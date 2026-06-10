@@ -180,13 +180,6 @@ export async function upsertClientInPipeline(
   if (a1.nastepny_krok) {
     props['Następny krok'] = { rich_text: richText(a1.nastepny_krok) }
   }
-  if (a1.koszt_problemu?.koszt_miesiecznie != null) {
-    props['Koszt problemu PLN/mc'] = { number: a1.koszt_problemu.koszt_miesiecznie }
-  }
-  if (a1.koszt_problemu?.koszt_roczny != null) {
-    props['Koszt roczny PLN/rok'] = { number: a1.koszt_problemu.koszt_roczny }
-  }
-
   const icpSelect = icpToSelect(a1.icp?.wynik ?? null)
   if (icpSelect) {
     props['Ocena ICP'] = { select: { name: icpSelect } }

@@ -1,25 +1,25 @@
 export const tokens = {
   bg: {
     primary: '#ffffff',
-    surface: '#f9fafb',
-    elevated: '#f3f4f6',
-    hover: '#f3f4f6',
+    surface: '#f8fafc',
+    elevated: '#f1f5f9',
+    hover: '#e8f0fe',
   },
   border: {
-    default: '#e5e7eb',
-    subtle: '#f3f4f6',
-    strong: '#d1d5db',
+    default: '#e2e8f0',
+    subtle: '#f1f5f9',
+    strong: '#cbd5e1',
   },
   accent: {
-    primary: '#f97316',
-    hover: '#ea6c0a',
-    muted: 'rgba(249,115,22,0.08)',
-    mutedBorder: 'rgba(249,115,22,0.2)',
+    primary: '#2563eb',
+    hover: '#1d4ed8',
+    muted: 'rgba(37,99,235,0.07)',
+    mutedBorder: 'rgba(37,99,235,0.2)',
   },
   text: {
-    primary: '#111827',
-    secondary: '#6b7280',
-    muted: '#9ca3af',
+    primary: '#0f172a',
+    secondary: '#334155',
+    muted: '#94a3b8',
   },
   status: {
     success: '#16a34a',
@@ -43,10 +43,10 @@ export const tokens = {
     '2xl': '20px',
   },
   shadow: {
-    card: '0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)',
-    elevated: '0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04)',
-    focus: '0 0 0 3px rgba(249,115,22,0.15)',
-    sidebar: '1px 0 0 #e5e7eb',
+    card: '0 1px 3px rgba(15,23,42,0.06), 0 1px 2px rgba(15,23,42,0.04)',
+    elevated: '0 4px 12px rgba(15,23,42,0.1), 0 2px 4px rgba(15,23,42,0.06)',
+    focus: '0 0 0 3px rgba(37,99,235,0.18)',
+    sidebar: '1px 0 0 #e2e8f0',
   },
 } as const
 
