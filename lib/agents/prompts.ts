@@ -85,7 +85,13 @@ WYCIĄGNIJ:
 9. STATUS PO ROZMOWIE
    - umówione spotkanie: TAK/NIE
    - data i godzina spotkania (jeśli pada)
-   - nastepny_krok: jeśli spotkanie umówione → "Discovery call [data] [godzina] — Google Meet"; jeśli nie umówiono → null
+   - nastepny_krok: ZAWSZE wypełnij jeśli ustalono jakikolwiek następny kontakt:
+     * Discovery call → "Discovery call [data] [godzina] — Google Meet"
+     * Telefon w konkretny dzień/czas → "Telefon [dzień/data] [godzina jeśli padła]"
+     * Oddzwonić bez godziny → "Oddzwonić [dzień]"
+     * Klient powiedział że się zastanowi bez terminu → "Follow-up email — brak terminu"
+     * Żadnego zainteresowania → null
+   WAŻNE: "telefon w poniedziałek", "zadzwonię w przyszłym tygodniu", "odezwę się" = nastepny_krok nie null
    - jeśli nie umówiono: powód
 
 10. UWAGI AGENTA
