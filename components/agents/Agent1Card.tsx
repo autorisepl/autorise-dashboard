@@ -114,9 +114,9 @@ function IcpDots({ score }: { score: number | null | undefined }) {
             width: 8,
             height: 8,
             borderRadius: '50%',
-            background: i <= (score ?? 0) ? c.blue : 'rgba(255,255,255,0.08)',
-            border: `1px solid ${i <= (score ?? 0) ? c.blue : 'rgba(255,255,255,0.12)'}`,
-            boxShadow: i <= (score ?? 0) ? `0 0 6px ${c.blue}60` : 'none',
+            background: i <= (score ?? 0) ? c.blue : '#e2e8f0',
+            border: `1px solid ${i <= (score ?? 0) ? c.blue : '#cbd5e1'}`,
+            boxShadow: i <= (score ?? 0) ? `0 0 6px ${c.blue}40` : 'none',
           }}
         />
       ))}
@@ -175,7 +175,7 @@ function Quotes({ text }: { text: string | null | undefined }) {
             borderLeft: `2px solid ${c.blue}60`,
             fontFamily: c.sans,
             fontSize: 12,
-            color: '#b8cce8',
+            color: c.secondary,
             fontStyle: 'italic',
             lineHeight: 1.55,
           }}
@@ -427,7 +427,7 @@ export function Agent1Card({ output }: { output: Agent1Output }) {
                 style={{
                   marginTop: 6,
                   fontSize: 12,
-                  color: '#93c5fd',
+                  color: c.blue,
                   padding: '4px 8px',
                   background: c.blueGlow,
                   border: `1px solid ${c.borderStrong}`,

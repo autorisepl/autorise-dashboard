@@ -727,7 +727,7 @@ function AgentPanel({
               if (canRun) {
                 const b = e.currentTarget as HTMLButtonElement
                 b.style.background = at.accent.primary
-                b.style.boxShadow = '0 1px 4px rgba(249,115,22,0.25)'
+                b.style.boxShadow = '0 1px 4px rgba(29,78,216,0.25)'
               }
             }}
             onMouseDown={(e) => {
