@@ -82,6 +82,35 @@ function ddMMYYYYtoISO(date: string): string | null {
   return `${match[3]}-${match[2]}-${match[1]}`
 }
 
+const POLISH_MONTHS: Record<string, string> = {
+  stycznia: '01', styczeń: '01', styczen: '01',
+  lutego: '02', luty: '02',
+  marca: '03', marzec: '03',
+  kwietnia: '04', kwiecień: '04', kwiecien: '04',
+  maja: '05', maj: '05',
+  czerwca: '06', czerwiec: '06',
+  lipca: '07', lipiec: '07',
+  sierpnia: '08', sierpień: '08', sierpien: '08',
+  września: '09', wrzesień: '09', wrzesien: '09',
+  października: '10', październik: '10', pazdziernika: '10', pazdziernik: '10',
+  listopada: '11', listopad: '11',
+  grudnia: '12', grudzień: '12', grudzien: '12',
+}
+
+function anyDateToISO(raw: string | null | undefined): string | null {
+  if (!raw) return null
+  const s = raw.trim()
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s
+  const dot = s.match(/^(\d{1,2})\.(\d{2})\.(\d{4})$/)
+  if (dot) return `${dot[3]}-${dot[2].padStart(2, '0')}-${dot[1].padStart(2, '0')}`
+  const pl = s.match(/(\d{1,2})\s+([a-ząćęłńóśźż]+)\s+(\d{4})/i)
+  if (pl) {
+    const month = POLISH_MONTHS[pl[2].toLowerCase()]
+    if (month) return `${pl[3]}-${month}-${pl[1].padStart(2, '0')}`
+  }
+  return null
+}
+
 function todayISO(): string {
   return new Date().toISOString().split('T')[0]
 }
@@ -94,7 +123,42 @@ export interface PipelineClient {
   status: string
 }
 
+export interface ExistingClientData {
+  firma?: string
+  kontakt?: string
+  telefon?: string
+  notatki?: string
+}
+
 // --- public API ---
+
+export async function getClientPage(pageId: string): Promise<ExistingClientData> {
+  const page = (await notion.pages.retrieve({ page_id: pageId })) as PageObjectResponse
+  const props = page.properties
+  const result: ExistingClientData = {}
+
+  const firma = props['Firma']
+  if (firma?.type === 'title') {
+    const val = firma.title.map((t) => t.plain_text).join('').trim()
+    if (val) result.firma = val
+  }
+  const kontakt = props['Kontakt']
+  if (kontakt?.type === 'rich_text') {
+    const val = kontakt.rich_text.map((t) => t.plain_text).join('').trim()
+    if (val) result.kontakt = val
+  }
+  const telefon = props['Telefon']
+  if (telefon?.type === 'phone_number' && telefon.phone_number) {
+    result.telefon = telefon.phone_number
+  }
+  const notatki = props['Notatki']
+  if (notatki?.type === 'rich_text') {
+    const val = notatki.rich_text.map((t) => t.plain_text).join('').trim()
+    if (val) result.notatki = val
+  }
+
+  return result
+}
 
 export async function getPipelineClients(): Promise<PipelineClient[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -189,7 +253,8 @@ export async function upsertClientInPipeline(
   props['Status'] = { select: { name: pipelineStatus } }
 
   if (a1.meet_data) {
-    props['Data discovery'] = { date: { start: a1.meet_data } }
+    const isoDate = anyDateToISO(a1.meet_data)
+    if (isoDate) props['Data discovery'] = { date: { start: isoDate } }
   }
   if (a1.uwagi_agenta) {
     props['Notatki'] = { rich_text: richText(a1.uwagi_agenta) }

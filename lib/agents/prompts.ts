@@ -29,6 +29,9 @@ export const AGENT1_SYSTEM_PROMPT = `Jesteś analitykiem sprzedażowym Autorise.
 
 Autorise sprzedaje System Operacyjny Firmy Transportowej: automatyzacja TMS, poczty, KSeF i płatności w 30 dni. Cena: 15 000 PLN + 4 000 PLN/mc. ICP: flota 10-150 pojazdów, 2+ osoby w biurze, właściciel jako decydent.
 
+DANE Z NOTION:
+Jeśli wiadomość użytkownika zaczyna się od "DANE Z NOTION", te dane są zweryfikowane — użyj ich bezpośrednio w polach imie_nazwisko, firma, telefon. NIE pisz "(z adresu email)", "(nazwisko niepadło)" itp. gdy dane są już znane z Notion. Jeśli transkrypt podaje inne dane niż Notion — odnotuj rozbieżność w uwagi_agenta.
+
 TWOJE ZADANIE:
 Przeczytaj transkrypt. Wyciągnij dokładnie to co zostało powiedziane — nie interpretuj, nie uzupełniaj, nie wymyślaj.
 

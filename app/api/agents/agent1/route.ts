@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { z } from 'zod'
 import { AGENT_MODELS, AGENT1_SYSTEM_PROMPT } from '@/lib/agents/prompts'
-import { upsertClientInPipeline } from '@/lib/notion/client'
+import { upsertClientInPipeline, getClientPage } from '@/lib/notion/client'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -24,11 +24,28 @@ export async function POST(req: Request) {
 
     const { transcript, notion_page_id } = parsed.data
 
+    // Fetch existing Notion data so agent can use/reconcile with transcript
+    let userMessage = transcript
+    if (notion_page_id) {
+      try {
+        const existing = await getClientPage(notion_page_id)
+        const lines: string[] = []
+        if (existing.firma) lines.push(`Firma: ${existing.firma}`)
+        if (existing.kontakt) lines.push(`Kontakt: ${existing.kontakt}`)
+        if (existing.telefon) lines.push(`Telefon: ${existing.telefon}`)
+        if (lines.length > 0) {
+          userMessage = `DANE Z NOTION (już zweryfikowane — użyj zamiast "(z adresu email)" itp.):\n${lines.join('\n')}\n\n---\nTRANSKRYPT:\n${transcript}`
+        }
+      } catch {
+        // non-fatal — proceed with transcript only
+      }
+    }
+
     const message = await client.messages.create({
       model: AGENT_MODELS.agent1,
       max_tokens: 4096,
       system: AGENT1_SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: transcript }],
+      messages: [{ role: 'user', content: userMessage }],
       metadata: { user_id: 'autorise-agent1' },
     })
 

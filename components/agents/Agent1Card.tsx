@@ -2,8 +2,6 @@
 
 import { useState } from 'react'
 import {
-  ChevronDown,
-  ChevronUp,
   Phone,
   Truck,
   Users,
@@ -14,8 +12,11 @@ import {
   Target,
   Calendar,
   ArrowRight,
-  CheckCircle,
+  CheckCircle2,
   XCircle,
+  ChevronDown,
+  ChevronUp,
+  Zap,
 } from 'lucide-react'
 
 export interface Agent1Output {
@@ -46,11 +47,11 @@ export interface Agent1Output {
   urgency?: string | null
   icp?: {
     wynik?: number | null
-    flota_ok?: boolean
-    biuro_ok?: boolean
-    decyzyjnosc_ok?: boolean
-    bol_ok?: boolean
-    aktywne_szukanie_ok?: boolean
+    flota_ok?: boolean | string | null
+    biuro_ok?: boolean | string | null
+    decyzyjnosc_ok?: boolean | string | null
+    bol_ok?: boolean | string | null
+    aktywne_szukanie_ok?: boolean | string | null
     kwalifikacja?: string | null
   } | null
   status?: string | null
@@ -60,63 +61,146 @@ export interface Agent1Output {
   uwagi_agenta?: string | null
 }
 
-const c = {
-  bg: '#ffffff',
-  card: '#f8fafc',
-  elevated: '#f1f5f9',
-  section: '#f8fafc',
-  border: '#e2e8f0',
-  borderStrong: 'rgba(37,99,235,0.2)',
-  blue: '#2563eb',
-  blueBright: '#3b82f6',
-  blueGlow: 'rgba(37,99,235,0.06)',
-  white: '#0f172a',
-  secondary: '#475569',
-  muted: '#94a3b8',
-  success: '#16a34a',
-  successBg: 'rgba(22,163,74,0.08)',
-  successBorder: 'rgba(22,163,74,0.2)',
-  error: '#dc2626',
-  errorBg: 'rgba(220,38,38,0.08)',
-  errorBorder: 'rgba(220,38,38,0.2)',
-  warning: '#d97706',
-  warningBg: 'rgba(217,119,6,0.08)',
-  warningBorder: 'rgba(217,119,6,0.2)',
+const d = {
+  bg: '#080e1c',
+  surface: 'rgba(255,255,255,0.04)',
+  surfaceHover: 'rgba(255,255,255,0.06)',
+  border: 'rgba(59,130,246,0.14)',
+  borderSubtle: 'rgba(255,255,255,0.07)',
+  blue: '#3b82f6',
+  blueDeep: '#2563eb',
+  blueFaint: 'rgba(59,130,246,0.10)',
+  blueFaintBorder: 'rgba(59,130,246,0.22)',
+  white: '#f0f4ff',
+  whiteDim: '#c8d8f0',
+  secondary: '#7a96b8',
+  muted: '#475569',
+  success: '#22c55e',
+  successFaint: 'rgba(34,197,94,0.10)',
+  successBorder: 'rgba(34,197,94,0.22)',
+  error: '#ef4444',
+  errorFaint: 'rgba(239,68,68,0.10)',
+  errorBorder: 'rgba(239,68,68,0.22)',
+  warning: '#f59e0b',
+  warningFaint: 'rgba(245,158,11,0.10)',
+  warningBorder: 'rgba(245,158,11,0.22)',
+  font: '"Geist", -apple-system, BlinkMacSystemFont, sans-serif',
   mono: '"Geist Mono", "Fira Code", monospace',
-  sans: '"Geist", -apple-system, BlinkMacSystemFont, sans-serif',
+}
+
+function icpOk(val?: boolean | string | null): boolean {
+  if (val == null) return false
+  if (typeof val === 'boolean') return val
+  return val.toUpperCase() === 'TAK'
+}
+
+function stripQuotes(text: string): string {
+  return text.replace(/^["«„]/, '').replace(/["»"]$/, '').trim()
 }
 
 function parseQuotes(text: string | null | undefined): string[] {
   if (!text) return []
-  const cleaned = text.replace(/^["«]/, '').replace(/["»]$/, '').trim()
+  const cleaned = stripQuotes(text)
   const parts = cleaned
-    .split(/"\s*\/\s*"/)
-    .map((s) => s.replace(/^["«]/, '').replace(/["»]$/, '').trim())
-    .filter((s) => s.length > 8)
-  return parts.length ? parts : [cleaned]
+    .split(/[/]\s*/)
+    .map((s) => stripQuotes(s).trim())
+    .filter((s) => s.length > 6)
+  return parts.length > 1 ? parts : [cleaned]
 }
 
-function parseNotes(text: string | null | undefined): string[] {
+function parseNotes(text: string | null | undefined): Array<{ head: string; body: string }> {
   if (!text) return []
   return text
     .split(/\n(?=\d+\.)/)
     .map((s) => s.trim())
     .filter(Boolean)
+    .map((s) => {
+      const lines = s.split('\n')
+      return {
+        head: lines[0].replace(/^\d+\.\s*/, '').trim(),
+        body: lines.slice(1).join('\n').trim(),
+      }
+    })
 }
 
-function IcpDots({ score }: { score: number | null | undefined }) {
+function Label({ children, color }: { children: React.ReactNode; color?: string }) {
   return (
-    <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+    <span
+      style={{
+        fontFamily: d.font,
+        fontSize: 10,
+        fontWeight: 700,
+        letterSpacing: '0.12em',
+        textTransform: 'uppercase',
+        color: color ?? d.muted,
+      }}
+    >
+      {children}
+    </span>
+  )
+}
+
+function SectionHeader({ icon, label }: { icon: React.ReactNode; label: string }) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 7,
+        paddingBottom: 12,
+        borderBottom: `1px solid ${d.borderSubtle}`,
+        marginBottom: 14,
+      }}
+    >
+      <span style={{ color: d.blue, display: 'flex', alignItems: 'center' }}>{icon}</span>
+      <Label>{label}</Label>
+    </div>
+  )
+}
+
+function IcpRow({ label, ok }: { label: string; ok?: boolean | string | null }) {
+  const pass = icpOk(ok)
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '4px 0' }}>
+      <div
+        style={{
+          width: 20,
+          height: 20,
+          borderRadius: 5,
+          background: pass ? d.successFaint : d.errorFaint,
+          border: `1px solid ${pass ? d.successBorder : d.errorBorder}`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}
+      >
+        {pass ? (
+          <CheckCircle2 size={11} color={d.success} />
+        ) : (
+          <XCircle size={11} color={d.error} />
+        )}
+      </div>
+      <span style={{ fontFamily: d.font, fontSize: 13, color: pass ? d.whiteDim : d.secondary }}>
+        {label}
+      </span>
+    </div>
+  )
+}
+
+function ScoreDots({ score }: { score: number | null | undefined }) {
+  return (
+    <div style={{ display: 'flex', gap: 5 }}>
       {[1, 2, 3, 4, 5].map((i) => (
         <div
           key={i}
           style={{
-            width: 8,
-            height: 8,
+            width: 9,
+            height: 9,
             borderRadius: '50%',
-            background: i <= (score ?? 0) ? c.blue : '#e2e8f0',
-            border: `1px solid ${i <= (score ?? 0) ? c.blue : '#cbd5e1'}`,
-            boxShadow: i <= (score ?? 0) ? `0 0 6px ${c.blue}40` : 'none',
+            background: i <= (score ?? 0) ? d.blue : 'rgba(59,130,246,0.15)',
+            border: `1px solid ${i <= (score ?? 0) ? d.blue : 'rgba(59,130,246,0.25)'}`,
+            boxShadow: i <= (score ?? 0) ? `0 0 8px ${d.blue}60` : 'none',
           }}
         />
       ))}
@@ -124,60 +208,22 @@ function IcpDots({ score }: { score: number | null | undefined }) {
   )
 }
 
-function IcpRow({ label, ok }: { label: string; ok?: boolean }) {
-  const color = ok ? c.success : c.error
-  const bg = ok ? c.successBg : c.errorBg
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '3px 0' }}>
-      <div
-        style={{
-          width: 18,
-          height: 18,
-          borderRadius: 4,
-          background: bg,
-          border: `1px solid ${ok ? c.successBorder : c.errorBorder}`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0,
-        }}
-      >
-        {ok ? (
-          <CheckCircle size={10} color={c.success} />
-        ) : (
-          <XCircle size={10} color={c.error} />
-        )}
-      </div>
-      <span
-        style={{
-          fontFamily: c.sans,
-          fontSize: 12,
-          color: ok ? c.white : c.secondary,
-          lineHeight: 1,
-        }}
-      >
-        {label}
-      </span>
-    </div>
-  )
-}
-
-function Quotes({ text }: { text: string | null | undefined }) {
+function QuoteBlock({ text }: { text: string | null | undefined }) {
   const parts = parseQuotes(text)
   if (!parts.length) return null
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       {parts.slice(0, 3).map((q, i) => (
         <div
           key={i}
           style={{
-            paddingLeft: 12,
-            borderLeft: `2px solid ${c.blue}60`,
-            fontFamily: c.sans,
-            fontSize: 12,
-            color: c.secondary,
+            paddingLeft: 14,
+            borderLeft: `2px solid ${d.blue}50`,
+            fontFamily: d.font,
+            fontSize: 14,
+            color: d.whiteDim,
             fontStyle: 'italic',
-            lineHeight: 1.55,
+            lineHeight: 1.6,
           }}
         >
           &ldquo;{q}&rdquo;
@@ -187,56 +233,42 @@ function Quotes({ text }: { text: string | null | undefined }) {
   )
 }
 
-function Label({ children }: { children: React.ReactNode }) {
-  return (
-    <span
-      style={{
-        fontFamily: c.sans,
-        fontSize: 10,
-        fontWeight: 700,
-        color: c.muted,
-        letterSpacing: '0.1em',
-        textTransform: 'uppercase',
-      }}
-    >
-      {children}
-    </span>
-  )
-}
-
-function SectionTitle({ icon, children }: { icon?: React.ReactNode; children: React.ReactNode }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-      {icon && <span style={{ color: c.blue, opacity: 0.7, display: 'flex', alignItems: 'center' }}>{icon}</span>}
-      <Label>{children}</Label>
-    </div>
-  )
-}
-
-function BigStat({
+function BigNum({
   value,
   unit,
-  highlight,
+  accent,
+  size = 44,
 }: {
   value: string | number
   unit: string
-  highlight?: boolean
+  accent?: boolean
+  size?: number
 }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-      <span
+    <div>
+      <div
         style={{
-          fontFamily: c.mono,
-          fontSize: 28,
+          fontFamily: d.mono,
+          fontSize: size,
           fontWeight: 800,
-          color: highlight ? c.blue : c.white,
+          color: accent ? d.blue : d.white,
           lineHeight: 1,
-          letterSpacing: '-0.02em',
+          letterSpacing: '-0.04em',
         }}
       >
-        {value}
-      </span>
-      <span style={{ fontFamily: c.sans, fontSize: 12, color: c.secondary }}>{unit}</span>
+        {typeof value === 'number' ? value.toLocaleString('pl') : value}
+      </div>
+      <div
+        style={{
+          fontFamily: d.font,
+          fontSize: 12,
+          color: d.secondary,
+          marginTop: 4,
+          letterSpacing: '0.04em',
+        }}
+      >
+        {unit}
+      </div>
     </div>
   )
 }
@@ -246,20 +278,18 @@ export function Agent1Card({ output }: { output: Agent1Output }) {
 
   const icp = output.icp
   const score = icp?.wynik ?? null
-  const kwal = icp?.kwalifikacja ?? ''
-  const isDisq = kwal.toUpperCase().includes('NIE KWALIFIKUJE')
-  const isOk =
-    kwal.toUpperCase().includes('KWALIFIKUJE') &&
-    !kwal.toUpperCase().includes('NIE') &&
-    !kwal.toUpperCase().includes('WYMAGA')
+  const kwal = (icp?.kwalifikacja ?? '').toUpperCase()
+  const isDisq = kwal.includes('NIE KWALIFIKUJE')
+  const isOk = kwal.includes('KWALIFIKUJE') && !kwal.includes('NIE') && !kwal.includes('WYMAGA')
 
-  const verdictColor = isDisq ? c.error : isOk ? c.success : c.warning
-  const verdictBg = isDisq ? c.errorBg : isOk ? c.successBg : c.warningBg
-  const verdictBorder = isDisq ? c.errorBorder : isOk ? c.successBorder : c.warningBorder
+  const verdictColor = isDisq ? d.error : isOk ? d.success : d.warning
+  const verdictBg = isDisq ? d.errorFaint : isOk ? d.successFaint : d.warningFaint
+  const verdictBorder = isDisq ? d.errorBorder : isOk ? d.successBorder : d.warningBorder
   const verdictLabel = isDisq ? 'NIE KWALIFIKUJE' : isOk ? 'KWALIFIKUJE' : 'WYMAGA ANALIZY'
 
-  const displayName = output.firma || output.imie_nazwisko || 'Nieznany klient'
-  const displaySub = output.firma && output.imie_nazwisko ? output.imie_nazwisko : null
+  const displayName = output.firma || output.imie_nazwisko || 'Nowy klient'
+  const displaySub =
+    output.firma && output.imie_nazwisko ? output.imie_nazwisko : null
 
   const hasCost =
     output.koszt_problemu?.koszt_miesiecznie != null ||
@@ -267,390 +297,376 @@ export function Agent1Card({ output }: { output: Agent1Output }) {
 
   const notes = parseNotes(output.uwagi_agenta)
 
+  const fleet =
+    output.pojazdy != null
+      ? typeof output.pojazdy === 'number'
+        ? output.pojazdy
+        : parseInt(String(output.pojazdy), 10) || String(output.pojazdy)
+      : null
+
+  const spedNum =
+    output.spedytorzy_biuro
+      ? (() => {
+          const m = String(output.spedytorzy_biuro).match(/\d+/)
+          return m ? parseInt(m[0], 10) : null
+        })()
+      : null
+
   return (
     <div
       style={{
+        background: d.bg,
+        fontFamily: d.font,
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
         overflow: 'auto',
-        background: c.bg,
-        fontFamily: c.sans,
+        color: d.white,
       }}
     >
       {/* ─── HEADER ─── */}
       <div
         style={{
-          padding: '20px 24px 18px',
-          background: `linear-gradient(160deg, #eff6ff 0%, #ffffff 100%)`,
-          borderBottom: `1px solid ${c.border}`,
+          padding: '24px 28px 20px',
+          background: 'linear-gradient(160deg, rgba(37,99,235,0.12) 0%, rgba(8,14,28,0) 60%)',
+          borderBottom: `1px solid ${d.border}`,
           flexShrink: 0,
         }}
       >
+        {/* Row 1: verdict + score */}
         <div
           style={{
             display: 'flex',
-            alignItems: 'flex-start',
+            alignItems: 'center',
             justifyContent: 'space-between',
-            gap: 20,
+            marginBottom: 14,
           }}
         >
-          {/* Identity */}
-          <div>
-            <div
-              style={{
-                fontSize: 24,
-                fontWeight: 800,
-                color: c.white,
-                letterSpacing: '-0.03em',
-                lineHeight: 1.1,
-              }}
-            >
-              {displayName}
-            </div>
-            {displaySub && (
-              <div style={{ fontSize: 13, color: c.secondary, marginTop: 4 }}>{displaySub}</div>
-            )}
-            {output.telefon && (
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  marginTop: 8,
-                  padding: '4px 10px',
-                  background: c.blueGlow,
-                  border: `1px solid ${c.borderStrong}`,
-                  borderRadius: 6,
-                  width: 'fit-content',
-                }}
-              >
-                <Phone size={11} color={c.blueBright} />
-                <span
-                  style={{
-                    fontSize: 13,
-                    fontFamily: c.mono,
-                    color: c.blueBright,
-                    letterSpacing: '0.03em',
-                  }}
-                >
-                  {output.telefon}
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* ICP verdict block */}
           <div
             style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'flex-end',
-              gap: 10,
-              flexShrink: 0,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 7,
+              padding: '5px 14px',
+              borderRadius: 6,
+              background: verdictBg,
+              border: `1px solid ${verdictBorder}`,
             }}
           >
-            <div
+            <Zap size={11} color={verdictColor} />
+            <span
               style={{
-                padding: '6px 16px',
-                borderRadius: 6,
-                background: verdictBg,
-                border: `1px solid ${verdictBorder}`,
+                fontFamily: d.font,
                 fontSize: 11,
                 fontWeight: 800,
                 color: verdictColor,
-                letterSpacing: '0.1em',
+                letterSpacing: '0.12em',
                 textTransform: 'uppercase',
               }}
             >
               {verdictLabel}
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <IcpDots score={score} />
-              <span
-                style={{
-                  fontFamily: c.mono,
-                  fontSize: 16,
-                  fontWeight: 700,
-                  color: c.white,
-                  letterSpacing: '-0.02em',
-                }}
-              >
-                {score ?? '?'}
-                <span style={{ color: c.muted }}>/5</span>
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <ScoreDots score={score} />
+            <span
+              style={{
+                fontFamily: d.mono,
+                fontSize: 18,
+                fontWeight: 700,
+                color: d.white,
+                letterSpacing: '-0.02em',
+              }}
+            >
+              {score ?? '?'}
+              <span style={{ color: d.muted }}>/5</span>
+            </span>
+          </div>
+        </div>
+
+        {/* Row 2: name */}
+        <div
+          style={{
+            fontSize: 34,
+            fontWeight: 800,
+            color: d.white,
+            letterSpacing: '-0.04em',
+            lineHeight: 1.05,
+          }}
+        >
+          {displayName}
+        </div>
+
+        {/* Row 3: sub + phone */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 10,
+            marginTop: 8,
+          }}
+        >
+          {displaySub && (
+            <span style={{ fontSize: 15, color: d.secondary }}>{displaySub}</span>
+          )}
+          {output.telefon && (
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '4px 10px',
+                background: d.blueFaint,
+                border: `1px solid ${d.blueFaintBorder}`,
+                borderRadius: 6,
+              }}
+            >
+              <Phone size={11} color={d.blue} />
+              <span style={{ fontFamily: d.mono, fontSize: 13, color: d.blue, letterSpacing: '0.04em' }}>
+                {output.telefon}
               </span>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
-      {/* ─── GRID 2×2 ─── */}
+      {/* ─── MAIN GRID 2×2 ─── */}
       <div
         style={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
-          gridTemplateRows: 'auto auto',
           gap: 1,
-          background: c.border,
+          background: d.border,
           flexShrink: 0,
         }}
       >
-        {/* Cell 1 — Dane firmy + ICP checks */}
-        <div
-          style={{
-            background: c.card,
-            padding: '18px 20px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 18,
-          }}
-        >
-          <div>
-            <SectionTitle icon={<Truck size={13} />}>Dane firmy</SectionTitle>
-            <div style={{ display: 'flex', gap: 20, marginBottom: 10 }}>
-              <BigStat
-                value={output.pojazdy ?? '—'}
-                unit="pojazdy"
-                highlight
-              />
-              {output.spedytorzy_biuro && (
-                <BigStat value={output.spedytorzy_biuro} unit="biuro" />
-              )}
-            </div>
-            {output.wlasciciel_czy_manager && (
-              <div style={{ fontSize: 12, color: c.secondary }}>
-                {output.wlasciciel_czy_manager}
-              </div>
+        {/* TL — Dane firmy + ICP */}
+        <div style={{ background: d.bg, padding: '20px 22px' }}>
+          <SectionHeader icon={<Truck size={13} />} label="Dane firmy" />
+
+          <div style={{ display: 'flex', gap: 28, marginBottom: 16 }}>
+            {fleet != null && (
+              <BigNum value={fleet} unit="pojazdów" accent size={40} />
             )}
-            {output.decydent && (
-              <div
-                style={{
-                  marginTop: 6,
-                  fontSize: 12,
-                  color: c.blue,
-                  padding: '4px 8px',
-                  background: c.blueGlow,
-                  border: `1px solid ${c.borderStrong}`,
-                  borderRadius: 4,
-                  lineHeight: 1.4,
-                }}
-              >
-                {output.decydent}
-              </div>
+            {spedNum != null && (
+              <BigNum value={spedNum} unit="spedytorów" size={40} />
             )}
           </div>
 
-          <div>
-            <SectionTitle icon={<Target size={13} />}>Weryfikacja ICP</SectionTitle>
-            <IcpRow label="Flota ≥ 10 pojazdów" ok={icp?.flota_ok} />
-            <IcpRow label="Biuro ≥ 2 osoby" ok={icp?.biuro_ok} />
-            <IcpRow label="Decyzyjność" ok={icp?.decyzyjnosc_ok} />
-            <IcpRow label="Ból zdefiniowany" ok={icp?.bol_ok} />
-            <IcpRow label="Aktywnie szuka rozwiązania" ok={icp?.aktywne_szukanie_ok} />
+          {output.wlasciciel_czy_manager && (
+            <div style={{ fontSize: 13, color: d.secondary, marginBottom: 6 }}>
+              {output.wlasciciel_czy_manager}
+            </div>
+          )}
+          {output.decydent && (
+            <div
+              style={{
+                display: 'inline-block',
+                padding: '4px 10px',
+                background: d.blueFaint,
+                border: `1px solid ${d.blueFaintBorder}`,
+                borderRadius: 5,
+                fontSize: 12,
+                color: d.blue,
+                marginBottom: 18,
+              }}
+            >
+              {output.decydent}
+            </div>
+          )}
+
+          <div style={{ borderTop: `1px solid ${d.borderSubtle}`, paddingTop: 14, marginTop: 6 }}>
+            <Label>Weryfikacja ICP</Label>
+            <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column' }}>
+              <IcpRow label="Flota ≥ 10 pojazdów" ok={icp?.flota_ok} />
+              <IcpRow label="Biuro ≥ 2 osoby" ok={icp?.biuro_ok} />
+              <IcpRow label="Decyzyjność" ok={icp?.decyzyjnosc_ok} />
+              <IcpRow label="Ból zdefiniowany" ok={icp?.bol_ok} />
+              <IcpRow label="Aktywnie szuka rozwiązania" ok={icp?.aktywne_szukanie_ok} />
+            </div>
           </div>
         </div>
 
-        {/* Cell 2 — Ból + Motywacja */}
-        <div
-          style={{
-            background: c.card,
-            padding: '18px 20px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 18,
-          }}
-        >
+        {/* TR — Ból + Motywacja + Pre-commit */}
+        <div style={{ background: d.bg, padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 20 }}>
           {output.bol_glowny_cytat && (
             <div>
-              <SectionTitle icon={<AlertTriangle size={13} />}>Ból główny</SectionTitle>
-              <Quotes text={output.bol_glowny_cytat} />
+              <SectionHeader icon={<AlertTriangle size={13} />} label="Ból główny" />
+              <QuoteBlock text={output.bol_glowny_cytat} />
             </div>
           )}
 
           {output.motywacja_cytat && (
             <div>
-              <SectionTitle icon={<TrendingUp size={13} />}>Motywacja</SectionTitle>
-              <Quotes text={output.motywacja_cytat} />
+              <SectionHeader icon={<TrendingUp size={13} />} label="Motywacja" />
+              <QuoteBlock text={output.motywacja_cytat} />
             </div>
           )}
 
           {output.pre_commit_cytat && (
             <div>
-              <SectionTitle>Pre-commit</SectionTitle>
+              <SectionHeader icon={<Zap size={13} />} label="Pre-commit" />
               <div
                 style={{
-                  padding: '8px 12px',
-                  background: c.warningBg,
-                  border: `1px solid ${c.warningBorder}`,
-                  borderRadius: 6,
-                  fontSize: 12,
-                  color: c.warning,
+                  padding: '10px 14px',
+                  background: d.warningFaint,
+                  border: `1px solid ${d.warningBorder}`,
+                  borderRadius: 7,
+                  fontSize: 14,
+                  color: d.warning,
                   fontStyle: 'italic',
-                  lineHeight: 1.5,
+                  lineHeight: 1.55,
                 }}
               >
-                &ldquo;{output.pre_commit_cytat.replace(/^["«]/, '').replace(/["»]$/, '').trim()}&rdquo;
+                &ldquo;{stripQuotes(output.pre_commit_cytat)}&rdquo;
               </div>
             </div>
           )}
         </div>
 
-        {/* Cell 3 — Systemy */}
-        <div
-          style={{
-            background: c.card,
-            padding: '18px 20px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 14,
-          }}
-        >
-          <div>
-            <SectionTitle icon={<Database size={13} />}>Systemy</SectionTitle>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {/* BL — Systemy */}
+        <div style={{ background: d.surface, padding: '20px 22px' }}>
+          <SectionHeader icon={<Database size={13} />} label="Systemy" />
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div>
+              <Label>TMS</Label>
+              <div
+                style={{
+                  marginTop: 5,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: output.tms?.toLowerCase().includes('brak') ? d.error : d.white,
+                  lineHeight: 1.4,
+                }}
+              >
+                {output.tms || '—'}
+              </div>
+            </div>
+
+            {output.inne_systemy && (
               <div>
-                <Label>TMS</Label>
-                <div
-                  style={{
-                    marginTop: 4,
-                    fontSize: 13,
-                    color: output.tms?.toLowerCase().includes('brak') ? c.error : c.white,
-                    fontWeight: 500,
-                  }}
-                >
-                  {output.tms || '—'}
+                <Label>Inne systemy</Label>
+                <div style={{ marginTop: 5, fontSize: 13, color: d.secondary, lineHeight: 1.5 }}>
+                  {output.inne_systemy}
                 </div>
               </div>
+            )}
 
-              {output.inne_systemy && (
-                <div>
-                  <Label>Inne systemy</Label>
-                  <div
-                    style={{
-                      marginTop: 4,
-                      fontSize: 12,
-                      color: c.secondary,
-                      lineHeight: 1.55,
-                    }}
-                  >
-                    {output.inne_systemy}
-                  </div>
+            {output.podejscie_integracyjne && (
+              <div>
+                <Label>Integracja</Label>
+                <div
+                  style={{
+                    marginTop: 5,
+                    fontSize: 13,
+                    color: output.podejscie_integracyjne.toLowerCase().includes('brak') ? d.error : d.blue,
+                    fontWeight: 500,
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {output.podejscie_integracyjne}
                 </div>
-              )}
+              </div>
+            )}
 
-              {output.podejscie_integracyjne && (
-                <div>
-                  <Label>Podejście integracyjne</Label>
-                  <div
-                    style={{
-                      marginTop: 4,
-                      fontSize: 12,
-                      color: c.blueBright,
-                      fontWeight: 500,
-                    }}
-                  >
-                    {output.podejscie_integracyjne}
-                  </div>
+            {output.poprzednie_proby && (
+              <div>
+                <Label>Poprzednie próby</Label>
+                <div style={{ marginTop: 5, fontSize: 13, color: d.secondary, lineHeight: 1.5 }}>
+                  {output.poprzednie_proby}
                 </div>
-              )}
-
-              {output.poprzednie_proby && (
-                <div>
-                  <Label>Poprzednie próby</Label>
-                  <div style={{ marginTop: 4, fontSize: 12, color: c.secondary, lineHeight: 1.5 }}>
-                    {output.poprzednie_proby}
+                {output.poprzednie_proby_powod_niepowodzenia && (
+                  <div style={{ marginTop: 4, fontSize: 12, color: d.error, opacity: 0.8, fontStyle: 'italic' }}>
+                    {output.poprzednie_proby_powod_niepowodzenia}
                   </div>
-                  {output.poprzednie_proby_powod_niepowodzenia && (
-                    <div
-                      style={{
-                        marginTop: 4,
-                        fontSize: 11,
-                        color: c.error,
-                        opacity: 0.8,
-                        fontStyle: 'italic',
-                        lineHeight: 1.4,
-                      }}
-                    >
-                      {output.poprzednie_proby_powod_niepowodzenia}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Cell 4 — Koszt + Status + Urgency */}
-        <div
-          style={{
-            background: c.card,
-            padding: '18px 20px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 16,
-          }}
-        >
+        {/* BR — Koszt + Urgency + Next step */}
+        <div style={{ background: d.surface, padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 18 }}>
           <div>
-            <SectionTitle>Koszt problemu</SectionTitle>
+            <SectionHeader icon={<Target size={13} />} label="Koszt problemu" />
             {hasCost ? (
-              <div style={{ display: 'flex', gap: 20 }}>
+              <div style={{ display: 'flex', gap: 28, alignItems: 'flex-end' }}>
                 {output.koszt_problemu?.koszt_miesiecznie != null && (
-                  <BigStat
-                    value={output.koszt_problemu.koszt_miesiecznie.toLocaleString('pl')}
-                    unit="PLN/mc"
-                    highlight
+                  <BigNum
+                    value={output.koszt_problemu.koszt_miesiecznie}
+                    unit="PLN / miesiąc"
+                    accent
+                    size={42}
                   />
                 )}
                 {output.koszt_problemu?.koszt_roczny != null && (
-                  <BigStat
-                    value={output.koszt_problemu.koszt_roczny.toLocaleString('pl')}
-                    unit="PLN/rok"
+                  <BigNum
+                    value={output.koszt_problemu.koszt_roczny}
+                    unit="PLN / rok"
+                    size={32}
                   />
                 )}
               </div>
             ) : (
-              <div style={{ fontSize: 12, color: c.muted, fontStyle: 'italic' }}>
-                Niepoliczalny — brak danych liczbowych
+              <div style={{ fontSize: 13, color: d.muted, fontStyle: 'italic' }}>
+                Niepoliczalny — brak danych
               </div>
             )}
             {output.koszt_problemu?.procent_czasu != null && (
-              <div style={{ marginTop: 6, fontSize: 12, color: c.secondary }}>
+              <div style={{ marginTop: 8, fontSize: 12, color: d.secondary }}>
                 {output.koszt_problemu.procent_czasu}% czasu spedytora
+                {output.koszt_problemu.czy_szacunek && (
+                  <span
+                    style={{
+                      marginLeft: 8,
+                      padding: '2px 6px',
+                      background: d.warningFaint,
+                      border: `1px solid ${d.warningBorder}`,
+                      borderRadius: 4,
+                      fontSize: 10,
+                      color: d.warning,
+                      letterSpacing: '0.06em',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    szacunek
+                  </span>
+                )}
               </div>
             )}
           </div>
 
           {output.urgency && (
             <div>
-              <SectionTitle icon={<Clock size={13} />}>Urgency</SectionTitle>
-              <div style={{ fontSize: 12, color: c.secondary, lineHeight: 1.55 }}>
+              <SectionHeader icon={<Clock size={13} />} label="Urgency" />
+              <div style={{ fontSize: 13, color: d.secondary, lineHeight: 1.6 }}>
                 {output.urgency}
               </div>
             </div>
           )}
 
           <div>
-            <SectionTitle icon={<ArrowRight size={13} />}>Status i następny krok</SectionTitle>
-            <div
-              style={{
-                fontSize: 13,
-                color: c.white,
-                lineHeight: 1.5,
-                marginBottom: output.nastepny_krok ? 8 : 0,
-              }}
-            >
-              {output.status || '—'}
-            </div>
+            <SectionHeader icon={<ArrowRight size={13} />} label="Status i następny krok" />
+            {output.status && (
+              <div style={{ fontSize: 14, color: d.whiteDim, lineHeight: 1.5, marginBottom: 10 }}>
+                {output.status}
+              </div>
+            )}
             {output.nastepny_krok && (
               <div
                 style={{
-                  padding: '8px 12px',
-                  background: c.blueGlow,
-                  border: `1px solid ${c.borderStrong}`,
-                  borderRadius: 6,
-                  fontSize: 12,
-                  color: c.blueBright,
+                  padding: '10px 14px',
+                  background: d.blueFaint,
+                  border: `1px solid ${d.blueFaintBorder}`,
+                  borderRadius: 7,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: d.blue,
                   lineHeight: 1.5,
+                  marginBottom: 8,
                 }}
               >
                 {output.nastepny_krok}
@@ -659,17 +675,18 @@ export function Agent1Card({ output }: { output: Agent1Output }) {
             {output.meet_data && (
               <div
                 style={{
-                  marginTop: 8,
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 6,
-                  fontSize: 12,
-                  color: c.success,
+                  gap: 7,
+                  fontSize: 13,
+                  color: d.success,
                 }}
               >
-                <Calendar size={12} />
+                <Calendar size={13} />
                 {output.meet_data}
-                {output.meet_godzina && ` · ${output.meet_godzina}`}
+                {output.meet_godzina && (
+                  <span style={{ color: d.secondary }}>· {output.meet_godzina}</span>
+                )}
               </div>
             )}
           </div>
@@ -680,8 +697,8 @@ export function Agent1Card({ output }: { output: Agent1Output }) {
       {notes.length > 0 && (
         <div
           style={{
-            borderTop: `1px solid ${c.border}`,
-            background: c.section,
+            borderTop: `1px solid ${d.border}`,
+            background: d.surface,
             flexShrink: 0,
           }}
         >
@@ -689,79 +706,79 @@ export function Agent1Card({ output }: { output: Agent1Output }) {
             onClick={() => setNotesOpen((v) => !v)}
             style={{
               width: '100%',
-              padding: '12px 22px',
+              padding: '14px 24px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              color: c.secondary,
+              color: d.secondary,
+              fontFamily: d.font,
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Label>Analiza agenta</Label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Label color={d.secondary}>Analiza agenta</Label>
               <span
                 style={{
-                  padding: '1px 7px',
-                  background: c.blueGlow,
-                  border: `1px solid ${c.borderStrong}`,
+                  padding: '2px 8px',
+                  background: d.blueFaint,
+                  border: `1px solid ${d.blueFaintBorder}`,
                   borderRadius: 99,
-                  fontSize: 10,
+                  fontFamily: d.mono,
+                  fontSize: 11,
                   fontWeight: 700,
-                  color: c.blue,
-                  fontFamily: c.mono,
+                  color: d.blue,
                 }}
               >
                 {notes.length}
               </span>
             </div>
-            {notesOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+            {notesOpen ? <ChevronUp size={14} color={d.secondary} /> : <ChevronDown size={14} color={d.secondary} />}
           </button>
 
           {notesOpen && (
-            <div style={{ padding: '0 22px 18px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ padding: '0 24px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
               {notes.map((note, i) => {
-                const lines = note.trim().split('\n')
-                const head = lines[0].replace(/^\d+\.\s*/, '').trim()
-                const body = lines.slice(1).join('\n').trim()
-                const isWarning =
-                  head.toUpperCase().includes('DYSKWALIF') ||
-                  head.toUpperCase().includes('BARIERA') ||
-                  head.toUpperCase().includes('RYZYKO')
-                const isPositive = head.toUpperCase().includes('POZYTYW') || head.toUpperCase().includes('SYGNAŁ')
+                const isRisk =
+                  note.head.toUpperCase().includes('RYZYKO') ||
+                  note.head.toUpperCase().includes('BARIERA') ||
+                  note.head.toUpperCase().includes('NO-SHOW')
+                const isPositive =
+                  note.head.toUpperCase().includes('POZYTYW') ||
+                  note.head.toUpperCase().includes('SYGNAŁ')
 
                 return (
                   <div
                     key={i}
                     style={{
                       display: 'flex',
-                      gap: 12,
-                      padding: '10px 14px',
-                      background: isWarning
-                        ? 'rgba(239,68,68,0.05)'
+                      gap: 14,
+                      padding: '12px 16px',
+                      background: isRisk
+                        ? 'rgba(239,68,68,0.06)'
                         : isPositive
-                        ? 'rgba(34,197,94,0.05)'
-                        : 'rgba(255,255,255,0.02)',
+                        ? 'rgba(34,197,94,0.06)'
+                        : 'rgba(255,255,255,0.03)',
                       border: `1px solid ${
-                        isWarning
-                          ? 'rgba(239,68,68,0.15)'
+                        isRisk
+                          ? 'rgba(239,68,68,0.16)'
                           : isPositive
-                          ? 'rgba(34,197,94,0.15)'
-                          : c.border
+                          ? 'rgba(34,197,94,0.16)'
+                          : d.borderSubtle
                       }`,
-                      borderRadius: 6,
+                      borderRadius: 7,
                     }}
                   >
                     <span
                       style={{
-                        fontFamily: c.mono,
-                        fontSize: 11,
+                        fontFamily: d.mono,
+                        fontSize: 12,
                         fontWeight: 700,
-                        color: isWarning ? c.error : isPositive ? c.success : c.blue,
+                        color: isRisk ? d.error : isPositive ? d.success : d.blue,
                         flexShrink: 0,
+                        minWidth: 20,
                         marginTop: 1,
-                        minWidth: 18,
                       }}
                     >
                       {i + 1}.
@@ -769,24 +786,24 @@ export function Agent1Card({ output }: { output: Agent1Output }) {
                     <div>
                       <div
                         style={{
-                          fontSize: 13,
+                          fontSize: 14,
                           fontWeight: 600,
-                          color: c.white,
+                          color: d.white,
                           lineHeight: 1.4,
+                          marginBottom: note.body ? 5 : 0,
                         }}
                       >
-                        {head}
+                        {note.head}
                       </div>
-                      {body && (
+                      {note.body && (
                         <div
                           style={{
-                            fontSize: 12,
-                            color: c.secondary,
-                            lineHeight: 1.55,
-                            marginTop: 4,
+                            fontSize: 13,
+                            color: d.secondary,
+                            lineHeight: 1.6,
                           }}
                         >
-                          {body}
+                          {note.body}
                         </div>
                       )}
                     </div>
