@@ -21,6 +21,7 @@ import {
   BarChart2,
   BookOpen,
   Microscope,
+  Wrench,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { WeatherData } from '@/app/api/weather/route'
@@ -56,6 +57,7 @@ const SALES_STAGES = [
 
 const NAV_BOTTOM = [
   { href: '/workspace', label: 'Workspace', icon: FolderOpen },
+  { href: '/narzedzia', label: 'Narzędzia', icon: Wrench },
 ]
 
 // ── Hooks ──────────────────────────────────────────────────────────
