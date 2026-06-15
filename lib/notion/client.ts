@@ -284,6 +284,46 @@ export async function upsertClientInPipeline(
   return page.id
 }
 
+// --- Agent 0: Lead Intake ---
+
+export interface LeadIntakeData {
+  firma: string | null
+  kontakt: string | null
+  telefon: string | null
+  email: string | null
+  nip: string | null
+  jest_decydentem: boolean | null
+  notatka_krs: string
+}
+
+export async function upsertLeadIntake(data: LeadIntakeData): Promise<string> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const props: Record<string, any> = {}
+
+  const firma = data.firma || data.kontakt
+  if (firma) props['Firma'] = { title: richText(firma) }
+  if (data.kontakt) props['Kontakt'] = { rich_text: richText(data.kontakt) }
+  if (data.telefon) props['Telefon'] = { phone_number: data.telefon }
+
+  const notesLines: string[] = []
+  if (data.email) notesLines.push(`Email: ${data.email}`)
+  if (data.nip) notesLines.push(`NIP: ${data.nip}`)
+  if (notesLines.length > 0) notesLines.push('')
+  notesLines.push(data.notatka_krs)
+  props['Notatki'] = { rich_text: richText(notesLines.join('\n')) }
+
+  if (data.jest_decydentem === true) props['Decydent'] = { checkbox: true }
+
+  props['Status'] = { select: { name: 'Nowy lead' } }
+  props['Data pierwszego kontaktu'] = { date: { start: todayISO() } }
+
+  const page = await notion.pages.create({
+    parent: { database_id: PIPELINE_DB_ID },
+    properties: props,
+  })
+  return page.id
+}
+
 export async function createChildPage(
   parentId: string,
   title: string,

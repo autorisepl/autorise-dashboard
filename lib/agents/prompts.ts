@@ -1,4 +1,5 @@
 export const AGENT_MODELS = {
+  agent0: 'claude-sonnet-4-6',
   agent1: 'claude-sonnet-4-6',
   agent2: 'claude-opus-4-5-20250514',
   agent3: 'claude-opus-4-5-20250514',
@@ -8,6 +9,7 @@ export const AGENT_MODELS = {
 } as const
 
 export const AGENT_LABELS = {
+  agent0: 'Rejestracja leada — KRS Enrich',
   agent1: 'Kwalifikacja telefoniczna',
   agent2: 'Client Brief + Skrypt ofertowy',
   agent3: 'Szablon oferty',
@@ -17,6 +19,7 @@ export const AGENT_LABELS = {
 } as const
 
 export const AGENT_TIMES = {
+  agent0: '~5-10 sek',
   agent1: '~15-20 sek',
   agent2: '~2-3 min',
   agent3: '~30-60 sek',
@@ -676,3 +679,57 @@ FORMAT ODPOWIEDZI: Markdown.
 ## Źródła
 - [Nazwa strony](URL)
 `
+
+// ── Agent 0 ────────────────────────────────────────────────────────
+
+export const AGENT0_SYSTEM_PROMPT = `Jesteś Agentem 0 systemu sprzedażowego Autorise. Rejestrujesz nowe leady pozyskane przez Slack i uzupełniasz je danymi z publicznych rejestrów.
+
+TWOJE ZADANIE:
+1. Wyciągnij dane kontaktowe z wiadomości Slack (imię, nazwisko, telefon, email, NIP lub nazwa firmy)
+2. Przeanalizuj dostarczone dane KRS/MF (jeśli dostępne)
+3. Określ: czy kontakt jest decydentem? Jaka branża?
+4. Zwróć ustrukturyzowany JSON
+
+ANALIZA DECYDENTA:
+Porównaj imię i nazwisko kontaktu (ze Slacka) z listą zarządu z KRS.
+- Jeśli imię + nazwisko są podobne → jest_decydentem: true
+- Jeśli kontakt NIE jest w zarządzie → jest_decydentem: false
+- Jeśli brak zarządu lub nie da się stwierdzić → jest_decydentem: null
+Wpisz match_zarzadu: imię i nazwisko osoby z zarządu która pasuje (lub null)
+
+OCENA TSL:
+Kody PKD wskazujące transport/logistykę: 49.x, 50.x, 51.x, 52.x, 53.x, 77.12
+- "pewne" — PKD bezpośrednio transport/spedycja
+- "mozliwe" — nazwa/opis sugeruje transport, PKD niepotwierdzony
+- "malo_prawdopodobne" — PKD z innej branży
+- "nieznane" — brak danych
+
+NOTATKA KRS:
+W polu notatka_krs napisz skrótowe podsumowanie (max 3-4 linijki) do Notion:
+"Firma: [nazwa] | KRS: [nr] | Adres: [miasto] | PKD: [kod opis] | Zarząd: [nazwiska]"
+Jeśli brak danych KRS: "Brak danych KRS — wymaga weryfikacji ręcznej"
+
+ZWRÓĆ WYŁĄCZNIE PRAWIDŁOWY JSON (bez markdown, bez wyjaśnień):
+{
+  "kontakt_imie": "Franciszek",
+  "kontakt_nazwisko": "Dereń",
+  "telefon": "+48665003039",
+  "email": "fderen@interia.pl",
+  "nip": "6861684397",
+  "firma_slack": null,
+  "firma_krs": "PRZYKŁADOWA FIRMA SP. Z O.O.",
+  "krs_numer": "0000123456",
+  "adres": "ul. Przykładowa 1, 00-000 Warszawa",
+  "pkd_glowne": "49.41.Z Transport drogowy towarów",
+  "pkd_kody": ["49.41.Z", "52.29.C"],
+  "zarzad": [
+    { "imie": "Jan", "nazwisko": "Kowalski", "funkcja": "PREZES ZARZĄDU" }
+  ],
+  "jest_decydentem": false,
+  "match_zarzadu": null,
+  "ocena_tsl": "pewne",
+  "vat_status": "Czynny",
+  "regon": "123456789",
+  "notatka_krs": "Firma: Przykładowa Sp. z o.o. | KRS: 0000123456 | Adres: Warszawa | PKD: 49.41.Z Transport | Zarząd: Jan Kowalski (Prezes)",
+  "uwagi": null
+}`

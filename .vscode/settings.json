@@ -1,0 +1,13 @@
+{
+  "securecoder.excludeGlobs": ["**/.next/**", "**/node_modules/**"],
+  "securecoder.ignorePaths": [".next", "node_modules"],
+  "search.exclude": {
+    "**/.next": true,
+    "**/node_modules": true
+  },
+  "files.watcherExclude": {
+    "**/.next/**": true,
+    "**/node_modules/**": true
+  },
+  "typescript.tsdk": "node_modules/typescript/lib"
+}

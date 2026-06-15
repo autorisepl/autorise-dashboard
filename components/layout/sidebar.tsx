@@ -15,13 +15,14 @@ import {
   CloudLightning,
   Zap,
   Wind,
+  UserPlus,
   PhoneCall,
   FileText,
   Megaphone,
   BarChart2,
   BookOpen,
   Microscope,
-  Wrench,
+  Mic,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { WeatherData } from '@/app/api/weather/route'
@@ -45,6 +46,7 @@ const s = {
 // ── Sales pipeline stages ──────────────────────────────────────────
 
 const SALES_STAGES = [
+  { label: 'Lead Intake', icon: UserPlus, step: 0 },
   { label: 'Kwalifikacja', icon: PhoneCall, step: 1 },
   { label: 'Discovery', icon: FileText, step: 2 },
   { label: 'Oferta', icon: Megaphone, step: 3 },
@@ -55,9 +57,12 @@ const SALES_STAGES = [
 
 // ── Nav ────────────────────────────────────────────────────────────
 
-const NAV_BOTTOM = [
+const NAV_SYSTEM = [
   { href: '/workspace', label: 'Workspace', icon: FolderOpen },
-  { href: '/narzedzia', label: 'Narzędzia', icon: Wrench },
+]
+
+const NAV_TOOLS = [
+  { href: '/narzedzia', label: 'Audio → TXT', icon: Mic },
 ]
 
 // ── Hooks ──────────────────────────────────────────────────────────
@@ -283,13 +288,35 @@ function SidebarContent({ pathname }: { pathname: string }) {
           System
         </div>
 
-        {NAV_BOTTOM.map((item) => (
+        {NAV_SYSTEM.map((item) => (
           <NavItem
             key={item.href}
             href={item.href}
             label={item.label}
             icon={item.icon}
             isActive={pathname.startsWith(item.href)}
+          />
+        ))}
+
+        {/* Divider */}
+        <div style={{ height: 1, background: s.border, margin: '8px 0' }} />
+
+        {/* Narzędzia section */}
+        <div style={{
+          fontFamily: s.mono, fontSize: '9px', fontWeight: 700, color: s.muted,
+          letterSpacing: '0.12em', textTransform: 'uppercase',
+          padding: '0 10px', marginBottom: 6,
+        }}>
+          Narzędzia
+        </div>
+
+        {NAV_TOOLS.map((item) => (
+          <NavItem
+            key={item.href}
+            href={item.href}
+            label={item.label}
+            icon={item.icon}
+            isActive={pathname === item.href}
           />
         ))}
       </nav>

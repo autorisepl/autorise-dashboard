@@ -26,8 +26,10 @@ import type { PipelineClient } from '@/lib/notion/client'
 import type { HealthResponse } from '@/app/api/health/route'
 import { Agent1Card } from '@/components/agents/Agent1Card'
 import type { Agent1Output } from '@/components/agents/Agent1Card'
+import { Agent0Card } from '@/components/agents/Agent0Card'
+import type { Agent0Output } from '@/components/agents/Agent0Card'
 
-type AgentId = 'agent1' | 'agent2' | 'agent3' | 'agent4' | 'agent5' | 'agent6'
+type AgentId = 'agent0' | 'agent1' | 'agent2' | 'agent3' | 'agent4' | 'agent5' | 'agent6'
 type AgentStatus = 'idle' | 'running' | 'done' | 'error'
 
 interface AgentState {
@@ -50,9 +52,10 @@ const INITIAL_STATE: AgentState = {
   notionPushing: false,
 }
 
-const AGENT_IDS: AgentId[] = ['agent1', 'agent2', 'agent3', 'agent4', 'agent5', 'agent6']
+const AGENT_IDS: AgentId[] = ['agent0', 'agent1', 'agent2', 'agent3', 'agent4', 'agent5', 'agent6']
 
 const AGENT_DESCRIPTIONS: Record<AgentId, string> = {
+  agent0: 'Lead Intake — wklej wiadomość ze Slacka, agent parsuje dane, odpytuje KRS/MF i tworzy kartę w Notion Pipeline.',
   agent1: 'Kwalifikacja telefoniczna — ICP score, koszt problemu, dane do Notion Pipeline.',
   agent2: 'Discovery call z extended thinking — Client Brief + spersonalizowany skrypt ofertowy.',
   agent3: 'Szablon oferty tekstowej (max 400 słów) na podstawie Client Brief z Agenta 2.',
@@ -62,6 +65,7 @@ const AGENT_DESCRIPTIONS: Record<AgentId, string> = {
 }
 
 const AGENT_INPUT_LABELS: Record<AgentId, string> = {
+  agent0: 'Wiadomość ze Slacka (treść pozyskanego leada)',
   agent1: 'Transkrypt rozmowy kwalifikacyjnej',
   agent2: 'Transkrypt discovery call (45–60 min)',
   agent3: 'Client Brief z Agenta 2 (JSON)',
@@ -71,6 +75,7 @@ const AGENT_INPUT_LABELS: Record<AgentId, string> = {
 }
 
 const TAB_LABELS: Record<AgentId, string> = {
+  agent0: '0 · Lead Intake',
   agent1: '1 · Kwalifikacja',
   agent2: '2 · Discovery',
   agent3: '3 · Oferta',
@@ -81,6 +86,7 @@ const TAB_LABELS: Record<AgentId, string> = {
 
 // Which Pipeline statuses are relevant for each agent
 const AGENT_STATUSES_FILTER: Record<AgentId, string[]> = {
+  agent0: [],
   agent1: ['Nowy lead', 'Kwalifikacja', 'Nieaktywny (follow up)'],
   agent2: ['Kwalifikacja', 'Discovery umówione'],
   agent3: ['Discovery umówione', 'Discovery wykonane', 'Oferta przygotowana'],
@@ -90,6 +96,7 @@ const AGENT_STATUSES_FILTER: Record<AgentId, string[]> = {
 }
 
 const AGENT_STAGE_HINT: Record<AgentId, string> = {
+  agent0: 'slack → krs → notion',
   agent1: 'nowi i kwalifikowani',
   agent2: 'kwalifikacja → discovery',
   agent3: 'discovery → oferta',
@@ -237,11 +244,12 @@ function OutputPanel({
           style={{
             fontFamily: at.font.sans,
             fontSize: '12px',
+
             fontWeight: 600,
             color: at.text.secondary,
           }}
         >
-          {agentId === 'agent1' ? 'Karta klienta' : agentId === 'agent3' ? 'Treść oferty' : agentId === 'agent5' ? 'Knowledge Report' : agentId === 'agent6' ? 'Intelligence Report' : 'Output JSON'}
+          {agentId === 'agent0' ? 'Karta leada' : agentId === 'agent1' ? 'Karta klienta' : agentId === 'agent3' ? 'Treść oferty' : agentId === 'agent5' ? 'Knowledge Report' : agentId === 'agent6' ? 'Intelligence Report' : 'Output JSON'}
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {/* Notion status */}
@@ -372,7 +380,19 @@ function OutputPanel({
       </AnimatePresence>
 
       {/* Output content */}
-      {agentId === 'agent1' ? (
+      {agentId === 'agent0' ? (
+        <div
+          style={{
+            flex: 1,
+            border: `1px solid ${at.border.default}`,
+            borderRadius: at.radius.md,
+            overflow: 'hidden',
+            minHeight: 0,
+          }}
+        >
+          <Agent0Card output={output as Agent0Output} />
+        </div>
+      ) : agentId === 'agent1' ? (
         <div
           style={{
             flex: 1,
@@ -479,11 +499,11 @@ function AgentPanel({
           notionPageId: data.notion_page_id ?? null,
           notionError: data.notion_error ?? null,
         }))
-        if (agentId === 'agent1' && data.notion_page_id && !selectedClientId) {
+        if ((agentId === 'agent0' || agentId === 'agent1') && data.notion_page_id && !selectedClientId) {
           onNewClientCreated(
             data.notion_page_id,
             data.notion_client_name ?? 'Nowy klient',
-            data.notion_client_status ?? 'Kwalifikacja'
+            data.notion_client_status ?? 'Nowy lead'
           )
         }
       } else {
@@ -553,6 +573,7 @@ function AgentPanel({
   const model = AGENT_MODELS[agentId]
   const isOpus = model.includes('opus')
   const hasThinking = agentId === 'agent2' || agentId === 'agent5' || agentId === 'agent6'
+  const hasKRS = agentId === 'agent0'
 
   return (
     <div
@@ -645,6 +666,25 @@ function AgentPanel({
               extended thinking
             </span>
           )}
+          {hasKRS && (
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                padding: '3px 8px',
+                borderRadius: '999px',
+                background: 'rgba(22,163,74,0.1)',
+                border: '1px solid rgba(22,163,74,0.22)',
+                fontFamily: at.font.mono,
+                fontSize: '10px',
+                color: '#16a34a',
+              }}
+            >
+              <FileText size={9} />
+              KRS + MF API
+            </span>
+          )}
         </div>
 
         {/* Input label */}
@@ -665,7 +705,13 @@ function AgentPanel({
         <textarea
           value={state.transcript}
           onChange={(e) => setField('transcript', e.target.value)}
-          placeholder={agentId === 'agent6' ? 'Opisz temat badania, np. "Analiza konkurentów automatyzujących TMS w Polsce" lub "Firmy transportowe w Wielkopolsce 10-50 pojazdów"...' : 'Wklej tekst transkryptu tutaj...'}
+          placeholder={
+            agentId === 'agent0'
+              ? 'Wklej wiadomość ze Slacka, np.:\n\nPozyskaliśmy Nowy Kontakt!\nNazwa: Jan Kowalski\ntel: +48 600 000 000\nEmail: jan@firma.pl\nNIP: 1234567890'
+              : agentId === 'agent6'
+              ? 'Opisz temat badania, np. "Analiza konkurentów automatyzujących TMS w Polsce" lub "Firmy transportowe w Wielkopolsce 10-50 pojazdów"...'
+              : 'Wklej tekst transkryptu tutaj...'
+          }
           style={{
             flex: 1,
             minHeight: 140,
@@ -742,7 +788,10 @@ function AgentPanel({
             ) : (
               <Play size={14} />
             )}
-            {isRunning ? 'Analizuję...' : `Uruchom Agenta ${agentId.replace('agent', '')}`}
+            {isRunning
+              ? (agentId === 'agent0' ? 'Rejestruję lead...' : 'Analizuję...')
+              : (agentId === 'agent0' ? 'Zarejestruj Lead' : `Uruchom Agenta ${agentId.replace('agent', '')}`)
+            }
           </button>
 
           <AnimatePresence mode="wait">
@@ -1022,8 +1071,8 @@ export default function AgenciPage() {
             </div>
           </div>
 
-          {/* Right: client selector — hidden for agent5 and agent6 */}
-          <div style={{ display: (activeAgent === 'agent5' || activeAgent === 'agent6') ? 'none' : 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          {/* Right: client selector — hidden for agent0, agent5, agent6 */}
+          <div style={{ display: (activeAgent === 'agent0' || activeAgent === 'agent5' || activeAgent === 'agent6') ? 'none' : 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
             {/* Status badge for selected client */}
             <AnimatePresence>
               {selectedClient && (
