@@ -28,6 +28,12 @@ import { Agent1Card } from '@/components/agents/Agent1Card'
 import type { Agent1Output } from '@/components/agents/Agent1Card'
 import { Agent0Card } from '@/components/agents/Agent0Card'
 import type { Agent0Output } from '@/components/agents/Agent0Card'
+import { Agent2Card } from '@/components/agents/Agent2Card'
+import type { Agent2Output } from '@/components/agents/Agent2Card'
+import { Agent3Card } from '@/components/agents/Agent3Card'
+import type { Agent3Output } from '@/components/agents/Agent3Card'
+import { Agent4Card } from '@/components/agents/Agent4Card'
+import type { Agent4Output } from '@/components/agents/Agent4Card'
 import { AgentFieldsCard } from '@/components/agents/AgentFieldsCard'
 
 type AgentId = 'agent0' | 'agent1' | 'agent2' | 'agent3' | 'agent4' | 'agent5' | 'agent6'
@@ -215,7 +221,7 @@ function OutputPanel({
   onNotionPush: () => void
 }) {
   const [copied, setCopied] = useState(false)
-  const isText = agentId === 'agent3' || agentId === 'agent5' || agentId === 'agent6'
+  const isText = agentId === 'agent5' || agentId === 'agent6'
   const displayText = isText ? (output as string) : JSON.stringify(output, null, 2)
 
   const handleCopy = async () => {
@@ -245,7 +251,7 @@ function OutputPanel({
             color: at.text.secondary,
           }}
         >
-          {agentId === 'agent0' ? 'Karta leada' : agentId === 'agent1' ? 'Karta klienta' : agentId === 'agent3' ? 'Treść oferty' : agentId === 'agent5' ? 'Knowledge Report' : agentId === 'agent6' ? 'Intelligence Report' : 'Output JSON'}
+          {agentId === 'agent0' ? 'Karta leada' : agentId === 'agent1' ? 'Karta klienta' : agentId === 'agent2' ? 'Pre-Discovery Brief' : agentId === 'agent3' ? 'Dane do prezentacji' : agentId === 'agent4' ? 'Analiza spotkania' : agentId === 'agent5' ? 'Knowledge Report' : agentId === 'agent6' ? 'Intelligence Report' : 'Output'}
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {/* Notion status */}
@@ -399,6 +405,42 @@ function OutputPanel({
           }}
         >
           <Agent1Card output={output as Agent1Output} />
+        </div>
+      ) : agentId === 'agent2' ? (
+        <div
+          style={{
+            flex: 1,
+            border: `1px solid ${at.border.default}`,
+            borderRadius: at.radius.md,
+            overflow: 'hidden',
+            minHeight: 0,
+          }}
+        >
+          <Agent2Card output={output as Agent2Output} />
+        </div>
+      ) : agentId === 'agent3' ? (
+        <div
+          style={{
+            flex: 1,
+            border: `1px solid rgba(59,130,246,0.18)`,
+            borderRadius: at.radius.md,
+            overflow: 'hidden',
+            minHeight: 0,
+          }}
+        >
+          <Agent3Card output={output as Agent3Output} />
+        </div>
+      ) : agentId === 'agent4' ? (
+        <div
+          style={{
+            flex: 1,
+            border: `1px solid rgba(59,130,246,0.18)`,
+            borderRadius: at.radius.md,
+            overflow: 'hidden',
+            minHeight: 0,
+          }}
+        >
+          <Agent4Card output={output as Agent4Output} />
         </div>
       ) : (
         <div
@@ -1295,7 +1337,8 @@ export default function AgenciPage() {
               display: 'flex',
               borderBottom: `1px solid ${at.border.default}`,
               background: at.bg.surface,
-              padding: '0 4px',
+              padding: '6px 8px',
+              gap: 3,
               flexShrink: 0,
             }}
           >
@@ -1307,29 +1350,33 @@ export default function AgenciPage() {
                   onClick={() => setActiveAgent(id)}
                   style={{
                     flex: 1,
-                    padding: '12px 8px',
+                    padding: '7px 8px',
                     fontFamily: at.font.sans,
-                    fontSize: '13px',
-                    fontWeight: isActive ? 600 : 400,
-                    color: isActive ? at.accent.primary : at.text.muted,
-                    background: 'none',
-                    border: 'none',
-                    borderBottom: isActive
-                      ? `2px solid ${at.accent.primary}`
-                      : '2px solid transparent',
+                    fontSize: '12px',
+                    fontWeight: isActive ? 700 : 500,
+                    color: isActive ? '#ffffff' : at.text.muted,
+                    background: isActive ? at.accent.primary : 'transparent',
+                    border: `1px solid ${isActive ? at.accent.primary : 'transparent'}`,
+                    borderRadius: '7px',
                     cursor: 'pointer',
-                    transition: 'color 0.15s',
+                    transition: 'all 0.15s',
                     whiteSpace: 'nowrap',
-                    marginBottom: -1,
                     outline: 'none',
+                    letterSpacing: isActive ? '0.01em' : '0',
                   }}
                   onMouseEnter={(e) => {
-                    if (!isActive)
-                      (e.currentTarget as HTMLButtonElement).style.color = at.text.secondary
+                    if (!isActive) {
+                      const el = e.currentTarget as HTMLButtonElement
+                      el.style.color = at.text.secondary
+                      el.style.background = at.bg.elevated
+                    }
                   }}
                   onMouseLeave={(e) => {
-                    if (!isActive)
-                      (e.currentTarget as HTMLButtonElement).style.color = at.text.muted
+                    if (!isActive) {
+                      const el = e.currentTarget as HTMLButtonElement
+                      el.style.color = at.text.muted
+                      el.style.background = 'transparent'
+                    }
                   }}
                 >
                   {TAB_LABELS[id]}
