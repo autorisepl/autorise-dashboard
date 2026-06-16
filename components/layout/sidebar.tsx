@@ -23,6 +23,8 @@ import {
   BookOpen,
   Microscope,
   Mic,
+  Calculator,
+  Presentation,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { WeatherData } from '@/app/api/weather/route'
@@ -63,6 +65,8 @@ const NAV_SYSTEM = [
 
 const NAV_TOOLS = [
   { href: '/narzedzia', label: 'Audio → TXT', icon: Mic },
+  { href: '/narzedzia/kalkulator', label: 'Kalkulator ROI', icon: Calculator },
+  { href: '/prezentacja', label: 'Prezentacja', icon: Presentation, external: true },
 ]
 
 // ── Hooks ──────────────────────────────────────────────────────────
@@ -116,9 +120,29 @@ function WeatherIcon({ description, size = 13 }: { description?: string; size?: 
 
 // ── Nav item ───────────────────────────────────────────────────────
 
-function NavItem({ href, label, icon: Icon, isActive }: {
-  href: string; label: string; icon: React.ElementType; isActive: boolean
+function NavItem({ href, label, icon: Icon, isActive, external }: {
+  href: string; label: string; icon: React.ElementType; isActive: boolean; external?: boolean
 }) {
+  if (external) {
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', display: 'block' }}>
+        <div
+          style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            padding: '9px 12px', borderRadius: 8, cursor: 'pointer', transition: 'background 0.1s',
+          }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.background = s.bgHover }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.background = 'transparent' }}
+        >
+          <Icon size={15} color={s.secondary} style={{ flexShrink: 0 }} />
+          <span style={{ fontFamily: s.sans, fontSize: '14px', fontWeight: 400, color: s.secondary, flex: 1 }}>
+            {label}
+          </span>
+          <span style={{ fontSize: '10px', color: s.muted }}>↗</span>
+        </div>
+      </a>
+    )
+  }
   return (
     <Link href={href} style={{ textDecoration: 'none', display: 'block' }}>
       <div style={{ position: 'relative' }}>
@@ -316,7 +340,8 @@ function SidebarContent({ pathname }: { pathname: string }) {
             href={item.href}
             label={item.label}
             icon={item.icon}
-            isActive={pathname === item.href}
+            isActive={pathname === item.href || pathname.startsWith(item.href + '/')}
+            external={'external' in item ? item.external : false}
           />
         ))}
       </nav>
