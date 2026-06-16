@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import {
   upsertClientInPipeline,
-  createChildPage,
-  updateOfferAnalysis,
+  saveAgent2Output,
+  saveAgent3Output,
+  updateDiscoveryAnalysis,
 } from '@/lib/notion/client'
 
 const ReqSchema = z.object({
@@ -37,9 +38,8 @@ export async function POST(req: Request) {
           { success: false, error: 'Wybierz klienta z listy przed zapisem do Notion' },
           { status: 400 }
         )
-      const o = output as { client_brief: Record<string, unknown>; skrypt_ofertowy: string }
-      await createChildPage(notion_page_id, 'Client Brief', JSON.stringify(o.client_brief, null, 2), true)
-      await createChildPage(notion_page_id, 'Skrypt ofertowy', o.skrypt_ofertowy, false)
+      const o = output as { pre_discovery_brief: Record<string, unknown>; plan_discovery: string }
+      await saveAgent2Output(notion_page_id, o.pre_discovery_brief, o.plan_discovery)
       savedPageId = notion_page_id
     } else if (agent_id === 'agent3') {
       if (!notion_page_id)
@@ -47,7 +47,7 @@ export async function POST(req: Request) {
           { success: false, error: 'Wybierz klienta z listy przed zapisem do Notion' },
           { status: 400 }
         )
-      await createChildPage(notion_page_id, 'Oferta', output as string, false)
+      await saveAgent3Output(notion_page_id, JSON.stringify(output, null, 2))
       savedPageId = notion_page_id
     } else if (agent_id === 'agent4') {
       if (!notion_page_id)
@@ -56,7 +56,7 @@ export async function POST(req: Request) {
           { status: 400 }
         )
       const analysisJson = JSON.stringify(output, null, 2)
-      await updateOfferAnalysis(
+      await updateDiscoveryAnalysis(
         notion_page_id,
         output as Record<string, unknown>,
         analysisJson

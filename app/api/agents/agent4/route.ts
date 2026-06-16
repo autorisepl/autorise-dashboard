@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { z } from 'zod'
 import { AGENT_MODELS, AGENT4_SYSTEM_PROMPT } from '@/lib/agents/prompts'
-import { updateOfferAnalysis } from '@/lib/notion/client'
+import { updateDiscoveryAnalysis } from '@/lib/notion/client'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -58,7 +58,7 @@ export async function POST(req: Request) {
     if (notion_page_id) {
       try {
         const analysisJson = JSON.stringify(output, null, 2)
-        await updateOfferAnalysis(notion_page_id, output, analysisJson)
+        await updateDiscoveryAnalysis(notion_page_id, output, analysisJson)
       } catch (notionErr) {
         console.error('[agent4] Notion error:', notionErr)
         notionError = notionErr instanceof Error ? notionErr.message : 'Błąd Notion'

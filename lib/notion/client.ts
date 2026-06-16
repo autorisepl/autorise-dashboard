@@ -71,9 +71,9 @@ function kwalifikacjaToStatus(kwalifikacja: string | null, hasMeeting: boolean):
 function wynikToStatus(wynik: string): string {
   const upper = wynik.toUpperCase().trim()
   if (upper === 'TAK') return 'Finalizacja'
-  if (upper === 'W TRAKCIE') return 'Oferta przedstawiona'
+  if (upper === 'W TRAKCIE') return 'Discovery umówione'
   if (upper === 'NIE') return 'Niekwalifikowany'
-  return 'Oferta przedstawiona'
+  return 'Discovery umówione'
 }
 
 function ddMMYYYYtoISO(date: string): string | null {
@@ -195,6 +195,7 @@ export async function upsertClientInPipeline(
     firma?: string | null
     telefon?: string | null
     pojazdy?: string | number | null
+    spedytorzy_biuro?: string | number | null
     tms?: string | null
     podejscie_integracyjne?: string | null
     bol_glowny_cytat?: string | null
@@ -211,9 +212,14 @@ export async function upsertClientInPipeline(
     meet_data?: string | null
     uwagi_agenta?: string | null
     wlasciciel_czy_manager?: string | null
+    decydent?: string | null
+    dyskwalifikacja?: boolean
+    dyskwalifikacja_powod?: string | null
   }
 
   const hasMeeting = Boolean(a1.meet_data)
+  const isDiskwalifikowany = a1.dyskwalifikacja === true
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const props: Record<string, any> = {}
 
@@ -232,6 +238,10 @@ export async function upsertClientInPipeline(
     const num = parseInt(String(a1.pojazdy), 10)
     if (!isNaN(num)) props['Flota'] = { number: num }
   }
+  if (a1.spedytorzy_biuro != null) {
+    const num = parseInt(String(a1.spedytorzy_biuro), 10)
+    if (!isNaN(num)) props['Spedytorzy'] = { number: num }
+  }
   if (a1.tms) {
     props['TMS'] = { rich_text: richText(a1.tms) }
   }
@@ -241,28 +251,42 @@ export async function upsertClientInPipeline(
   if (a1.bol_glowny_cytat) {
     props['Ból główny'] = { rich_text: richText(a1.bol_glowny_cytat) }
   }
-  if (a1.nastepny_krok) {
-    props['Następny krok'] = { rich_text: richText(a1.nastepny_krok) }
+  if (a1.poprzednie_proby) {
+    props['Poprzednie próby'] = { rich_text: richText(a1.poprzednie_proby) }
   }
+
   const icpSelect = icpToSelect(a1.icp?.wynik ?? null)
   if (icpSelect) {
     props['Ocena ICP'] = { select: { name: icpSelect } }
   }
 
-  const pipelineStatus = kwalifikacjaToStatus(a1.icp?.kwalifikacja ?? null, hasMeeting)
-  props['Status'] = { select: { name: pipelineStatus } }
+  if (isDiskwalifikowany) {
+    props['Status'] = { select: { name: 'Niekwalifikowany' } }
+  } else {
+    const pipelineStatus = kwalifikacjaToStatus(a1.icp?.kwalifikacja ?? null, hasMeeting)
+    props['Status'] = { select: { name: pipelineStatus } }
 
-  if (a1.meet_data) {
-    const isoDate = anyDateToISO(a1.meet_data)
-    if (isoDate) props['Data discovery'] = { date: { start: isoDate } }
+    if (a1.meet_data) {
+      const isoDate = anyDateToISO(a1.meet_data)
+      if (isoDate) props['Data discovery'] = { date: { start: isoDate } }
+    }
+    if (a1.nastepny_krok) {
+      props['Następny krok'] = { rich_text: richText(a1.nastepny_krok) }
+    }
+  }
+
+  if (a1.koszt_problemu?.koszt_miesiecznie != null) {
+    props['Koszt problemu PLN/mc'] = { number: a1.koszt_problemu.koszt_miesiecznie }
+  }
+  if (a1.koszt_problemu?.koszt_roczny != null) {
+    props['Koszt roczny PLN/rok'] = { number: a1.koszt_problemu.koszt_roczny }
   }
   if (a1.uwagi_agenta) {
-    props['Notatki'] = { rich_text: richText(a1.uwagi_agenta) }
+    props['Uwagi Agenta 1'] = { rich_text: richText(a1.uwagi_agenta) }
   }
 
-  const isWlasciciel = a1.wlasciciel_czy_manager
-    ?.toLowerCase()
-    .includes('właściciel') ||
+  const isWlasciciel =
+    a1.wlasciciel_czy_manager?.toLowerCase().includes('właściciel') ||
     a1.wlasciciel_czy_manager?.toLowerCase().includes('wlasciciel')
   if (isWlasciciel) {
     props['Decydent'] = { checkbox: true }
@@ -346,7 +370,61 @@ export async function createChildPage(
   })
 }
 
-export async function updateOfferAnalysis(
+// --- Agent 2: Pre-Discovery Brief ---
+
+export async function saveAgent2Output(
+  pageId: string,
+  preDiscoveryBrief: Record<string, unknown>,
+  planDiscovery: string
+): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const props: Record<string, any> = {}
+
+  const brief = preDiscoveryBrief as {
+    hipoteza_bol_glowny?: string | null
+    przewidywane_obiekcje?: Array<{ objekcja?: string }> | null
+    ryzyka_rozmowy?: string | null
+    uwagi_agenta?: string | null
+  }
+
+  if (brief.hipoteza_bol_glowny) {
+    props['Hipoteza ból główny'] = { rich_text: richText(brief.hipoteza_bol_glowny) }
+  }
+  if (brief.przewidywane_obiekcje?.length) {
+    const text = brief.przewidywane_obiekcje
+      .map((o) => o.objekcja)
+      .filter(Boolean)
+      .join('\n')
+    if (text) props['Przewidywane obiekcje'] = { rich_text: richText(text) }
+  }
+  if (brief.ryzyka_rozmowy) {
+    props['Ryzyka rozmowy'] = { rich_text: richText(brief.ryzyka_rozmowy) }
+  }
+  if (brief.uwagi_agenta) {
+    props['Uwagi Agenta 2'] = { rich_text: richText(brief.uwagi_agenta) }
+  }
+
+  await notion.pages.update({ page_id: pageId, properties: props })
+  await createChildPage(pageId, 'Pre-Discovery Brief', planDiscovery, false)
+}
+
+// --- Agent 3: Personalizacja Prezentacji ---
+
+export async function saveAgent3Output(
+  pageId: string,
+  personalizacjaJson: string
+): Promise<void> {
+  await notion.pages.update({
+    page_id: pageId,
+    properties: {
+      'Personalizacja prezentacji': { rich_text: richText(personalizacjaJson) },
+    },
+  })
+}
+
+// --- Agent 4: Analiza Discovery Call ---
+
+export async function updateDiscoveryAnalysis(
   pageId: string,
   data: Record<string, unknown>,
   analysisJson: string
@@ -355,7 +433,6 @@ export async function updateOfferAnalysis(
     wynik?: string | null
     nastepny_kontakt_data?: string | null
     nastepne_kroki?: string | null
-    obiekcje?: Array<{ tresc_cytat?: string }> | null
     data_reengagement?: string | null
   }
 
@@ -364,26 +441,74 @@ export async function updateOfferAnalysis(
 
   if (a4.wynik) {
     props['Status'] = { select: { name: wynikToStatus(a4.wynik) } }
+    props['Wynik Discovery'] = { select: { name: a4.wynik.toUpperCase().trim() } }
   }
   if (a4.nastepny_kontakt_data) {
-    const iso = ddMMYYYYtoISO(a4.nastepny_kontakt_data)
+    const iso = anyDateToISO(a4.nastepny_kontakt_data) ?? ddMMYYYYtoISO(a4.nastepny_kontakt_data)
     if (iso) props['Data następnego kroku'] = { date: { start: iso } }
   }
   if (a4.nastepne_kroki) {
     props['Następny krok'] = { rich_text: richText(a4.nastepne_kroki) }
   }
-  if (a4.obiekcje?.length) {
-    const text = a4.obiekcje
-      .map((o) => o.tresc_cytat)
-      .filter(Boolean)
-      .join('\n')
-    if (text) props['Obiekcje'] = { rich_text: richText(text) }
-  }
   if (a4.data_reengagement) {
-    const iso = ddMMYYYYtoISO(a4.data_reengagement)
+    const iso = anyDateToISO(a4.data_reengagement) ?? ddMMYYYYtoISO(a4.data_reengagement)
     if (iso) props['Re-engagement'] = { date: { start: iso } }
   }
 
   await notion.pages.update({ page_id: pageId, properties: props })
-  await createChildPage(pageId, 'Analiza oferty', analysisJson, true)
+  await createChildPage(pageId, 'Analiza Discovery Call', analysisJson, true)
+}
+
+// --- Schema migration: add new Pipeline properties ---
+
+export async function migrateNotionSchema(): Promise<{ added: string[]; errors: string[] }> {
+  const added: string[] = []
+  const errors: string[] = []
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (notion.databases.update as any)({
+      database_id: PIPELINE_DB_ID,
+      properties: {
+        'Hipoteza ból główny': { rich_text: {} },
+        'Przewidywane obiekcje': { rich_text: {} },
+        'Ryzyka rozmowy': { rich_text: {} },
+        'Personalizacja prezentacji': { rich_text: {} },
+        'Wynik Discovery': {
+          select: {
+            options: [
+              { name: 'TAK', color: 'green' },
+              { name: 'NIE', color: 'red' },
+              { name: 'W TRAKCIE', color: 'yellow' },
+            ],
+          },
+        },
+        'Uwagi Agenta 2': { rich_text: {} },
+        'Spedytorzy': { number: {} },
+        'Poprzednie próby': { rich_text: {} },
+        'Koszt problemu PLN/mc': { number: {} },
+        'Koszt roczny PLN/rok': { number: {} },
+        'Uwagi Agenta 1': { rich_text: {} },
+        'Uwagi Agenta 4': { rich_text: {} },
+      },
+    })
+    added.push(
+      'Hipoteza ból główny',
+      'Przewidywane obiekcje',
+      'Ryzyka rozmowy',
+      'Personalizacja prezentacji',
+      'Wynik Discovery',
+      'Uwagi Agenta 2',
+      'Spedytorzy',
+      'Poprzednie próby',
+      'Koszt problemu PLN/mc',
+      'Koszt roczny PLN/rok',
+      'Uwagi Agenta 1',
+      'Uwagi Agenta 4'
+    )
+  } catch (err) {
+    errors.push(err instanceof Error ? err.message : 'Błąd migracji schematu')
+  }
+
+  return { added, errors }
 }

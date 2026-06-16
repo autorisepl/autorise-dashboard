@@ -3,7 +3,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import type { Message } from '@anthropic-ai/sdk/resources/messages'
 import { z } from 'zod'
 import { AGENT_MODELS, AGENT2_SYSTEM_PROMPT } from '@/lib/agents/prompts'
-import { createChildPage } from '@/lib/notion/client'
+import { saveAgent2Output } from '@/lib/notion/client'
 
 export const maxDuration = 300
 
@@ -27,10 +27,9 @@ export async function POST(req: Request) {
 
     const { transcript, notion_page_id } = parsed.data
 
-    // Extended thinking requires explicit cast — SDK types don't expose it yet
     const message = (await client.messages.create({
       model: AGENT_MODELS.agent2,
-      max_tokens: 16000,
+      max_tokens: 12000,
       thinking: { type: 'enabled', budget_tokens: 10000 },
       system: AGENT2_SYSTEM_PROMPT,
       messages: [{ role: 'user', content: transcript }],
@@ -49,7 +48,7 @@ export async function POST(req: Request) {
     const jsonMatch = rawText.match(/```(?:json)?\s*([\s\S]*?)```/)
     const jsonText = jsonMatch ? jsonMatch[1].trim() : rawText.trim()
 
-    let output: { client_brief: Record<string, unknown>; skrypt_ofertowy: string }
+    let output: { pre_discovery_brief: Record<string, unknown>; plan_discovery: string }
     try {
       output = JSON.parse(jsonText)
     } catch {
@@ -60,11 +59,9 @@ export async function POST(req: Request) {
     }
 
     let notionError: string | null = null
-    if (notion_page_id) {
+    if (notion_page_id && output.pre_discovery_brief && output.plan_discovery) {
       try {
-        const briefJson = JSON.stringify(output.client_brief, null, 2)
-        await createChildPage(notion_page_id, 'Client Brief', briefJson, true)
-        await createChildPage(notion_page_id, 'Skrypt ofertowy', output.skrypt_ofertowy, false)
+        await saveAgent2Output(notion_page_id, output.pre_discovery_brief, output.plan_discovery)
       } catch (notionErr) {
         console.error('[agent2] Notion error:', notionErr)
         notionError = notionErr instanceof Error ? notionErr.message : 'Błąd Notion'

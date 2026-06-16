@@ -2,12 +2,12 @@ import { NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { z } from 'zod'
 import { AGENT_MODELS, AGENT3_SYSTEM_PROMPT } from '@/lib/agents/prompts'
-import { createChildPage } from '@/lib/notion/client'
+import { saveAgent3Output } from '@/lib/notion/client'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 const ReqSchema = z.object({
-  transcript: z.string().min(10, 'Transkrypt / Client Brief jest za krótki'),
+  transcript: z.string().min(10, 'JSON z Agenta 1 + Agenta 2 jest za krótki'),
   notion_page_id: z.string().optional(),
 })
 
@@ -36,16 +36,29 @@ export async function POST(req: Request) {
       console.warn('[agent3] Response truncated — consider increasing max_tokens')
     }
 
-    const output = message.content
+    const rawText = message.content
       .filter((b) => b.type === 'text')
       .map((b) => (b as { type: 'text'; text: string }).text)
       .join('')
       .trim()
 
+    const jsonMatch = rawText.match(/```(?:json)?\s*([\s\S]*?)```/)
+    const jsonText = jsonMatch ? jsonMatch[1].trim() : rawText
+
+    let output: Record<string, unknown>
+    try {
+      output = JSON.parse(jsonText)
+    } catch {
+      return NextResponse.json(
+        { success: false, error: 'Agent zwrócił nieprawidłowy JSON', raw: rawText },
+        { status: 500 }
+      )
+    }
+
     let notionError: string | null = null
     if (notion_page_id) {
       try {
-        await createChildPage(notion_page_id, 'Oferta', output, false)
+        await saveAgent3Output(notion_page_id, JSON.stringify(output, null, 2))
       } catch (notionErr) {
         console.error('[agent3] Notion error:', notionErr)
         notionError = notionErr instanceof Error ? notionErr.message : 'Błąd Notion'

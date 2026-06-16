@@ -28,6 +28,7 @@ import { Agent1Card } from '@/components/agents/Agent1Card'
 import type { Agent1Output } from '@/components/agents/Agent1Card'
 import { Agent0Card } from '@/components/agents/Agent0Card'
 import type { Agent0Output } from '@/components/agents/Agent0Card'
+import { AgentFieldsCard } from '@/components/agents/AgentFieldsCard'
 
 type AgentId = 'agent0' | 'agent1' | 'agent2' | 'agent3' | 'agent4' | 'agent5' | 'agent6'
 type AgentStatus = 'idle' | 'running' | 'done' | 'error'
@@ -57,19 +58,19 @@ const AGENT_IDS: AgentId[] = ['agent0', 'agent1', 'agent2', 'agent3', 'agent4', 
 const AGENT_DESCRIPTIONS: Record<AgentId, string> = {
   agent0: 'Lead Intake — wklej wiadomość ze Slacka, agent parsuje dane, odpytuje KRS/MF i tworzy kartę w Notion Pipeline.',
   agent1: 'Kwalifikacja telefoniczna — ICP score, koszt problemu, dane do Notion Pipeline.',
-  agent2: 'Discovery call z extended thinking — Client Brief + spersonalizowany skrypt ofertowy.',
-  agent3: 'Szablon oferty tekstowej (max 400 słów) na podstawie Client Brief z Agenta 2.',
-  agent4: 'Analiza rozmowy ofertowej — wynik, obiekcje, następne kroki, re-engagement.',
+  agent2: 'Pre-Discovery Brief z extended thinking — analiza kwalifikacji i przygotowanie planu Discovery Call. Uruchom PO Agencie 1, PRZED Discovery Call.',
+  agent3: 'Personalizacja Prezentacji — przygotowuje dane do podstawienia w Autorise_Prezentacja.html przed Discovery Call.',
+  agent4: 'Analiza Discovery Call — wynik, jakość kroków 1-5, obiekcje, re-engagement. Transkrypt całego spotkania (45-60 min).',
   agent5: 'Agency Leaders Knowledge — przetwarza transkrypt sesji (Robert Kimura / Kacper Wierszewski) i wyodrębnia actionable learningi.',
   agent6: 'Wywiad rynkowy — przeszukuje sieć i analizuje konkurencję, potencjalnych klientów i trendy na rynku transportowym.',
 }
 
 const AGENT_INPUT_LABELS: Record<AgentId, string> = {
   agent0: 'Wiadomość ze Slacka (treść pozyskanego leada)',
-  agent1: 'Transkrypt rozmowy kwalifikacyjnej',
-  agent2: 'Transkrypt discovery call (45–60 min)',
-  agent3: 'Client Brief z Agenta 2 (JSON)',
-  agent4: 'Transkrypt rozmowy ofertowej',
+  agent1: 'Transkrypt rozmowy kwalifikacyjnej (5-8 min)',
+  agent2: 'Transkrypt rozmowy kwalifikacyjnej + JSON Agenta 1 (Agent 1 musi być uruchomiony wcześniej)',
+  agent3: 'JSON z Agenta 1 + JSON pre_discovery_brief z Agenta 2',
+  agent4: 'Transkrypt Discovery Call (45-60 min, całość — diagnoza + pitch + cena + closing)',
   agent5: 'Transkrypt sesji Agency Leaders (Fathom)',
   agent6: 'Zapytanie / temat badania rynkowego',
 }
@@ -77,20 +78,20 @@ const AGENT_INPUT_LABELS: Record<AgentId, string> = {
 const TAB_LABELS: Record<AgentId, string> = {
   agent0: '0 · Lead Intake',
   agent1: '1 · Kwalifikacja',
-  agent2: '2 · Discovery',
-  agent3: '3 · Oferta',
-  agent4: '4 · Analiza',
+  agent2: '2 · Pre-Discovery',
+  agent3: '3 · Personalizacja',
+  agent4: '4 · Discovery Call',
   agent5: '5 · Agency Leaders',
   agent6: '6 · Wywiad rynkowy',
 }
 
-// Which Pipeline statuses are relevant for each agent
+// Which Pipeline statuses are relevant for each agent (v5 status map)
 const AGENT_STATUSES_FILTER: Record<AgentId, string[]> = {
   agent0: [],
-  agent1: ['Nowy lead', 'Kwalifikacja', 'Nieaktywny (follow up)'],
+  agent1: ['Nowy lead', 'Kwalifikacja'],
   agent2: ['Kwalifikacja', 'Discovery umówione'],
-  agent3: ['Discovery umówione', 'Discovery wykonane', 'Oferta przygotowana'],
-  agent4: ['Oferta przygotowana', 'Oferta przedstawiona', 'Finalizacja'],
+  agent3: ['Discovery umówione'],
+  agent4: ['Discovery umówione'],
   agent5: [],
   agent6: [],
 }
@@ -98,9 +99,9 @@ const AGENT_STATUSES_FILTER: Record<AgentId, string[]> = {
 const AGENT_STAGE_HINT: Record<AgentId, string> = {
   agent0: 'slack → krs → notion',
   agent1: 'nowi i kwalifikowani',
-  agent2: 'kwalifikacja → discovery',
-  agent3: 'discovery → oferta',
-  agent4: 'oferta → finalizacja',
+  agent2: 'przed discovery call',
+  agent3: 'personalizacja prezentacji',
+  agent4: 'analiza discovery call',
   agent5: 'agency leaders · śr+pt 12:00',
   agent6: 'web search · na żądanie',
 }
@@ -109,17 +110,12 @@ const STATUS_COLORS = {
   'Nowy lead': '#2563eb',
   Kwalifikacja: '#7c3aed',
   'Discovery umówione': '#d97706',
-  'Discovery wykonane': '#ea580c',
-  'Oferta przygotowana': '#db2777',
-  'Oferta przedstawiona': '#dc2626',
   Finalizacja: '#16a34a',
   Kickoff: '#16a34a',
   Wdrożenie: '#16a34a',
   Retainer: '#16a34a',
   Upsell: '#2563eb',
   Niekwalifikowany: '#6b7280',
-  'Nieaktywny (follow up)': '#6b7280',
-  'Zakończona współpraca': '#6b7280',
 } as Record<string, string>
 
 function statusColor(s: string): string {
@@ -455,10 +451,14 @@ function AgentPanel({
   agentId,
   selectedClientId,
   onNewClientCreated,
+  health,
+  healthLoading,
 }: {
   agentId: AgentId
   selectedClientId: string
   onNewClientCreated: (id: string, name: string, status: string) => void
+  health: HealthResponse | null
+  healthLoading: boolean
 }) {
   const [state, setState] = useState<AgentState>(INITIAL_STATE)
 
@@ -609,6 +609,13 @@ function AgentPanel({
         >
           {AGENT_DESCRIPTIONS[agentId]}
         </p>
+
+        {/* Agent fields card */}
+        <AgentFieldsCard
+          agentNumber={parseInt(agentId.replace('agent', ''), 10)}
+          health={health}
+          healthLoading={healthLoading}
+        />
 
         {/* Model badges */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, flexShrink: 0 }}>
@@ -1387,6 +1394,8 @@ export default function AgenciPage() {
                 agentId={activeAgent}
                 selectedClientId={selectedClientId}
                 onNewClientCreated={handleNewClientCreated}
+                health={health}
+                healthLoading={healthLoading}
               />
             </motion.div>
           </AnimatePresence>
