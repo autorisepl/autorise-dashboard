@@ -1,4 +1,4 @@
-export const maxDuration = 600
+export const maxDuration = 300
 export const dynamic = 'force-dynamic'
 
 const GROQ_URL = 'https://api.groq.com/openai/v1/audio/transcriptions'
