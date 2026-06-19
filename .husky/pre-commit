@@ -1,0 +1,4 @@
+#!/bin/sh
+npx knip --no-exit-code
+npx biome check --write .
+echo "✅ knip + Biome — OK"

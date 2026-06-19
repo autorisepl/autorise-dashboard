@@ -1,0 +1,10 @@
+name = "autorise-dashboard"
+compatibility_date = "2026-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# UWAGA: Cloudflare Pages free plan ma 30s wall-clock timeout per request.
+# Agent2 (claude-opus-4-8 z extended thinking) moze trwac 60-180s.
+# Przy przekroczeniu limitu wymagany upgrade do Cloudflare Pages paid (900s).
+#
+# Ustawienie nodejs_compat wymagane rowniez w Cloudflare Pages Dashboard:
+# Settings -> Functions -> Compatibility flags -> nodejs_compat

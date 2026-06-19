@@ -1,41 +1,65 @@
-import { NextResponse } from 'next/server'
-import { Client } from '@notionhq/client'
+import { Client } from "@notionhq/client";
+import { NextResponse } from "next/server";
+import { z } from "zod";
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic";
 
-const notion = new Client({ auth: process.env.NOTION_TOKEN })
+const notion = new Client({ auth: process.env.NOTION_TOKEN });
+
+const FIELD_MAP: Record<string, string> = {
+  koszt_problemu: "Koszt problemu PLN/mc",
+  koszt_roczny: "Koszt roczny PLN/rok",
+  maile_dziennie: "Maile ze zleceniami / dzień",
+  godziny_wpisywania: "Godziny wpisywania / spedytor",
+  faktury_po_terminie: "Faktury po terminie / mc",
+  srednia_wartosc_faktury: "Średnia wartość faktury PLN",
+};
+
+const bodySchema = z.object({
+  pageId: z.string().min(1),
+  fields: z.record(z.string(), z.union([z.number(), z.string(), z.null()])),
+});
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json()
-    const { pageId, fields } = body as {
-      pageId: string
-      fields: { koszt_problemu?: number; koszt_roczny?: number }
+    const raw = await req.json();
+    const parsed = bodySchema.safeParse(raw);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { success: false, error: parsed.error.issues[0]?.message ?? "Nieprawidłowe dane" },
+        { status: 400 },
+      );
     }
 
-    if (!pageId) {
-      return NextResponse.json({ success: false, error: 'Brak pageId' }, { status: 400 })
+    const { pageId, fields } = parsed.data;
+    const properties: Record<string, { number: number }> = {};
+
+    for (const [key, notionProp] of Object.entries(FIELD_MAP)) {
+      const val = fields[key];
+      if (val != null && typeof val === "number") {
+        properties[notionProp] = { number: val };
+      }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const properties: any = {}
-    if (fields?.koszt_problemu != null) {
-      properties['Koszt problemu PLN/mc'] = { number: fields.koszt_problemu }
-    }
-    if (fields?.koszt_roczny != null) {
-      properties['Koszt roczny PLN/rok'] = { number: fields.koszt_roczny }
+    if (Object.keys(properties).length === 0) {
+      return NextResponse.json(
+        { success: false, error: "Brak pól do aktualizacji" },
+        { status: 400 },
+      );
     }
 
-    await notion.pages.update({ page_id: pageId, properties })
+    await notion.pages.update({ page_id: pageId, properties });
 
-    const page = await notion.pages.retrieve({ page_id: pageId }) as Record<string, unknown>
-    const props = (page.properties ?? {}) as Record<string, unknown>
-    const nameField = props['Firma / Nazwa'] as { title?: Array<{ plain_text: string }> } | undefined
-    const firmaNazwa = nameField?.title?.[0]?.plain_text ?? ''
+    const page = (await notion.pages.retrieve({ page_id: pageId })) as Record<string, unknown>;
+    const props = (page.properties ?? {}) as Record<string, unknown>;
+    const nameField = props["Firma / Nazwa"] as
+      | { title?: Array<{ plain_text: string }> }
+      | undefined;
+    const firmaNazwa = nameField?.title?.[0]?.plain_text ?? "";
 
-    return NextResponse.json({ success: true, firmaNazwa })
+    return NextResponse.json({ success: true, firmaNazwa });
   } catch (error) {
-    const msg = error instanceof Error ? error.message : 'Nieznany błąd'
-    return NextResponse.json({ success: false, error: msg }, { status: 500 })
+    const msg = error instanceof Error ? error.message : "Nieznany błąd";
+    return NextResponse.json({ success: false, error: msg }, { status: 500 });
   }
 }

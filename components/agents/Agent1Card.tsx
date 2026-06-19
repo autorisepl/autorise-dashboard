@@ -1,228 +1,215 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
 import {
-  Phone,
-  Truck,
-  Users,
-  Database,
   AlertTriangle,
-  TrendingUp,
-  Clock,
-  Target,
-  Calendar,
   ArrowRight,
+  Calendar,
   CheckCircle2,
-  XCircle,
   ChevronDown,
   ChevronUp,
+  Clock,
+  Database,
+  Phone,
+  Target,
+  TrendingUp,
+  Truck,
+  Users,
+  XCircle,
   Zap,
-} from 'lucide-react'
+} from "lucide-react";
+import { useState } from "react";
 
 export interface Agent1Output {
-  imie_nazwisko?: string | null
-  firma?: string | null
-  telefon?: string | null
-  pojazdy?: string | number | null
-  spedytorzy_biuro?: string | null
-  wlasciciel_czy_manager?: string | null
-  decydent?: string | null
-  bol_glowny_cytat?: string | null
-  motywacja_cytat?: string | null
-  poprzednie_proby?: string | null
-  poprzednie_proby_powod_niepowodzenia?: string | null
+  imie_nazwisko?: string | null;
+  firma?: string | null;
+  telefon?: string | null;
+  pojazdy?: string | number | null;
+  spedytorzy_biuro?: string | null;
+  wlasciciel_czy_manager?: string | null;
+  decydent?: string | null;
+  bol_glowny_cytat?: string | null;
+  motywacja_cytat?: string | null;
+  poprzednie_proby?: string | null;
+  poprzednie_proby_powod_niepowodzenia?: string | null;
   koszt_problemu?: {
-    spedytorzy_liczba?: number | null
-    procent_czasu?: number | null
-    stawka_miesiecznie?: number | null
-    koszt_miesiecznie?: number | null
-    koszt_roczny?: number | null
-    czy_szacunek?: boolean
-  } | null
-  tms?: string | null
-  inne_systemy?: string | null
-  podejscie_integracyjne?: string | null
-  czas_setup_dni?: number | null
-  pre_commit_cytat?: string | null
-  urgency?: string | null
+    spedytorzy_liczba?: number | null;
+    procent_czasu?: number | null;
+    stawka_miesiecznie?: number | null;
+    koszt_miesiecznie?: number | null;
+    koszt_roczny?: number | null;
+    czy_szacunek?: boolean;
+  } | null;
+  tms?: string | null;
+  inne_systemy?: string | null;
+  podejscie_integracyjne?: string | null;
+  czas_setup_dni?: number | null;
+  pre_commit_cytat?: string | null;
+  urgency?: string | null;
   icp?: {
-    wynik?: number | null
-    flota_ok?: boolean | string | null
-    biuro_ok?: boolean | string | null
-    decyzyjnosc_ok?: boolean | string | null
-    bol_ok?: boolean | string | null
-    aktywne_szukanie_ok?: boolean | string | null
-    kwalifikacja?: string | null
-  } | null
-  status?: string | null
-  meet_data?: string | null
-  meet_godzina?: string | null
-  nastepny_krok?: string | null
-  uwagi_agenta?: string | null
+    wynik?: number | null;
+    flota_ok?: boolean | string | null;
+    biuro_ok?: boolean | string | null;
+    decyzyjnosc_ok?: boolean | string | null;
+    bol_ok?: boolean | string | null;
+    aktywne_szukanie_ok?: boolean | string | null;
+    kwalifikacja?: string | null;
+  } | null;
+  status?: string | null;
+  meet_data?: string | null;
+  meet_godzina?: string | null;
+  nastepny_krok?: string | null;
+  uwagi_agenta?: string | null;
 }
 
-const d = {
-  bg: '#080e1c',
-  surface: 'rgba(255,255,255,0.04)',
-  surfaceHover: 'rgba(255,255,255,0.06)',
-  border: 'rgba(59,130,246,0.14)',
-  borderSubtle: 'rgba(255,255,255,0.07)',
-  blue: '#3b82f6',
-  blueDeep: '#2563eb',
-  blueFaint: 'rgba(59,130,246,0.10)',
-  blueFaintBorder: 'rgba(59,130,246,0.22)',
-  white: '#f0f4ff',
-  whiteDim: '#c8d8f0',
-  secondary: '#7a96b8',
-  muted: '#475569',
-  success: '#22c55e',
-  successFaint: 'rgba(34,197,94,0.10)',
-  successBorder: 'rgba(34,197,94,0.22)',
-  error: '#ef4444',
-  errorFaint: 'rgba(239,68,68,0.10)',
-  errorBorder: 'rgba(239,68,68,0.22)',
-  warning: '#f59e0b',
-  warningFaint: 'rgba(245,158,11,0.10)',
-  warningBorder: 'rgba(245,158,11,0.22)',
-  font: '"Geist", -apple-system, BlinkMacSystemFont, sans-serif',
-  mono: '"Geist Mono", "Fira Code", monospace',
-}
+// ─── Apple system palette (hardcoded per spec) ───────────────────────────────
+const ACCENT = "#1a56ff";
+const SUCCESS = "#34c759";
+const ERROR = "#ff3b30";
+const WARNING = "#ff9500";
 
 function icpOk(val?: boolean | string | null): boolean {
-  if (val == null) return false
-  if (typeof val === 'boolean') return val
-  return val.toUpperCase() === 'TAK'
+  if (val == null) return false;
+  if (typeof val === "boolean") return val;
+  return val.toUpperCase() === "TAK";
 }
 
 function stripQuotes(text: string): string {
-  return text.replace(/^["«„]/, '').replace(/["»"]$/, '').trim()
+  return text
+    .replace(/^["«„]/, "")
+    .replace(/["»"]$/, "")
+    .trim();
 }
 
 function parseQuotes(text: string | null | undefined): string[] {
-  if (!text) return []
-  const cleaned = stripQuotes(text)
+  if (!text) return [];
+  const cleaned = stripQuotes(text);
   const parts = cleaned
     .split(/[/]\s*/)
     .map((s) => stripQuotes(s).trim())
-    .filter((s) => s.length > 6)
-  return parts.length > 1 ? parts : [cleaned]
+    .filter((s) => s.length > 6);
+  return parts.length > 1 ? parts : [cleaned];
 }
 
 function parseNotes(text: string | null | undefined): Array<{ head: string; body: string }> {
-  if (!text) return []
+  if (!text) return [];
   return text
     .split(/\n(?=\d+\.)/)
     .map((s) => s.trim())
     .filter(Boolean)
     .map((s) => {
-      const lines = s.split('\n')
+      const lines = s.split("\n");
       return {
-        head: lines[0].replace(/^\d+\.\s*/, '').trim(),
-        body: lines.slice(1).join('\n').trim(),
-      }
-    })
+        head: lines[0].replace(/^\d+\.\s*/, "").trim(),
+        body: lines.slice(1).join("\n").trim(),
+      };
+    });
 }
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
 
 function Label({ children, color }: { children: React.ReactNode; color?: string }) {
   return (
     <span
       style={{
-        fontFamily: d.font,
+        fontFamily: "var(--font-system)",
         fontSize: 10,
         fontWeight: 700,
-        letterSpacing: '0.12em',
-        textTransform: 'uppercase',
-        color: color ?? d.muted,
+        letterSpacing: "0.12em",
+        textTransform: "uppercase",
+        color: color ?? "var(--text-tertiary)",
       }}
     >
       {children}
     </span>
-  )
+  );
 }
 
 function SectionHeader({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
     <div
       style={{
-        display: 'flex',
-        alignItems: 'center',
+        display: "flex",
+        alignItems: "center",
         gap: 7,
         paddingBottom: 12,
-        borderBottom: `1px solid ${d.borderSubtle}`,
+        borderBottom: "1px solid var(--separator)",
         marginBottom: 14,
       }}
     >
-      <span style={{ color: d.blue, display: 'flex', alignItems: 'center' }}>{icon}</span>
+      <span style={{ color: ACCENT, display: "flex", alignItems: "center" }}>{icon}</span>
       <Label>{label}</Label>
     </div>
-  )
+  );
 }
 
 function IcpRow({ label, ok }: { label: string; ok?: boolean | string | null }) {
-  const pass = icpOk(ok)
+  const pass = icpOk(ok);
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '4px 0' }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 9, padding: "4px 0" }}>
       <div
         style={{
           width: 20,
           height: 20,
           borderRadius: 5,
-          background: pass ? d.successFaint : d.errorFaint,
-          border: `1px solid ${pass ? d.successBorder : d.errorBorder}`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          background: pass ? `${SUCCESS}1a` : `${ERROR}1a`,
+          border: `1px solid ${pass ? `${SUCCESS}38` : `${ERROR}38`}`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
           flexShrink: 0,
         }}
       >
-        {pass ? (
-          <CheckCircle2 size={11} color={d.success} />
-        ) : (
-          <XCircle size={11} color={d.error} />
-        )}
+        {pass ? <CheckCircle2 size={11} color={SUCCESS} /> : <XCircle size={11} color={ERROR} />}
       </div>
-      <span style={{ fontFamily: d.font, fontSize: 13, color: pass ? d.whiteDim : d.secondary }}>
+      <span
+        style={{
+          fontFamily: "var(--font-system)",
+          fontSize: 13,
+          color: pass ? "var(--text-primary)" : "var(--text-secondary)",
+        }}
+      >
         {label}
       </span>
     </div>
-  )
+  );
 }
 
 function ScoreDots({ score }: { score: number | null | undefined }) {
+  const filled = score ?? 0;
   return (
-    <div style={{ display: 'flex', gap: 5 }}>
+    <div style={{ display: "flex", gap: 5 }}>
       {[1, 2, 3, 4, 5].map((i) => (
         <div
           key={i}
           style={{
             width: 9,
             height: 9,
-            borderRadius: '50%',
-            background: i <= (score ?? 0) ? d.blue : 'rgba(59,130,246,0.15)',
-            border: `1px solid ${i <= (score ?? 0) ? d.blue : 'rgba(59,130,246,0.25)'}`,
-            boxShadow: i <= (score ?? 0) ? `0 0 8px ${d.blue}60` : 'none',
+            borderRadius: "50%",
+            background: i <= filled ? ACCENT : `${ACCENT}26`,
+            border: `1px solid ${i <= filled ? ACCENT : `${ACCENT}40`}`,
+            boxShadow: i <= filled ? `0 0 8px ${ACCENT}60` : "none",
           }}
         />
       ))}
     </div>
-  )
+  );
 }
 
 function QuoteBlock({ text }: { text: string | null | undefined }) {
-  const parts = parseQuotes(text)
-  if (!parts.length) return null
+  const parts = parseQuotes(text);
+  if (!parts.length) return null;
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       {parts.slice(0, 3).map((q, i) => (
         <div
           key={i}
           style={{
             paddingLeft: 14,
-            borderLeft: `2px solid ${d.blue}50`,
-            fontFamily: d.font,
+            borderLeft: `2px solid ${ACCENT}50`,
+            fontFamily: "var(--font-system)",
             fontSize: 14,
-            color: d.whiteDim,
-            fontStyle: 'italic',
+            color: "var(--text-secondary)",
+            fontStyle: "italic",
             lineHeight: 1.6,
           }}
         >
@@ -230,7 +217,7 @@ function QuoteBlock({ text }: { text: string | null | undefined }) {
         </div>
       ))}
     </div>
-  )
+  );
 }
 
 function BigNum({
@@ -239,192 +226,200 @@ function BigNum({
   accent,
   size = 44,
 }: {
-  value: string | number
-  unit: string
-  accent?: boolean
-  size?: number
+  value: string | number;
+  unit: string;
+  accent?: boolean;
+  size?: number;
 }) {
   return (
     <div>
       <div
         style={{
-          fontFamily: d.mono,
+          fontFamily: "var(--font-mono)",
           fontSize: size,
           fontWeight: 800,
-          color: accent ? d.blue : d.white,
+          color: accent ? ACCENT : "var(--text-primary)",
           lineHeight: 1,
-          letterSpacing: '-0.04em',
+          letterSpacing: "-0.04em",
         }}
       >
-        {typeof value === 'number' ? value.toLocaleString('pl') : value}
+        {typeof value === "number" ? value.toLocaleString("pl") : value}
       </div>
       <div
         style={{
-          fontFamily: d.font,
+          fontFamily: "var(--font-system)",
           fontSize: 12,
-          color: d.secondary,
+          color: "var(--text-secondary)",
           marginTop: 4,
-          letterSpacing: '0.04em',
+          letterSpacing: "0.04em",
         }}
       >
         {unit}
       </div>
     </div>
-  )
+  );
 }
 
+// ─── Main card ────────────────────────────────────────────────────────────────
+
 export function Agent1Card({ output }: { output: Agent1Output }) {
-  const [notesOpen, setNotesOpen] = useState(false)
+  const [notesOpen, setNotesOpen] = useState(false);
 
-  const icp = output.icp
-  const score = icp?.wynik ?? null
-  const kwal = (icp?.kwalifikacja ?? '').toUpperCase()
-  const isDisq = kwal.includes('NIE KWALIFIKUJE')
-  const isOk = kwal.includes('KWALIFIKUJE') && !kwal.includes('NIE') && !kwal.includes('WYMAGA')
+  const icp = output.icp;
+  const score = icp?.wynik ?? null;
+  const kwal = (icp?.kwalifikacja ?? "").toUpperCase();
+  const isDisq = kwal.includes("NIE KWALIFIKUJE");
+  const isOk = kwal.includes("KWALIFIKUJE") && !kwal.includes("NIE") && !kwal.includes("WYMAGA");
 
-  const verdictColor = isDisq ? d.error : isOk ? d.success : d.warning
-  const verdictBg = isDisq ? d.errorFaint : isOk ? d.successFaint : d.warningFaint
-  const verdictBorder = isDisq ? d.errorBorder : isOk ? d.successBorder : d.warningBorder
-  const verdictLabel = isDisq ? 'NIE KWALIFIKUJE' : isOk ? 'KWALIFIKUJE' : 'WYMAGA ANALIZY'
+  const verdictColor = isDisq ? ERROR : isOk ? SUCCESS : WARNING;
+  const verdictBg = isDisq ? `${ERROR}1a` : isOk ? `${SUCCESS}1a` : `${WARNING}1a`;
+  const verdictBorder = isDisq ? `${ERROR}38` : isOk ? `${SUCCESS}38` : `${WARNING}38`;
+  const verdictLabel = isDisq ? "NIE KWALIFIKUJE" : isOk ? "KWALIFIKUJE" : "WYMAGA ANALIZY";
 
-  const displayName = output.firma || output.imie_nazwisko || 'Nowy klient'
-  const displaySub =
-    output.firma && output.imie_nazwisko ? output.imie_nazwisko : null
+  const displayName = output.firma || output.imie_nazwisko || "Nowy klient";
+  const displaySub = output.firma && output.imie_nazwisko ? output.imie_nazwisko : null;
 
   const hasCost =
-    output.koszt_problemu?.koszt_miesiecznie != null ||
-    output.koszt_problemu?.koszt_roczny != null
+    output.koszt_problemu?.koszt_miesiecznie != null || output.koszt_problemu?.koszt_roczny != null;
 
-  const notes = parseNotes(output.uwagi_agenta)
+  const notes = parseNotes(output.uwagi_agenta);
 
   const fleet =
     output.pojazdy != null
-      ? typeof output.pojazdy === 'number'
+      ? typeof output.pojazdy === "number"
         ? output.pojazdy
         : parseInt(String(output.pojazdy), 10) || String(output.pojazdy)
-      : null
+      : null;
 
-  const spedNum =
-    output.spedytorzy_biuro
-      ? (() => {
-          const m = String(output.spedytorzy_biuro).match(/\d+/)
-          return m ? parseInt(m[0], 10) : null
-        })()
-      : null
+  const spedNum = output.spedytorzy_biuro
+    ? (() => {
+        const m = String(output.spedytorzy_biuro).match(/\d+/);
+        return m ? parseInt(m[0], 10) : null;
+      })()
+    : null;
 
   return (
     <div
       style={{
-        background: d.bg,
-        fontFamily: d.font,
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100%',
-        overflow: 'auto',
-        color: d.white,
+        background: "var(--bg-elevated)",
+        fontFamily: "var(--font-system)",
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        overflow: "auto",
+        color: "var(--text-primary)",
       }}
     >
       {/* ─── HEADER ─── */}
       <div
         style={{
-          padding: '24px 28px 20px',
-          background: 'linear-gradient(160deg, rgba(37,99,235,0.12) 0%, rgba(8,14,28,0) 60%)',
-          borderBottom: `1px solid ${d.border}`,
+          padding: "24px 28px 20px",
+          background: `linear-gradient(160deg, ${ACCENT}1e 0%, transparent 60%)`,
+          borderBottom: "1px solid var(--border)",
           flexShrink: 0,
         }}
       >
-        {/* Row 1: verdict + score */}
+        {/* Row 1: verdict badge + score */}
         <div
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
             marginBottom: 14,
           }}
         >
+          {/* Verdict — large, colored background */}
           <div
             style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 7,
-              padding: '5px 14px',
-              borderRadius: 6,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "8px 18px",
+              borderRadius: 8,
               background: verdictBg,
-              border: `1px solid ${verdictBorder}`,
+              border: `1.5px solid ${verdictBorder}`,
             }}
           >
-            <Zap size={11} color={verdictColor} />
+            <Zap size={13} color={verdictColor} />
             <span
               style={{
-                fontFamily: d.font,
-                fontSize: 11,
+                fontFamily: "var(--font-system)",
+                fontSize: 12,
                 fontWeight: 800,
                 color: verdictColor,
-                letterSpacing: '0.12em',
-                textTransform: 'uppercase',
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
               }}
             >
               {verdictLabel}
             </span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {/* Score dots + numeric */}
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <ScoreDots score={score} />
             <span
               style={{
-                fontFamily: d.mono,
+                fontFamily: "var(--font-mono)",
                 fontSize: 18,
                 fontWeight: 700,
-                color: d.white,
-                letterSpacing: '-0.02em',
+                color: "var(--text-primary)",
+                letterSpacing: "-0.02em",
               }}
             >
-              {score ?? '?'}
-              <span style={{ color: d.muted }}>/5</span>
+              {score ?? "?"}
+              <span style={{ color: "var(--text-tertiary)" }}>/5</span>
             </span>
           </div>
         </div>
 
-        {/* Row 2: name */}
+        {/* Row 2: company / contact name */}
         <div
           style={{
             fontSize: 34,
             fontWeight: 800,
-            color: d.white,
-            letterSpacing: '-0.04em',
+            color: "var(--text-primary)",
+            letterSpacing: "-0.04em",
             lineHeight: 1.05,
           }}
         >
           {displayName}
         </div>
 
-        {/* Row 3: sub + phone */}
+        {/* Row 3: contact name (if company shown above) + phone chip */}
         <div
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            flexWrap: 'wrap',
+            display: "flex",
+            alignItems: "center",
+            flexWrap: "wrap",
             gap: 10,
             marginTop: 8,
           }}
         >
           {displaySub && (
-            <span style={{ fontSize: 15, color: d.secondary }}>{displaySub}</span>
+            <span style={{ fontSize: 15, color: "var(--text-secondary)" }}>{displaySub}</span>
           )}
           {output.telefon && (
             <div
               style={{
-                display: 'inline-flex',
-                alignItems: 'center',
+                display: "inline-flex",
+                alignItems: "center",
                 gap: 6,
-                padding: '4px 10px',
-                background: d.blueFaint,
-                border: `1px solid ${d.blueFaintBorder}`,
+                padding: "4px 10px",
+                background: `${ACCENT}1a`,
+                border: `1px solid ${ACCENT}38`,
                 borderRadius: 6,
               }}
             >
-              <Phone size={11} color={d.blue} />
-              <span style={{ fontFamily: d.mono, fontSize: 13, color: d.blue, letterSpacing: '0.04em' }}>
+              <Phone size={11} color={ACCENT} />
+              <span
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 13,
+                  color: ACCENT,
+                  letterSpacing: "0.04em",
+                }}
+              >
                 {output.telefon}
               </span>
             </div>
@@ -432,44 +427,41 @@ export function Agent1Card({ output }: { output: Agent1Output }) {
         </div>
       </div>
 
-      {/* ─── MAIN GRID 2×2 ─── */}
+      {/* ─── MAIN 2×2 GRID ─── */}
       <div
         style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
           gap: 1,
-          background: d.border,
+          background: "var(--separator)",
           flexShrink: 0,
         }}
       >
-        {/* TL — Dane firmy + ICP */}
-        <div style={{ background: d.bg, padding: '20px 22px' }}>
+        {/* TL — Company data + ICP checklist */}
+        <div style={{ background: "var(--bg-elevated)", padding: "20px 22px" }}>
           <SectionHeader icon={<Truck size={13} />} label="Dane firmy" />
 
-          <div style={{ display: 'flex', gap: 28, marginBottom: 16 }}>
-            {fleet != null && (
-              <BigNum value={fleet} unit="pojazdów" accent size={40} />
-            )}
-            {spedNum != null && (
-              <BigNum value={spedNum} unit="spedytorów" size={40} />
-            )}
+          <div style={{ display: "flex", gap: 28, marginBottom: 16 }}>
+            {fleet != null && <BigNum value={fleet} unit="pojazdów" accent size={40} />}
+            {spedNum != null && <BigNum value={spedNum} unit="spedytorów" size={40} />}
           </div>
 
           {output.wlasciciel_czy_manager && (
-            <div style={{ fontSize: 13, color: d.secondary, marginBottom: 6 }}>
+            <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 6 }}>
               {output.wlasciciel_czy_manager}
             </div>
           )}
+
           {output.decydent && (
             <div
               style={{
-                display: 'inline-block',
-                padding: '4px 10px',
-                background: d.blueFaint,
-                border: `1px solid ${d.blueFaintBorder}`,
+                display: "inline-block",
+                padding: "4px 10px",
+                background: `${ACCENT}1a`,
+                border: `1px solid ${ACCENT}38`,
                 borderRadius: 5,
                 fontSize: 12,
-                color: d.blue,
+                color: ACCENT,
                 marginBottom: 18,
               }}
             >
@@ -477,9 +469,15 @@ export function Agent1Card({ output }: { output: Agent1Output }) {
             </div>
           )}
 
-          <div style={{ borderTop: `1px solid ${d.borderSubtle}`, paddingTop: 14, marginTop: 6 }}>
+          <div
+            style={{
+              borderTop: "1px solid var(--separator)",
+              paddingTop: 14,
+              marginTop: 6,
+            }}
+          >
             <Label>Weryfikacja ICP</Label>
-            <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column' }}>
+            <div style={{ marginTop: 8, display: "flex", flexDirection: "column" }}>
               <IcpRow label="Flota ≥ 10 pojazdów" ok={icp?.flota_ok} />
               <IcpRow label="Biuro ≥ 2 osoby" ok={icp?.biuro_ok} />
               <IcpRow label="Decyzyjność" ok={icp?.decyzyjnosc_ok} />
@@ -489,8 +487,16 @@ export function Agent1Card({ output }: { output: Agent1Output }) {
           </div>
         </div>
 
-        {/* TR — Ból + Motywacja + Pre-commit */}
-        <div style={{ background: d.bg, padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+        {/* TR — Pain + Motivation + Pre-commit */}
+        <div
+          style={{
+            background: "var(--bg-elevated)",
+            padding: "20px 22px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 20,
+          }}
+        >
           {output.bol_glowny_cytat && (
             <div>
               <SectionHeader icon={<AlertTriangle size={13} />} label="Ból główny" />
@@ -510,13 +516,13 @@ export function Agent1Card({ output }: { output: Agent1Output }) {
               <SectionHeader icon={<Zap size={13} />} label="Pre-commit" />
               <div
                 style={{
-                  padding: '10px 14px',
-                  background: d.warningFaint,
-                  border: `1px solid ${d.warningBorder}`,
+                  padding: "10px 14px",
+                  background: `${WARNING}1a`,
+                  border: `1px solid ${WARNING}38`,
                   borderRadius: 7,
                   fontSize: 14,
-                  color: d.warning,
-                  fontStyle: 'italic',
+                  color: WARNING,
+                  fontStyle: "italic",
                   lineHeight: 1.55,
                 }}
               >
@@ -526,11 +532,11 @@ export function Agent1Card({ output }: { output: Agent1Output }) {
           )}
         </div>
 
-        {/* BL — Systemy */}
-        <div style={{ background: d.surface, padding: '20px 22px' }}>
+        {/* BL — Systems */}
+        <div style={{ background: "var(--bg-card)", padding: "20px 22px" }}>
           <SectionHeader icon={<Database size={13} />} label="Systemy" />
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             <div>
               <Label>TMS</Label>
               <div
@@ -538,18 +544,25 @@ export function Agent1Card({ output }: { output: Agent1Output }) {
                   marginTop: 5,
                   fontSize: 14,
                   fontWeight: 600,
-                  color: output.tms?.toLowerCase().includes('brak') ? d.error : d.white,
+                  color: output.tms?.toLowerCase().includes("brak") ? ERROR : "var(--text-primary)",
                   lineHeight: 1.4,
                 }}
               >
-                {output.tms || '—'}
+                {output.tms || "—"}
               </div>
             </div>
 
             {output.inne_systemy && (
               <div>
                 <Label>Inne systemy</Label>
-                <div style={{ marginTop: 5, fontSize: 13, color: d.secondary, lineHeight: 1.5 }}>
+                <div
+                  style={{
+                    marginTop: 5,
+                    fontSize: 13,
+                    color: "var(--text-secondary)",
+                    lineHeight: 1.5,
+                  }}
+                >
                   {output.inne_systemy}
                 </div>
               </div>
@@ -562,7 +575,9 @@ export function Agent1Card({ output }: { output: Agent1Output }) {
                   style={{
                     marginTop: 5,
                     fontSize: 13,
-                    color: output.podejscie_integracyjne.toLowerCase().includes('brak') ? d.error : d.blue,
+                    color: output.podejscie_integracyjne.toLowerCase().includes("brak")
+                      ? ERROR
+                      : ACCENT,
                     fontWeight: 500,
                     lineHeight: 1.4,
                   }}
@@ -575,11 +590,26 @@ export function Agent1Card({ output }: { output: Agent1Output }) {
             {output.poprzednie_proby && (
               <div>
                 <Label>Poprzednie próby</Label>
-                <div style={{ marginTop: 5, fontSize: 13, color: d.secondary, lineHeight: 1.5 }}>
+                <div
+                  style={{
+                    marginTop: 5,
+                    fontSize: 13,
+                    color: "var(--text-secondary)",
+                    lineHeight: 1.5,
+                  }}
+                >
                   {output.poprzednie_proby}
                 </div>
                 {output.poprzednie_proby_powod_niepowodzenia && (
-                  <div style={{ marginTop: 4, fontSize: 12, color: d.error, opacity: 0.8, fontStyle: 'italic' }}>
+                  <div
+                    style={{
+                      marginTop: 4,
+                      fontSize: 12,
+                      color: ERROR,
+                      opacity: 0.8,
+                      fontStyle: "italic",
+                    }}
+                  >
                     {output.poprzednie_proby_powod_niepowodzenia}
                   </div>
                 )}
@@ -588,12 +618,20 @@ export function Agent1Card({ output }: { output: Agent1Output }) {
           </div>
         </div>
 
-        {/* BR — Koszt + Urgency + Next step */}
-        <div style={{ background: d.surface, padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+        {/* BR — Cost + Urgency + Next step */}
+        <div
+          style={{
+            background: "var(--bg-card)",
+            padding: "20px 22px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 18,
+          }}
+        >
           <div>
             <SectionHeader icon={<Target size={13} />} label="Koszt problemu" />
             {hasCost ? (
-              <div style={{ display: 'flex', gap: 28, alignItems: 'flex-end' }}>
+              <div style={{ display: "flex", gap: 28, alignItems: "flex-end" }}>
                 {output.koszt_problemu?.koszt_miesiecznie != null && (
                   <BigNum
                     value={output.koszt_problemu.koszt_miesiecznie}
@@ -603,33 +641,35 @@ export function Agent1Card({ output }: { output: Agent1Output }) {
                   />
                 )}
                 {output.koszt_problemu?.koszt_roczny != null && (
-                  <BigNum
-                    value={output.koszt_problemu.koszt_roczny}
-                    unit="PLN / rok"
-                    size={32}
-                  />
+                  <BigNum value={output.koszt_problemu.koszt_roczny} unit="PLN / rok" size={32} />
                 )}
               </div>
             ) : (
-              <div style={{ fontSize: 13, color: d.muted, fontStyle: 'italic' }}>
+              <div
+                style={{
+                  fontSize: 13,
+                  color: "var(--text-tertiary)",
+                  fontStyle: "italic",
+                }}
+              >
                 Niepoliczalny — brak danych
               </div>
             )}
             {output.koszt_problemu?.procent_czasu != null && (
-              <div style={{ marginTop: 8, fontSize: 12, color: d.secondary }}>
+              <div style={{ marginTop: 8, fontSize: 12, color: "var(--text-secondary)" }}>
                 {output.koszt_problemu.procent_czasu}% czasu spedytora
                 {output.koszt_problemu.czy_szacunek && (
                   <span
                     style={{
                       marginLeft: 8,
-                      padding: '2px 6px',
-                      background: d.warningFaint,
-                      border: `1px solid ${d.warningBorder}`,
+                      padding: "2px 6px",
+                      background: `${WARNING}1a`,
+                      border: `1px solid ${WARNING}38`,
                       borderRadius: 4,
                       fontSize: 10,
-                      color: d.warning,
-                      letterSpacing: '0.06em',
-                      textTransform: 'uppercase',
+                      color: WARNING,
+                      letterSpacing: "0.06em",
+                      textTransform: "uppercase",
                     }}
                   >
                     szacunek
@@ -642,7 +682,7 @@ export function Agent1Card({ output }: { output: Agent1Output }) {
           {output.urgency && (
             <div>
               <SectionHeader icon={<Clock size={13} />} label="Urgency" />
-              <div style={{ fontSize: 13, color: d.secondary, lineHeight: 1.6 }}>
+              <div style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.6 }}>
                 {output.urgency}
               </div>
             </div>
@@ -651,20 +691,27 @@ export function Agent1Card({ output }: { output: Agent1Output }) {
           <div>
             <SectionHeader icon={<ArrowRight size={13} />} label="Status i następny krok" />
             {output.status && (
-              <div style={{ fontSize: 14, color: d.whiteDim, lineHeight: 1.5, marginBottom: 10 }}>
+              <div
+                style={{
+                  fontSize: 14,
+                  color: "var(--text-primary)",
+                  lineHeight: 1.5,
+                  marginBottom: 10,
+                }}
+              >
                 {output.status}
               </div>
             )}
             {output.nastepny_krok && (
               <div
                 style={{
-                  padding: '10px 14px',
-                  background: d.blueFaint,
-                  border: `1px solid ${d.blueFaintBorder}`,
+                  padding: "10px 14px",
+                  background: `${ACCENT}1a`,
+                  border: `1px solid ${ACCENT}38`,
                   borderRadius: 7,
                   fontSize: 14,
                   fontWeight: 600,
-                  color: d.blue,
+                  color: ACCENT,
                   lineHeight: 1.5,
                   marginBottom: 8,
                 }}
@@ -675,17 +722,17 @@ export function Agent1Card({ output }: { output: Agent1Output }) {
             {output.meet_data && (
               <div
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
+                  display: "flex",
+                  alignItems: "center",
                   gap: 7,
                   fontSize: 13,
-                  color: d.success,
+                  color: SUCCESS,
                 }}
               >
                 <Calendar size={13} />
                 {output.meet_data}
                 {output.meet_godzina && (
-                  <span style={{ color: d.secondary }}>· {output.meet_godzina}</span>
+                  <span style={{ color: "var(--text-tertiary)" }}>· {output.meet_godzina}</span>
                 )}
               </div>
             )}
@@ -693,89 +740,102 @@ export function Agent1Card({ output }: { output: Agent1Output }) {
         </div>
       </div>
 
-      {/* ─── AGENT NOTES ─── */}
+      {/* ─── AGENT NOTES (collapsible) ─── */}
       {notes.length > 0 && (
         <div
           style={{
-            borderTop: `1px solid ${d.border}`,
-            background: d.surface,
+            borderTop: "1px solid var(--border)",
+            background: "var(--bg-card)",
             flexShrink: 0,
           }}
         >
           <button
             onClick={() => setNotesOpen((v) => !v)}
             style={{
-              width: '100%',
-              padding: '14px 24px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: d.secondary,
-              fontFamily: d.font,
+              width: "100%",
+              padding: "14px 24px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              color: "var(--text-secondary)",
+              fontFamily: "var(--font-system)",
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <Label color={d.secondary}>Analiza agenta</Label>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <Label color="var(--text-secondary)">Analiza agenta</Label>
               <span
                 style={{
-                  padding: '2px 8px',
-                  background: d.blueFaint,
-                  border: `1px solid ${d.blueFaintBorder}`,
+                  padding: "2px 8px",
+                  background: `${ACCENT}1a`,
+                  border: `1px solid ${ACCENT}38`,
                   borderRadius: 99,
-                  fontFamily: d.mono,
+                  fontFamily: "var(--font-mono)",
                   fontSize: 11,
                   fontWeight: 700,
-                  color: d.blue,
+                  color: ACCENT,
                 }}
               >
                 {notes.length}
               </span>
             </div>
-            {notesOpen ? <ChevronUp size={14} color={d.secondary} /> : <ChevronDown size={14} color={d.secondary} />}
+            {notesOpen ? (
+              <ChevronUp size={14} color="var(--text-secondary)" />
+            ) : (
+              <ChevronDown size={14} color="var(--text-secondary)" />
+            )}
           </button>
 
           {notesOpen && (
-            <div style={{ padding: '0 24px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div
+              style={{
+                padding: "0 24px 20px",
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
+              }}
+            >
               {notes.map((note, i) => {
                 const isRisk =
-                  note.head.toUpperCase().includes('RYZYKO') ||
-                  note.head.toUpperCase().includes('BARIERA') ||
-                  note.head.toUpperCase().includes('NO-SHOW')
+                  note.head.toUpperCase().includes("RYZYKO") ||
+                  note.head.toUpperCase().includes("BARIERA") ||
+                  note.head.toUpperCase().includes("NO-SHOW");
                 const isPositive =
-                  note.head.toUpperCase().includes('POZYTYW') ||
-                  note.head.toUpperCase().includes('SYGNAŁ')
+                  note.head.toUpperCase().includes("POZYTYW") ||
+                  note.head.toUpperCase().includes("SYGNAŁ");
+
+                const noteBg = isRisk
+                  ? `${ERROR}0f`
+                  : isPositive
+                    ? `${SUCCESS}0f`
+                    : "var(--bg-elevated)";
+                const noteBorder = isRisk
+                  ? `${ERROR}28`
+                  : isPositive
+                    ? `${SUCCESS}28`
+                    : "var(--border)";
+                const noteNumColor = isRisk ? ERROR : isPositive ? SUCCESS : ACCENT;
 
                 return (
                   <div
                     key={i}
                     style={{
-                      display: 'flex',
+                      display: "flex",
                       gap: 14,
-                      padding: '12px 16px',
-                      background: isRisk
-                        ? 'rgba(239,68,68,0.06)'
-                        : isPositive
-                        ? 'rgba(34,197,94,0.06)'
-                        : 'rgba(255,255,255,0.03)',
-                      border: `1px solid ${
-                        isRisk
-                          ? 'rgba(239,68,68,0.16)'
-                          : isPositive
-                          ? 'rgba(34,197,94,0.16)'
-                          : d.borderSubtle
-                      }`,
+                      padding: "12px 16px",
+                      background: noteBg,
+                      border: `1px solid ${noteBorder}`,
                       borderRadius: 7,
                     }}
                   >
                     <span
                       style={{
-                        fontFamily: d.mono,
+                        fontFamily: "var(--font-mono)",
                         fontSize: 12,
                         fontWeight: 700,
-                        color: isRisk ? d.error : isPositive ? d.success : d.blue,
+                        color: noteNumColor,
                         flexShrink: 0,
                         minWidth: 20,
                         marginTop: 1,
@@ -788,7 +848,7 @@ export function Agent1Card({ output }: { output: Agent1Output }) {
                         style={{
                           fontSize: 14,
                           fontWeight: 600,
-                          color: d.white,
+                          color: "var(--text-primary)",
                           lineHeight: 1.4,
                           marginBottom: note.body ? 5 : 0,
                         }}
@@ -799,7 +859,7 @@ export function Agent1Card({ output }: { output: Agent1Output }) {
                         <div
                           style={{
                             fontSize: 13,
-                            color: d.secondary,
+                            color: "var(--text-secondary)",
                             lineHeight: 1.6,
                           }}
                         >
@@ -808,12 +868,12 @@ export function Agent1Card({ output }: { output: Agent1Output }) {
                       )}
                     </div>
                   </div>
-                )
+                );
               })}
             </div>
           )}
         </div>
       )}
     </div>
-  )
+  );
 }

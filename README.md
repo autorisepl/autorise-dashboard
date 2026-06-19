@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Autorise Dashboard
 
-## Getting Started
+Command Center dla Autorise — sprzedaż i automatyzacja TSL.
 
-First, run the development server:
+## Uruchomienie lokalne
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
+cp .env.example .env.local
+# Wypełnij .env.local wartościami
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Otwórz [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Zmienne środowiskowe
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Zmienna | Opis |
+|---------|------|
+| `ANTHROPIC_API_KEY` | Klucz API Anthropic (agenci AI) |
+| `NOTION_TOKEN` | Integration token Notion |
+| `NOTION_DATABASE_ID` | ID bazy Pipeline (`75ac8bc6...`) |
+| `DASHBOARD_PASSWORD` | Hasło dostępu do dashboardu |
+| `DASHBOARD_SESSION_SECRET` | Secret do JWT sesji (min. 64 znaki) |
+| `WORKSPACE_ROOT` | Ścieżka do workspace (`D:\autorise\workspace`) |
+| `GROQ_API_KEY` | Klucz Groq API (transkrypcja Whisper) |
 
-## Learn More
+## Deploy — Cloudflare Pages
 
-To learn more about Next.js, take a look at the following resources:
+Repo podpięte do Cloudflare Pages via GitHub. Każdy push do `main` triggeruje auto-deploy.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**Wymagane ustawienia w Cloudflare Pages:**
+- Build command: `pnpm build`
+- Build output: `.next`
+- Compatibility flags: `nodejs_compat` (Settings → Functions)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**UWAGA timeout**: Free plan = 30s limit per request. Agent2 (claude-opus-4-8 z extended thinking) może trwać 60–180s → może wymagać upgrade do paid planu.
 
-## Deploy on Vercel
+## Stack
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Next.js 14 App Router + TypeScript strict
+- Tailwind CSS + Geist + Sora fonts
+- Anthropic API (claude-sonnet-4-6, claude-opus-4-8)
+- Notion API (`@notionhq/client`)
+- Zod validation na wszystkich API routes
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Repozytorium
+
+`https://github.com/autorisepl/autorise-dashboard` (prywatne)
