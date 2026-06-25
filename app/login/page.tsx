@@ -11,6 +11,7 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showPw, setShowPw] = useState(false);
+  const [focused, setFocused] = useState(false);
 
   useEffect(() => {
     setError("");
@@ -42,17 +43,24 @@ function LoginForm() {
     }
   };
 
+  const borderColor = error
+    ? "var(--error-border)"
+    : focused
+      ? "var(--border-focus)"
+      : "var(--border)";
+
   return (
     <form onSubmit={handleSubmit}>
-      <div style={{ marginBottom: 16 }}>
+      <div style={{ marginBottom: 18 }}>
         <label
           style={{
             display: "block",
-            fontSize: "12px",
-            fontWeight: 600,
-            color: "#566a8a",
+            fontFamily: "var(--font-sans)",
+            fontSize: 10.5,
+            fontWeight: 700,
+            color: "var(--text-tertiary)",
             marginBottom: 8,
-            letterSpacing: "0.06em",
+            letterSpacing: "0.07em",
             textTransform: "uppercase",
           }}
         >
@@ -61,34 +69,31 @@ function LoginForm() {
         <div style={{ position: "relative" }}>
           <Lock
             size={14}
-            color="#334155"
+            color="var(--text-tertiary)"
             style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)" }}
           />
           <input
             type={showPw ? "text" : "password"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
             placeholder="••••••••••••"
             autoFocus
             style={{
               width: "100%",
               padding: "12px 40px",
               boxSizing: "border-box",
-              background: "rgba(255,255,255,0.05)",
-              border: error ? "1px solid rgba(220,38,38,0.5)" : "1px solid rgba(255,255,255,0.1)",
-              borderRadius: 10,
-              fontFamily: '"Geist Mono", monospace',
-              fontSize: "15px",
-              color: "#f0f4ff",
+              background: "var(--bg-elevated)",
+              border: `1px solid ${borderColor}`,
+              borderRadius: "var(--radius-sm)",
+              fontFamily: "var(--font-mono)",
+              fontSize: 15,
+              color: "var(--text-primary)",
               outline: "none",
-              transition: "border-color 0.15s",
+              transition: "border-color 0.15s, box-shadow 0.15s",
               letterSpacing: "0.12em",
-            }}
-            onFocus={(e) => {
-              if (!error) e.currentTarget.style.borderColor = "rgba(59,130,246,0.5)";
-            }}
-            onBlur={(e) => {
-              if (!error) e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
+              boxShadow: focused && !error ? "0 0 0 3px var(--accent-muted)" : "none",
             }}
           />
           <button
@@ -102,7 +107,7 @@ function LoginForm() {
               background: "none",
               border: "none",
               cursor: "pointer",
-              color: "#334155",
+              color: "var(--text-tertiary)",
               display: "flex",
               alignItems: "center",
               padding: 2,
@@ -111,7 +116,11 @@ function LoginForm() {
             {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
           </button>
         </div>
-        {error && <div style={{ fontSize: "12px", color: "#f87171", marginTop: 8 }}>{error}</div>}
+        {error && (
+          <div style={{ fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--error)", marginTop: 8 }}>
+            {error}
+          </div>
+        )}
       </div>
 
       <button
@@ -120,15 +129,12 @@ function LoginForm() {
         style={{
           width: "100%",
           padding: "12px",
-          background:
-            password && !loading
-              ? "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)"
-              : "rgba(255,255,255,0.05)",
-          color: password && !loading ? "#fff" : "#334155",
+          background: password && !loading ? "var(--accent)" : "var(--bg-hover)",
+          color: password && !loading ? "#fff" : "var(--text-tertiary)",
           border: "none",
-          borderRadius: 10,
-          fontFamily: '"Geist", sans-serif',
-          fontSize: "14px",
+          borderRadius: "var(--radius-sm)",
+          fontFamily: "var(--font-sans)",
+          fontSize: 14,
           fontWeight: 600,
           cursor: password && !loading ? "pointer" : "not-allowed",
           display: "flex",
@@ -136,11 +142,11 @@ function LoginForm() {
           justifyContent: "center",
           gap: 8,
           transition: "all 0.15s",
-          boxShadow: password && !loading ? "0 2px 12px rgba(37,99,235,0.35)" : "none",
+          boxShadow: password && !loading ? "0 4px 16px rgba(10,132,255,0.30)" : "none",
         }}
       >
         {loading && <Loader2 size={15} style={{ animation: "spin 1s linear infinite" }} />}
-        {loading ? "Logowanie..." : "Wejdź"}
+        {loading ? "Logowanie…" : "Wejdź"}
       </button>
     </form>
   );
@@ -151,59 +157,79 @@ export default function LoginPage() {
     <div
       style={{
         minHeight: "100vh",
-        background: "#0a0f1e",
+        background: "var(--bg)",
+        backgroundImage: "var(--page-gradient)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        fontFamily: '"Geist", -apple-system, BlinkMacSystemFont, sans-serif',
+        fontFamily: "var(--font-sans)",
+        padding: "0 20px",
       }}
     >
-      <div style={{ width: "100%", maxWidth: 360, padding: "0 20px" }}>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            marginBottom: 40,
-          }}
-        >
+      <div
+        style={{
+          width: "100%",
+          maxWidth: 380,
+          background: "var(--glass)",
+          backdropFilter: "var(--glass-blur)",
+          WebkitBackdropFilter: "var(--glass-blur)",
+          border: "1px solid var(--glass-border)",
+          borderRadius: "var(--radius-xl)",
+          boxShadow: "var(--shadow-elevated)",
+          padding: "40px 36px 32px",
+        }}
+      >
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 32 }}>
           <div
             style={{
-              width: 48,
-              height: 48,
-              borderRadius: 14,
-              background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
+              width: 52,
+              height: 52,
+              borderRadius: 15,
+              background: "linear-gradient(135deg, var(--accent) 0%, #4b7bff 100%)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              boxShadow: "0 4px 20px rgba(37,99,235,0.5)",
-              marginBottom: 16,
+              boxShadow: "0 6px 22px rgba(10,132,255,0.35)",
+              marginBottom: 18,
             }}
           >
-            <Zap size={22} color="#fff" strokeWidth={2.5} />
+            <Zap size={24} color="#fff" strokeWidth={2.4} />
           </div>
           <div
             style={{
-              fontSize: "22px",
+              fontSize: 22,
               fontWeight: 800,
-              color: "#f0f4ff",
-              letterSpacing: "-0.04em",
+              color: "var(--text-primary)",
+              letterSpacing: "-0.03em",
               lineHeight: 1,
             }}
           >
             Autorise
           </div>
-          <div
-            style={{ fontSize: "12px", color: "#566a8a", marginTop: 6, letterSpacing: "0.04em" }}
-          >
-            Command Center
+          <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 6, letterSpacing: "0.02em" }}>
+            Panel operacyjny
           </div>
         </div>
 
         <Suspense fallback={null}>
           <LoginForm />
         </Suspense>
+
+        <div
+          style={{
+            marginTop: 22,
+            paddingTop: 16,
+            borderTop: "1px solid var(--border)",
+            textAlign: "center",
+            fontFamily: "var(--font-sans)",
+            fontSize: 11,
+            color: "var(--text-placeholder)",
+          }}
+        >
+          Dostęp tylko dla zespołu Autorise
+        </div>
       </div>
+
       <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </div>
   );
