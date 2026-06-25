@@ -6,21 +6,27 @@ export const dynamic = "force-dynamic";
 
 const notion = new Client({ auth: process.env.NOTION_TOKEN });
 
-const FIELD_MAP: Record<string, string> = {
-  koszt_problemu: "Koszt problemu PLN/mc",
-  koszt_roczny: "Koszt roczny PLN/rok",
-  maile_dziennie: "Maile ze zleceniami / dzień",
-  godziny_wpisywania: "Godziny wpisywania / spedytor",
-  faktury_po_terminie: "Faktury po terminie / mc",
-  srednia_wartosc_faktury: "Średnia wartość faktury PLN",
-};
-
 const bodySchema = z.object({
   pageId: z.string().min(1),
-  fields: z.record(z.string(), z.union([z.number(), z.string(), z.null()])),
+  status: z.string().optional(),
+  nastepnyKrok: z.string().optional(),
+  dataFollowup: z.string().nullable().optional(),
+  typFollowup: z.string().nullable().optional(),
+  kontekstFollowup: z.string().nullable().optional(),
+  powodNiekwalifikowania: z.string().nullable().optional(),
+  dataReengagement: z.string().nullable().optional(),
+  liczbaProb: z.number().optional(),
+  firma: z.string().optional(),
+  kontakt: z.string().optional(),
+  telefon: z.string().optional(),
+  notatki: z.string().optional(),
 });
 
-export async function POST(req: Request) {
+function richText(text: string) {
+  return [{ type: "text" as const, text: { content: text.slice(0, 2000) } }];
+}
+
+export async function PATCH(req: Request) {
   try {
     const raw = await req.json();
     const parsed = bodySchema.safeParse(raw);
@@ -31,9 +37,98 @@ export async function POST(req: Request) {
       );
     }
 
-    const { pageId, fields } = parsed.data;
-    const properties: Record<string, { number: number }> = {};
+    const d = parsed.data;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const properties: Record<string, any> = {};
 
+    if (d.status !== undefined) {
+      properties["Status"] = { select: { name: d.status } };
+    }
+    if (d.nastepnyKrok !== undefined) {
+      properties["Następny krok"] = { rich_text: richText(d.nastepnyKrok) };
+    }
+    if (d.dataFollowup !== undefined) {
+      properties["Data następnego kroku"] = d.dataFollowup
+        ? { date: { start: d.dataFollowup } }
+        : { date: null };
+    }
+    if (d.typFollowup !== undefined) {
+      properties["Typ follow-up"] = d.typFollowup
+        ? { select: { name: d.typFollowup } }
+        : { select: null };
+    }
+    if (d.kontekstFollowup !== undefined && d.kontekstFollowup) {
+      properties["Następny krok"] = {
+        rich_text: richText(`[Follow-up: ${d.typFollowup ?? ""}] ${d.kontekstFollowup}`),
+      };
+    }
+    if (d.powodNiekwalifikowania !== undefined && d.powodNiekwalifikowania) {
+      properties["Powód rezygnacji"] = { rich_text: richText(d.powodNiekwalifikowania) };
+    }
+    if (d.dataReengagement !== undefined) {
+      properties["Re-engagement"] = d.dataReengagement
+        ? { date: { start: d.dataReengagement } }
+        : { date: null };
+    }
+    if (d.liczbaProb !== undefined) {
+      properties["Liczba prób"] = { number: d.liczbaProb };
+    }
+    if (d.firma !== undefined && d.firma) {
+      properties["Firma"] = { title: richText(d.firma) };
+    }
+    if (d.kontakt !== undefined) {
+      properties["Kontakt"] = { rich_text: richText(d.kontakt) };
+    }
+    if (d.telefon !== undefined) {
+      properties["Telefon"] = { phone_number: d.telefon };
+    }
+    if (d.notatki !== undefined) {
+      properties["Notatki"] = { rich_text: richText(d.notatki) };
+    }
+
+    if (Object.keys(properties).length === 0) {
+      return NextResponse.json(
+        { success: false, error: "Brak pól do aktualizacji" },
+        { status: 400 },
+      );
+    }
+
+    await notion.pages.update({ page_id: d.pageId, properties });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : "Nieznany błąd";
+    return NextResponse.json({ success: false, error: msg }, { status: 500 });
+  }
+}
+
+// Keep POST for backward compat (numeric fields only)
+export async function POST(req: Request) {
+  try {
+    const raw = await req.json();
+    const schema = z.object({
+      pageId: z.string().min(1),
+      fields: z.record(z.string(), z.union([z.number(), z.string(), z.null()])),
+    });
+    const parsed = schema.safeParse(raw);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { success: false, error: parsed.error.issues[0]?.message ?? "Nieprawidłowe dane" },
+        { status: 400 },
+      );
+    }
+
+    const { pageId, fields } = parsed.data;
+    const FIELD_MAP: Record<string, string> = {
+      koszt_problemu: "Koszt problemu PLN/mc",
+      koszt_roczny: "Koszt roczny PLN/rok",
+      maile_dziennie: "Maile ze zleceniami / dzień",
+      godziny_wpisywania: "Godziny wpisywania / spedytor",
+      faktury_po_terminie: "Faktury po terminie / mc",
+      srednia_wartosc_faktury: "Średnia wartość faktury PLN",
+    };
+
+    const properties: Record<string, { number: number }> = {};
     for (const [key, notionProp] of Object.entries(FIELD_MAP)) {
       const val = fields[key];
       if (val != null && typeof val === "number") {
@@ -49,15 +144,7 @@ export async function POST(req: Request) {
     }
 
     await notion.pages.update({ page_id: pageId, properties });
-
-    const page = (await notion.pages.retrieve({ page_id: pageId })) as Record<string, unknown>;
-    const props = (page.properties ?? {}) as Record<string, unknown>;
-    const nameField = props["Firma / Nazwa"] as
-      | { title?: Array<{ plain_text: string }> }
-      | undefined;
-    const firmaNazwa = nameField?.title?.[0]?.plain_text ?? "";
-
-    return NextResponse.json({ success: true, firmaNazwa });
+    return NextResponse.json({ success: true });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Nieznany błąd";
     return NextResponse.json({ success: false, error: msg }, { status: 500 });

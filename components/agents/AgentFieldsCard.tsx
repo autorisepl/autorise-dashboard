@@ -3,7 +3,6 @@
 import { Brain, Cpu, Database, Layers, Wifi, WifiOff } from "lucide-react";
 import type { HealthResponse } from "@/app/api/health/route";
 import { AGENT_FIELD_MAP } from "@/lib/agents/field-map";
-import { agentTokens as at } from "@/lib/tokens";
 
 interface AgentFieldsCardProps {
   agentNumber: number;
@@ -22,29 +21,28 @@ export function AgentFieldsCard({ agentNumber, health, healthLoading }: AgentFie
   return (
     <div
       style={{
-        background: at.bg.terminal,
-        border: `1px solid ${at.bg.terminalBorder}`,
-        borderRadius: at.radius.lg,
+        background: "var(--bg-elevated)",
+        border: "1px solid var(--border)",
+        borderRadius: "var(--radius-md)",
         padding: "14px 16px",
         flexShrink: 0,
         transition: "border-color 0.15s",
       }}
       onMouseEnter={(e) => {
-        (e.currentTarget as HTMLDivElement).style.borderColor = "#30363d";
+        (e.currentTarget as HTMLDivElement).style.borderColor = "var(--border-hover)";
       }}
       onMouseLeave={(e) => {
-        (e.currentTarget as HTMLDivElement).style.borderColor = at.bg.terminalBorder;
+        (e.currentTarget as HTMLDivElement).style.borderColor = "var(--border)";
       }}
     >
-      {/* Header */}
       <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 10 }}>
-        <Layers size={12} color={at.text.terminalAccent} />
+        <Layers size={12} color="var(--accent)" />
         <span
           style={{
-            fontFamily: at.font.mono,
+            fontFamily: "var(--font-mono)",
             fontSize: "11px",
             fontWeight: 600,
-            color: at.text.terminalAccent,
+            color: "var(--accent)",
             letterSpacing: "0.03em",
           }}
         >
@@ -52,44 +50,47 @@ export function AgentFieldsCard({ agentNumber, health, healthLoading }: AgentFie
         </span>
       </div>
 
-      {/* Divider */}
-      <div style={{ height: 1, background: at.bg.terminalBorder, marginBottom: 10 }} />
+      <div style={{ height: 1, background: "var(--border)", marginBottom: 10 }} />
 
-      {/* Model row */}
       <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 8 }}>
-        <Cpu size={10} color={at.text.terminalMuted} />
-        <span style={{ fontFamily: at.font.mono, fontSize: "10px", color: at.text.terminalMuted }}>
+        <Cpu size={10} color="var(--text-tertiary)" />
+        <span
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: "10px",
+            color: "var(--text-tertiary)",
+          }}
+        >
           {info.model}
         </span>
         {info.extendedThinking && (
           <>
-            <span style={{ color: at.text.terminalMuted, fontSize: "10px" }}>·</span>
-            <Brain size={10} color={at.status.info} />
-            <span style={{ fontFamily: at.font.mono, fontSize: "10px", color: at.status.info }}>
+            <span style={{ color: "var(--text-tertiary)", fontSize: "10px" }}>·</span>
+            <Brain size={10} color="var(--accent)" />
+            <span
+              style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "var(--accent)" }}
+            >
               extended thinking
             </span>
           </>
         )}
       </div>
 
-      {/* Connection status */}
       <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
         <StatusDot label="Anthropic" ok={anthropicOk} />
         <StatusDot label="Notion" ok={noNotionWrite ? true : notionOk} dimmed={noNotionWrite} />
       </div>
 
-      {/* Divider */}
-      <div style={{ height: 1, background: at.bg.terminalBorder, marginBottom: 10 }} />
+      <div style={{ height: 1, background: "var(--border)", marginBottom: 10 }} />
 
-      {/* Fields written */}
       <div style={{ marginBottom: info.requires ? 10 : 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 6 }}>
-          <Database size={10} color={at.text.terminalMuted} />
+          <Database size={10} color="var(--text-tertiary)" />
           <span
             style={{
-              fontFamily: at.font.mono,
+              fontFamily: "var(--font-mono)",
               fontSize: "10px",
-              color: at.text.terminalMuted,
+              color: "var(--text-tertiary)",
               fontWeight: 600,
               letterSpacing: "0.04em",
             }}
@@ -102,32 +103,31 @@ export function AgentFieldsCard({ agentNumber, health, healthLoading }: AgentFie
             <li
               key={field}
               style={{
-                fontFamily: at.font.mono,
+                fontFamily: "var(--font-mono)",
                 fontSize: "11px",
-                color: at.text.terminal,
+                color: "var(--text-primary)",
                 lineHeight: 1.6,
                 display: "flex",
                 alignItems: "flex-start",
                 gap: 5,
               }}
             >
-              <span style={{ color: at.text.terminalMuted, flexShrink: 0 }}>•</span>
+              <span style={{ color: "var(--text-tertiary)", flexShrink: 0 }}>•</span>
               {field}
             </li>
           ))}
         </ul>
       </div>
 
-      {/* Requires */}
       {info.requires && (
         <>
-          <div style={{ height: 1, background: at.bg.terminalBorder, marginBottom: 10 }} />
+          <div style={{ height: 1, background: "var(--border)", marginBottom: 10 }} />
           <div>
             <span
               style={{
-                fontFamily: at.font.mono,
+                fontFamily: "var(--font-mono)",
                 fontSize: "10px",
-                color: at.text.terminalMuted,
+                color: "var(--text-tertiary)",
                 fontWeight: 600,
                 letterSpacing: "0.04em",
               }}
@@ -136,9 +136,9 @@ export function AgentFieldsCard({ agentNumber, health, healthLoading }: AgentFie
             </span>
             <p
               style={{
-                fontFamily: at.font.mono,
+                fontFamily: "var(--font-mono)",
                 fontSize: "11px",
-                color: at.status.warning,
+                color: "var(--warning)",
                 margin: "4px 0 0",
                 lineHeight: 1.5,
               }}
@@ -154,12 +154,12 @@ export function AgentFieldsCard({ agentNumber, health, healthLoading }: AgentFie
 
 function StatusDot({ label, ok, dimmed }: { label: string; ok: boolean | null; dimmed?: boolean }) {
   const color = dimmed
-    ? at.text.terminalMuted
+    ? "var(--text-tertiary)"
     : ok === null
-      ? at.text.terminalMuted
+      ? "var(--text-tertiary)"
       : ok
-        ? at.status.success
-        : at.status.error;
+        ? "var(--success)"
+        : "var(--error)";
 
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
@@ -169,7 +169,7 @@ function StatusDot({ label, ok, dimmed }: { label: string; ok: boolean | null; d
             width: 7,
             height: 7,
             borderRadius: "50%",
-            background: at.text.terminalMuted,
+            background: "var(--text-tertiary)",
             opacity: 0.5,
           }}
         />
@@ -178,7 +178,7 @@ function StatusDot({ label, ok, dimmed }: { label: string; ok: boolean | null; d
       ) : (
         <WifiOff size={9} color={color} />
       )}
-      <span style={{ fontFamily: at.font.mono, fontSize: "10px", color }}>{label}</span>
+      <span style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color }}>{label}</span>
     </span>
   );
 }

@@ -3,7 +3,7 @@ import { Client } from "@notionhq/client";
 import { NextResponse } from "next/server";
 
 const PIPELINE_DB_ID = "75ac8bc6fd6d4c36934bedc1270217eb";
-const CACHE_TTL = 45_000; // 45 seconds — avoids hitting external APIs on every page load
+const CACHE_TTL = 20_000; // 20 seconds
 
 export interface HealthStatus {
   ok: boolean;
@@ -14,6 +14,9 @@ export interface HealthStatus {
 export interface HealthResponse {
   anthropic: HealthStatus;
   notion: HealthStatus;
+  google: HealthStatus;
+  groq: HealthStatus;
+  mcp: HealthStatus;
   timestamp: string;
   cached: boolean;
 }
@@ -41,16 +44,54 @@ async function checkNotion(): Promise<HealthStatus> {
   return { ok: true, label: "Pipeline dostępny" };
 }
 
-export async function GET() {
-  // Return cached response if still valid
-  if (_cache && Date.now() < _cache.expiresAt) {
+async function checkGoogle(): Promise<HealthStatus> {
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  if (!clientId)
+    return { ok: false, label: "Brak konfiguracji", error: "GOOGLE_CLIENT_ID nie ustawiony" };
+  return { ok: true, label: "Skonfigurowano OAuth" };
+}
+
+async function checkGroq(): Promise<HealthStatus> {
+  const key = process.env.GROQ_API_KEY;
+  if (!key) return { ok: false, label: "Brak klucza", error: "GROQ_API_KEY nie ustawiony" };
+  try {
+    const res = await fetch("https://api.groq.com/openai/v1/models", {
+      headers: { Authorization: `Bearer ${key}` },
+      signal: AbortSignal.timeout(4000),
+    });
+    if (!res.ok) return { ok: false, label: `HTTP ${res.status}` };
+    return { ok: true, label: "Whisper large-v3" };
+  } catch {
+    return { ok: false, label: "Timeout / brak połączenia" };
+  }
+}
+
+async function checkMcp(): Promise<HealthStatus> {
+  try {
+    const res = await fetch("https://mcp.autorise.pl/health", {
+      signal: AbortSignal.timeout(3000),
+    });
+    if (!res.ok) return { ok: false, label: `HTTP ${res.status}` };
+    return { ok: true, label: "mcp.autorise.pl → :3010" };
+  } catch {
+    return { ok: false, label: "Niedostępny" };
+  }
+}
+
+export async function GET(req: Request) {
+  const force = new URL(req.url).searchParams.get("force") === "1";
+  if (!force && _cache && Date.now() < _cache.expiresAt) {
     return NextResponse.json({ ..._cache.data, cached: true });
   }
 
-  const [anthropicResult, notionResult] = await Promise.allSettled([
-    checkAnthropic(),
-    checkNotion(),
-  ]);
+  const [anthropicResult, notionResult, googleResult, groqResult, mcpResult] =
+    await Promise.allSettled([
+      checkAnthropic(),
+      checkNotion(),
+      checkGoogle(),
+      checkGroq(),
+      checkMcp(),
+    ]);
 
   const toStatus = (r: PromiseSettledResult<HealthStatus>): HealthStatus =>
     r.status === "fulfilled"
@@ -64,6 +105,9 @@ export async function GET() {
   const data: HealthResponse = {
     anthropic: toStatus(anthropicResult),
     notion: toStatus(notionResult),
+    google: toStatus(googleResult),
+    groq: toStatus(groqResult),
+    mcp: toStatus(mcpResult),
     timestamp: new Date().toISOString(),
     cached: false,
   };

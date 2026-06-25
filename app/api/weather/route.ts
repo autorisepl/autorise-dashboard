@@ -32,14 +32,16 @@ export interface WeatherData {
   description: string;
   emoji: string;
   wind: number;
+  windMs: number;
   humidity: number;
+  precipitationChance: number;
   city: string;
   updated: string;
 }
 
 export async function GET() {
   try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,apparent_temperature,weathercode,wind_speed_10m,relative_humidity_2m&timezone=Europe/Warsaw&forecast_days=1`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,apparent_temperature,weathercode,wind_speed_10m,relative_humidity_2m&daily=precipitation_probability_max&timezone=Europe/Warsaw&forecast_days=1`;
     const res = await fetch(url, { next: { revalidate: 1800 } });
     if (!res.ok) throw new Error(`Open-Meteo error: ${res.status}`);
 
@@ -51,16 +53,21 @@ export async function GET() {
       wind_speed_10m: number;
       relative_humidity_2m: number;
     };
+    const daily = json.daily as { precipitation_probability_max: number[] };
 
     const wmo = WMO_CODES[cur.weathercode] ?? { label: "Nieznane", emoji: "🌡️" };
+    const windKmh = Math.round(cur.wind_speed_10m);
+    const windMs = Math.round(windKmh / 3.6);
 
     const data: WeatherData = {
       temp: Math.round(cur.temperature_2m),
       feels_like: Math.round(cur.apparent_temperature),
       description: wmo.label,
       emoji: wmo.emoji,
-      wind: Math.round(cur.wind_speed_10m),
+      wind: windKmh,
+      windMs,
       humidity: cur.relative_humidity_2m,
+      precipitationChance: daily.precipitation_probability_max[0] ?? 0,
       city: "Kórnik",
       updated: new Date().toISOString(),
     };

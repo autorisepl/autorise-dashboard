@@ -3,15 +3,15 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import type { HealthResponse } from "@/app/api/health/route";
-import type { AgentId } from "@/components/agents/AgentsOverview";
 import { AgentsOverview } from "@/components/agents/AgentsOverview";
-import type { AgentState } from "@/components/agents/AgentWorkspace";
-import { AgentWorkspace } from "@/components/agents/AgentWorkspace";
+import type { AgentId, AgentState, CardStage } from "@/components/agents/AgentWorkspace";
+import { AgentWorkspace, CARD_STAGE_BY_AGENT } from "@/components/agents/AgentWorkspace";
+import type { CardState } from "@/lib/google/sheets-card";
 import type { PipelineClient } from "@/lib/notion/client";
 
 // ── Constants ──────────────────────────────────────────────────────
 
-const AGENT_IDS: AgentId[] = ["agent0", "agent1", "agent2", "agent3", "agent4", "agent5", "agent6"];
+const AGENT_IDS: AgentId[] = ["agent1", "agent2", "agent3", "agent4", "agent5", "agent6"];
 
 const INITIAL_STATE: AgentState = {
   transcript: "",
@@ -24,7 +24,56 @@ const INITIAL_STATE: AgentState = {
   notionError: null,
   notionPushing: false,
   elapsed: null,
+  attachedTxtName: "",
+  attachedMp3Link: "",
+  attachedClientName: "",
+  cardStatus: "idle",
+  cardError: null,
 };
+
+// ── Build "Kontakty" card fields from an agent output ───────────────
+
+function truncate(s: unknown, n: number): string {
+  const str = typeof s === "string" ? s : s == null ? "" : String(s);
+  return str.length > n ? `${str.slice(0, n - 1)}…` : str;
+}
+
+function buildCardFields(stage: CardStage, output: unknown, mp3Link: string): Partial<CardState> {
+  const o = (output ?? {}) as Record<string, unknown>;
+
+  if (stage === "kwalifikacja") {
+    const icp = (o.icp ?? {}) as Record<string, unknown>;
+    const summary = [
+      icp.kwalifikacja ? `ICP: ${String(icp.kwalifikacja)}` : null,
+      o.bol_glowny_cytat ? `Ból: ${truncate(o.bol_glowny_cytat, 160)}` : null,
+      o.nastepny_krok ? `Następny krok: ${truncate(o.nastepny_krok, 120)}` : null,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+    return {
+      rozmowaKwalifikacyjna: true,
+      ...(summary ? { notatkiKwalifikacyjne: summary } : {}),
+      ...(mp3Link ? { nagranieKwalifikacyjne: mp3Link } : {}),
+    };
+  }
+
+  // sprzedazowa (Discovery / rozmowa ofertowa)
+  const summary = [
+    o.wynik_discovery
+      ? `Wynik: ${truncate(o.wynik_discovery, 160)}`
+      : o.wynik
+        ? `Wynik: ${truncate(o.wynik, 160)}`
+        : null,
+    o.nastepny_krok ? `Następny krok: ${truncate(o.nastepny_krok, 120)}` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  return {
+    odbytaRozmowaSprzedazowa: true,
+    ...(summary ? { notatkiSprzedazowe: summary } : {}),
+    ...(mp3Link ? { nagranieSprzedazowe: mp3Link } : {}),
+  };
+}
 
 function makeInitialStates(): Record<AgentId, AgentState> {
   return Object.fromEntries(AGENT_IDS.map((id) => [id, { ...INITIAL_STATE }])) as Record<
@@ -90,13 +139,6 @@ function AgenciPageInner() {
 
   // ── Navigation ─────────────────────────────────────────────────
 
-  const selectAgent = useCallback(
-    (id: AgentId) => {
-      router.push(`/agenci?agent=${id}`);
-    },
-    [router],
-  );
-
   const goBack = useCallback(() => {
     router.push("/agenci");
   }, [router]);
@@ -126,6 +168,46 @@ function AgenciPageInner() {
     [activeAgent],
   );
 
+  // ── Write "Kontakty" card after a stage agent run ──────────────
+
+  const writeCard = useCallback(
+    async (
+      agentId: AgentId,
+      stage: CardStage,
+      clientName: string,
+      mp3Link: string,
+      output: unknown,
+    ) => {
+      updateAgentState(agentId, { cardStatus: "saving", cardError: null });
+      try {
+        const fields = buildCardFields(stage, output, mp3Link);
+        const res = await fetch("/api/google/sheets/card", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: clientName, fields, createIfMissing: true }),
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          updateAgentState(agentId, { cardStatus: "saved", cardError: null });
+        } else {
+          updateAgentState(agentId, {
+            cardStatus: "error",
+            cardError:
+              data.error === "scope_required"
+                ? "Brak uprawnień do arkusza — połącz Google ponownie."
+                : data.detail || data.error || "Nie udało się zapisać karty.",
+          });
+        }
+      } catch (err) {
+        updateAgentState(agentId, {
+          cardStatus: "error",
+          cardError: err instanceof Error ? err.message : "Błąd połączenia z arkuszem.",
+        });
+      }
+    },
+    [updateAgentState],
+  );
+
   // ── Run agent ──────────────────────────────────────────────────
 
   const handleRun = useCallback(async () => {
@@ -143,6 +225,8 @@ function AgenciPageInner() {
       notionError: null,
       notionPushing: false,
       elapsed: null,
+      cardStatus: "idle",
+      cardError: null,
     });
 
     try {
@@ -177,11 +261,7 @@ function AgenciPageInner() {
           notionError: data.notion_error ?? null,
           elapsed,
         });
-        if (
-          (activeAgent === "agent0" || activeAgent === "agent1") &&
-          data.notion_page_id &&
-          !selectedClientId
-        ) {
+        if (activeAgent === "agent1" && data.notion_page_id && !selectedClientId) {
           const newClient: PipelineClient = {
             id: data.notion_page_id,
             name: data.notion_client_name ?? "Nowy klient",
@@ -189,6 +269,15 @@ function AgenciPageInner() {
           };
           setClients((prev) => [newClient, ...prev.filter((c) => c.id !== newClient.id)]);
           setSelectedClientIds((prev) => ({ ...prev, [activeAgent]: data.notion_page_id }));
+        }
+
+        // Auto-update the "Kontakty" client card for stage agents (01/04).
+        const stage = CARD_STAGE_BY_AGENT[activeAgent];
+        if (stage) {
+          const clientName = (state.attachedClientName || data.notion_client_name || "").trim();
+          if (clientName) {
+            void writeCard(activeAgent, stage, clientName, state.attachedMp3Link, data.output);
+          }
         }
       } else {
         updateAgentState(activeAgent, {
@@ -205,7 +294,7 @@ function AgenciPageInner() {
         elapsed,
       });
     }
-  }, [activeAgent, agentStates, selectedClientIds, updateAgentState]);
+  }, [activeAgent, agentStates, selectedClientIds, updateAgentState, writeCard]);
 
   // ── Notion push ────────────────────────────────────────────────
 
@@ -262,7 +351,7 @@ function AgenciPageInner() {
   // ── Render ─────────────────────────────────────────────────────
 
   if (!activeAgent) {
-    return <AgentsOverview health={health} healthLoading={healthLoading} onSelect={selectAgent} />;
+    return <AgentsOverview />;
   }
 
   return (

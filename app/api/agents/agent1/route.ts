@@ -2,7 +2,12 @@ import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { AGENT_MODELS, AGENT1_SYSTEM_PROMPT } from "@/lib/agents/prompts";
-import { getClientPage, upsertClientInPipeline } from "@/lib/notion/client";
+import {
+  getClientPage,
+  getKwalifikacjaKnowledge,
+  saveOperationHistory,
+  upsertClientInPipeline,
+} from "@/lib/notion/client";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -24,6 +29,15 @@ export async function POST(req: Request) {
 
     const { transcript, notion_page_id } = parsed.data;
 
+    // Fetch qualification knowledge base (5-min cache) — always injected
+    let kbSection = "";
+    try {
+      const kb = await getKwalifikacjaKnowledge();
+      if (kb.trim()) kbSection = `BAZA WIEDZY — ETAP 1 ROZMOWA KWALIFIKACYJNA:\n${kb}\n\n---\n\n`;
+    } catch {
+      /* non-fatal */
+    }
+
     // Fetch existing Notion data so agent can use/reconcile with transcript
     let userMessage = transcript;
     if (notion_page_id) {
@@ -40,6 +54,8 @@ export async function POST(req: Request) {
         // non-fatal — proceed with transcript only
       }
     }
+
+    if (kbSection) userMessage = kbSection + userMessage;
 
     const message = await client.messages.create({
       model: AGENT_MODELS.agent1,
@@ -71,12 +87,33 @@ export async function POST(req: Request) {
       );
     }
 
+    // Deterministyczny wynik ICP — nie ufamy arytmetyce LLM (model liczył 3/5 przy 1 TAK).
+    // "TAK" = 1 pkt; "NIE" i "BRAK DANYCH" = 0. Źródło prawdy dla Notion/UI/historii.
+    const icp = (output.icp ?? {}) as Record<string, unknown>;
+    const isYes = (v: unknown) =>
+      String(v ?? "")
+        .trim()
+        .toUpperCase() === "TAK";
+    const computedIcp = [
+      icp.flota_ok,
+      icp.biuro_ok,
+      icp.decyzyjnosc_ok,
+      icp.bol_ok,
+      icp.aktywne_szukanie_ok,
+    ].filter(isYes).length;
+    icp.wynik = computedIcp;
+    if (!icp.kwalifikacja || String(icp.kwalifikacja).trim() === "") {
+      icp.kwalifikacja = computedIcp <= 1 ? "SŁABA" : computedIcp <= 3 ? "ŚREDNIA" : "MOCNA";
+    }
+    output.icp = icp;
+
     // Compute client name + status for immediate UI update (no Notion round-trip needed)
     const o1 = output as {
       firma?: string;
       imie_nazwisko?: string;
       meet_data?: string | null;
       icp?: { kwalifikacja?: string | null };
+      bol_glowny_cytat?: string;
     };
     const notionClientName = o1.firma || o1.imie_nazwisko || "Nowy klient";
     const kwal = o1.icp?.kwalifikacja ?? null;
@@ -99,6 +136,22 @@ export async function POST(req: Request) {
     } catch (notionErr) {
       console.error("[agent1] Notion error:", notionErr);
       notionError = notionErr instanceof Error ? notionErr.message : "Błąd Notion";
+    }
+
+    if (savedNotionPageId) {
+      const summary = [
+        `Status: ${notionClientStatus}`,
+        o1.icp?.kwalifikacja ? `ICP: ${o1.icp.kwalifikacja}` : null,
+        o1.bol_glowny_cytat ? `Ból: ${String(o1.bol_glowny_cytat).slice(0, 120)}` : null,
+      ]
+        .filter(Boolean)
+        .join(" · ");
+      saveOperationHistory(
+        savedNotionPageId,
+        "Agent 01 — Analiza kwalifikacyjna",
+        summary,
+        JSON.stringify(output, null, 2),
+      ).catch(() => {});
     }
 
     return NextResponse.json({

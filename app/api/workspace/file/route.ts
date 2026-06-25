@@ -1,4 +1,5 @@
 import fs from "fs";
+import fsPromises from "fs/promises";
 import { NextResponse } from "next/server";
 import path from "path";
 
@@ -72,6 +73,29 @@ export async function GET(req: Request) {
   } catch (err) {
     return NextResponse.json(
       { success: false, error: err instanceof Error ? err.message : "Read error" },
+      { status: 500 },
+    );
+  }
+}
+
+export async function PUT(req: Request) {
+  try {
+    const body = (await req.json()) as { path?: string; content?: string };
+    const { path: filePath, content } = body;
+    if (!filePath || content === undefined) {
+      return NextResponse.json({ success: false, error: "Brak path lub content" }, { status: 400 });
+    }
+
+    const resolved = path.resolve(WORKSPACE_ROOT, filePath.replace(/^\//, ""));
+    if (!resolved.startsWith(path.resolve(WORKSPACE_ROOT))) {
+      return NextResponse.json({ success: false, error: "Niedozwolona ścieżka" }, { status: 403 });
+    }
+
+    await fsPromises.writeFile(resolved, content, "utf8");
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    return NextResponse.json(
+      { success: false, error: err instanceof Error ? err.message : "Błąd zapisu" },
       { status: 500 },
     );
   }

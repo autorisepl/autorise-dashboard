@@ -3,7 +3,8 @@ export const dynamic = "force-dynamic";
 
 const GROQ_URL = "https://api.groq.com/openai/v1/audio/transcriptions";
 const ALLOWED_EXTS = new Set(["mp3", "mp4", "m4a", "wav", "ogg", "webm", "flac"]);
-const CHUNK_BYTES = 22 * 1024 * 1024; // 22 MB — safely under Groq's 25 MB limit
+const CHUNK_BYTES = 24 * 1024 * 1024; // 24 MB — pod limitem Groq 25 MB; mniej dzielenia = mniej błędów
+const TRANSCRIBE_LANGUAGE = "pl"; // stały język: polski
 
 interface GroqSegment {
   start: number;
@@ -24,35 +25,58 @@ interface TranscriptSegment {
   text: string;
 }
 
-async function transcribeBytes(
+async function callGroqOnce(
   bytes: Uint8Array,
   fileName: string,
   mimeType: string,
   apiKey: string,
-): Promise<GroqVerboseResponse> {
+): Promise<Response> {
   const form = new FormData();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   form.append("file", new Blob([bytes.buffer as any], { type: mimeType }), fileName);
   form.append("model", "whisper-large-v3");
   form.append("response_format", "verbose_json");
   form.append("temperature", "0");
+  form.append("language", TRANSCRIBE_LANGUAGE); // wymuś polski
 
-  const res = await fetch(GROQ_URL, {
+  return fetch(GROQ_URL, {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}` },
     body: form,
   });
+}
+
+const GATEWAY_STATUSES = new Set([429, 500, 502, 503, 504]);
+
+async function transcribeBytes(
+  bytes: Uint8Array,
+  fileName: string,
+  mimeType: string,
+  apiKey: string,
+): Promise<GroqVerboseResponse> {
+  // Do 3 prób z narastającym backoffem na przejściowe błędy bramy Groq (429/5xx).
+  let res = await callGroqOnce(bytes, fileName, mimeType, apiKey);
+  for (let attempt = 1; attempt <= 2 && GATEWAY_STATUSES.has(res.status); attempt++) {
+    await new Promise((r) => setTimeout(r, attempt * 1500));
+    res = await callGroqOnce(bytes, fileName, mimeType, apiKey);
+  }
 
   if (!res.ok) {
     const body = await res.text().catch(() => "");
-    let msg = `Groq API błąd ${res.status}`;
+    let detail = "";
     try {
       const parsed = JSON.parse(body) as { error?: { message?: string } };
-      if (parsed.error?.message) msg = parsed.error.message;
+      if (parsed.error?.message) detail = parsed.error.message;
     } catch {
-      /* use raw msg */
+      /* brak JSON */
     }
-    throw new Error(msg);
+    if (GATEWAY_STATUSES.has(res.status)) {
+      // 502/503/504/429 = chwilowy problem po stronie Groq, nie uszkodzony plik.
+      throw new Error(
+        `Serwer Groq chwilowo niedostępny (${res.status}). To przejściowy problem usługi — spróbuj ponownie za chwilę.`,
+      );
+    }
+    throw new Error(detail || `Groq API błąd ${res.status}`);
   }
 
   return res.json() as Promise<GroqVerboseResponse>;
@@ -64,19 +88,16 @@ export async function POST(req: Request) {
     return Response.json({ error: "Brak konfiguracji GROQ_API_KEY na serwerze." }, { status: 500 });
   }
 
-  let formData: FormData;
+  // Read file name and MIME type from custom headers (avoids multipart parsing limits)
+  const rawName = req.headers.get("x-file-name") ?? "audio.mp3";
+  let fileName: string;
   try {
-    formData = await req.formData();
+    fileName = decodeURIComponent(rawName);
   } catch {
-    return Response.json({ error: "Nie udało się odczytać pliku." }, { status: 400 });
+    fileName = rawName;
   }
 
-  const file = formData.get("audio") as File | null;
-  if (!file || file.size === 0) {
-    return Response.json({ error: "Brak pliku audio." }, { status: 400 });
-  }
-
-  const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+  const ext = fileName.split(".").pop()?.toLowerCase() ?? "";
   if (!ALLOWED_EXTS.has(ext)) {
     return Response.json(
       { error: `Format .${ext} nie jest obsługiwany. Użyj: mp3, m4a, wav, flac, ogg.` },
@@ -84,8 +105,23 @@ export async function POST(req: Request) {
     );
   }
 
-  const buffer = await file.arrayBuffer();
-  const bytes = new Uint8Array(buffer);
+  const mimeType =
+    req.headers.get("x-file-mime") ??
+    req.headers.get("content-type")?.split(";")[0] ??
+    "audio/mpeg";
+
+  let bytes: Uint8Array;
+  try {
+    const buffer = await req.arrayBuffer();
+    if (buffer.byteLength === 0) {
+      return Response.json({ error: "Brak pliku audio (plik pusty)." }, { status: 400 });
+    }
+    bytes = new Uint8Array(buffer);
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : "nieznany błąd";
+    return Response.json({ error: `Nie udało się odczytać pliku: ${detail}` }, { status: 400 });
+  }
+
   const chunkCount = Math.ceil(bytes.length / CHUNK_BYTES);
 
   const encoder = new TextEncoder();
@@ -97,7 +133,7 @@ export async function POST(req: Request) {
       };
 
       try {
-        send({ type: "start", chunks: chunkCount, fileName: file.name, fileSize: file.size });
+        send({ type: "start", chunks: chunkCount, fileName, fileSize: bytes.length });
 
         const allSegments: TranscriptSegment[] = [];
         let fullText = "";
@@ -108,11 +144,11 @@ export async function POST(req: Request) {
           const start = i * CHUNK_BYTES;
           const end = Math.min(start + CHUNK_BYTES, bytes.length);
           const chunk = bytes.slice(start, end);
-          const chunkName = chunkCount > 1 ? `chunk_${i + 1}.${ext}` : file.name;
+          const chunkName = chunkCount > 1 ? `chunk_${i + 1}.${ext}` : fileName;
 
           let result: GroqVerboseResponse;
           try {
-            result = await transcribeBytes(chunk, chunkName, file.type, apiKey);
+            result = await transcribeBytes(chunk, chunkName, mimeType, apiKey);
           } catch (err) {
             send({
               type: "error",

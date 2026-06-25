@@ -1,6 +1,8 @@
 {
-  "securecoder.excludeGlobs": ["**/.next/**", "**/node_modules/**"],
-  "securecoder.ignorePaths": [".next", "node_modules"],
+  "securecoder.excludeGlobs": ["**/.next/**", "**/node_modules/**", "**/.next/server/**", "**/dist/**", "**/build/**"],
+  "securecoder.ignorePaths": [".next", "node_modules", ".next/server", ".next/server/chunks", "dist", "build"],
+  "securecoder.exclude": [".next/**", "node_modules/**"],
+  "securecoder.enableOnSave": false,
   "search.exclude": {
     "**/.next": true,
     "**/node_modules": true
@@ -9,5 +11,12 @@
     "**/.next/**": true,
     "**/node_modules/**": true
   },
-  "typescript.tsdk": "node_modules/typescript/lib"
+  "files.exclude": {
+    "**/.next": true,
+    "**/node_modules": true
+  },
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.validate.enable": true,
+  "eslint.workingDirectories": ["."],
+  "problems.decorations.enabled": true
 }

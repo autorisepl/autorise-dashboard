@@ -205,6 +205,8 @@
 
 <!-- Edit bar -->
 <div id="edit-bar">
+  <div id="edit-slide-info" style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.45);letter-spacing:.06em;white-space:nowrap;flex-shrink:0;text-transform:uppercase;">Slajd 1/7 — Problem</div>
+  <div class="ei-sep"></div>
   <div class="ei"><label>Dziś h/mc</label><input id="ei-roi" type="number" placeholder="70"/></div>
   <div class="ei-sep"></div>
   <div class="ei"><label>Po h/mc</label><input id="ei-po" type="number" placeholder="10"/></div>
@@ -214,6 +216,8 @@
   <div class="ei"><label>TMS</label><input id="ei-tms" class="wide" type="text" placeholder="Trans.eu"/></div>
   <div class="ei-sep"></div>
   <div class="ei"><label>Gwarancja %</label><input id="ei-gwar" type="number" placeholder="95"/></div>
+  <div class="ei-sep"></div>
+  <button id="edit-exit" style="height:26px;padding:0 10px;border-radius:6px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.45);font-family:var(--font);font-size:10px;font-weight:700;cursor:pointer;letter-spacing:.05em;white-space:nowrap;flex-shrink:0;">Wyjdź ✕</button>
 </div>
 
 <!-- Progress -->
@@ -564,11 +568,16 @@ function updateNav() {
   document.getElementById('progress-bar').style.width = ((cur + 1) / TOTAL * 100).toFixed(1) + '%'
   document.getElementById('btn-prev').style.opacity = cur === 0 ? '0.22' : '1'
   document.getElementById('btn-next').style.opacity = cur === TOTAL - 1 ? '0.22' : '1'
+  if (editMode) {
+    const info = document.getElementById('edit-slide-info')
+    if (info) info.textContent = 'Slajd ' + (cur + 1) + '/7 — ' + SLIDE_NAMES[cur]
+  }
 }
 
 // ── Edit mode ─────────────────────────────────────────────────────
 
 let editMode = false
+const SLIDE_NAMES = ['Problem', 'Efekt ROI', 'System', 'Dlaczego my', 'Proces', 'Inwestycja', 'Gwarancja']
 
 function setEdit(on) {
   editMode = on
@@ -577,6 +586,19 @@ function setEdit(on) {
   bar.classList.toggle('visible', on)
   tog.classList.toggle('on', on)
   document.documentElement.style.setProperty('--edit-h', on ? '56px' : '0px')
+
+  // Presentation mode: only progress bar visible; edit mode: show all nav
+  const d = on ? '' : 'none'
+  document.getElementById('nav').style.display = on ? 'flex' : 'none'
+  document.getElementById('counter').style.display = d
+  document.getElementById('btn-prev').style.display = d
+  document.getElementById('btn-next').style.display = d
+  tog.style.display = d
+
+  if (on) {
+    const info = document.getElementById('edit-slide-info')
+    if (info) info.textContent = 'Slajd ' + (cur + 1) + '/7 — ' + SLIDE_NAMES[cur]
+  }
 }
 
 document.getElementById('edit-toggle').addEventListener('click', () => setEdit(!editMode))
@@ -615,6 +637,7 @@ document.addEventListener('touchend', e => {
 
 document.getElementById('btn-prev').addEventListener('click', () => goTo(cur - 1, -1))
 document.getElementById('btn-next').addEventListener('click', () => goTo(cur + 1, 1))
+document.getElementById('edit-exit').addEventListener('click', () => setEdit(false))
 dots.forEach((d, i) => d.addEventListener('click', () => goTo(i, i > cur ? 1 : -1)))
 
 // ── Init ──────────────────────────────────────────────────────────
@@ -624,6 +647,13 @@ slides[START].style.cssText = ''
 slides[START].classList.add('active')
 cur = START
 updateNav()
+
+// Start in presentation mode — only progress bar visible, use E to enter edit
+document.getElementById('nav').style.display = 'none'
+document.getElementById('counter').style.display = 'none'
+document.getElementById('btn-prev').style.display = 'none'
+document.getElementById('btn-next').style.display = 'none'
+document.getElementById('edit-toggle').style.display = 'none'
 </script>
 </body>
 </html>

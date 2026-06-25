@@ -434,7 +434,7 @@ export function Agent2Card({ output }: { output: Agent2Output }) {
           </>
         )}
 
-        {/* Plan Discovery — Live Script */}
+        {/* Plan Analizy diagnostycznej — Live Script */}
         {output.plan_discovery && (
           <>
             <div style={{ margin: "0 0 12px", display: "flex", alignItems: "center", gap: 8 }}>
@@ -449,7 +449,7 @@ export function Agent2Card({ output }: { output: Agent2Output }) {
                   color: "#1a56ff",
                 }}
               >
-                Plan Discovery Call
+                Analiza diagnostyczna z ofertowaniem — Plan
               </span>
             </div>
             <LiveScript plan={output.plan_discovery} />

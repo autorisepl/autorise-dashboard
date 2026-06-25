@@ -3,7 +3,7 @@ import type { Message } from "@anthropic-ai/sdk/resources/messages";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { AGENT_MODELS, AGENT2_SYSTEM_PROMPT } from "@/lib/agents/prompts";
-import { saveAgent2Output } from "@/lib/notion/client";
+import { saveAgent2Output, saveOperationHistory } from "@/lib/notion/client";
 
 export const maxDuration = 300;
 
@@ -67,6 +67,16 @@ export async function POST(req: Request) {
     if (notion_page_id && output.pre_discovery_brief && output.plan_discovery) {
       try {
         await saveAgent2Output(notion_page_id, output.pre_discovery_brief, output.plan_discovery);
+        const brief = output.pre_discovery_brief as { hipoteza_bol_glowny?: string };
+        const summary = brief.hipoteza_bol_glowny
+          ? `Hipoteza bólu: ${brief.hipoteza_bol_glowny.slice(0, 150)}`
+          : "Pre-Discovery Brief gotowy";
+        saveOperationHistory(
+          notion_page_id,
+          "Agent 02 — Pre-Discovery Brief",
+          summary,
+          JSON.stringify(output, null, 2),
+        ).catch(() => {});
       } catch (notionErr) {
         console.error("[agent2] Notion error:", notionErr);
         notionError = notionErr instanceof Error ? notionErr.message : "Błąd Notion";

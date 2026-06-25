@@ -30,6 +30,7 @@ export async function POST(req: Request) {
       thinking: { type: "adaptive" },
       system: AGENT5_SYSTEM_PROMPT,
       messages: [{ role: "user", content: `Transkrypt sesji Agency Leaders:\n\n${transcript}` }],
+      metadata: { user_id: "autorise-agent5" },
     });
 
     if (message.stop_reason === "max_tokens") {

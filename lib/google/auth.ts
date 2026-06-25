@@ -2,8 +2,10 @@ import { google } from "googleapis";
 
 const SCOPES = [
   "https://www.googleapis.com/auth/tasks",
-  "https://www.googleapis.com/auth/spreadsheets.readonly",
+  "https://www.googleapis.com/auth/spreadsheets",
+  "https://www.googleapis.com/auth/drive.readonly",
   "https://www.googleapis.com/auth/drive.file",
+  "https://www.googleapis.com/auth/calendar",
   "https://www.googleapis.com/auth/userinfo.email",
   "https://www.googleapis.com/auth/userinfo.profile",
 ];
@@ -61,4 +63,9 @@ export function getSheetsClient(refreshToken: string) {
 export function getDriveClient(refreshToken: string) {
   const auth = getAuthenticatedClient(refreshToken);
   return google.drive({ version: "v3", auth });
+}
+
+export function getCalendarClient(refreshToken: string) {
+  const auth = getAuthenticatedClient(refreshToken);
+  return google.calendar({ version: "v3", auth });
 }

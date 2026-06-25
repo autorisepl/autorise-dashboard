@@ -1,7 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedClient, getRefreshToken } from "@/lib/google/auth";
 
-const TRANSCRIPT_FOLDER_ID = "15xY1klu-c_3EqDDVT7SpzzUVRGRYVHNo";
+const TRANSCRIPT_FOLDER_ID =
+  process.env.GOOGLE_DRIVE_TRANSCRIPTS_TXT_FOLDER_ID ?? "1wk2yKYnC_7kvk8-P0Na8lBYrWO8DqHox";
 
 export async function POST(req: NextRequest) {
   const token = getRefreshToken({

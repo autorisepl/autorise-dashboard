@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "100mb",
     },
   },
+  outputFileTracingExcludes: {
+    "/api/workspace/tree": ["**"],
+  },
 };
 
 export default nextConfig;

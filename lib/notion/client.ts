@@ -250,6 +250,11 @@ export async function upsertClientInPipeline(
       faktury_po_terminie?: number | null;
       srednia_wartosc_faktury?: number | null;
     } | null;
+    followup?: {
+      typ_followup?: string | null;
+      data_followup?: string | null;
+      kontekst_followup?: string | null;
+    } | null;
   };
 
   const hasMeeting = Boolean(a1.meet_data);
@@ -298,7 +303,11 @@ export async function upsertClientInPipeline(
   if (isDiskwalifikowany) {
     props["Status"] = { select: { name: "Niekwalifikowany" } };
   } else {
-    const pipelineStatus = kwalifikacjaToStatus(a1.icp?.kwalifikacja ?? null, hasMeeting);
+    let pipelineStatus = kwalifikacjaToStatus(a1.icp?.kwalifikacja ?? null, hasMeeting);
+    // "Discovery umówione" is a MANUAL action only — never auto-set for existing clients
+    if (pageId && pipelineStatus === "Discovery umówione") {
+      pipelineStatus = "Kwalifikacja";
+    }
     props["Status"] = { select: { name: pipelineStatus } };
 
     if (a1.meet_data) {
@@ -331,6 +340,34 @@ export async function upsertClientInPipeline(
   if (a1.kalkulator_dane?.srednia_wartosc_faktury != null) {
     props["Średnia wartość faktury PLN"] = { number: a1.kalkulator_dane.srednia_wartosc_faktury };
   }
+
+  // Follow-up scenario: second decision-maker must join Discovery Call, or other deferral.
+  // Graceful: missing Notion fields don't break the entire save.
+  if (a1.followup?.typ_followup) {
+    try {
+      props["Typ follow-up"] = { select: { name: a1.followup.typ_followup } };
+      if (a1.followup.data_followup) {
+        const isoFollowup = anyDateToISO(a1.followup.data_followup);
+        if (isoFollowup) props["Data następnego kroku"] = { date: { start: isoFollowup } };
+      }
+      if (a1.followup.kontekst_followup) {
+        props["Następny krok"] = {
+          rich_text: richText(
+            `[Follow-up: ${a1.followup.typ_followup}] ${a1.followup.kontekst_followup}`,
+          ),
+        };
+      }
+    } catch {
+      // Follow-up fields are optional — skip silently if Notion rejects them
+    }
+  }
+
+  // NOTE: The following Pipeline fields are filled MANUALLY by Michał in the Notion UI.
+  // They are NEVER written by any agent. Do not add agent logic for these:
+  //   "Cena wdrożenia"    — PLN, negotiated price per client
+  //   "Retainer PLN/mc"  — monthly retainer amount
+  //   "Gotowość zakupowa" — Michał's subjective readiness assessment
+  //   "Pilność"           — urgency flag set after Discovery Call
 
   const isWlasciciel =
     a1.wlasciciel_czy_manager?.toLowerCase().includes("właściciel") ||
@@ -546,6 +583,7 @@ export async function migrateNotionSchema(): Promise<{ added: string[]; errors: 
   const added: string[] = [];
   const errors: string[] = [];
 
+  // Batch 1: core agent-written fields and calculators
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (notion.databases.update as any)({
@@ -575,6 +613,20 @@ export async function migrateNotionSchema(): Promise<{ added: string[]; errors: 
         "Godziny wpisywania / spedytor": { number: {} },
         "Faktury po terminie / mc": { number: {} },
         "Średnia wartość faktury PLN": { number: {} },
+        // Contact fields written by Agent 1
+        Kontakt: { rich_text: {} },
+        Telefon: { phone_number: {} },
+        Email: { email: {} },
+        NIP: { rich_text: {} },
+        Flota: { number: {} },
+        Decydent: { checkbox: {} },
+        // Pain & solution fields
+        "Ból główny": { rich_text: {} },
+        TMS: { rich_text: {} },
+        "Podejście TMS": { rich_text: {} },
+        Obiekcje: { rich_text: {} },
+        Notatki: { rich_text: {} },
+        "Następny krok": { rich_text: {} },
       },
     });
     added.push(
@@ -594,10 +646,217 @@ export async function migrateNotionSchema(): Promise<{ added: string[]; errors: 
       "Godziny wpisywania / spedytor",
       "Faktury po terminie / mc",
       "Średnia wartość faktury PLN",
+      "Kontakt",
+      "Telefon",
+      "Email",
+      "NIP",
+      "Flota",
+      "Decydent",
+      "Ból główny",
+      "TMS",
+      "Podejście TMS",
+      "Obiekcje",
+      "Notatki",
+      "Następny krok",
     );
   } catch (err) {
-    errors.push(err instanceof Error ? err.message : "Błąd migracji schematu");
+    errors.push(`Batch 1: ${err instanceof Error ? err.message : "Błąd migracji schematu"}`);
+  }
+
+  // Batch 2: date fields, selects, and additional fields
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (notion.databases.update as any)({
+      database_id: PIPELINE_DB_ID,
+      properties: {
+        "Data pierwszego kontaktu": { date: {} },
+        "Data discovery": { date: {} },
+        "Data następnego kroku": { date: {} },
+        "Data oferty": { date: {} },
+        "Data zamknięcia": { date: {} },
+        "Re-engagement": { date: {} },
+        Źródło: {
+          select: {
+            options: [
+              { name: "META Ads", color: "blue" },
+              { name: "Polecenie", color: "green" },
+              { name: "LinkedIn", color: "purple" },
+              { name: "Cold outreach", color: "orange" },
+              { name: "Inne", color: "gray" },
+            ],
+          },
+        },
+        "Powód rezygnacji": { rich_text: {} },
+        "Wszystkie transkrypty": { rich_text: {} },
+        // Option names MUST match icpToSelect() in this file and real Notion schema
+        "Ocena ICP": {
+          select: {
+            options: [
+              { name: "5 - idealny", color: "green" },
+              { name: "4 - dobry", color: "green" },
+              { name: "3 - średni", color: "yellow" },
+              { name: "2 - słaby", color: "orange" },
+              { name: "1 - nie pasuje", color: "red" },
+            ],
+          },
+        },
+        // Fields filled MANUALLY by Michał in Notion UI — never written by agents
+        "Cena wdrożenia": { number: {} },
+        "Retainer PLN/mc": { number: {} },
+        "Gotowość zakupowa": {
+          select: {
+            options: [
+              { name: "5 - kupuje", color: "green" },
+              { name: "4 - prawie", color: "green" },
+              { name: "3 - zainteresowany", color: "yellow" },
+              { name: "2 - waha się", color: "orange" },
+              { name: "1 - zimny", color: "red" },
+            ],
+          },
+        },
+        Pilność: {
+          select: {
+            options: [
+              { name: "Szuka teraz", color: "red" },
+              { name: "W ciągu miesiąca", color: "orange" },
+              { name: "Rozgląda się", color: "yellow" },
+              { name: "Brak pilności", color: "gray" },
+            ],
+          },
+        },
+      },
+    });
+    added.push(
+      "Data pierwszego kontaktu",
+      "Data discovery",
+      "Data następnego kroku",
+      "Data oferty",
+      "Data zamknięcia",
+      "Re-engagement",
+      "Źródło",
+      "Powód rezygnacji",
+      "Wszystkie transkrypty",
+      "Ocena ICP",
+      "Cena wdrożenia",
+      "Retainer PLN/mc",
+      "Gotowość zakupowa",
+      "Pilność",
+    );
+  } catch (err) {
+    errors.push(`Batch 2: ${err instanceof Error ? err.message : "Błąd migracji schematu"}`);
   }
 
   return { added, errors };
+}
+
+// --- Operation History ---
+
+export interface HistoryEntry {
+  id: string;
+  title: string;
+  date: string;
+  type: string;
+}
+
+export async function saveOperationHistory(
+  pageId: string,
+  type: string,
+  summary: string,
+  detailsJson?: string,
+): Promise<void> {
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const dateStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  const timeStr = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  const title = `[Historia] ${dateStr} ${timeStr} — ${type}`;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const blocks: any[] = [
+    headingBlock(`${type}`),
+    paragraphBlock(`${dateStr} ${timeStr}`),
+    paragraphBlock(summary),
+  ];
+  if (detailsJson) {
+    blocks.push(...codeBlock(detailsJson));
+  }
+
+  await notion.pages.create({
+    parent: { page_id: pageId },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    properties: { title: { title: richText(title) } } as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    children: blocks.slice(0, 95) as any,
+  });
+}
+
+export async function getOperationHistory(pageId: string): Promise<HistoryEntry[]> {
+  const blocks = await notion.blocks.children.list({ block_id: pageId, page_size: 100 });
+  const entries: HistoryEntry[] = [];
+
+  for (const block of blocks.results) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const b = block as any;
+    if (b.type === "child_page") {
+      const title: string = b.child_page?.title ?? "";
+      if (title.startsWith("[Historia]")) {
+        const match = title.match(/\[Historia\] (\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}) — (.+)/);
+        entries.push({
+          id: block.id,
+          title,
+          date: match ? `${match[1]} ${match[2]}` : "",
+          type: match ? match[3] : title.replace("[Historia] ", ""),
+        });
+      }
+    }
+  }
+
+  return entries.sort((a, b) => b.date.localeCompare(a.date));
+}
+
+// --- Kwalifikacja Knowledge Base (Etap 1) ---
+// Fetches and caches the content of the "Etap 1 - Rozmowa kwalifikacyjna" Notion page
+// so Agent 01 always has up-to-date process knowledge injected into its context.
+
+const KWALIFIKACJA_KB_PAGE_ID = "387b5106a69481f6aea8ed47a7ec279e";
+const KB_TTL = 5 * 60 * 1000; // 5-minute in-memory cache
+
+let kbCache: { text: string; fetchedAt: number } | null = null;
+
+function richBlockToText(block: Record<string, unknown>): string {
+  const t = block.type as string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rt = (items: any[]) => (items ?? []).map((r: any) => r.plain_text ?? "").join("");
+
+  if (t === "paragraph") return rt((block.paragraph as any)?.rich_text);
+  if (t === "heading_1") return `# ${rt((block.heading_1 as any)?.rich_text)}`;
+  if (t === "heading_2") return `## ${rt((block.heading_2 as any)?.rich_text)}`;
+  if (t === "heading_3") return `### ${rt((block.heading_3 as any)?.rich_text)}`;
+  if (t === "bulleted_list_item") return `- ${rt((block.bulleted_list_item as any)?.rich_text)}`;
+  if (t === "numbered_list_item") return `• ${rt((block.numbered_list_item as any)?.rich_text)}`;
+  if (t === "quote") return `> ${rt((block.quote as any)?.rich_text)}`;
+  if (t === "callout") return `📌 ${rt((block.callout as any)?.rich_text)}`;
+  if (t === "toggle") return `▶ ${rt((block.toggle as any)?.rich_text)}`;
+  if (t === "to_do")
+    return `[${(block.to_do as any)?.checked ? "x" : " "}] ${rt((block.to_do as any)?.rich_text)}`;
+  return "";
+}
+
+export async function getKwalifikacjaKnowledge(): Promise<string> {
+  const now = Date.now();
+  if (kbCache && now - kbCache.fetchedAt < KB_TTL) return kbCache.text;
+
+  try {
+    const response = await notion.blocks.children.list({
+      block_id: KWALIFIKACJA_KB_PAGE_ID,
+      page_size: 100,
+    });
+    const lines = (response.results as Record<string, unknown>[])
+      .map(richBlockToText)
+      .filter(Boolean);
+    const text = lines.join("\n");
+    kbCache = { text, fetchedAt: now };
+    return text;
+  } catch {
+    return kbCache?.text ?? "";
+  }
 }

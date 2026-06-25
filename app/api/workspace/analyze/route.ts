@@ -121,6 +121,10 @@ export async function POST(req: Request) {
       metadata: { user_id: "autorise-workspace-agent" },
     });
 
+    if (message.stop_reason === "max_tokens") {
+      console.warn("[workspace/analyze] Response truncated — consider increasing max_tokens");
+    }
+
     const text = message.content
       .filter((b) => b.type === "text")
       .map((b) => (b as { type: "text"; text: string }).text)
