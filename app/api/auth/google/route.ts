@@ -1,11 +1,12 @@
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { getAuthUrl, isGoogleConfigured } from "@/lib/google/auth";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   if (!isGoogleConfigured()) {
-    return NextResponse.redirect(
-      new URL("/profil?google=not_configured", process.env.NEXTAUTH_URL ?? "http://localhost:3000"),
-    );
+    return NextResponse.redirect(new URL("/profil?google=not_configured", req.nextUrl.origin));
   }
-  return NextResponse.redirect(getAuthUrl());
+  // redirect_uri wyliczone z domeny żądania → działa na localhost i na produkcji
+  // (musi być dodane w Google Cloud Console → Authorized redirect URIs).
+  const redirectUri = `${req.nextUrl.origin}/api/auth/google/callback`;
+  return NextResponse.redirect(getAuthUrl(redirectUri));
 }

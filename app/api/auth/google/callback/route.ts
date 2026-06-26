@@ -11,7 +11,8 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const auth = getOAuth2Client();
+    // redirect_uri przy wymianie kodu MUSI być identyczny jak w auth URL.
+    const auth = getOAuth2Client(`${base}/api/auth/google/callback`);
     const { tokens } = await auth.getToken(code);
 
     if (!tokens.refresh_token) {

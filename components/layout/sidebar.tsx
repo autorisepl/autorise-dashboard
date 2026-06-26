@@ -276,7 +276,10 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
 
       {/* 2. Profil */}
       <button
-        onClick={() => { router.push("/profil"); onNavigate?.(); }}
+        onClick={() => {
+          router.push("/profil");
+          onNavigate?.();
+        }}
         style={{
           display: "flex",
           alignItems: "center",

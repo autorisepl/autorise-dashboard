@@ -13,6 +13,7 @@ interface GoogleStatus {
   picture?: string;
   source?: "env" | "cookie";
   reason?: string;
+  stale_env?: boolean;
 }
 
 // ── Google SVG ─────────────────────────────────────────────────────────
@@ -527,6 +528,38 @@ function ProfilContent() {
                     .env.local.
                   </div>
                 )}
+
+                {!connected &&
+                  (googleStatus?.reason === "expired" ||
+                    googleStatus?.reason === "invalid_token") && (
+                    <div
+                      style={{
+                        marginTop: 12,
+                        padding: "12px 14px",
+                        background: "var(--warning-bg)",
+                        border: "1px solid var(--warning-border)",
+                        borderRadius: 10,
+                        fontFamily: "var(--font-sans)",
+                        fontSize: 11.5,
+                        color: "var(--text-secondary)",
+                        lineHeight: 1.6,
+                      }}
+                    >
+                      <div style={{ fontWeight: 700, color: "var(--warning)", marginBottom: 4 }}>
+                        Połączenie z Google wygasło
+                      </div>
+                      Token dostępu stracił ważność (Google odświeża go co kilka dni w trybie
+                      testowym). Kliknij <strong>„Połącz z Google"</strong> powyżej, aby połączyć
+                      ponownie.
+                      {googleStatus?.stale_env && (
+                        <div style={{ marginTop: 6, color: "var(--text-tertiary)" }}>
+                          Uwaga: w zmiennych środowiskowych jest nieważny{" "}
+                          <code>GOOGLE_REFRESH_TOKEN</code> — usuń go (Vercel → Settings → Env), aby
+                          ponowne łączenie działało na stałe.
+                        </div>
+                      )}
+                    </div>
+                  )}
               </>
             )}
           </div>
