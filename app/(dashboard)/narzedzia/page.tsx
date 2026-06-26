@@ -12,6 +12,7 @@ import {
   ExternalLink,
   FileAudio,
   Loader2,
+  RefreshCw,
   Upload,
   X,
 } from "lucide-react";
@@ -204,11 +205,12 @@ export default function NarzedziaPage() {
   };
 
   // ── Załączanie MP3 z Dysku + status transkryptów ──
-  const loadDriveFiles = useCallback(async () => {
-    setDriveLoading(true);
-    setDriveError(null);
+  // silent=true → odświeżenie w tle (bez spinnera/migotania, nie czyści listy przy błędzie).
+  const loadDriveFiles = useCallback(async (silent = false) => {
+    if (!silent) setDriveLoading(true);
+    if (!silent) setDriveError(null);
     try {
-      const res = await fetch("/api/google/drive/transcripts");
+      const res = await fetch("/api/google/drive/transcripts", { cache: "no-store" });
       const data = (await res.json()) as {
         success?: boolean;
         mp3?: DriveAudioFile[];
@@ -218,24 +220,35 @@ export default function NarzedziaPage() {
       if (res.ok && data.success) {
         setDriveFiles(data.mp3 ?? []);
         setDriveTxtNames((data.txt ?? []).map((t) => t.name));
-      } else {
+        setDriveError(null);
+      } else if (!silent) {
         setDriveError(data.error ?? "Nie udało się pobrać listy z Dysku.");
         setDriveFiles([]);
         setDriveTxtNames([]);
       }
     } catch (err) {
-      setDriveError(err instanceof Error ? err.message : "Błąd połączenia z Dyskiem.");
-      setDriveFiles([]);
-      setDriveTxtNames([]);
+      if (!silent) {
+        setDriveError(err instanceof Error ? err.message : "Błąd połączenia z Dyskiem.");
+        setDriveFiles([]);
+        setDriveTxtNames([]);
+      }
     } finally {
-      setDriveLoading(false);
+      if (!silent) setDriveLoading(false);
     }
   }, []);
 
-  // Załaduj listę z Dysku przy wejściu — żeby od razu było widać które nagrania
-  // nie mają jeszcze transkryptu (status przy kliencie).
+  // Załaduj listę z Dysku przy wejściu + auto-odświeżanie w tle (real-time):
+  // co 20 s oraz przy powrocie do karty — żeby nowo wrzucone nagrania pojawiały
+  // się same, bez przeładowania strony.
   useEffect(() => {
     void loadDriveFiles();
+    const id = setInterval(() => void loadDriveFiles(true), 20_000);
+    const onFocus = () => void loadDriveFiles(true);
+    window.addEventListener("focus", onFocus);
+    return () => {
+      clearInterval(id);
+      window.removeEventListener("focus", onFocus);
+    };
   }, [loadDriveFiles]);
 
   const toggleDrivePicker = () => {
@@ -811,6 +824,7 @@ export default function NarzedziaPage() {
                   downloadingId={driveDownloadingId}
                   onPick={pickDriveFile}
                   onClose={() => setDrivePickerOpen(false)}
+                  onRefresh={() => void loadDriveFiles()}
                 />
               )}
             </div>
@@ -1451,6 +1465,7 @@ function DrivePicker({
   downloadingId,
   onPick,
   onClose,
+  onRefresh,
 }: {
   files: DriveAudioFile[];
   txtNames: string[];
@@ -1459,6 +1474,7 @@ function DrivePicker({
   downloadingId: string | null;
   onPick: (f: DriveAudioFile) => void;
   onClose: () => void;
+  onRefresh: () => void;
 }) {
   // Status per nagranie + sortowanie: najpierw bez transkryptu (do zrobienia).
   const withStatus = files
@@ -1525,6 +1541,18 @@ function DrivePicker({
               {todoCount > 0 ? `${todoCount} do transkrypcji` : "wszystko gotowe"}
             </span>
           )}
+          <button
+            onClick={(e) => { e.stopPropagation(); onRefresh(); }}
+            title="Odśwież listę z Dysku"
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "center",
+              width: 24, height: 24, borderRadius: 6, flexShrink: 0,
+              background: "none", border: "1px solid var(--border)",
+              cursor: "pointer", color: "var(--text-tertiary)",
+            }}
+          >
+            <RefreshCw size={11} style={{ animation: loading ? "spin 0.8s linear infinite" : "none" }} />
+          </button>
         </div>
         <div style={{ overflowY: "auto", padding: 2 }}>
           {loading ? (
