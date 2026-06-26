@@ -380,7 +380,7 @@ export default function PlikiPage() {
   return (
     <div
       style={{
-        height: "100vh",
+        height: "100%",
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
@@ -446,7 +446,7 @@ export default function PlikiPage() {
       </div>
 
       {/* Body — file panels (left) + preview (right) */}
-      <div style={{ flex: 1, overflow: "hidden", display: "flex" }}>
+      <div className="responsive-split" style={{ flex: 1, overflow: "hidden", display: "flex" }}>
         {/* Left: file panels */}
         <div
           style={{
@@ -460,6 +460,7 @@ export default function PlikiPage() {
         >
           {/* Top row: TXT | MP3 side by side */}
           <div
+            className="responsive-split"
             style={{
               flex: "3 1 0",
               display: "flex",

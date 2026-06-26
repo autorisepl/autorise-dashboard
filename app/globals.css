@@ -134,3 +134,138 @@ html, body {
 .page-enter {
   animation: pageFadeIn 200ms ease-out both;
 }
+
+/* ──────────────────────────────────────────────────────────────────
+   Responsywność — shell (sidebar/treść) + wysuwane menu na telefonie
+   Breakpoint mobilny: ≤ 768px. Desktop bez zmian.
+   ────────────────────────────────────────────────────────────────── */
+
+.app-shell {
+  display: flex;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.app-main {
+  flex: 1;
+  min-width: 0;
+  margin-left: 260px;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.mobile-topbar { display: none; }
+.sidebar-backdrop { display: none; }
+
+@media (max-width: 768px) {
+  .app-shell { flex-direction: column; }
+
+  /* Pasek górny z hamburgerem — tylko mobile */
+  .mobile-topbar {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    height: 52px;
+    flex-shrink: 0;
+    padding: 0 14px;
+    background: var(--bg-sidebar);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-bottom: 1px solid var(--border);
+    z-index: 30;
+  }
+  .mobile-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 9px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  /* Sidebar → wysuwany drawer */
+  .app-sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+    width: 86vw !important;
+    max-width: 320px !important;
+    min-width: 0 !important;
+    z-index: 50 !important;
+  }
+  .app-sidebar.open {
+    transform: translateX(0);
+    box-shadow: var(--shadow-menu);
+  }
+
+  .sidebar-backdrop.open {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    background: rgba(0, 0, 0, 0.34);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+  }
+
+  /* Treść na całą szerokość + naturalne przewijanie pionowe */
+  .app-main {
+    margin-left: 0;
+    height: auto;
+    min-height: 0;
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Strony zaprojektowane na sztywną wysokość desktopu → na mobile płyną
+     w pionie i przewijają się wewnątrz .app-main (desktop nietknięty). */
+  .app-main > * {
+    height: auto !important;
+    min-height: 100% !important;
+    overflow: visible !important;
+  }
+
+  /* Składanie paneli ustawionych obok siebie → jeden pod drugim */
+  .responsive-split {
+    flex-direction: column !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .responsive-split > * {
+    width: 100% !important;
+    max-width: none !important;
+    flex-basis: auto !important;
+    min-width: 0 !important;
+  }
+
+  /* Siatki → 1 lub 2 kolumny na mobile */
+  .responsive-grid {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: none !important;
+    grid-auto-rows: minmax(300px, auto) !important;
+    height: auto !important;
+  }
+  .responsive-grid-2 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Paski narzędzi z wieloma przyciskami — niech się zawijają */
+  .responsive-wrap {
+    flex-wrap: wrap !important;
+    height: auto !important;
+    min-height: 48px;
+    row-gap: 6px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+}

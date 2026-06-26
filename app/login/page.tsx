@@ -117,7 +117,14 @@ function LoginForm() {
           </button>
         </div>
         {error && (
-          <div style={{ fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--error)", marginTop: 8 }}>
+          <div
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 12,
+              color: "var(--error)",
+              marginTop: 8,
+            }}
+          >
             {error}
           </div>
         )}
@@ -179,7 +186,14 @@ export default function LoginPage() {
           padding: "40px 36px 32px",
         }}
       >
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 32 }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            marginBottom: 32,
+          }}
+        >
           <div
             style={{
               width: 52,
@@ -206,7 +220,14 @@ export default function LoginPage() {
           >
             Autorise
           </div>
-          <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 6, letterSpacing: "0.02em" }}>
+          <div
+            style={{
+              fontSize: 12,
+              color: "var(--text-tertiary)",
+              marginTop: 6,
+              letterSpacing: "0.02em",
+            }}
+          >
             Panel operacyjny
           </div>
         </div>

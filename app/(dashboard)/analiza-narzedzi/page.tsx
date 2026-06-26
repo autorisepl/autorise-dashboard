@@ -105,7 +105,7 @@ export default function AnalizaNarzedziPage() {
   return (
     <div
       style={{
-        height: "100vh",
+        height: "100%",
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",

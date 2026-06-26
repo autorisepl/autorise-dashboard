@@ -579,9 +579,10 @@ export default function NarzedziaPage() {
 
   return (
     <div
+      className="responsive-split"
       style={{
         display: "flex",
-        height: "100vh",
+        height: "100%",
         overflow: "hidden",
         background: "var(--bg)",
         fontFamily: "var(--font-sans)",

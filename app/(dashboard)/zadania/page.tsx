@@ -874,7 +874,7 @@ export default function ZadaniaPage() {
   return (
     <div
       style={{
-        height: "100vh",
+        height: "100%",
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
@@ -979,6 +979,7 @@ export default function ZadaniaPage() {
 
         {!loading && !error && lists.length > 0 && (
           <div
+            className="responsive-grid"
             style={{
               display: "grid",
               gridTemplateColumns: "1fr 1fr",

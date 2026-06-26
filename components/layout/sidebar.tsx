@@ -125,15 +125,17 @@ function NavItem({
   label,
   icon: Icon,
   isActive,
+  onNavigate,
 }: {
   href: string;
   label: string;
   icon: React.ElementType;
   isActive: boolean;
+  onNavigate?: () => void;
 }) {
   const [hovered, setHovered] = useState(false);
   return (
-    <Link href={href} style={{ textDecoration: "none", display: "block" }}>
+    <Link href={href} onClick={onNavigate} style={{ textDecoration: "none", display: "block" }}>
       <div style={{ position: "relative" }}>
         {isActive && (
           <motion.div
@@ -207,7 +209,7 @@ function isActive(pathname: string, href: string, exact?: boolean): boolean {
   return pathname === href || pathname.startsWith(href + "/");
 }
 
-export function Sidebar() {
+export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNavigate?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
   const weather = useWeather();
@@ -229,6 +231,7 @@ export function Sidebar() {
 
   return (
     <aside
+      className={`app-sidebar${open ? " open" : ""}`}
       style={{
         width: 260,
         minWidth: 260,
@@ -273,7 +276,7 @@ export function Sidebar() {
 
       {/* 2. Profil */}
       <button
-        onClick={() => router.push("/profil")}
+        onClick={() => { router.push("/profil"); onNavigate?.(); }}
         style={{
           display: "flex",
           alignItems: "center",
@@ -401,6 +404,7 @@ export function Sidebar() {
                   label={item.label}
                   icon={item.icon}
                   isActive={isActive(pathname, item.href, item.exact)}
+                  onNavigate={onNavigate}
                 />
               ))}
             </div>

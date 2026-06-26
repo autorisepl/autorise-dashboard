@@ -634,7 +634,7 @@ export default function AgencjaPage() {
   return (
     <div
       style={{
-        height: "100vh",
+        height: "100%",
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
@@ -906,6 +906,7 @@ export default function AgencjaPage() {
           <div style={{ height: "100%", display: "flex", flexDirection: "column", gap: 12 }}>
             {/* KPI strip */}
             <div
+              className="responsive-grid-2"
               style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(4, 1fr)",

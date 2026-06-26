@@ -1551,7 +1551,7 @@ export default function HarmonogramPage() {
   return (
     <div
       style={{
-        height: "100vh",
+        height: "100%",
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
@@ -1560,6 +1560,7 @@ export default function HarmonogramPage() {
     >
       {/* Top bar */}
       <div
+        className="responsive-wrap"
         style={{
           height: 48,
           flexShrink: 0,
