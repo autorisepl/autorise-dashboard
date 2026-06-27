@@ -3,9 +3,9 @@
 ## Stack
 
 - **Next.js 16.2.7** App Router, TypeScript strict mode, React 19
-- **Cloudflare Pages** (GitHub integration) — free tier: **30s** wall-clock timeout per request
-  - Agent2/5 (claude-opus-4-8 + extended thinking) mogą trwać 60–180s → ryzyko timeout na free tier
-  - `maxDuration` z Vercela nie działa na CF Pages — timeout kontrolowany przez plan CF
+- **Vercel** (GitHub integration) — auto-deploy przy każdym push do `main`, `maxDuration` do 300s
+  - **URL produkcyjny: app.autorise.pl** (DNS przez Cloudflare, CNAME → cname.vercel-dns.com, DNS only)
+  - Produkcyjna gałąź na Vercel to `main`; lokalnie pracujesz na `master` → deploy: `git push origin master:main`
 - **UI**: var(--font-sans) WSZĘDZIE. ZERO var(--font-mono) w UI labels/number/time
 - **Design tokens**: CSS custom properties w `app/globals.css`
 - **Animation**: framer-motion, lucide-react icons
@@ -82,8 +82,10 @@ NARZĘDZIA
 - `app/api/auth/google/` — start OAuth / callback / status / disconnect
 - `app/api/google/tasks/route.ts` — GET wszystkie listy + tasks; PATCH toggle status
 - `app/api/google/calendar/events/route.ts` — GET events
-- Token priority: `GOOGLE_REFRESH_TOKEN` env var > `google_refresh_token` cookie
-- Required: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`
+- Token priority: `google_refresh_token` cookie (świeży reconnect) > `GOOGLE_REFRESH_TOKEN` env var
+- Required: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
+- `GOOGLE_REDIRECT_URI = https://app.autorise.pl/api/auth/google/callback` (prod; redirect_uri liczone też dynamicznie z origin)
+- `GOOGLE_SHEETS_ID = 18BjXDFAWDVQnQkrE_1Kmvj0-ZJIGXQejLY6IJOOXnH0`
 
 ## Sheets Sync (Agencja)
 
@@ -157,3 +159,14 @@ lib/agents/prompts.ts                 — all system prompts
 lib/notion/client.ts                  — Notion API client
 context/AUTORISE_DASHBOARD_STATE_v6.md — stan systemu dla Claude AI
 ```
+
+## Historia zmian
+
+| Data | Zmiana |
+|------|--------|
+| 2026-06-25 | Migracja z Cloudflare Workers/Pages na Vercel (prod: app.autorise.pl) |
+| 2026-06-25 | GOOGLE_REDIRECT_URI → app.autorise.pl; cookie ma priorytet nad env |
+| 2026-06-27 | Agent 1 uwagi_agenta + nastepny_krok — naturalny język, zakaz AI-slop |
+| 2026-06-27 | Agent 1 — dyskwalifikacja (zła osoba/brak zainteresowania) → Niekwalifikowany; nazwa = osoba nie firma |
+| 2026-06-27 | KartaKlienta NoteField — auto-resize textarea |
+| 2026-06-27 | Responsywność mobilna — drawer sidebar + adaptacyjne układy |

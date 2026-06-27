@@ -455,24 +455,34 @@ function NoteField({
   onSave: (v: string) => void;
 }) {
   const [draft, setDraft] = useState(value);
+  const ref = useRef<HTMLTextAreaElement>(null);
   useEffect(() => setDraft(value), [value]);
+  // Auto-resize: textarea rośnie pod treść (cała notatka widoczna bez scrolla).
+  useEffect(() => {
+    if (ref.current) {
+      ref.current.style.height = "auto";
+      ref.current.style.height = `${ref.current.scrollHeight}px`;
+    }
+  }, [draft]);
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
       <label style={{ fontSize: 10.5, fontWeight: 600, color: "var(--text-tertiary)" }}>
         {label}
       </label>
       <textarea
+        ref={ref}
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
         onBlur={() => {
           if (draft !== value) onSave(draft);
         }}
-        rows={2}
+        rows={4}
         placeholder="—"
         style={{
           width: "100%",
           boxSizing: "border-box",
-          resize: "vertical",
+          resize: "none",
+          overflow: "hidden",
           padding: "7px 9px",
           borderRadius: "var(--radius-sm)",
           border: "1px solid var(--border)",

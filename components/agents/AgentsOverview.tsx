@@ -377,6 +377,7 @@ export function AgentsOverview() {
 
       {/* Grid 3+2 */}
       <div
+        className="responsive-grid-2"
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(3, 1fr)",

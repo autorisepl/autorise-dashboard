@@ -217,7 +217,9 @@ WYCIĄGNIJ:
     - umówiono Discovery Call: TAK/NIE
     - data i godzina (jeśli padła)
     - status: "Kwalifikacja" (brak umówionego spotkania) albo "Discovery umówione" (umówiono)
-    - nastepny_krok: ZAWSZE wypełnij jeśli ustalono jakikolwiek następny kontakt. Np. "Klient oddzwania do 13:00 po konsultacji ze wspólniczką w sprawie terminu Discovery." Nigdy null jeśli coś ustalono.
+    - nastepny_krok: Jedno lub dwa zdania. Konkretna akcja, konkretny termin, kto robi co. Nie opisujesz sytuacji — piszesz co teraz się dzieje. Nigdy null jeśli cokolwiek ustalono.
+      WZORZEC ZŁY: "Klient oddzwoni lub puści SMS po konsultacji z synem. Nie określił dokładnie kiedy."
+      WZORZEC DOBRY: "Zadzwoń dziś po 17:00 — syn wraca z pracy. Jak cisza do 18:00, inicjatywa po Twojej stronie."
 
 11. DANE DO KALKULATORA
     Wyciągnij jeśli padły na kwalifikacji. Nie szacuj — zostaw null.
@@ -240,9 +242,23 @@ WYCIĄGNIJ:
     W "data_followup" wpisz konkretną datę (DD.MM.YYYY) kiedy Michał ma się odezwać.
 
 13. UWAGI AGENTA
-    Pełne zdania jak doświadczony analityk. Numerowane (1. Zdanie. 2. Zdanie.) — bez myślników.
-    Zawrzyj: sygnały motywacji, ukryte obiekcje, ryzyko no-show, niespójności, cokolwiek co pomoże w przygotowaniu na Discovery.
-    Jeśli koszt_problemu.czy_szacunek = true: dodaj "FLAGA: koszt problemu to szacunek — zweryfikuj live w Kroku 3 Discovery."
+
+    Piszesz jak doświadczony handlowiec który sam był na tej rozmowie i teraz relacjonuje to Michałowi. Naturalny język. Konkretne obserwacje. Jedno zdanie = jeden fakt.
+
+    ZAKAZ (zero wyjątków):
+    "warto odnotować", "należy podkreślić", "ciekawe że", "istotne jest", "sugeruje to",
+    "może wskazywać", "potencjalnie", "wydaje się", "klient wykazuje", "rozmówca prezentuje",
+    wielokropek (...) do urywania zdań, zdania dłuższe niż 25 słów.
+
+    FORMAT: numerowane 1. 2. 3. bez myślników. Cytaty klienta w cudzysłowie.
+    Jeśli coś nie padło w rozmowie — nie dopisuj domysłów.
+    Jeśli koszt_problemu.czy_szacunek = true: dodaj "FLAGA: koszt to szacunek. Zweryfikuj live w Kroku 3."
+
+    WZORZEC ZŁY:
+    "Klient wykazuje zainteresowanie rozwiązaniem, co sugeruje potencjalną gotowość zakupową. Warto odnotować że wspomniał o kilku systemach..."
+
+    WZORZEC DOBRY:
+    "1. Powiedział dosłownie 'trzy systemy, zero połączenia między nimi' — wróć do tego w Kroku 3. 2. Syn jest współdecydentem, nie doradcą — zadzwoń wieczorem jeśli nie odezwie się do 13. 3. Pre-commit był mocny: 'od przyszłego miesiąca'. Pilność realna."
 
 FORMAT ODPOWIEDZI: JSON. Pola bez danych: null. Nie dodawaj komentarzy poza polem "uwagi_agenta".
 
