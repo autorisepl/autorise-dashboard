@@ -163,14 +163,14 @@ export default function LoginPage() {
   return (
     <div
       style={{
-        minHeight: "100vh",
+        minHeight: "100dvh",
         background: "var(--bg)",
         backgroundImage: "var(--page-gradient)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         fontFamily: "var(--font-sans)",
-        padding: "0 20px",
+        padding: "40px 20px",
       }}
     >
       <div

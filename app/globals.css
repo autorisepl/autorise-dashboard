@@ -162,7 +162,18 @@ html, body {
 .sidebar-backdrop { display: none; }
 
 @media (max-width: 768px) {
-  .app-shell { flex-direction: column; }
+  .app-shell {
+    flex-direction: column;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  /* Twardy zakaz poziomego scrolla — nic nie „wystaje" poza ekran. */
+  html, body {
+    overflow-x: hidden;
+    max-width: 100%;
+  }
 
   /* Pasek górny z hamburgerem — tylko mobile */
   .mobile-topbar {
@@ -230,6 +241,8 @@ html, body {
     height: auto;
     min-height: 0;
     flex: 1;
+    width: 100%;
+    max-width: 100vw;
     overflow-y: auto;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
@@ -241,6 +254,28 @@ html, body {
     height: auto !important;
     min-height: 100% !important;
     overflow: visible !important;
+  }
+
+  /* Drugi i trzeci poziom też zwalniamy — strony mają wzorzec
+     <root><nagłówek/><body overflow:hidden flex:1> który więzi scroll. */
+  .app-main > * > *,
+  .app-main > * > * > * {
+    max-height: none !important;
+  }
+  .app-main > * > * {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Nic nie może być szersze niż ekran (inline-style architektura). */
+  .app-main * {
+    max-width: 100% !important;
+  }
+
+  /* Wiersze flex (inline display:flex bez kolumny) zawijają się zamiast
+     uciekać poza prawą krawędź. Kolumny zostają nietknięte. */
+  .app-main [style*="display: flex"]:not([style*="column"]) {
+    flex-wrap: wrap !important;
   }
 
   /* Składanie paneli ustawionych obok siebie → jeden pod drugim */
