@@ -114,18 +114,23 @@ export async function POST(req: Request) {
       meet_data?: string | null;
       icp?: { kwalifikacja?: string | null };
       bol_glowny_cytat?: string;
+      dyskwalifikacja?: boolean;
+      dyskwalifikacja_powod?: string | null;
     };
-    const notionClientName = o1.firma || o1.imie_nazwisko || "Nowy klient";
+    // KLIENT = osoba (imię i nazwisko) ma priorytet nad nazwą firmy.
+    const notionClientName = o1.imie_nazwisko || o1.firma || "Nowy klient";
     const kwal = o1.icp?.kwalifikacja ?? null;
     const hasMeeting = Boolean(o1.meet_data);
     let notionClientStatus = "Nowy lead";
-    if (kwal) {
+    if (o1.dyskwalifikacja === true || (kwal && kwal.toUpperCase().includes("NIE KWALIFIKUJE"))) {
+      // Dyskwalifikacja (np. flota < ICP, zła osoba, zaprzeczył formularzowi) → nie ląduje w kwalifikacji.
+      notionClientStatus = "Niekwalifikowany";
+    } else if (kwal) {
       const u = kwal.toUpperCase();
-      if (u.includes("NIE KWALIFIKUJE")) notionClientStatus = "Niekwalifikowany";
-      else if (u.includes("KWALIFIKUJE") && !u.includes("NIE") && !u.includes("WYMAGA")) {
+      if (u.includes("KWALIFIKUJE") && !u.includes("NIE") && !u.includes("WYMAGA")) {
         notionClientStatus = hasMeeting ? "Discovery umówione" : "Kwalifikacja";
       } else {
-        notionClientStatus = "Kwalifikacja";
+        notionClientStatus = hasMeeting ? "Discovery umówione" : "Kwalifikacja";
       }
     }
 

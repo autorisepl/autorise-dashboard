@@ -59,6 +59,8 @@ export interface Agent1Output {
   meet_godzina?: string | null;
   nastepny_krok?: string | null;
   uwagi_agenta?: string | null;
+  dyskwalifikacja?: boolean | null;
+  dyskwalifikacja_powod?: string | null;
 }
 
 // ─── Apple system palette (hardcoded per spec) ───────────────────────────────
@@ -268,16 +270,35 @@ export function Agent1Card({ output }: { output: Agent1Output }) {
   const icp = output.icp;
   const score = icp?.wynik ?? null;
   const kwal = (icp?.kwalifikacja ?? "").toUpperCase();
-  const isDisq = kwal.includes("NIE KWALIFIKUJE");
-  const isOk = kwal.includes("KWALIFIKUJE") && !kwal.includes("NIE") && !kwal.includes("WYMAGA");
+  const isDisq = output.dyskwalifikacja === true || kwal.includes("NIE KWALIFIKUJE");
+  const isOk =
+    !isDisq && kwal.includes("KWALIFIKUJE") && !kwal.includes("NIE") && !kwal.includes("WYMAGA");
 
   const verdictColor = isDisq ? ERROR : isOk ? SUCCESS : WARNING;
   const verdictBg = isDisq ? `${ERROR}1a` : isOk ? `${SUCCESS}1a` : `${WARNING}1a`;
   const verdictBorder = isDisq ? `${ERROR}38` : isOk ? `${SUCCESS}38` : `${WARNING}38`;
-  const verdictLabel = isDisq ? "NIE KWALIFIKUJE" : isOk ? "KWALIFIKUJE" : "WYMAGA ANALIZY";
+  const verdictLabel = isDisq ? "NIE KWALIFIKUJE" : isOk ? "KWALIFIKUJE" : "DO WERYFIKACJI";
 
-  const displayName = output.firma || output.imie_nazwisko || "Nowy klient";
-  const displaySub = output.firma && output.imie_nazwisko ? output.imie_nazwisko : null;
+  // Konkretny, krótki powód werdyktu (zamiast samego "WYMAGA ANALIZY").
+  const missingIcp = [
+    !icpOk(icp?.flota_ok) && "flota",
+    !icpOk(icp?.biuro_ok) && "biuro 2+",
+    !icpOk(icp?.decyzyjnosc_ok) && "decydent",
+    !icpOk(icp?.bol_ok) && "ból",
+    !icpOk(icp?.aktywne_szukanie_ok) && "aktywne szukanie",
+  ].filter(Boolean) as string[];
+  const verdictReason = isDisq
+    ? output.dyskwalifikacja_powod || "Nie spełnia kryteriów ICP."
+    : isOk
+      ? null
+      : output.dyskwalifikacja_powod ||
+        (missingIcp.length > 0
+          ? `Braki ICP: ${missingIcp.join(", ")}${score != null ? ` (${score}/5)` : ""}`
+          : "Niejednoznaczna kwalifikacja — sprawdź szczegóły.");
+
+  // KLIENT = osoba (imię i nazwisko) ma priorytet nad nazwą firmy.
+  const displayName = output.imie_nazwisko || output.firma || "Nowy klient";
+  const displaySub = output.firma && output.imie_nazwisko ? output.firma : null;
 
   const hasCost =
     output.koszt_problemu?.koszt_miesiecznie != null || output.koszt_problemu?.koszt_roczny != null;
@@ -354,6 +375,21 @@ export function Agent1Card({ output }: { output: Agent1Output }) {
               {verdictLabel}
             </span>
           </div>
+
+          {/* Konkretny powód werdyktu (zamiast "WYMAGA ANALIZY" bez treści) */}
+          {verdictReason && (
+            <div
+              style={{
+                fontFamily: "var(--font-system)",
+                fontSize: 12,
+                color: "var(--text-secondary)",
+                lineHeight: 1.45,
+                maxWidth: 520,
+              }}
+            >
+              {verdictReason}
+            </div>
+          )}
 
           {/* Score dots + numeric */}
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>

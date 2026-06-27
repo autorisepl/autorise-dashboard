@@ -54,10 +54,11 @@ async function transcribeBytes(
   mimeType: string,
   apiKey: string,
 ): Promise<GroqVerboseResponse> {
-  // Do 3 prób z narastającym backoffem na przejściowe błędy bramy Groq (429/5xx).
+  // Do 6 prób z narastającym backoffem na przejściowe błędy bramy Groq (429/5xx).
+  // Backoff: 2s, 4s, 6s, 8s, 10s — Groq potrafi 502/500 przy chwilowym obciążeniu.
   let res = await callGroqOnce(bytes, fileName, mimeType, apiKey);
-  for (let attempt = 1; attempt <= 2 && GATEWAY_STATUSES.has(res.status); attempt++) {
-    await new Promise((r) => setTimeout(r, attempt * 1500));
+  for (let attempt = 1; attempt <= 5 && GATEWAY_STATUSES.has(res.status); attempt++) {
+    await new Promise((r) => setTimeout(r, attempt * 2000));
     res = await callGroqOnce(bytes, fileName, mimeType, apiKey);
   }
 

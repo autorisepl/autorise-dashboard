@@ -1542,16 +1542,29 @@ function DrivePicker({
             </span>
           )}
           <button
-            onClick={(e) => { e.stopPropagation(); onRefresh(); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onRefresh();
+            }}
             title="Odśwież listę z Dysku"
             style={{
-              display: "flex", alignItems: "center", justifyContent: "center",
-              width: 24, height: 24, borderRadius: 6, flexShrink: 0,
-              background: "none", border: "1px solid var(--border)",
-              cursor: "pointer", color: "var(--text-tertiary)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 24,
+              height: 24,
+              borderRadius: 6,
+              flexShrink: 0,
+              background: "none",
+              border: "1px solid var(--border)",
+              cursor: "pointer",
+              color: "var(--text-tertiary)",
             }}
           >
-            <RefreshCw size={11} style={{ animation: loading ? "spin 0.8s linear infinite" : "none" }} />
+            <RefreshCw
+              size={11}
+              style={{ animation: loading ? "spin 0.8s linear infinite" : "none" }}
+            />
           </button>
         </div>
         <div style={{ overflowY: "auto", padding: 2 }}>

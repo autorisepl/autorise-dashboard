@@ -200,6 +200,14 @@ html, body {
     max-width: 320px !important;
     min-width: 0 !important;
     z-index: 50 !important;
+    /* 100dvh = realna wysokość ekranu (bez paska przeglądarki) → menu mieści się
+       i wewnętrzna nawigacja faktycznie się przewija. */
+    height: 100dvh !important;
+  }
+  /* Wewnętrzna nawigacja drawera musi się przewijać płynnie na telefonie. */
+  .app-sidebar nav {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
   }
   .app-sidebar.open {
     transform: translateX(0);

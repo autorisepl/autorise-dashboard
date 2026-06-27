@@ -185,11 +185,25 @@ WYCIĄGNIJ:
    WAŻNE: wynik = DOKŁADNA liczba kryteriów oznaczonych jako TAK. "BRAK DANYCH" i "NIE" liczą się jako 0 punktów. Policz mechanicznie kryteria TAK — nie oceniaj holistycznie ani "na oko".
 
 9. DYSKWALIFIKACJA — SPRAWDŹ ZAWSZE JAKO PIERWSZE
+   Gdy zachodzi KTÓRYKOLWIEK z poniższych → "dyskwalifikacja": true, "status": "Niekwalifikowany",
+   krótki konkretny "dyskwalifikacja_powod", a pola spotkania (meet_data, meet_godzina, nastepny_krok) = null
+   (chyba że ustalono realny ponowny kontakt — wtedy opisz go w nastepny_krok):
 
-   TWARDA DYSKWALIFIKACJA: flota < 10 pojazdów (jasno powiedziana, nie "brak danych"):
-   → "dyskwalifikacja": true, "status": "Niekwalifikowany"
-   → "dyskwalifikacja_powod": "Flota poniżej ICP (N pojazdów, wymagane 10+)"
-   → pola spotkania (meet_data, meet_godzina, nastepny_krok): null
+   a) ZŁA OSOBA / ZAPRZECZENIE: rozmówca to nie jest osoba z formularza, przedstawia się innym imieniem,
+      zaprzecza wypełnieniu formularza, albo numer prowadzi do kogoś innego.
+      → "dyskwalifikacja_powod": np. "Zła osoba pod numerem — rozmówca (Andrzej) zaprzeczył wypełnieniu formularza; zweryfikować numer w Notion / kontakt z właściwą osobą."
+
+   b) BRAK ZAINTERESOWANIA / ODMOWA: wprost nie jest zainteresowany, prosi nie dzwonić, rozłączył się.
+      → "dyskwalifikacja_powod": "Brak zainteresowania — rozmówca odmówił rozmowy."
+
+   c) POZA RYNKIEM: firma spoza TSL / nie transport / oczywiście nie ICP.
+      → "dyskwalifikacja_powod": "Poza ICP — [krótki powód]."
+
+   d) TWARDA DYSKWALIFIKACJA — FLOTA: flota < 10 pojazdów (jasno powiedziana, nie "brak danych"):
+      → "dyskwalifikacja_powod": "Flota poniżej ICP (N pojazdów, wymagane 10+)"
+
+   WAŻNE: jeśli rozmowa nie była realną rozmową kwalifikacyjną z właściwym, zainteresowanym decydentem,
+   NIE oznaczaj statusu "Kwalifikacja". Dyskwalifikuj i napisz dlaczego.
 
    BORDERLINE (8-9 pojazdów): flota poniżej ICP ale klient umówił spotkanie lub wykazuje silną motywację i plan wzrostu:
    → "dyskwalifikacja": false (Michał decyduje po Discovery)
