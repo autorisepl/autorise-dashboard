@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { getOAuth2Client } from "@/lib/google/auth";
+import { getOAuth2Client, resolveRedirectUri } from "@/lib/google/auth";
 
 export async function GET(req: NextRequest) {
   const base = req.nextUrl.origin;
@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
 
   try {
     // redirect_uri przy wymianie kodu MUSI być identyczny jak w auth URL.
-    const auth = getOAuth2Client(`${base}/api/auth/google/callback`);
+    const auth = getOAuth2Client(resolveRedirectUri(req));
     const { tokens } = await auth.getToken(code);
 
     if (!tokens.refresh_token) {
