@@ -127,9 +127,10 @@ export async function POST(req: NextRequest) {
     endDateTime: string;
     description?: string;
     location?: string;
+    timeZone?: string;
   };
 
-  const { summary, startDateTime, endDateTime, description, location } = body;
+  const { summary, startDateTime, endDateTime, description, location, timeZone } = body;
   if (!summary || !startDateTime || !endDateTime) {
     return NextResponse.json(
       { error: "summary, startDateTime i endDateTime są wymagane" },
@@ -139,12 +140,13 @@ export async function POST(req: NextRequest) {
 
   try {
     const cal = getCalendarClient(token);
+    // timeZone (np. Europe/Warsaw) → Google rozwiązuje DST z naiwnego dateTime.
     const { data } = await cal.events.insert({
       calendarId: "primary",
       requestBody: {
         summary,
-        start: { dateTime: startDateTime },
-        end: { dateTime: endDateTime },
+        start: { dateTime: startDateTime, timeZone: timeZone || undefined },
+        end: { dateTime: endDateTime, timeZone: timeZone || undefined },
         description: description || undefined,
         location: location || undefined,
       },

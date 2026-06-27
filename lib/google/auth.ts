@@ -36,21 +36,25 @@ export function isGoogleConfigured(): boolean {
 }
 
 // Zwraca redirect_uri identyczny z tym zarejestrowanym w Google Cloud Console.
-// 1) Jawny GOOGLE_REDIRECT_URI (produkcja: app.autorise.pl) ma pierwszeństwo —
-//    eliminuje redirect_uri_mismatch, bo nextUrl.origin za proxy Vercel/Cloudflare
-//    bywa zawodne (zła domena/schemat). 2) Inaczej z nagłówków forwarded (localhost/preview).
+// Liczymy z REALNEJ domeny żądania (forwarded host) — na app.autorise.pl daje
+// "https://app.autorise.pl/api/auth/google/callback" (autoryzowane w Google).
+// NIE ufamy env GOOGLE_REDIRECT_URI na produkcji: bywa nieaktualne (stara domena
+// Railway) i to właśnie powoduje redirect_uri_mismatch. Env = tylko ostatni fallback.
 export function resolveRedirectUri(req: {
   headers: { get: (name: string) => string | null };
-  nextUrl: { origin: string };
+  nextUrl: { origin: string; host?: string };
 }): string {
-  const explicit = process.env.GOOGLE_REDIRECT_URI;
-  if (explicit) return explicit;
+  const host =
+    req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? req.nextUrl.host ?? null;
 
-  const proto =
-    req.headers.get("x-forwarded-proto") ?? (req.nextUrl.origin.startsWith("https") ? "https" : "http");
-  const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host");
-  if (host) return `${proto}://${host}/api/auth/google/callback`;
-  return `${req.nextUrl.origin}/api/auth/google/callback`;
+  if (host) {
+    const fwdProto = req.headers.get("x-forwarded-proto");
+    const isLocal = /^(localhost|127\.0\.0\.1)(:|$)/.test(host);
+    const proto = fwdProto ?? (isLocal ? "http" : "https");
+    return `${proto}://${host}/api/auth/google/callback`;
+  }
+
+  return process.env.GOOGLE_REDIRECT_URI ?? `${req.nextUrl.origin}/api/auth/google/callback`;
 }
 
 export function getRefreshToken(reqCookies?: {

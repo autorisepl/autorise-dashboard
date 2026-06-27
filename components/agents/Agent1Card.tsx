@@ -18,6 +18,8 @@ import {
   Zap,
 } from "lucide-react";
 import { useState } from "react";
+import { CalendarAddButton } from "./CalendarAddButton";
+import { SmsPanel } from "./SmsPanel";
 
 export interface Agent1Output {
   imie_nazwisko?: string | null;
@@ -760,21 +762,55 @@ export function Agent1Card({ output }: { output: Agent1Output }) {
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: 7,
-                  fontSize: 13,
-                  color: SUCCESS,
+                  flexWrap: "wrap",
+                  gap: 10,
                 }}
               >
-                <Calendar size={13} />
-                {output.meet_data}
-                {output.meet_godzina && (
-                  <span style={{ color: "var(--text-tertiary)" }}>· {output.meet_godzina}</span>
-                )}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 7,
+                    fontSize: 13,
+                    color: SUCCESS,
+                  }}
+                >
+                  <Calendar size={13} />
+                  {output.meet_data}
+                  {output.meet_godzina && (
+                    <span style={{ color: "var(--text-tertiary)" }}>· {output.meet_godzina}</span>
+                  )}
+                </div>
+                <CalendarAddButton
+                  summary={`Discovery — ${displayName}`}
+                  dateStr={output.meet_data}
+                  timeStr={output.meet_godzina}
+                  description={
+                    [
+                      output.telefon ? `Telefon: ${output.telefon}` : null,
+                      output.firma ? `Firma: ${output.firma}` : null,
+                      output.nastepny_krok ? `Następny krok: ${output.nastepny_krok}` : null,
+                    ]
+                      .filter(Boolean)
+                      .join("\n") || undefined
+                  }
+                />
               </div>
             )}
           </div>
         </div>
       </div>
+
+      {/* ─── SMS DO WYSŁANIA (kopiuj-wklej, scenariusz auto z danych) ─── */}
+      <SmsPanel
+        ctx={{
+          imieNazwisko: output.imie_nazwisko,
+          data: output.meet_data,
+          godzina: output.meet_godzina,
+          dyskwalifikacja: output.dyskwalifikacja,
+          kwalifikacja: icp?.kwalifikacja,
+        }}
+      />
 
       {/* ─── AGENT NOTES (collapsible) ─── */}
       {notes.length > 0 && (
