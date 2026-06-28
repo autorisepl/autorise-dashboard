@@ -215,7 +215,7 @@
   <div class="ei-sep"></div>
   <div class="ei"><label>TMS</label><input id="ei-tms" class="wide" type="text" placeholder="Trans.eu"/></div>
   <div class="ei-sep"></div>
-  <div class="ei"><label>Gwarancja %</label><input id="ei-gwar" type="number" placeholder="95"/></div>
+  <div class="ei"><label>Gwarant. h/mc</label><input id="ei-gwar" type="number" placeholder="80"/></div>
   <div class="ei-sep"></div>
   <button id="edit-exit" style="height:26px;padding:0 10px;border-radius:6px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.45);font-family:var(--font);font-size:10px;font-weight:700;cursor:pointer;letter-spacing:.05em;white-space:nowrap;flex-shrink:0;">Wyjdź ✕</button>
 </div>
@@ -299,8 +299,8 @@
           <div class="st-val blue"><span id="val-months">–</span> mies.</div>
         </div>
         <div class="stat-box sb-green">
-          <div class="st-tag green">Automatyzacja</div>
-          <div class="st-val green"><span class="val-gwar">95</span>%</div>
+          <div class="st-tag green">Gwarancja</div>
+          <div class="st-val green"><span class="val-gwar">80</span>h/mc</div>
         </div>
       </div>
     </div>
@@ -310,8 +310,8 @@
   <div class="slide s-light" id="s3">
     <div class="si">
       <div class="tag">03 — System</div>
-      <h1 class="h1 dark">4 moduły,<br><span class="blue">jeden system.</span></h1>
-      <p class="sub gray">Zaprojektowany specjalnie dla firm transportowych i spedycyjnych.</p>
+      <h1 class="h1 dark">Moduły dobrane<br><span class="blue">do Twojej firmy.</span></h1>
+      <p class="sub gray">Nie wdrażamy wszystkiego. Dobieramy to co rozwiązuje Twój konkretny problem.</p>
 
       <div class="grid2">
         <div class="card light">
@@ -353,7 +353,7 @@
             <tr><td>Czas wdrożenia</td><td class="yes">✓ 4 tygodnie</td><td class="no">6–12 miesięcy</td></tr>
             <tr><td>Branża</td><td class="yes">✓ Transport / Spedycja</td><td class="no">Ogólne ERP</td></tr>
             <tr><td>Wsparcie</td><td class="yes">✓ Bezpośrednie, online</td><td class="no">Kolejka zgłoszeń</td></tr>
-            <tr><td>Gwarancja efektu</td><td class="yes">✓ <span class="val-gwar">95</span>% automatyzacji</td><td class="no">Brak</td></tr>
+            <tr><td>Gwarancja efektu</td><td class="yes">✓ min. <span class="val-gwar">80</span>h zaoszczędzonych / mies.</td><td class="no">Brak</td></tr>
             <tr><td>Integracja TMS</td><td class="yes">✓ <span class="val-tms">Trans.eu</span></td><td class="no">Osobne API, extra koszt</td></tr>
           </tbody>
         </table>
@@ -425,9 +425,9 @@
 
       <div class="guar-row">
         <div class="guar-left">
-          <div class="guar-pct"><span class="val-gwar">95</span>%</div>
-          <div class="guar-txt">automatyzacji<br>w 30 dni</div>
-          <div class="guar-sub">lub zwracamy pieniądze.<br>Zero ryzyka po Waszej stronie.</div>
+          <div class="guar-pct"><span class="val-gwar">80</span>h</div>
+          <div class="guar-txt">zaoszczędzonych<br>miesięcznie</div>
+          <div class="guar-sub">Gwarantujemy na umowie lub oddajemy 100% pieniędzy.<br>Zero ryzyka po Waszej stronie.</div>
         </div>
 
         <div class="guar-right">
@@ -483,7 +483,7 @@ const V = {
   po:   parseInt(P.get('po')   || '10')    || 10,
   bol:  parseInt(P.get('bol')  || '96000') || 96000,
   tms:  P.get('tms')  || 'Trans.eu',
-  gwar: parseInt(P.get('gwar') || '95')    || 95,
+  gwar: parseInt(P.get('gwar') || '80')    || 80,
 }
 const START = Math.min(Math.max((parseInt(P.get('start') || '1') || 1) - 1, 0), 6)
 

@@ -121,7 +121,7 @@ export const AGENT_ROADMAP_STEPS = {
 
 export const AGENT1_SYSTEM_PROMPT = `Jesteś analitykiem sprzedażowym Autorise. Czytasz transkrypty rozmów telefonicznych kwalifikacyjnych z właścicielami firm transportowych i uzupełniasz kartę klienta w Pipeline.
 
-Autorise sprzedaje System Operacyjny Firmy Transportowej: automatyzacja TMS, poczty, KSeF i płatności w 30 dni. Cena: 15 000 PLN netto wdrożenie + 4 000 PLN/mc retainer (min. 12 mc). Gwarancja: jeśli po 30 dniach system nie wpisuje poprawnie minimum 95 zleceń na 100 — 100% zwrotu.
+Autorise sprzedaje System Operacyjny Firmy Transportowej: automatyzacja TMS, poczty, KSeF i płatności w 30 dni. Cena: 15 000 PLN netto wdrożenie + 4 000 PLN/mc retainer (min. 12 mc). Gwarancja: minimum 80 godzin administracyjnych zaoszczędzonych miesięcznie — weryfikowane po 30 dniach na realnych zleceniach. 100% zwrotu jeśli cel nieosiągnięty przy spełnieniu warunków współpracy.
 ICP: flota 10-150 pojazdów, 2+ osoby w biurze, właściciel jako decydent, konkretny ból operacyjny, aktywnie szuka rozwiązania.
 
 DANE Z NOTION:
@@ -312,7 +312,7 @@ FORMAT ODPOWIEDZI: JSON. Pola bez danych: null. Nie dodawaj komentarzy poza pole
   },
   "followup": null,
   "uwagi_agenta": "",
-  "wersja_skryptu": "2026-06-25"
+  "wersja_skryptu": "2026-06-28"
 }
 
 PRZYKŁAD followup (gdy decydent nieobecny):
@@ -363,7 +363,7 @@ Autorise sprzedaje System Operacyjny Firmy Transportowej (PR-0), 4 moduły:
 - Alerty WhatsApp: właściciel dostaje tylko to co wymaga jego uwagi
 
 Cena: 15 000 PLN netto wdrożenie + 4 000 PLN/mc retainer (min. 12 mc)
-Gwarancja: jeśli po 30 dniach system nie wpisuje poprawnie minimum 95 zleceń na 100 — 100% zwrotu, sprawdzane wspólnie na realnych zleceniach klienta z ostatniego miesiąca.
+Gwarancja: minimum 80 godzin administracyjnych zaoszczędzonych miesięcznie, weryfikowane po 30 dniach. 100% zwrotu przy niespełnieniu celu i spełnieniu warunków (dostęp do systemów w 5 dni, kickoff, responsywność na WhatsApp 48h).
 
 FRAMEWORK DISCOVERY CALL (Agency Leaders, 45-60 minut, JEDNO spotkanie, 6 kroków):
 1. Intro (2-3 min) — smalltalk, ustawienie AI notetakera
@@ -411,6 +411,16 @@ Jeśli koszt_problemu.czy_szacunek = true → dodaj do sekcji RYZYKA:
 "FLAGA: koszt problemu to szacunek z benchmarku, klient nie potwierdził liczb.
 W Kroku 3 OBOWIĄZKOWO zapytaj: ile godzin dziennie per spedytor na wpisywanie?
 Wylicz razem z klientem i poproś o potwierdzenie obu kwot: PLN/mc i PLN/rok."
+
+PRIORYTETYZACJA DLA KLIENTÓW ZE STAŁYMI ZLECENIAMI:
+Gdy klient ma powyżej 70% stałych zleceń (regularni partnerzy, powtarzające się trasy), email-parser nie jest głównym argumentem — liczba nowych zleceń z maili jest zbyt mała.
+W takim przypadku priorytet modułów:
+1. document-ocr — CMR, WZ, faktury nadal przychodzą w PDFach nawet przy stałych zleceniach
+2. payment-monitor — stałe zlecenia = regularne faktury = regularny problem z terminami płatności
+3. whatsapp-alerts — właściciel chce widzieć co się dzieje bez dzwonienia do spedytorów
+4. email-parser — drugi plan, dla tych zleceń co nadal przychodzą mailowo
+
+Zaznacz w pre_discovery_brief gdy ten przypadek zachodzi.
 
 5. TMS I PODEJŚCIE TECHNICZNE
    Potwierdź z danych Agenta 1. Jeśli "do weryfikacji" — dodaj pytanie do listy w punkcie 3.
@@ -507,7 +517,7 @@ Wylicz procent: round(15000 / koszt_roczny * 100). Podstaw konkretne liczby — 
 Jeśli koszt_roczny jest null:
 > "[uzupełnij z kalkulatora — otwórz kalkulator ROI i wylicz przed rozmową]"
 
-> "Gwarancja na umowie: jeśli po 30 dniach system nie wpisuje poprawnie minimum 95 zleceń na 100 — 100% zwrotu. Sprawdzamy to wspólnie na Pana realnych zleceniach. Ryzyko jest po mojej stronie."
+> "Gwarancja na umowie: jeśli po 30 dniach Pana biuro nie zaoszczędzi minimum 80 godzin miesięcznie — oddaję 100% pieniędzy. Sprawdzamy razem na Pana realnych zleceniach z ostatniego miesiąca. Ryzyko jest po mojej stronie."
 
 KROK 6 — CLOSING
 "Startujemy w przyszły poniedziałek czy w ten?"
