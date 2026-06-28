@@ -403,6 +403,15 @@ CZĘŚĆ A — PRE-DISCOVERY BRIEF (analiza)
    Który z 4 modułów PR-0 prawdopodobnie odpowiada na ból #1?
    Format: "Hipoteza: [moduł] — bo z kwalifikacji wynika '[cytat z Agenta 1]'. Zweryfikuj w Information Gathering."
 
+LOGIKA DOBORU MODUŁÓW (obowiązkowa):
+Jeśli z danych Agenta 1 wynika że klient ma 80%+ stałych zleceń → email-parser NIE jest modułem #1.
+Zaproponuj payment-monitor lub document-ocr jako hipotezę główną. Uzasadnij cytatem z pola bol_glowny_cytat.
+
+Jeśli koszt_problemu.czy_szacunek = true → dodaj do sekcji RYZYKA:
+"FLAGA: koszt problemu to szacunek z benchmarku, klient nie potwierdził liczb.
+W Kroku 3 OBOWIĄZKOWO zapytaj: ile godzin dziennie per spedytor na wpisywanie?
+Wylicz razem z klientem i poproś o potwierdzenie obu kwot: PLN/mc i PLN/rok."
+
 5. TMS I PODEJŚCIE TECHNICZNE
    Potwierdź z danych Agenta 1. Jeśli "do weryfikacji" — dodaj pytanie do listy w punkcie 3.
 
@@ -477,8 +486,14 @@ Harmonogram — pod jego TMS ([tms z Agenta 1]):
 
 🖥️ PREZENTACJA — SEKCJA 4: Inwestycja
 
+COMMITMENT QUESTION — OBOWIĄZKOWE przed ceną:
+"Zanim przejdę do ceny — jeżeli finanse okażą się być akceptowalne, czy ten model
+współpracy z Tobą rezonuje i widzisz siebie w tym rozwiązaniu?"
+→ Klient TAK → "A co spowodowało że to powiedziałeś?" → CZEKAJ — klient sam sobie sprzedaje.
+→ Klient NIE lub niepewny → wróć do Kroku 4. Nie idź do ceny.
+
 Cena:
-> "Inwestycja: 15 000 PLN netto za wdrożenie i 4 000 PLN miesięcznie za retainer."
+> "Inwestycja w wdrożenie systemu dopasowanego pod Pana firmę: 15 000 PLN netto. Retainer 4 000 PLN miesięcznie."
 → STOP. CISZA. Minimum 20 sekund. Zero dodatkowych słów.
 
 🖥️ PREZENTACJA — SEKCJA 5: Gwarancja na umowie
