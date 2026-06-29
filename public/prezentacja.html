@@ -6,206 +6,239 @@
   <title>Autorise — Prezentacja</title>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
-    :root { --edit-h: 0px; --blue: #1a56ff; --font: 'Manrope',sans-serif; }
+    :root {
+      --edit-h: 0px;
+      --accent: #5170ff;
+      --bg: #f5f5f7;
+      --surface: rgba(255,255,255,0.82);
+      --border: rgba(0,0,0,0.08);
+      --border-strong: rgba(0,0,0,0.13);
+      --text-primary: #1d1d1f;
+      --text-secondary: #3a3a3c;
+      --text-tertiary: #6e6e73;
+      --success: #28a745;
+      --success-light: #30d158;
+      --error: #d93025;
+      --error-light: #ff453a;
+      --warning: #e6770e;
+      --warning-light: #ff9f0a;
+      --font: 'Manrope', sans-serif;
+      --sh: 0 1px 3px rgba(0,0,0,0.06), 0 4px 14px rgba(0,0,0,0.08);
+      --sh-icon: 0 1px 4px rgba(0,0,0,0.1), 0 2px 10px rgba(0,0,0,0.08);
+    }
 
-    *, *::before, *::after { box-sizing: border-box; }
-    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: var(--font); }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%; overflow: hidden;
+      font-family: var(--font); background: var(--bg); color: var(--text-primary);
+    }
 
-    /* Progress bar */
+    /* ── Progress ── */
     #progress {
-      position: fixed; top: var(--edit-h); left: 0; right: 0; height: 3px;
-      background: rgba(100,116,139,0.12); z-index: 300; transition: top 0.28s;
+      position: fixed; top: var(--edit-h); left: 0; right: 0; height: 2px;
+      background: rgba(0,0,0,0.07); z-index: 300; transition: top .28s;
     }
-    #progress-bar { height: 100%; background: var(--blue); transition: width 0.32s cubic-bezier(.4,0,.2,1); }
+    #progress-bar { height: 100%; background: var(--accent); transition: width .32s cubic-bezier(.4,0,.2,1); }
 
-    /* Edit toggle */
+    /* ── Edit toggle ── */
     #edit-toggle {
-      position: fixed; top: 8px; right: 12px; z-index: 500;
-      width: 30px; height: 30px; border-radius: 8px;
-      background: rgba(10,10,20,0.35); border: 1px solid rgba(255,255,255,0.15);
-      backdrop-filter: blur(8px); cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 13px; transition: background 0.15s, border-color 0.15s, top 0.28s;
+      position: fixed; top: 10px; right: 14px; z-index: 500;
+      width: 32px; height: 32px; border-radius: 9px;
+      background: rgba(255,255,255,0.92); border: 1px solid var(--border-strong);
+      backdrop-filter: blur(20px); box-shadow: var(--sh);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: background .15s, border-color .15s, top .28s; color: var(--text-secondary);
     }
-    #edit-toggle.on { background: var(--blue); border-color: var(--blue); top: 64px; }
+    #edit-toggle.on { background: var(--accent); border-color: var(--accent); top: 64px; color: #fff; }
 
-    /* Edit bar */
+    /* ── Edit bar ── */
     #edit-bar {
       position: fixed; top: 0; left: 0; right: 0; height: 56px;
-      background: rgba(8,12,28,0.97); backdrop-filter: blur(20px);
-      border-bottom: 1px solid rgba(255,255,255,0.07);
-      display: none; align-items: center; gap: 14px; padding: 0 14px;
-      z-index: 400; overflow-x: auto;
+      background: rgba(255,255,255,0.96); backdrop-filter: blur(28px);
+      border-bottom: 1px solid var(--border-strong);
+      display: none; align-items: center; gap: 14px; padding: 0 16px;
+      z-index: 400; overflow-x: auto; box-shadow: var(--sh);
     }
     #edit-bar.visible { display: flex; }
+    #edit-slide-info { font-size: 10px; font-weight: 700; color: var(--text-tertiary); letter-spacing: .06em; white-space: nowrap; flex-shrink: 0; text-transform: uppercase; }
     .ei { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
-    .ei label { font-size: 9px; color: rgba(255,255,255,0.38); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
-    .ei input {
-      height: 26px; padding: 0 8px; border-radius: 6px;
-      border: 1px solid rgba(255,255,255,0.13); background: rgba(255,255,255,0.06);
-      color: #fff; font-family: var(--font); font-size: 12px; font-weight: 600;
-      width: 72px; outline: none;
-    }
+    .ei label { font-size: 9px; color: var(--text-tertiary); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+    .ei input { height: 26px; padding: 0 8px; border-radius: 6px; border: 1px solid var(--border-strong); background: rgba(0,0,0,0.03); color: var(--text-primary); font-family: var(--font); font-size: 12px; font-weight: 600; width: 72px; outline: none; }
     .ei input.wide { width: 110px; }
-    .ei input:focus { border-color: var(--blue); }
-    .ei-sep { width: 1px; height: 24px; background: rgba(255,255,255,0.08); flex-shrink: 0; }
+    .ei input:focus { border-color: var(--accent); }
+    .ei-sep { width: 1px; height: 24px; background: var(--border-strong); flex-shrink: 0; }
+    #edit-exit { height: 26px; padding: 0 10px; border-radius: 6px; background: transparent; border: 1px solid var(--border-strong); color: var(--text-tertiary); font-family: var(--font); font-size: 10px; font-weight: 700; cursor: pointer; letter-spacing: .05em; white-space: nowrap; flex-shrink: 0; }
+    #edit-exit:hover { background: rgba(0,0,0,0.04); }
 
-    /* Slides wrap */
-    #slides-wrap {
-      position: fixed; top: var(--edit-h); left: 0; right: 0; bottom: 0;
-      overflow: hidden; transition: top 0.28s;
-    }
+    /* ── Slides ── */
+    #slides-wrap { position: fixed; top: var(--edit-h); left: 0; right: 0; bottom: 0; overflow: hidden; transition: top .28s; }
     .slide {
-      position: absolute; inset: 0;
-      opacity: 0; transform: translateX(30px);
-      transition: opacity 0.3s ease, transform 0.3s ease;
-      pointer-events: none; display: flex; flex-direction: column;
+      position: absolute; inset: 0; opacity: 0; transform: translateX(28px);
+      transition: opacity .3s ease, transform .3s ease;
+      pointer-events: none; display: flex; flex-direction: column; background: var(--bg);
     }
     .slide.active { opacity: 1; transform: translateX(0); pointer-events: all; }
 
-    /* Themes */
-    .s-light { background: #ffffff; color: #0f172a; }
-    .s-gray  { background: #f8fafc; color: #0f172a; }
-    .s-dark  { background: #080f24; color: #e2e8f0; }
-
-    /* Arrow buttons */
+    /* ── Arrows ── */
     .arr {
       position: fixed; top: 50%; transform: translateY(-50%);
       width: 36px; height: 36px; border-radius: 50%;
-      background: rgba(0,0,0,0.1); border: 1px solid rgba(0,0,0,0.1);
+      background: rgba(255,255,255,0.9); border: 1px solid var(--border-strong);
+      backdrop-filter: blur(20px); box-shadow: var(--sh);
       cursor: pointer; display: flex; align-items: center; justify-content: center;
-      font-size: 15px; z-index: 200; color: rgba(60,60,80,0.45);
-      transition: background 0.15s, opacity 0.2s; user-select: none;
+      z-index: 200; color: var(--text-tertiary);
+      transition: color .12s, background .12s, opacity .2s; user-select: none;
     }
+    .arr:hover { background: #fff; color: var(--text-primary); }
     #btn-prev { left: 10px; }
     #btn-next { right: 10px; }
 
-    /* Bottom nav */
-    #nav {
-      position: fixed; bottom: 0; left: 0; right: 0; height: 44px;
-      display: flex; align-items: center; justify-content: center; gap: 7px;
-      z-index: 200; pointer-events: none;
+    /* ── Nav ── */
+    #nav { position: fixed; bottom: 0; left: 0; right: 0; height: 44px; display: flex; align-items: center; justify-content: center; gap: 7px; z-index: 200; pointer-events: none; }
+    .dot { width: 5px; height: 5px; border-radius: 50%; background: rgba(0,0,0,0.16); cursor: pointer; pointer-events: all; transition: background .2s, transform .2s; }
+    .dot.active { background: var(--accent); transform: scale(1.5); }
+    #counter { position: fixed; bottom: 14px; right: 14px; font-size: 10px; font-weight: 600; color: var(--text-tertiary); z-index: 200; letter-spacing: .03em; }
+
+    /* ── Slide inner ── */
+    .si { flex: 1; display: flex; flex-direction: column; padding: 24px 64px 44px; max-width: 1020px; margin: 0 auto; width: 100%; justify-content: center; }
+
+    /* ── Typography ── */
+    .tag { font-size: 10px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+    .h1 { font-size: clamp(40px, 5.4vw, 68px); font-weight: 900; line-height: 1.06; letter-spacing: -.03em; margin-bottom: 18px; }
+    .sub { font-size: 16px; font-weight: 500; line-height: 1.52; color: var(--text-secondary); margin-bottom: 22px; }
+    .blue  { color: var(--accent); }
+    .red   { color: var(--error); }
+    .green { color: var(--success); }
+
+    /* ── Icon box ── */
+    .c-icon {
+      width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: #fff; box-shadow: var(--sh-icon); margin-bottom: 10px;
+      color: var(--accent);
     }
-    .dot {
-      width: 6px; height: 6px; border-radius: 50%;
-      background: rgba(100,116,139,0.25);
-      cursor: pointer; pointer-events: all;
-      transition: background 0.2s, transform 0.2s;
-    }
-    .dot.active { background: var(--blue); transform: scale(1.5); }
-    #counter {
-      position: fixed; bottom: 14px; right: 14px;
-      font-size: 10px; color: rgba(100,116,139,0.5); z-index: 200;
-    }
+    .c-icon.ic-red    { color: var(--error); }
+    .c-icon.ic-warn   { color: var(--warning); }
+    .c-icon.ic-green  { color: var(--success); }
+    .c-icon.ic-purple { color: #7c3aed; }
 
-    /* Slide inner */
-    .si {
-      flex: 1; display: flex; flex-direction: column;
-      padding: 28px 56px 48px; max-width: 980px; margin: 0 auto; width: 100%;
-      justify-content: center;
-    }
+    /* ── Cards ── */
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .card { border-radius: 14px; padding: 16px 18px; background: rgba(255,255,255,0.85); border: 1px solid rgba(255,255,255,0.95); box-shadow: var(--sh); backdrop-filter: blur(20px) saturate(1.4); }
+    .c-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+    .c-desc  { font-size: 13px; line-height: 1.5; color: var(--text-secondary); }
 
-    /* Typography */
-    .tag { font-size: 9.5px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--blue); margin-bottom: 10px; }
-    .tag.dim { color: rgba(255,255,255,0.38); }
-    .h1 { font-size: clamp(26px,3.8vw,46px); font-weight: 900; line-height: 1.08; letter-spacing: -.03em; margin: 0 0 8px; }
-    .h1.white { color: #fff; }
-    .h1.dark  { color: #0f172a; }
-    .blue  { color: var(--blue); }
-    .red   { color: #ef4444; }
-    .green { color: #22c55e; }
-    .sub { font-size: 14px; font-weight: 400; margin: 0 0 20px; line-height: 1.5; }
-    .sub.dim  { color: rgba(255,255,255,0.4); }
-    .sub.gray { color: #64748b; }
+    /* ── Bars ── */
+    .bars { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+    .bar-row { display: flex; align-items: center; gap: 12px; }
+    .bar-lbl { width: 108px; font-size: 12px; font-weight: 600; color: var(--text-tertiary); flex-shrink: 0; }
+    .bar-track { flex: 1; height: 40px; border-radius: 10px; background: rgba(0,0,0,0.04); overflow: hidden; border: 1px solid var(--border); }
+    .bar-fill { height: 100%; border-radius: 9px; display: flex; align-items: center; padding: 0 14px; font-size: 13.5px; font-weight: 800; color: #fff; transition: width .7s cubic-bezier(.4,0,.2,1); white-space: nowrap; }
+    .bar-red   { background: var(--error); }
+    .bar-green { background: var(--success); }
 
-    /* Cards */
-    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .card { border-radius: 13px; padding: 17px 18px; }
-    .card.light { background: #f8fafc; border: 1px solid #e2e8f0; }
-    .card.dark  { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); }
-    .c-icon  { font-size: 22px; margin-bottom: 7px; }
-    .c-title { font-size: 12.5px; font-weight: 700; margin: 0 0 3px; }
-    .c-desc  { font-size: 11.5px; margin: 0; line-height: 1.45; opacity: .58; }
+    /* ── Stat boxes ── */
+    .stat-boxes { display: flex; gap: 10px; flex-wrap: wrap; }
+    .stat-box { flex: 1; min-width: 140px; border-radius: 13px; padding: 14px 16px; background: rgba(255,255,255,0.85); border: 1px solid var(--border); box-shadow: var(--sh); }
+    .sb-red   { background: rgba(217,48,37,0.06)!important;   border-color: rgba(217,48,37,0.16)!important; }
+    .sb-blue  { background: rgba(81,112,255,0.06)!important;  border-color: rgba(81,112,255,0.16)!important; }
+    .sb-green { background: rgba(40,167,69,0.06)!important;   border-color: rgba(40,167,69,0.16)!important; }
+    .st-tag { font-size: 9.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 5px; }
+    .st-val { font-size: clamp(20px, 2.6vw, 30px); font-weight: 900; letter-spacing: -.025em; line-height: 1; color: var(--text-primary); }
+    .st-val.red   { color: var(--error); }
+    .st-val.blue  { color: var(--accent); }
+    .st-val.green { color: var(--success); }
 
-    /* Bar chart */
-    .bars { display: flex; flex-direction: column; gap: 10px; }
-    .bar-row  { display: flex; align-items: center; gap: 10px; }
-    .bar-lbl  { width: 110px; font-size: 11px; font-weight: 600; opacity: .55; flex-shrink: 0; }
-    .bar-track { flex: 1; height: 30px; border-radius: 8px; background: rgba(255,255,255,0.05); overflow: hidden; }
-    .bar-fill { height: 100%; border-radius: 8px; display: flex; align-items: center; padding: 0 12px; font-size: 12px; font-weight: 800; color: #fff; transition: width 0.65s cubic-bezier(.4,0,.2,1); white-space: nowrap; }
-    .bar-red   { background: linear-gradient(90deg,#b91c1c,#ef4444); }
-    .bar-green { background: linear-gradient(90deg,#15803d,#22c55e); }
-
-    /* Stat boxes */
-    .stat-boxes { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 14px; }
-    .stat-box { flex: 1; min-width: 130px; border-radius: 12px; padding: 14px 16px; }
-    .stat-box.sb-blue  { background: rgba(26,86,255,0.1);  border: 1px solid rgba(26,86,255,0.22); }
-    .stat-box.sb-red   { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); }
-    .stat-box.sb-green { background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2); }
-    .st-tag { font-size: 9px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; opacity: .45; margin-bottom: 4px; }
-    .st-val { font-size: clamp(18px,2.5vw,28px); font-weight: 900; letter-spacing: -.02em; line-height: 1; }
-
-    /* Table */
-    .cmp-wrap { background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 2px 14px rgba(0,0,0,0.04); margin-top: 16px; }
+    /* ── Comparison table ── */
+    .cmp-wrap { background: rgba(255,255,255,0.9); border-radius: 13px; border: 1px solid var(--border); overflow: hidden; box-shadow: var(--sh); margin-top: 18px; }
     table.cmp { width: 100%; border-collapse: collapse; }
-    table.cmp th, table.cmp td { padding: 9px 14px; text-align: left; font-size: 12px; border-bottom: 1px solid #f1f5f9; }
-    table.cmp th { font-size: 10px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: #94a3b8; background: #f8fafc; }
-    table.cmp th.hl { color: var(--blue); }
-    table.cmp td:first-child { font-weight: 600; color: #475569; }
-    table.cmp td.yes { color: #16a34a; font-weight: 700; }
-    table.cmp td.no  { color: #94a3b8; }
+    table.cmp th, table.cmp td { padding: 11px 16px; text-align: left; font-size: 13px; border-bottom: 1px solid rgba(0,0,0,0.045); }
+    table.cmp th { font-size: 10.5px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--text-tertiary); background: rgba(0,0,0,0.02); }
+    table.cmp th.hl { color: var(--accent); }
+    table.cmp td:first-child { font-weight: 600; color: var(--text-secondary); }
+    table.cmp td.yes { color: var(--success); font-weight: 700; }
+    table.cmp td.no  { color: var(--text-tertiary); }
     table.cmp tr:last-child td { border-bottom: none; }
 
-    /* Steps */
+    /* ── Steps ── */
     .steps { display: flex; flex-direction: column; gap: 13px; }
     .step  { display: flex; align-items: flex-start; gap: 13px; }
-    .s-num { width: 30px; height: 30px; border-radius: 50%; background: var(--blue); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; color: #fff; flex-shrink: 0; }
-    .s-title { font-size: 13.5px; font-weight: 700; color: #fff; margin: 0 0 2px; }
-    .s-desc  { font-size: 11.5px; opacity: .5; margin: 0; line-height: 1.4; }
+    .s-num { width: 32px; height: 32px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; color: #fff; flex-shrink: 0; }
+    .s-title { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+    .s-desc  { font-size: 12.5px; color: var(--text-secondary); line-height: 1.48; }
 
-    /* Timeline */
-    .timeline { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-top: 18px; }
-    .tl-week { font-size: 9px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: rgba(255,255,255,0.3); margin-bottom: 5px; }
-    .tl-bar  { height: 5px; border-radius: 3px; }
-    .tl-lbl  { font-size: 10px; color: rgba(255,255,255,0.45); margin-top: 4px; }
+    /* ── Timeline ── */
+    .timeline { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-top: 20px; }
+    .tl-week { font-size: 9.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 5px; }
+    .tl-bar  { height: 6px; border-radius: 3px; }
+    .tl-lbl  { font-size: 11px; color: var(--text-secondary); margin-top: 5px; font-weight: 600; }
 
-    /* Price cards */
-    .price-cards { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 16px; align-items: flex-start; }
-    .price-card { flex: 1; min-width: 160px; border-radius: 13px; padding: 16px 20px; }
-    .price-card.cost   { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); }
-    .price-card.invest { background: rgba(26,86,255,0.1);  border: 1px solid rgba(26,86,255,0.25); }
-    .pc-tag { font-size: 9px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 6px; opacity: .55; }
-    .pc-val { font-size: clamp(20px,2.8vw,34px); font-weight: 900; letter-spacing: -.02em; line-height: 1; }
-    .pc-sub { font-size: 11px; opacity: .38; margin-top: 3px; }
+    /* ── Price cards ── */
+    .price-cards { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 18px; align-items: stretch; }
+    .price-card  { flex: 1; min-width: 180px; border-radius: 14px; padding: 20px 22px; }
+    .price-card.cost   { background: rgba(217,48,37,0.06);  border: 1px solid rgba(217,48,37,0.16); }
+    .price-card.invest { background: rgba(81,112,255,0.06); border: 1px solid rgba(81,112,255,0.18); }
+    .pc-tag { font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 8px; color: var(--text-tertiary); }
+    .pc-val { font-size: clamp(28px, 3.8vw, 46px); font-weight: 900; letter-spacing: -.03em; line-height: 1; }
+    .pc-sub { font-size: 12px; color: var(--text-tertiary); margin-top: 5px; }
 
-    /* ROI note */
-    .roi-note { margin-top: 16px; background: rgba(34,197,94,0.07); border: 1px solid rgba(34,197,94,0.18); border-radius: 10px; padding: 12px 16px; font-size: 12.5px; color: rgba(255,255,255,0.65); line-height: 1.55; }
+    /* ── ROI metrics row ── */
+    .roi-row { display: flex; margin-top: 16px; background: rgba(255,255,255,0.85); border: 1px solid rgba(40,167,69,0.2); border-radius: 13px; overflow: hidden; box-shadow: var(--sh); }
+    .roi-metric { flex: 1; padding: 18px 22px; display: flex; align-items: center; gap: 14px; }
+    .roi-metric + .roi-metric { border-left: 1px solid rgba(40,167,69,0.15); }
+    .roi-val { font-size: clamp(34px,4.5vw,52px); font-weight: 900; letter-spacing: -.035em; line-height: 1; color: var(--text-primary); flex-shrink: 0; }
+    .roi-label { font-size: 13px; font-weight: 500; color: var(--text-secondary); line-height: 1.45; }
+    .roi-accent { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; background: rgba(40,167,69,0.1); color: var(--success); flex-shrink: 0; }
 
-    /* Guarantee */
-    .guar-row  { display: flex; gap: 28px; flex-wrap: wrap; align-items: flex-start; }
-    .guar-left { flex: 1; min-width: 180px; }
-    .guar-pct  { font-size: clamp(44px,7vw,80px); font-weight: 900; color: var(--blue); letter-spacing: -.04em; line-height: 1; }
-    .guar-txt  { font-size: 18px; font-weight: 800; color: #fff; margin: 4px 0 6px; line-height: 1.2; }
-    .guar-sub  { font-size: 12px; opacity: .38; line-height: 1.5; }
-    .guar-right { flex: 1; min-width: 200px; }
+    /* ── Guarantee ── */
+    .guar-row   { display: flex; gap: 36px; flex-wrap: wrap; align-items: flex-start; }
+    .guar-left  { flex: 1; min-width: 220px; }
+    .guar-pct   { font-size: clamp(64px, 10vw, 112px); font-weight: 900; color: var(--accent); letter-spacing: -.05em; line-height: 1; }
+    .guar-txt   { font-size: 22px; font-weight: 800; margin: 6px 0 8px; line-height: 1.2; }
+    .guar-sub   { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+    .guar-right { flex: 1; min-width: 240px; }
 
-    /* Contact */
-    .contact-box { margin-top: 14px; padding: 11px 14px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 9px; }
-    .contact-sub   { font-size: 10px; color: rgba(255,255,255,0.3); margin-bottom: 2px; }
-    .contact-email { font-size: 13px; font-weight: 700; color: var(--blue); }
+    /* ── Contact ── */
+    .contact-box { margin-top: 16px; padding: 13px 16px; background: rgba(255,255,255,0.85); border: 1px solid var(--border-strong); border-radius: 10px; }
+    .contact-sub   { font-size: 9.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 3px; }
+    .contact-email { font-size: 14px; font-weight: 700; color: var(--accent); }
 
-    /* Donut row */
+    /* ── Check list ── */
+    .check-list { display: flex; flex-direction: column; gap: 9px; margin-top: 16px; }
+    .check-item { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 500; color: var(--text-secondary); }
+    .check-dot  { width: 22px; height: 22px; border-radius: 50%; background: #fff; border: 1px solid rgba(40,167,69,0.3); box-shadow: var(--sh-icon); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--success); }
+
+    /* ── Donut row ── */
     .donut-row { display: flex; align-items: center; gap: 20px; margin-top: 16px; flex-wrap: wrap; }
+
+    /* ── Hero number accent ── */
+    .hero-saved { text-align: right; }
+    .hero-saved-val { font-size: clamp(52px, 8vw, 96px); font-weight: 900; color: var(--success); letter-spacing: -.05em; line-height: 1; }
+    .hero-saved-label { font-size: 12px; font-weight: 600; color: var(--text-tertiary); margin-top: 2px; text-transform: uppercase; letter-spacing: .05em; }
+
+    /* ── Two-col header ── */
+    .header-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 6px; }
+    .header-row .h1 { margin-bottom: 0; }
+
+    /* ── Stagger animation ── */
+    .ai { opacity: 0; }
+    .ai.sp { animation: fadeUp .65s cubic-bezier(.16,1,.3,1) both; animation-delay: calc(var(--i,0) * 85ms); }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:none; } }
   </style>
 </head>
 <body>
 
 <!-- Edit toggle -->
-<button id="edit-toggle" title="Tryb edycji (klawisz E)">✏️</button>
+<button id="edit-toggle" title="Tryb edycji (E)">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+  </svg>
+</button>
 
 <!-- Edit bar -->
 <div id="edit-bar">
-  <div id="edit-slide-info" style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.45);letter-spacing:.06em;white-space:nowrap;flex-shrink:0;text-transform:uppercase;">Slajd 1/7 — Problem</div>
+  <div id="edit-slide-info">Slajd 1/7</div>
   <div class="ei-sep"></div>
   <div class="ei"><label>Dziś h/mc</label><input id="ei-roi" type="number" placeholder="70"/></div>
   <div class="ei-sep"></div>
@@ -217,7 +250,7 @@
   <div class="ei-sep"></div>
   <div class="ei"><label>Gwarant. h/mc</label><input id="ei-gwar" type="number" placeholder="80"/></div>
   <div class="ei-sep"></div>
-  <button id="edit-exit" style="height:26px;padding:0 10px;border-radius:6px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.45);font-family:var(--font);font-size:10px;font-weight:700;cursor:pointer;letter-spacing:.05em;white-space:nowrap;flex-shrink:0;">Wyjdź ✕</button>
+  <button id="edit-exit">Zamknij</button>
 </div>
 
 <!-- Progress -->
@@ -226,224 +259,358 @@
 <!-- Slides -->
 <div id="slides-wrap">
 
-  <!-- 1: PROBLEM (light) -->
-  <div class="slide s-light" id="s1">
+  <!-- 1: PROBLEM -->
+  <div class="slide" id="s1">
     <div class="si">
-      <div class="tag">01 — Problem</div>
-      <h1 class="h1 dark">Transport ręczny<br><span class="blue">kosztuje więcej,<br>niż myślisz.</span></h1>
-      <p class="sub gray">Każdy spedytor codziennie traci czas na zadania, które może wykonać automat.</p>
+      <div class="tag ai" style="--i:0">01 · Problem</div>
+      <h1 class="h1 ai" style="--i:1">Transport ręczny<br><span class="blue">kosztuje więcej,<br>niż myślisz.</span></h1>
+      <p class="sub ai" style="--i:2">Każdy spedytor codziennie traci czas na zadania, które może wykonać automat.</p>
 
-      <div class="grid2">
-        <div class="card light">
-          <div class="c-icon">⏱</div>
+      <div class="grid2 ai" style="--i:3">
+        <div class="card">
+          <div class="c-icon ic-warn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+          </div>
           <div class="c-title">Manualne wpisywanie</div>
-          <p class="c-desc"><strong class="val-roi" style="color:#0f172a">–</strong> h / spedytor / mies. przepada na ręczne dane</p>
+          <p class="c-desc"><strong class="val-roi" style="color:var(--text-primary)">–</strong> h na spedytora miesięcznie przepada na ręczne wprowadzanie danych do systemu</p>
         </div>
-        <div class="card light">
-          <div class="c-icon">📄</div>
+        <div class="card">
+          <div class="c-icon ic-red">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+          </div>
           <div class="c-title">Opóźnione faktury</div>
-          <p class="c-desc"><strong class="val-bol" style="color:#0f172a">–</strong> PLN rocznie zablokowane przez błędy i opóźnienia</p>
+          <p class="c-desc"><strong class="val-bol" style="color:var(--text-primary)">–</strong> PLN rocznie zablokowane przez błędy i opóźnienia fakturowania</p>
         </div>
-        <div class="card light">
-          <div class="c-icon">❌</div>
+        <div class="card">
+          <div class="c-icon ic-red">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+          </div>
           <div class="c-title">Błędy ludzkie</div>
-          <p class="c-desc">Każdy ręczny wpis to ryzyko — literówka, zły numer, brakująca pozycja</p>
+          <p class="c-desc">Każdy ręczny wpis to ryzyko. Literówka, zły numer, brakująca pozycja na fakturze.</p>
         </div>
-        <div class="card light">
-          <div class="c-icon">🔦</div>
+        <div class="card">
+          <div class="c-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </div>
           <div class="c-title">Brak widoczności</div>
-          <p class="c-desc">Nie wiadomo co się dzieje z ładunkami, dopóki klient nie zadzwoni</p>
+          <p class="c-desc">Nie wiadomo co się dzieje z ładunkami, dopóki klient sam nie zadzwoni i nie zapyta.</p>
         </div>
       </div>
 
-      <div class="donut-row">
-        <svg width="76" height="76" viewBox="0 0 76 76">
-          <circle cx="38" cy="38" r="28" fill="none" stroke="#e2e8f0" stroke-width="9"/>
-          <circle cx="38" cy="38" r="28" fill="none" stroke="var(--blue)" stroke-width="9"
+      <div class="donut-row ai" style="--i:5">
+        <svg width="72" height="72" viewBox="0 0 76 76">
+          <circle cx="38" cy="38" r="28" fill="none" stroke="rgba(0,0,0,0.07)" stroke-width="9"/>
+          <circle cx="38" cy="38" r="28" fill="none" stroke="var(--accent)" stroke-width="9"
             stroke-dasharray="109 176" stroke-linecap="round" transform="rotate(-90 38 38)"/>
-          <text x="38" y="43" text-anchor="middle" font-family="Manrope,sans-serif" font-size="14" font-weight="900" fill="#0f172a">62%</text>
+          <text x="38" y="43" text-anchor="middle" font-family="Manrope,sans-serif" font-size="14" font-weight="900" fill="#1d1d1f">62%</text>
         </svg>
         <div>
-          <div style="font-size:13px;font-weight:700;color:#0f172a;">62% firm transportowych</div>
-          <div style="font-size:12px;color:#64748b;line-height:1.45;margin-top:2px;">traci ponad <strong class="val-bol" style="color:#ef4444"></strong> PLN rocznie<br>przez nieefektywność operacyjną</div>
+          <div style="font-size:14px;font-weight:700;">62% firm transportowych</div>
+          <div style="font-size:13px;color:var(--text-secondary);line-height:1.5;margin-top:3px;">
+            traci ponad <strong class="val-bol" style="color:var(--error)">–</strong> PLN rocznie<br>przez nieefektywność operacyjną
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- 2: EFEKT ROI (dark) -->
-  <div class="slide s-dark" id="s2">
+  <!-- 2: EFEKT ROI -->
+  <div class="slide" id="s2">
     <div class="si">
-      <div class="tag dim">02 — Efekt wdrożenia</div>
-      <h1 class="h1 white">Ile czasu <span class="blue">oszczędzasz</span><br>po wdrożeniu?</h1>
-      <p class="sub dim">godzin na spedytora miesięcznie — mniej pracy, więcej zleceń</p>
+      <div class="tag ai" style="--i:0">02 · Efekt wdrożenia</div>
 
-      <div class="bars" style="margin-bottom:16px;">
+      <div class="header-row ai" style="--i:1">
+        <h1 class="h1">Ile czasu <span class="blue">oszczędzasz</span><br>po wdrożeniu?</h1>
+        <div class="hero-saved">
+          <div class="hero-saved-val"><span id="val-saved">60</span>h</div>
+          <div class="hero-saved-label">oszczędność / mies.</div>
+        </div>
+      </div>
+
+      <p class="sub ai" style="--i:2;margin-bottom:14px;">Porównanie obciążenia spedytora przed i po automatyzacji procesów operacyjnych.</p>
+
+      <div class="bars ai" style="--i:3">
         <div class="bar-row">
           <div class="bar-lbl">Dziś</div>
-          <div class="bar-track"><div class="bar-fill bar-red" id="bar-dzis" style="width:70%"><span class="val-roi">70</span>&nbsp;h</div></div>
+          <div class="bar-track"><div class="bar-fill bar-red" id="bar-dzis" style="width:70%"><span class="val-roi">70</span>&nbsp;h / mies.</div></div>
         </div>
         <div class="bar-row">
           <div class="bar-lbl">Po wdrożeniu</div>
-          <div class="bar-track"><div class="bar-fill bar-green" id="bar-po" style="width:10%"><span class="val-po">10</span>&nbsp;h</div></div>
+          <div class="bar-track"><div class="bar-fill bar-green" id="bar-po" style="width:10%"><span class="val-po">10</span>&nbsp;h / mies.</div></div>
         </div>
       </div>
 
-      <div class="stat-boxes">
+      <div class="stat-boxes ai" style="--i:4">
         <div class="stat-box sb-red">
-          <div class="st-tag red">Koszt problemu</div>
+          <div class="st-tag">Koszt nieefektywności</div>
           <div class="st-val red"><span class="val-bol-k">–</span> PLN/rok</div>
         </div>
         <div class="stat-box sb-blue">
-          <div class="st-tag blue">Zwrot inwest.</div>
+          <div class="st-tag">Zwrot inwestycji</div>
           <div class="st-val blue"><span id="val-months">–</span> mies.</div>
         </div>
         <div class="stat-box sb-green">
-          <div class="st-tag green">Gwarancja</div>
-          <div class="st-val green"><span class="val-gwar">80</span>h/mc</div>
+          <div class="st-tag">Gwarancja oszczędności</div>
+          <div class="st-val green"><span class="val-gwar">80</span>h / mies.</div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- 3: SYSTEM (light) -->
-  <div class="slide s-light" id="s3">
+  <!-- 3: SYSTEM -->
+  <div class="slide" id="s3">
     <div class="si">
-      <div class="tag">03 — System</div>
-      <h1 class="h1 dark">Moduły dobrane<br><span class="blue">do Twojej firmy.</span></h1>
-      <p class="sub gray">Nie wdrażamy wszystkiego. Dobieramy to co rozwiązuje Twój konkretny problem.</p>
+      <div class="tag ai" style="--i:0">03 · System</div>
+      <h1 class="h1 ai" style="--i:1">Moduły dobrane<br><span class="blue">do Twojej firmy.</span></h1>
+      <p class="sub ai" style="--i:2">Nie wdrażamy wszystkiego. Dobieramy to, co eliminuje Twój konkretny problem w ciągu 4 tygodni.</p>
 
-      <div class="grid2">
-        <div class="card light">
-          <div class="c-icon">🔄</div>
+      <div class="grid2 ai" style="--i:3">
+        <div class="card">
+          <div class="c-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            </svg>
+          </div>
           <div class="c-title">Automatyzacja TMS</div>
-          <p class="c-desc">Zlecenia trafiają do <strong class="val-tms">Trans.eu</strong> bez klikania — zero ręcznego wpisywania</p>
+          <p class="c-desc">Zlecenia trafiają do <strong class="val-tms">Trans.eu</strong> bez klikania. Zero ręcznego wpisywania, zero pomyłek.</p>
         </div>
-        <div class="card light">
-          <div class="c-icon">🧾</div>
+        <div class="card">
+          <div class="c-icon ic-warn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 3 6 21 12 18 18 21 18 3"/>
+              <line x1="6" y1="8" x2="18" y2="8"/>
+              <line x1="6" y1="12" x2="14" y2="12"/>
+            </svg>
+          </div>
           <div class="c-title">OCR Faktur</div>
-          <p class="c-desc">Faktury skanowane, weryfikowane i przekazane do księgowości w sekundy</p>
+          <p class="c-desc">Faktury skanowane, weryfikowane i przekazywane do księgowości w sekundy, nie godziny.</p>
         </div>
-        <div class="card light">
-          <div class="c-icon">📱</div>
-          <div class="c-title">Powiadomienia</div>
-          <p class="c-desc">Kierowcy i klienci informowani automatycznie na każdym etapie zlecenia</p>
+        <div class="card">
+          <div class="c-icon ic-green">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+          </div>
+          <div class="c-title">Powiadomienia automatyczne</div>
+          <p class="c-desc">Kierowcy i klienci informowani na każdym etapie. Bez telefonów, bez SMS ręcznie.</p>
         </div>
-        <div class="card light">
-          <div class="c-icon">📊</div>
-          <div class="c-title">Dashboard CEO</div>
-          <p class="c-desc">Widoczność całej firmy w czasie rzeczywistym — bez chaotycznych telefonów</p>
+        <div class="card">
+          <div class="c-icon ic-purple">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="20" x2="18" y2="10"/>
+              <line x1="12" y1="20" x2="12" y2="4"/>
+              <line x1="6" y1="20" x2="6" y2="14"/>
+            </svg>
+          </div>
+          <div class="c-title">Dashboard zarządczy</div>
+          <p class="c-desc">Widoczność całej firmy w czasie rzeczywistym. Bez chaotycznych telefonów do spedytorów.</p>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- 4: DLACZEGO MY (gray) -->
-  <div class="slide s-gray" id="s4">
+  <!-- 4: DLACZEGO MY -->
+  <div class="slide" id="s4">
     <div class="si">
-      <div class="tag">04 — Dlaczego Autorise?</div>
-      <h1 class="h1 dark">Nie ERP.<br><span class="blue">Dedykowany automat<br>dla transportu.</span></h1>
+      <div class="tag ai" style="--i:0">04 · Dlaczego Autorise?</div>
+      <h1 class="h1 ai" style="--i:1">Nie ERP.<br><span class="blue">Dedykowany automat<br>dla transportu.</span></h1>
 
-      <div class="cmp-wrap">
+      <div class="cmp-wrap ai" style="--i:2">
         <table class="cmp">
           <thead>
-            <tr><th></th><th class="hl">Autorise</th><th>Typowe wdrożenie</th></tr>
+            <tr><th></th><th class="hl">Autorise</th><th>Typowe wdrożenie IT</th></tr>
           </thead>
           <tbody>
-            <tr><td>Czas wdrożenia</td><td class="yes">✓ 4 tygodnie</td><td class="no">6–12 miesięcy</td></tr>
-            <tr><td>Branża</td><td class="yes">✓ Transport / Spedycja</td><td class="no">Ogólne ERP</td></tr>
-            <tr><td>Wsparcie</td><td class="yes">✓ Bezpośrednie, online</td><td class="no">Kolejka zgłoszeń</td></tr>
-            <tr><td>Gwarancja efektu</td><td class="yes">✓ min. <span class="val-gwar">80</span>h zaoszczędzonych / mies.</td><td class="no">Brak</td></tr>
-            <tr><td>Integracja TMS</td><td class="yes">✓ <span class="val-tms">Trans.eu</span></td><td class="no">Osobne API, extra koszt</td></tr>
+            <tr><td>Czas wdrożenia</td><td class="yes">&#10003; 4 tygodnie</td><td class="no">6-12 miesięcy</td></tr>
+            <tr><td>Branża</td><td class="yes">&#10003; Transport i Spedycja</td><td class="no">Ogólny ERP lub WMS</td></tr>
+            <tr><td>Integracja TMS</td><td class="yes">&#10003; <span class="val-tms">Trans.eu</span></td><td class="no">Osobne API, extra koszt</td></tr>
+            <tr><td>Wsparcie</td><td class="yes">&#10003; Bezpośrednie, online</td><td class="no">Kolejka zgłoszeń</td></tr>
+            <tr><td>Gwarancja efektu</td><td class="yes">&#10003; min. <span class="val-gwar">80</span>h oszczędzonych / mies.</td><td class="no">Brak</td></tr>
+            <tr><td>Model cenowy</td><td class="yes">&#10003; Stała opłata, brak ukrytych kosztów</td><td class="no">Licencje + wdrożenie + utrzymanie</td></tr>
           </tbody>
         </table>
       </div>
     </div>
   </div>
 
-  <!-- 5: PROCES (dark) -->
-  <div class="slide s-dark" id="s5">
+  <!-- 5: PROCES -->
+  <div class="slide" id="s5">
     <div class="si">
-      <div class="tag dim">05 — Proces</div>
-      <h1 class="h1 white">Od decyzji do <span class="blue">live</span><br>— 4 tygodnie.</h1>
+      <div class="tag ai" style="--i:0">05 · Proces</div>
+      <h1 class="h1 ai" style="--i:1">Od decyzji do live<br><span class="blue">w 4 tygodnie.</span></h1>
 
-      <div class="steps" style="margin-top:14px;">
+      <div class="steps ai" style="--i:2;margin-top:14px;">
         <div class="step">
           <div class="s-num">1</div>
-          <div><div class="s-title">Discovery (tydzień 1)</div><p class="s-desc">Mapujemy Wasze procesy — gdzie czas ucieka, co można zautomatyzować natychmiast</p></div>
+          <div>
+            <div class="s-title">Discovery (tydzień 1)</div>
+            <p class="s-desc">Mapujemy procesy: gdzie czas ucieka, co można zautomatyzować natychmiast, od czego zacząć.</p>
+          </div>
         </div>
         <div class="step">
           <div class="s-num">2</div>
-          <div><div class="s-title">Integracja (tydzień 2–3)</div><p class="s-desc">Podłączamy system do <span class="val-tms">Trans.eu</span> i procesów wewnętrznych firmy</p></div>
+          <div>
+            <div class="s-title">Integracja (tydzień 2-3)</div>
+            <p class="s-desc">Podłączamy system do <span class="val-tms">Trans.eu</span> i procesów wewnętrznych firmy, testy na realnych danych.</p>
+          </div>
         </div>
         <div class="step">
           <div class="s-num">3</div>
-          <div><div class="s-title">Wdrożenie + szkolenie (tydzień 4)</div><p class="s-desc">System live, zespół przeszkolony, pierwsze zlecenia przechodzą automatycznie</p></div>
+          <div>
+            <div class="s-title">Wdrożenie i szkolenie (tydzień 4)</div>
+            <p class="s-desc">System live, zespół przeszkolony, pierwsze zlecenia przechodzą przez system automatycznie.</p>
+          </div>
         </div>
       </div>
 
-      <div class="timeline">
-        <div><div class="tl-week">Tydzień 1</div><div class="tl-bar" style="background:linear-gradient(90deg,#1a56ff,#3b82f6)"></div><div class="tl-lbl">Discovery</div></div>
-        <div><div class="tl-week">Tydzień 2</div><div class="tl-bar" style="background:linear-gradient(90deg,#3b82f6,#8b5cf6)"></div><div class="tl-lbl">Integracja</div></div>
-        <div><div class="tl-week">Tydzień 3</div><div class="tl-bar" style="background:linear-gradient(90deg,#8b5cf6,#a855f7)"></div><div class="tl-lbl">Testy</div></div>
-        <div><div class="tl-week">Tydzień 4</div><div class="tl-bar" style="background:linear-gradient(90deg,#15803d,#22c55e)"></div><div class="tl-lbl">🚀 Live</div></div>
+      <div class="timeline ai" style="--i:4">
+        <div>
+          <div class="tl-week">Tydzień 1</div>
+          <div class="tl-bar" style="background:linear-gradient(90deg,var(--accent),#34aadc)"></div>
+          <div class="tl-lbl">Discovery</div>
+        </div>
+        <div>
+          <div class="tl-week">Tydzień 2</div>
+          <div class="tl-bar" style="background:linear-gradient(90deg,#34aadc,#5856d6)"></div>
+          <div class="tl-lbl">Integracja</div>
+        </div>
+        <div>
+          <div class="tl-week">Tydzień 3</div>
+          <div class="tl-bar" style="background:linear-gradient(90deg,#5856d6,#7c3aed)"></div>
+          <div class="tl-lbl">Testy</div>
+        </div>
+        <div>
+          <div class="tl-week">Tydzień 4</div>
+          <div class="tl-bar" style="background:linear-gradient(90deg,var(--success),var(--success-light))"></div>
+          <div class="tl-lbl">Live</div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- 6: INWESTYCJA (dark) -->
-  <div class="slide s-dark" id="s6">
+  <!-- 6: INWESTYCJA -->
+  <div class="slide" id="s6">
     <div class="si">
-      <div class="tag dim">06 — Inwestycja</div>
-      <h1 class="h1 white">Ile kosztuje<br><span class="blue">nierobienie nic?</span></h1>
+      <div class="tag ai" style="--i:0">06 · Inwestycja</div>
+      <h1 class="h1 ai" style="--i:1">Ile kosztuje<br><span class="blue">nierobienie nic?</span></h1>
 
-      <div class="price-cards">
+      <div class="price-cards ai" style="--i:2">
         <div class="price-card cost">
-          <div class="pc-tag red">Problem kosztuje Was</div>
+          <div class="pc-tag">Problem kosztuje Was</div>
           <div class="pc-val red"><span class="val-bol-k">–</span> PLN</div>
           <div class="pc-sub">rocznie, każdego roku</div>
         </div>
-        <div style="display:flex;align-items:center;padding:0 4px;font-size:22px;opacity:.25;flex-shrink:0;">→</div>
+        <div style="display:flex;align-items:center;padding:0 4px;flex-shrink:0;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+          </svg>
+        </div>
         <div class="price-card invest">
-          <div class="pc-tag blue">Autorise kosztuje</div>
-          <div class="pc-val" style="color:#fff;">15 000 PLN</div>
-          <div class="pc-sub">jednorazowo + 4 000 PLN/mc wsparcie</div>
+          <div class="pc-tag">Autorise kosztuje</div>
+          <div class="pc-val blue">15 000 PLN</div>
+          <div class="pc-sub">jednorazowo + 4 000 PLN / mies. wsparcie</div>
         </div>
       </div>
 
-      <div class="roi-note">
-        15 000 PLN to <strong class="green" id="pct-inv">–</strong>% rocznego kosztu problemu.<br>
-        Inwestycja zwraca się w <strong class="green" id="months-inv">–</strong> miesiące.
+      <div class="roi-row ai" style="--i:3">
+        <div class="roi-metric">
+          <div class="roi-accent">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </div>
+          <div>
+            <div class="roi-val"><span id="pct-inv">–</span>%</div>
+            <div class="roi-label">rocznego kosztu problemu to cena Autorise</div>
+          </div>
+        </div>
+        <div class="roi-metric">
+          <div class="roi-accent">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </div>
+          <div>
+            <div class="roi-val"><span id="months-inv">–</span> mies.</div>
+            <div class="roi-label">i inwestycja się w pełni zwraca</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- 7: GWARANCJA + CTA (dark) -->
-  <div class="slide s-dark" id="s7">
+  <!-- 7: GWARANCJA + CTA -->
+  <div class="slide" id="s7">
     <div class="si">
-      <div class="tag dim">07 — Gwarancja + Co dalej</div>
+      <div class="tag ai" style="--i:0">07 · Gwarancja i następny krok</div>
 
       <div class="guar-row">
-        <div class="guar-left">
+        <div class="guar-left ai" style="--i:1">
           <div class="guar-pct"><span class="val-gwar">80</span>h</div>
           <div class="guar-txt">zaoszczędzonych<br>miesięcznie</div>
-          <div class="guar-sub">Gwarantujemy na umowie lub oddajemy 100% pieniędzy.<br>Zero ryzyka po Waszej stronie.</div>
+          <div class="guar-sub">Gwarantujemy na umowie lub oddajemy 100% pieniędzy. Zero ryzyka po Waszej stronie.</div>
+
+          <div class="check-list">
+            <div class="check-item">
+              <div class="check-dot">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              Weryfikacja po 30 dniach na realnych zleceniach
+            </div>
+            <div class="check-item">
+              <div class="check-dot">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              Zwrot 100% jeśli cel nieosiągnięty
+            </div>
+            <div class="check-item">
+              <div class="check-dot">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              Warunki gwarancji zapisane w umowie
+            </div>
+          </div>
         </div>
 
-        <div class="guar-right">
-          <div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:12px;">Co dalej?</div>
-          <div class="steps" style="gap:10px;">
+        <div class="guar-right ai" style="--i:2">
+          <div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:14px;">Co dalej?</div>
+          <div class="steps" style="gap:11px;">
             <div class="step">
-              <div class="s-num" style="width:26px;height:26px;font-size:11px;">1</div>
-              <div><div class="s-title" style="font-size:13px;">Umowa — dziś</div><p class="s-desc" style="font-size:11px;">Podpisujemy warunki i ustalamy harmonogram</p></div>
+              <div class="s-num" style="width:28px;height:28px;font-size:12px;">1</div>
+              <div>
+                <div class="s-title" style="font-size:14px;">Umowa, dziś</div>
+                <p class="s-desc" style="font-size:12.5px;">Podpisujemy warunki i ustalamy harmonogram wdrożenia</p>
+              </div>
             </div>
             <div class="step">
-              <div class="s-num" style="width:26px;height:26px;font-size:11px;">2</div>
-              <div><div class="s-title" style="font-size:13px;">Kick-off — w tym tygodniu</div><p class="s-desc" style="font-size:11px;">30-minutowe spotkanie z Waszym teamem</p></div>
+              <div class="s-num" style="width:28px;height:28px;font-size:12px;">2</div>
+              <div>
+                <div class="s-title" style="font-size:14px;">Kick-off, w tym tygodniu</div>
+                <p class="s-desc" style="font-size:12.5px;">30 minut z Waszym teamem, ustalamy dostępy i harmonogram</p>
+              </div>
             </div>
             <div class="step">
-              <div class="s-num" style="width:26px;height:26px;font-size:11px;">3</div>
-              <div><div class="s-title" style="font-size:13px;">Live — za 4 tygodnie 🚀</div><p class="s-desc" style="font-size:11px;">System działa, spedytorzy oszczędzają czas</p></div>
+              <div class="s-num" style="width:28px;height:28px;font-size:12px;">3</div>
+              <div>
+                <div class="s-title" style="font-size:14px;">Live, za 4 tygodnie</div>
+                <p class="s-desc" style="font-size:12.5px;">System działa, spedytorzy oszczędzają czas od pierwszego dnia</p>
+              </div>
             </div>
           </div>
 
@@ -460,23 +627,22 @@
 
 <!-- Dot nav -->
 <div id="nav">
-  <div class="dot" data-i="0"></div>
-  <div class="dot" data-i="1"></div>
-  <div class="dot" data-i="2"></div>
-  <div class="dot" data-i="3"></div>
-  <div class="dot" data-i="4"></div>
-  <div class="dot" data-i="5"></div>
+  <div class="dot" data-i="0"></div><div class="dot" data-i="1"></div>
+  <div class="dot" data-i="2"></div><div class="dot" data-i="3"></div>
+  <div class="dot" data-i="4"></div><div class="dot" data-i="5"></div>
   <div class="dot" data-i="6"></div>
 </div>
 <div id="counter">1 / 7</div>
 
 <!-- Arrows -->
-<button class="arr" id="btn-prev">←</button>
-<button class="arr" id="btn-next">→</button>
+<button class="arr" id="btn-prev">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+</button>
+<button class="arr" id="btn-next">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+</button>
 
 <script>
-// ── Values from URL params ────────────────────────────────────────
-
 const P = new URLSearchParams(location.search)
 const V = {
   roi:  parseInt(P.get('roi')  || '70')    || 70,
@@ -487,11 +653,7 @@ const V = {
 }
 const START = Math.min(Math.max((parseInt(P.get('start') || '1') || 1) - 1, 0), 6)
 
-// ── Formatting ────────────────────────────────────────────────────
-
 function fmt(n) { return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') }
-
-// ── Apply values ──────────────────────────────────────────────────
 
 function applyValues() {
   const { roi, po, bol, tms, gwar } = V
@@ -502,25 +664,24 @@ function applyValues() {
   document.querySelectorAll('.val-tms').forEach(el => el.textContent = tms)
   document.querySelectorAll('.val-gwar').forEach(el => el.textContent = gwar)
 
-  // Bar widths
+  const vs = document.getElementById('val-saved')
+  if (vs) vs.textContent = Math.max(roi - po, 0)
+
   const mx = Math.max(roi, 20)
   document.getElementById('bar-dzis').style.width = Math.round(roi / mx * 88) + '%'
-  document.getElementById('bar-po').style.width = Math.max(Math.round(po / mx * 88), 8) + '%'
+  document.getElementById('bar-po').style.width   = Math.max(Math.round(po  / mx * 88), 8) + '%'
 
-  // ROI months: 15000 / (bol/12 - 4000)
-  const gain = bol / 12 - 4000
+  const gain   = bol / 12 - 4000
   const months = gain > 0 ? Math.ceil(15000 / gain) : '–'
   const vm = document.getElementById('val-months')
   const mi = document.getElementById('months-inv')
   if (vm) vm.textContent = months
   if (mi) mi.textContent = months
 
-  // % investment
   const pct = bol > 0 ? Math.round(15000 / bol * 100) : '–'
-  const pi = document.getElementById('pct-inv')
+  const pi  = document.getElementById('pct-inv')
   if (pi) pi.textContent = pct
 
-  // Sync edit inputs
   document.getElementById('ei-roi').value  = roi
   document.getElementById('ei-po').value   = po
   document.getElementById('ei-bol').value  = bol
@@ -528,35 +689,36 @@ function applyValues() {
   document.getElementById('ei-gwar').value = gwar
 }
 
-// ── Slide engine ──────────────────────────────────────────────────
+function triggerStagger(slideEl) {
+  slideEl.querySelectorAll('.ai').forEach(el => {
+    el.classList.remove('sp')
+    void el.offsetWidth
+    el.classList.add('sp')
+  })
+}
 
-const TOTAL = 7
+const TOTAL  = 7
 const slides = document.querySelectorAll('.slide')
 const dots   = document.querySelectorAll('.dot')
 let cur = 0
 
 function goTo(idx, dir) {
   if (idx === cur || idx < 0 || idx >= TOTAL) return
-  const out = slides[cur]
-  const inn = slides[idx]
+  const out = slides[cur], inn = slides[idx]
 
-  out.style.transition = 'opacity 0.28s ease, transform 0.28s ease'
+  out.style.transition = 'opacity .28s ease, transform .28s ease'
   out.style.opacity = '0'
   out.style.transform = dir > 0 ? 'translateX(-28px)' : 'translateX(28px)'
 
   inn.style.cssText = 'transition:none;opacity:0;transform:' + (dir > 0 ? 'translateX(28px)' : 'translateX(-28px)')
   inn.classList.add('active')
   inn.offsetHeight
-  inn.style.transition = 'opacity 0.3s ease, transform 0.3s ease'
+  inn.style.transition = 'opacity .3s ease, transform .3s ease'
   inn.style.opacity = '1'
   inn.style.transform = 'translateX(0)'
 
-  const prevEl = out
-  setTimeout(() => {
-    prevEl.classList.remove('active')
-    prevEl.style.cssText = ''
-    inn.style.cssText = ''
-  }, 330)
+  setTimeout(() => triggerStagger(inn), 80)
+  setTimeout(() => { out.classList.remove('active'); out.style.cssText = ''; inn.style.cssText = '' }, 340)
 
   cur = idx
   updateNav()
@@ -564,57 +726,46 @@ function goTo(idx, dir) {
 
 function updateNav() {
   dots.forEach((d, i) => d.classList.toggle('active', i === cur))
-  document.getElementById('counter').textContent = (cur + 1) + ' / ' + TOTAL
+  document.getElementById('counter').textContent      = (cur + 1) + ' / ' + TOTAL
   document.getElementById('progress-bar').style.width = ((cur + 1) / TOTAL * 100).toFixed(1) + '%'
-  document.getElementById('btn-prev').style.opacity = cur === 0 ? '0.22' : '1'
-  document.getElementById('btn-next').style.opacity = cur === TOTAL - 1 ? '0.22' : '1'
+  document.getElementById('btn-prev').style.opacity   = cur === 0 ? '0.22' : '1'
+  document.getElementById('btn-next').style.opacity   = cur === TOTAL - 1 ? '0.22' : '1'
   if (editMode) {
     const info = document.getElementById('edit-slide-info')
-    if (info) info.textContent = 'Slajd ' + (cur + 1) + '/7 — ' + SLIDE_NAMES[cur]
+    if (info) info.textContent = 'Slajd ' + (cur + 1) + '/7 · ' + SLIDE_NAMES[cur]
   }
 }
-
-// ── Edit mode ─────────────────────────────────────────────────────
 
 let editMode = false
 const SLIDE_NAMES = ['Problem', 'Efekt ROI', 'System', 'Dlaczego my', 'Proces', 'Inwestycja', 'Gwarancja']
 
 function setEdit(on) {
   editMode = on
-  const bar = document.getElementById('edit-bar')
-  const tog = document.getElementById('edit-toggle')
+  const bar = document.getElementById('edit-bar'), tog = document.getElementById('edit-toggle')
   bar.classList.toggle('visible', on)
   tog.classList.toggle('on', on)
   document.documentElement.style.setProperty('--edit-h', on ? '56px' : '0px')
-
-  // Presentation mode: only progress bar visible; edit mode: show all nav
   const d = on ? '' : 'none'
-  document.getElementById('nav').style.display = on ? 'flex' : 'none'
-  document.getElementById('counter').style.display = d
+  document.getElementById('nav').style.display     = on ? 'flex' : 'none'
+  document.getElementById('counter').style.display  = d
   document.getElementById('btn-prev').style.display = d
   document.getElementById('btn-next').style.display = d
   tog.style.display = d
-
-  if (on) {
-    const info = document.getElementById('edit-slide-info')
-    if (info) info.textContent = 'Slajd ' + (cur + 1) + '/7 — ' + SLIDE_NAMES[cur]
-  }
+  if (on) { const i = document.getElementById('edit-slide-info'); if (i) i.textContent = 'Slajd ' + (cur + 1) + '/7 · ' + SLIDE_NAMES[cur] }
 }
 
 document.getElementById('edit-toggle').addEventListener('click', () => setEdit(!editMode))
 
 const EI = {
-  'ei-roi':  v => { V.roi  = parseInt(v)  || 0 },
-  'ei-po':   v => { V.po   = parseInt(v)  || 0 },
-  'ei-bol':  v => { V.bol  = parseInt(v)  || 0 },
+  'ei-roi':  v => { V.roi  = parseInt(v) || 0 },
+  'ei-po':   v => { V.po   = parseInt(v) || 0 },
+  'ei-bol':  v => { V.bol  = parseInt(v) || 0 },
   'ei-tms':  v => { V.tms  = v },
-  'ei-gwar': v => { V.gwar = parseInt(v)  || 95 },
+  'ei-gwar': v => { V.gwar = parseInt(v) || 80 },
 }
 Object.keys(EI).forEach(id => {
   document.getElementById(id).addEventListener('input', e => { EI[id](e.target.value); applyValues() })
 })
-
-// ── Keyboard ──────────────────────────────────────────────────────
 
 document.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT') return
@@ -624,8 +775,6 @@ document.addEventListener('keydown', e => {
   if (/^[1-7]$/.test(e.key)) { const t = parseInt(e.key) - 1; goTo(t, t > cur ? 1 : -1) }
 })
 
-// ── Touch swipe ───────────────────────────────────────────────────
-
 let tx = 0
 document.addEventListener('touchstart', e => { tx = e.touches[0].clientX }, { passive: true })
 document.addEventListener('touchend', e => {
@@ -633,24 +782,20 @@ document.addEventListener('touchend', e => {
   if (Math.abs(dx) > 40) goTo(dx < 0 ? cur + 1 : cur - 1, dx < 0 ? 1 : -1)
 }, { passive: true })
 
-// ── Buttons + dots ────────────────────────────────────────────────
-
 document.getElementById('btn-prev').addEventListener('click', () => goTo(cur - 1, -1))
 document.getElementById('btn-next').addEventListener('click', () => goTo(cur + 1, 1))
 document.getElementById('edit-exit').addEventListener('click', () => setEdit(false))
 dots.forEach((d, i) => d.addEventListener('click', () => goTo(i, i > cur ? 1 : -1)))
-
-// ── Init ──────────────────────────────────────────────────────────
 
 applyValues()
 slides[START].style.cssText = ''
 slides[START].classList.add('active')
 cur = START
 updateNav()
+setTimeout(() => triggerStagger(slides[START]), 100)
 
-// Start in presentation mode — only progress bar visible, use E to enter edit
-document.getElementById('nav').style.display = 'none'
-document.getElementById('counter').style.display = 'none'
+document.getElementById('nav').style.display     = 'none'
+document.getElementById('counter').style.display  = 'none'
 document.getElementById('btn-prev').style.display = 'none'
 document.getElementById('btn-next').style.display = 'none'
 document.getElementById('edit-toggle').style.display = 'none'

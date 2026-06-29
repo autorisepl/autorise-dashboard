@@ -866,7 +866,10 @@ export default function ZadaniaPage() {
     [fetchTasks],
   );
 
-  const rawLists = (data?.lists ?? []).filter((l) => l.title !== "Pomysły i inspiracje");
+  const rawLists = (data?.lists ?? []).filter((l) => {
+    const t = l.title.toLowerCase();
+    return !t.includes("pomysły") && !t.includes("inspiracje") && !t.includes("pomysly");
+  });
   // Swap positions: list at index 0 (top-left) ↔ list at index 2 (bottom-left)
   const lists =
     rawLists.length >= 3 ? [rawLists[2], rawLists[1], rawLists[0], ...rawLists.slice(3)] : rawLists;

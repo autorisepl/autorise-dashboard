@@ -63,8 +63,10 @@ function Field({
           style={{
             flex: 1,
             background: readOnly ? "var(--bg)" : "var(--bg-elevated)",
-            border: `1px solid ${focused && !readOnly ? ACCENT : "var(--border)"}`,
-            borderRight: suffix ? "none" : undefined,
+            borderTop: `1px solid ${focused && !readOnly ? ACCENT : "var(--border)"}`,
+            borderLeft: `1px solid ${focused && !readOnly ? ACCENT : "var(--border)"}`,
+            borderBottom: `1px solid ${focused && !readOnly ? ACCENT : "var(--border)"}`,
+            borderRight: suffix ? "none" : `1px solid ${focused && !readOnly ? ACCENT : "var(--border)"}`,
             borderRadius: suffix ? "9px 0 0 9px" : 9,
             color: readOnly ? "var(--text-tertiary)" : "var(--text-primary)",
             fontFamily: f.mono,

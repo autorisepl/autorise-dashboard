@@ -18,14 +18,14 @@
   --bg-elevated:     #ffffff;
   --bg-sidebar:      rgba(246, 246, 248, 0.94);
   --bg-hover:        rgba(0, 0, 0, 0.04);
-  --bg-active:       rgba(10, 132, 255, 0.08);
+  --bg-active:       rgba(81, 112, 255, 0.08);
   --bg-card:         #ffffff;
 
   /* Obramowania */
   --border:          rgba(0, 0, 0, 0.08);
   --border-hover:    rgba(0, 0, 0, 0.14);
   --border-sidebar:  rgba(0, 0, 0, 0.09);
-  --border-focus:    rgba(10, 132, 255, 0.45);
+  --border-focus:    rgba(81, 112, 255, 0.45);
 
   /* Tekst */
   --text-primary:    #1d1d1f;
@@ -35,10 +35,10 @@
   --text-on-accent:  #ffffff;
 
   /* Akcent */
-  --accent:          #0a84ff;
-  --accent-hover:    #0070d4;
-  --accent-muted:    rgba(10, 132, 255, 0.10);
-  --accent-border:   rgba(10, 132, 255, 0.25);
+  --accent:          #5170ff;
+  --accent-hover:    #3a55e8;
+  --accent-muted:    rgba(81, 112, 255, 0.10);
+  --accent-border:   rgba(81, 112, 255, 0.25);
 
   /* Statusy */
   --success:         #30d158;                  /* kropki / wskaźniki / akcenty */
@@ -80,9 +80,9 @@
 
   /* Gradient tła strony */
   --page-gradient:
-    radial-gradient(ellipse 70% 60% at 5% 5%,  rgba(10, 132, 255, 0.022) 0%, transparent 65%),
+    radial-gradient(ellipse 70% 60% at 5% 5%,  rgba(81, 112, 255, 0.022) 0%, transparent 65%),
     radial-gradient(ellipse 55% 50% at 95% 92%, rgba(175, 82, 222, 0.015) 0%, transparent 65%),
-    radial-gradient(ellipse 45% 40% at 70% 15%, rgba(10, 132, 255, 0.012) 0%, transparent 55%);
+    radial-gradient(ellipse 45% 40% at 70% 15%, rgba(81, 112, 255, 0.012) 0%, transparent 55%);
 
   color-scheme: light;
 }

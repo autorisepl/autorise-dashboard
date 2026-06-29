@@ -104,7 +104,7 @@ function getEventEnd(e: CalendarEvent): Date {
 // ── Event colours ─────────────────────────────────────────────────────
 
 const EVENT_COLORS = [
-  "#0a84ff",
+  "#5170ff",
   "#30d158",
   "#ff453a",
   "#ff9f0a",
@@ -154,11 +154,6 @@ function EventChip({
         marginBottom: 2,
       }}
     >
-      {!compact && time && (
-        <div style={{ fontFamily: "var(--font-sans)", fontSize: 9, color, marginBottom: 1 }}>
-          {time}
-        </div>
-      )}
       <div
         style={{
           fontFamily: "var(--font-sans)",

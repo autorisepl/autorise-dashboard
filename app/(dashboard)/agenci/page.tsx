@@ -271,6 +271,22 @@ function AgenciPageInner() {
           setSelectedClientIds((prev) => ({ ...prev, [activeAgent]: data.notion_page_id }));
         }
 
+        // Auto-propagate output to downstream agents
+        const outputStr = JSON.stringify(data.output, null, 2);
+        const downstreamClientId = selectedClientId || data.notion_page_id;
+        if (activeAgent === "agent1") {
+          // Agent 2 gets agent1Json pre-filled; Agent 3 gets its "transcript" field (which maps to agent1_json)
+          updateAgentState("agent2", { agent1Json: outputStr });
+          updateAgentState("agent3", { transcript: outputStr });
+          if (downstreamClientId) {
+            setSelectedClientIds((prev) => ({ ...prev, agent2: downstreamClientId }));
+          }
+        }
+        if (activeAgent === "agent2") {
+          // Agent 3 gets agent2Json pre-filled
+          updateAgentState("agent3", { agent2Json: outputStr });
+        }
+
         // Auto-update the "Kontakty" client card for stage agents (01/04).
         const stage = CARD_STAGE_BY_AGENT[activeAgent];
         if (stage) {

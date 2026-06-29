@@ -8,7 +8,10 @@ const TIME_ZONE = "Europe/Warsaw";
 const DEFAULT_HOUR = "10:00";
 
 // "DD.MM.YYYY" + "HH:MM" → naiwny ISO "YYYY-MM-DDTHH:MM:00" (Google + timeZone rozwiąże DST).
-function toNaiveIso(dateStr: string, timeStr: string | null): { start: string; end: string } | null {
+function toNaiveIso(
+  dateStr: string,
+  timeStr: string | null,
+): { start: string; end: string } | null {
   const m = dateStr.match(/(\d{1,2})[.\-/](\d{1,2})[.\-/](\d{4})/);
   if (!m) return null;
   const [, dd, mm, yyyy] = m;
@@ -65,7 +68,9 @@ export function CalendarAddButton({
       if (!res.ok) {
         setStatus("error");
         setError(
-          res.status === 401 ? "Połącz konto Google (zakładka Profil)." : data.error || "Błąd kalendarza.",
+          res.status === 401
+            ? "Połącz konto Google (zakładka Profil)."
+            : data.error || "Błąd kalendarza.",
         );
         return;
       }
@@ -125,11 +130,7 @@ export function CalendarAddButton({
           opacity: status === "loading" ? 0.7 : 1,
         }}
       >
-        {status === "loading" ? (
-          <Loader2 size={13} className="spin" />
-        ) : (
-          <CalendarPlus size={13} />
-        )}
+        {status === "loading" ? <Loader2 size={13} className="spin" /> : <CalendarPlus size={13} />}
         Dodaj do kalendarza
       </button>
       {status === "error" && error && (

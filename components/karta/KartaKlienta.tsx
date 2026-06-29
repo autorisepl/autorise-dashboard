@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Check, CheckCircle2, ExternalLink, Loader2, RefreshCw } from "lucide-react";
+import { AlertTriangle, Check, CheckCircle2, ExternalLink, Loader2, RefreshCw, RotateCcw } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CardState } from "@/lib/google/sheets-card";
 
@@ -25,6 +25,7 @@ function emptyCard(name: string): CardState {
     odbyteSpotkanieDecyzyjne: false,
     notatkiDecyzyjne: "",
     nagranieDecyzyjne: "",
+    followUpDate: "",
     pozyskanyKlient: false,
     podpisanaUmowa: false,
     oplaconaFaktura: false,
@@ -47,6 +48,7 @@ export function KartaKlienta({ clientName, phone, email }: KartaKlientaProps) {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [resetPending, setResetPending] = useState(false);
 
   const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -60,7 +62,12 @@ export function KartaKlienta({ clientName, phone, email }: KartaKlientaProps) {
         const data = await res.json();
         if (res.ok && data.success) {
           setFound(Boolean(data.found));
-          setCard(data.card ?? emptyCard(clientName));
+          const loaded = data.card ?? emptyCard(clientName);
+          setCard({
+            ...loaded,
+            numer: loaded.numer || phone || "",
+            email: loaded.email || email || "",
+          });
         } else {
           setLoadError(
             data.error === "scope_required"
@@ -162,6 +169,31 @@ export function KartaKlienta({ clientName, phone, email }: KartaKlientaProps) {
     );
   }
 
+  const resetCard = useCallback(async () => {
+    if (!window.confirm(`Wyczyścić dane karty klienta "${clientName}"? Zostaną skasowane wszystkie notatki, nagrania i statusy etapów.`)) return;
+    setResetPending(true);
+    await save({
+      rozmowaKwalifikacyjna: false,
+      notatkiKwalifikacyjne: "",
+      nagranieKwalifikacyjne: "",
+      umowionaRozmowaSprzedazowa: false,
+      telefonPrzypomnienie: false,
+      odbytaRozmowaSprzedazowa: false,
+      notatkiSprzedazowe: "",
+      nagranieSprzedazowe: "",
+      followUpDate: "",
+      umowioneSpotkanieDecyzyjne: false,
+      zaproszenieLinkedin: false,
+      odbyteSpotkanieDecyzyjne: false,
+      notatkiDecyzyjne: "",
+      nagranieDecyzyjne: "",
+      pozyskanyKlient: false,
+      podpisanaUmowa: false,
+      oplaconaFaktura: false,
+    });
+    setResetPending(false);
+  }, [clientName, save]);
+
   const c = card ?? emptyCard(clientName);
 
   return (
@@ -204,6 +236,22 @@ export function KartaKlienta({ clientName, phone, email }: KartaKlientaProps) {
             <CheckCircle2 size={11} /> Zapisano
           </span>
         )}
+        <button
+          onClick={() => void resetCard()}
+          title="Wyczyść dane klienta"
+          disabled={resetPending}
+          style={{
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            color: "var(--error)",
+            display: "flex",
+            padding: 3,
+            opacity: resetPending ? 0.4 : 0.6,
+          }}
+        >
+          <RotateCcw size={13} />
+        </button>
         <button
           onClick={() => void load(true)}
           title="Odśwież z arkusza"
@@ -279,6 +327,11 @@ export function KartaKlienta({ clientName, phone, email }: KartaKlientaProps) {
           value={c.nagranieSprzedazowe}
           onSave={(v) => save({ nagranieSprzedazowe: v })}
         />
+        <DateField
+          label="Data follow-up (jeśli klient nie mógł)"
+          value={c.followUpDate}
+          onSave={(v) => save({ followUpDate: v })}
+        />
       </Section>
 
       {/* Etap: Decyzyjna */}
@@ -307,6 +360,11 @@ export function KartaKlienta({ clientName, phone, email }: KartaKlientaProps) {
           label="Nagranie rozmowy decyzyjnej (finalizacja)"
           value={c.nagranieDecyzyjne}
           onSave={(v) => save({ nagranieDecyzyjne: v })}
+        />
+        <DateField
+          label="Data follow-up (jeśli odkładają decyzję)"
+          value={c.followUpDate}
+          onSave={(v) => save({ followUpDate: v })}
         />
       </Section>
 
@@ -601,6 +659,63 @@ function LinkField({
           </a>
         )}
       </div>
+    </div>
+  );
+}
+
+function DateField({
+  label,
+  value,
+  onSave,
+}: {
+  label: string;
+  value: string;
+  onSave: (v: string) => void;
+}) {
+  const [draft, setDraft] = useState(value);
+  useEffect(() => setDraft(value), [value]);
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      <label style={{ fontSize: 10.5, fontWeight: 600, color: "var(--accent)" }}>
+        {label}
+      </label>
+      <input
+        type="date"
+        value={draft}
+        onChange={(e) => {
+          setDraft(e.target.value);
+          onSave(e.target.value);
+        }}
+        style={{
+          width: "100%",
+          boxSizing: "border-box",
+          padding: "7px 9px",
+          borderRadius: "var(--radius-sm)",
+          border: `1px solid ${draft ? "var(--accent-border)" : "var(--border)"}`,
+          background: draft ? "var(--accent-muted)" : "var(--bg)",
+          fontFamily: "var(--font-sans)",
+          fontSize: 12,
+          color: draft ? "var(--accent)" : "var(--text-secondary)",
+          outline: "none",
+          cursor: "pointer",
+        }}
+      />
+      {draft && (
+        <button
+          onClick={() => { setDraft(""); onSave(""); }}
+          style={{
+            alignSelf: "flex-start",
+            fontSize: 10.5,
+            color: "var(--text-tertiary)",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            padding: 0,
+          }}
+        >
+          Wyczyść datę
+        </button>
+      )}
     </div>
   );
 }

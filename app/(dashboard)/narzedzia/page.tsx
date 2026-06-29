@@ -17,6 +17,7 @@ import {
   X,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { AudioRecorder } from "@/components/transcripts/AudioRecorder";
 import { ClientFileCard } from "@/components/transcripts/ClientFileCard";
 import { Button } from "@/components/ui/Button";
 import { Panel } from "@/components/ui/Panel";
@@ -632,6 +633,8 @@ export default function NarzedziaPage() {
             Transkrypcja
           </span>
         </div>
+
+        <AudioRecorder />
 
         <div style={{ flex: 1, overflowY: "auto", padding: "16px 16px 20px" }}>
           {/* Info panel */}

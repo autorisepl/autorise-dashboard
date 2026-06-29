@@ -31,6 +31,7 @@ export interface CardState {
   odbyteSpotkanieDecyzyjne: boolean;
   notatkiDecyzyjne: string;
   nagranieDecyzyjne: string;
+  followUpDate: string;
   pozyskanyKlient: boolean;
   podpisanaUmowa: boolean;
   oplaconaFaktura: boolean;
@@ -83,6 +84,7 @@ export const KONTAKTY_FIELDS: Record<CardFieldKey, CardFieldDef> = {
   notatkiDecyzyjne: { headerPatterns: [/notatki\s+po\s+rozmowie\s+decyzyjnej/i], type: "text" },
   nagranieDecyzyjne: { headerPatterns: [/nagranie\s+rozmowy\s+decyzyjnej/i], type: "link" },
 
+  followUpDate: { headerPatterns: [/data\s+follow.?up/i, /follow.?up\s+data/i, /data\s+nast[eę]pnego/i], type: "text" },
   pozyskanyKlient: { headerPatterns: [/pozyskany\s+klient/i], type: "checkbox" },
   podpisanaUmowa: { headerPatterns: [/podpisana\s+umowa/i], type: "checkbox" },
   oplaconaFaktura: { headerPatterns: [/op[lł]acona\s+faktura/i], type: "checkbox" },

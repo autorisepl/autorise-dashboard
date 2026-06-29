@@ -16,6 +16,7 @@ import {
   UserCircle2,
   Users,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -261,17 +262,14 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
           flexShrink: 0,
         }}
       >
-        <span
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: 15,
-            fontWeight: 700,
-            color: "var(--text-primary)",
-            letterSpacing: "-0.02em",
-          }}
-        >
-          Autorise Dashboard
-        </span>
+        <Image
+          src="/logo_autorise.png"
+          alt="Autorise"
+          width={120}
+          height={30}
+          style={{ objectFit: "contain", objectPosition: "left" }}
+          priority
+        />
       </div>
 
       {/* 2. Profil */}

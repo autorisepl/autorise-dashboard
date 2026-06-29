@@ -83,14 +83,20 @@ function initialsOf(name: string): string {
 
 function statusColor(value: string): { bg: string; color: string } {
   const v = value.toLowerCase();
-  if (v.includes("aktyw") || v.includes("klient"))
+  // Negative / lost
+  if (v.includes("niekwalifik")) return { bg: "var(--error-bg)", color: "var(--error)" };
+  // Active revenue stages
+  if (v.includes("retainer") || v.includes("upsell") || v.includes("wdrożenie") || v.includes("wdrozenie"))
     return { bg: "var(--success-bg)", color: "var(--success-text)" };
-  if (v.includes("lead") || v.includes("prospect"))
-    return { bg: "var(--accent-muted)", color: "var(--accent)" };
-  if (v.includes("zamk") || v.includes("utrac") || v.includes("lost"))
-    return { bg: "var(--error-bg)", color: "var(--error)" };
-  if (v.includes("kwal") || v.includes("disco"))
+  // Closing stages
+  if (v.includes("kickoff") || v.includes("finalizacja"))
+    return { bg: "rgba(48,209,88,0.12)", color: "var(--success-text)" };
+  // Active sales stages
+  if (v.includes("discovery") || v.includes("kwalifikacja"))
     return { bg: "var(--warning-bg)", color: "var(--warning)" };
+  // New / top of funnel
+  if (v.includes("nowy") || v.includes("lead") || v.includes("prospect"))
+    return { bg: "var(--accent-muted)", color: "var(--accent)" };
   return { bg: "var(--bg-hover)", color: "var(--text-secondary)" };
 }
 

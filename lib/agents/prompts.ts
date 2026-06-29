@@ -248,7 +248,8 @@ WYCIĄGNIJ:
     ZAKAZ (zero wyjątków):
     "warto odnotować", "należy podkreślić", "ciekawe że", "istotne jest", "sugeruje to",
     "może wskazywać", "potencjalnie", "wydaje się", "klient wykazuje", "rozmówca prezentuje",
-    wielokropek (...) do urywania zdań, zdania dłuższe niż 25 słów.
+    wielokropek (...) do urywania zdań, zdania dłuższe niż 25 słów,
+    myślnik narracyjny (—) w środku zdania — zamiast niego użyj kropki lub dwukropka.
 
     FORMAT: numerowane 1. 2. 3. bez myślników. Cytaty klienta w cudzysłowie.
     Jeśli coś nie padło w rozmowie — nie dopisuj domysłów.
@@ -258,7 +259,7 @@ WYCIĄGNIJ:
     "Klient wykazuje zainteresowanie rozwiązaniem, co sugeruje potencjalną gotowość zakupową. Warto odnotować że wspomniał o kilku systemach..."
 
     WZORZEC DOBRY:
-    "1. Powiedział dosłownie 'trzy systemy, zero połączenia między nimi' — wróć do tego w Kroku 3. 2. Syn jest współdecydentem, nie doradcą — zadzwoń wieczorem jeśli nie odezwie się do 13. 3. Pre-commit był mocny: 'od przyszłego miesiąca'. Pilność realna."
+    "1. Powiedział dosłownie 'trzy systemy, zero połączenia między nimi'. Wróć do tego w Kroku 3. 2. Syn jest współdecydentem, nie doradcą. Zadzwoń wieczorem jeśli nie odezwie się do 13:00. 3. Pre-commit był mocny: 'od przyszłego miesiąca'. Pilność realna."
 
 FORMAT ODPOWIEDZI: JSON. Pola bez danych: null. Nie dodawaj komentarzy poza polem "uwagi_agenta".
 
@@ -529,6 +530,12 @@ PRZEWIDYWANE OBIEKCJE [z Części A punkt 6]
 
 ---
 
+STYL PÓL TEKSTOWYCH (ryzyka_rozmowy, uwagi_agenta, profil_klienta):
+Piszesz do Michała bezpośrednio, jak doświadczony konsultant. Konkretne zdania.
+ZAKAZ: myślnik narracyjny (—) w środku zdania, wielokropek (...), "warto odnotować",
+"należy podkreślić", "sugeruje to", "może wskazywać", "potencjalnie", zdania dłuższe niż 25 słów.
+Zamiast myślnika: używaj kropki lub dwukropka.
+
 FORMAT ODPOWIEDZI: JSON z dwoma kluczami.
 
 {
@@ -668,7 +675,9 @@ WYCIĄGNIJ:
 
 8. UWAGI AGENTA
    Co zauważyłeś poza zadaniem. Szczególnie: czy Commitment Question jest główną przyczyną braku zamknięcia?
-   FORMA: pełne zdania, naturalny styl, bez myślników i punktów.
+   FORMA: pełne zdania, naturalny styl. Piszesz do Michała jak doświadczony sprzedawca który był na tej rozmowie.
+   ZAKAZ: myślnik narracyjny (—) w środku zdania, wielokropek (...), "warto odnotować", "należy podkreślić",
+   "sugeruje to", "może wskazywać", "potencjalnie", zdania dłuższe niż 25 słów.
 
 FORMAT: JSON
 
