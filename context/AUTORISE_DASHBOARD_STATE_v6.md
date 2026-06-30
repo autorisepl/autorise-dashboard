@@ -1,5 +1,5 @@
-# AUTORISE DASHBOARD — Stan systemu v6
-**Data:** 2026-06-21 | **Wersja:** v6 (post-security + kontrola redesign)
+# AUTORISE DASHBOARD — Stan systemu v7
+**Data:** 2026-07-01 | **Wersja:** v7 (agents redesign + mobile agencja + reset stages)
 
 ---
 
@@ -10,7 +10,7 @@
 | Framework | Next.js 16.2.7, App Router, React 19 |
 | TypeScript | Strict mode, zero errors |
 | CSS | Custom properties only, macOS Glassmorphism, var(--font-sans) everywhere |
-| Deploy | Cloudflare Pages (GitHub integration) |
+| Deploy | Vercel (GitHub integration) → app.autorise.pl, gałąź `main` (lokalna: `master`) |
 | Dev server | localhost:3000 (pnpm dev) |
 
 ---
@@ -40,7 +40,7 @@
 | /kontrola | Kontrola obszaru roboczego | ✅ v6 redesign |
 | /harmonogram | Harmonogram | ✅ Google Calendar + Tasks |
 | /zadania | Zadania | ✅ Google Tasks, 4 listy |
-| /agencja | Nasza karta | ✅ Sheets sync naprawiony |
+| /agencja | Nasza karta | ✅ Mobile responsive (panel switch), phone+email fix, Wyczyść etapy button |
 | /narzedzia | Transkrypcja | ✅ Groq Whisper SSE |
 | /profil | Profil | ✅ Google OAuth |
 
