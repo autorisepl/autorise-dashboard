@@ -10,7 +10,6 @@ import {
   ChevronDown,
   GitBranch,
   Loader2,
-  MapPin,
   MessageSquare,
   Monitor,
   Phone,
@@ -27,14 +26,7 @@ import { formatPhone } from "@/lib/format/phone";
 
 // ── Types ─────────────────────────────────────────────────────────────
 
-type Tab =
-  | "pipeline"
-  | "livescript"
-  | "mapa"
-  | "roi"
-  | "kwalifikacyjna"
-  | "sprzedazowa"
-  | "wiadomosci";
+type Tab = "pipeline" | "roi" | "kwalifikacyjna" | "sprzedazowa" | "wiadomosci";
 type QuickAction = "discovery" | "followup" | "niekwalifikowany" | "brak_odbioru" | null;
 
 // ── Constants ─────────────────────────────────────────────────────────
@@ -818,7 +810,13 @@ function PipelineClientPanel({
               >
                 {label}
               </div>
-              <div style={{ fontSize: 12, color: "var(--text-primary)", fontFamily: "var(--font-sans)" }}>
+              <div
+                style={{
+                  fontSize: 12,
+                  color: "var(--text-primary)",
+                  fontFamily: "var(--font-sans)",
+                }}
+              >
                 {value}
               </div>
             </div>
@@ -846,7 +844,7 @@ function PipelineClientPanel({
             }}
           >
             <Phone size={12} />
-            Otwórz Live Script
+            Otwórz skrypt rozmowy
           </button>
           <a
             href={`https://notion.so/${client.id.replace(/-/g, "")}`}
@@ -905,11 +903,7 @@ function KanbanRow({
             flexDirection: "column",
           }}
         >
-          <KanbanColumn
-            status={status}
-            clients={grouped[status] ?? []}
-            onSelect={onSelect}
-          />
+          <KanbanColumn status={status} clients={grouped[status] ?? []} onSelect={onSelect} />
         </div>
       ))}
     </div>
@@ -967,7 +961,13 @@ function PipelineTab({
               size={13}
               style={{ animation: loading ? "spin 1s linear infinite" : "none" }}
             />
-            <span style={{ fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--text-secondary)" }}>
+            <span
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 11,
+                color: "var(--text-secondary)",
+              }}
+            >
               Odśwież
             </span>
           </button>
@@ -1547,11 +1547,20 @@ export default function SprzedazPage() {
     return () => clearInterval(id);
   }, [fetchClients]);
 
-  // When client selected from pipeline, switch to livescript tab
+  const DISCOVERY_STATUSES = [
+    "Discovery umówione",
+    "Finalizacja",
+    "Kickoff",
+    "Wdrożenie",
+    "Retainer",
+    "Upsell",
+  ];
   const handleSelectClient = useCallback((c: PipelineClientDetailed, switchTab?: boolean) => {
     setSelectedClient(c);
-    if (switchTab) setTab("livescript");
-  }, []);
+    if (switchTab) {
+      setTab(DISCOVERY_STATUSES.includes(c.status) ? "sprzedazowa" : "kwalifikacyjna");
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
@@ -1602,33 +1611,21 @@ export default function SprzedazPage() {
           />
           <TabBtn
             icon={<Phone size={13} />}
-            label="Live Script"
-            active={tab === "livescript"}
-            onClick={() => setTab("livescript")}
+            label="Skrypt kwalifikacyjny"
+            active={tab === "kwalifikacyjna"}
+            onClick={() => setTab("kwalifikacyjna")}
           />
           <TabBtn
-            icon={<MapPin size={13} />}
-            label="Mapa procesu"
-            active={tab === "mapa"}
-            onClick={() => setTab("mapa")}
+            icon={<Monitor size={13} />}
+            label="Skrypt sprzedażowy"
+            active={tab === "sprzedazowa"}
+            onClick={() => setTab("sprzedazowa")}
           />
           <TabBtn
             icon={<Calculator size={13} />}
             label="Kalkulator ROI"
             active={tab === "roi"}
             onClick={() => setTab("roi")}
-          />
-          <TabBtn
-            icon={<Phone size={13} />}
-            label="Kwalifikacyjna"
-            active={tab === "kwalifikacyjna"}
-            onClick={() => setTab("kwalifikacyjna")}
-          />
-          <TabBtn
-            icon={<Monitor size={13} />}
-            label="Discovery"
-            active={tab === "sprzedazowa"}
-            onClick={() => setTab("sprzedazowa")}
           />
           <TabBtn
             icon={<MessageSquare size={13} />}
@@ -1664,14 +1661,6 @@ export default function SprzedazPage() {
             onSelectClient={handleSelectClient}
           />
         )}
-        {tab === "livescript" && (
-          <LiveScriptTabWrapper
-            clients={clients}
-            preSelected={selectedClient}
-            onSelectClient={setSelectedClient}
-          />
-        )}
-        {tab === "mapa" && <MapaProcesuTab clients={clients} selectedClient={selectedClient} />}
         {tab === "roi" && (
           <KalkulatorRoi
             embedded
@@ -1715,7 +1704,7 @@ function LiveScriptTabWrapper({
 }: {
   clients: PipelineClientDetailed[];
   preSelected: PipelineClientDetailed | null;
-  onSelectClient: (c: PipelineClientDetailed) => void;
+  onSelectClient: (c: PipelineClientDetailed | null) => void;
 }) {
   const [manualType, setManualType] = useState<"kwalifikacyjna" | "sprzedazowa" | null>(null);
   const [activeAction, setActiveAction] = useState<QuickAction>(null);
@@ -1748,8 +1737,8 @@ function LiveScriptTabWrapper({
   const scriptType = manualType ?? autoType;
 
   const SCRIPT_LABELS: Record<"kwalifikacyjna" | "sprzedazowa", string> = {
-    kwalifikacyjna: "Kwalifikacyjna",
-    sprzedazowa: "Discovery / Sprzedażowa",
+    kwalifikacyjna: "Skrypt kwalifikacyjny",
+    sprzedazowa: "Skrypt sprzedażowy",
   };
 
   return (
@@ -2289,12 +2278,23 @@ const STEPS_D: Step[] = [
       },
       {
         t: "say",
-        text: "Proszę mi opisać — jak wygląda u Pana w biurze typowy dzień gdy przychodzi nowe zlecenie mailem?",
+        text: "Proszę mi opisać — jak wygląda u Pana w biurze typowy dzień gdy przychodzi nowe zlecenie?",
       },
-      { t: "client", text: "Klient opisuje." },
+      { t: "branch", text: "JEŚLI klient dostaje zlecenia mailowo / przez TMS / giełdę" },
       {
         t: "say",
-        text: "Co się dzieje gdy spedytor jest nieobecny — jak firma sobie wtedy radzi?",
+        text: "Czyli maile przychodzą, ktoś je przetwarza ręcznie — ile czasu zajmuje jedno zlecenie od maila do wprowadzenia do systemu?",
+      },
+      { t: "branch-bad", text: "JEŚLI klient ma stałe trasy / Amazon Relay / brak zmiennych zleceń" },
+      {
+        t: "say",
+        text: "Rozumiem, stałe trasy — nie trafiają do Pana nowe zlecenia co dzień. To pokaż mi jak wygląda administracja: rozliczenia z kierowcami, dokumenty CMR, monitoring floty — co pochłania największy czas Pana zespołu?",
+      },
+      { t: "note", text: "Przy stałych trasach / Amazon Relay: nie pytaj o maile. Skup się na dokumentacji, kierowcach, rozliczeniach." },
+      { t: "client", text: "Klient opisuje swój model." },
+      {
+        t: "say",
+        text: "Co się dzieje gdy spedytor / dyspozytor jest nieobecny — jak firma sobie wtedy radzi?",
       },
       { t: "say", text: "Jak długo ten problem trwa w tej formie?" },
       { t: "say", text: "Co Pana najbardziej kosztuje — czas, pieniądze, nerwy?" },
@@ -2308,16 +2308,23 @@ const STEPS_D: Step[] = [
     duration: "4–5 min",
     lines: [
       { t: "note", text: "Fundament pitchu. Cytujesz to w Kroku 4." },
+      { t: "branch", text: "JEŚLI klient miał wcześniejsze próby (liczbaProb > 0 w systemie)" },
       {
         t: "say",
-        text: "Wiem z naszej rozmowy że wcześniej próbował Pan [poprzednia próba]. Co konkretnie nie zadziałało?",
+        text: "Wiem z naszej rozmowy że miał Pan [poprzednia próba]. Co konkretnie nie zadziałało — czego brakowało tamtemu rozwiązaniu?",
       },
       { t: "client", text: "No bo [powód]..." },
       {
         t: "say",
         text: "Czyli problem był nie tyle w chęciach co w [powtarzasz jego słowa]. Dobrze rozumiem?",
       },
-      { t: "note", text: "Zapisz dosłownie. Użyjesz w Kroku 4." },
+      { t: "branch-bad", text: "JEŚLI klient nigdy nie próbował żadnych narzędzi / automatyzacji" },
+      {
+        t: "say",
+        text: "Czyli do tej pory robił Pan to wszystko ręcznie — własnymi zasobami. Co sprawiło że w ogóle zaczął Pan teraz szukać rozwiązania?",
+      },
+      { t: "client", text: "Klient podaje powód (wzrost, brak rąk, chaos)." },
+      { t: "note", text: "Zapisz dokładne słowa klienta — użyjesz ich dosłownie w Kroku 4 (pitch)." },
     ],
   },
   {
@@ -2558,6 +2565,10 @@ const ICP_RULES: IcpRule[] = [
   { ok: false, label: "Odrzuć", val: "< 2 osoby w biurze LUB potencjał ROI < 80h/mc łącznie" },
 ];
 
+const DISCOVERY_STATUSES_SCRIPT = [
+  "Discovery umówione", "Finalizacja", "Kickoff", "Wdrożenie", "Retainer", "Upsell",
+];
+
 function ScriptTab({
   type,
   selectedClient,
@@ -2567,13 +2578,29 @@ function ScriptTab({
   type: "kwalifikacyjna" | "sprzedazowa";
   selectedClient: PipelineClientDetailed | null;
   clients: PipelineClientDetailed[];
-  onSelectClient: (c: PipelineClientDetailed) => void;
+  onSelectClient: (c: PipelineClientDetailed | null) => void;
 }) {
   const steps = type === "kwalifikacyjna" ? STEPS_K : STEPS_D;
   const objections = type === "kwalifikacyjna" ? OBJECTIONS_K : OBJECTIONS_D;
   const [vocative, setVocative] = useState("");
   const [openObj, setOpenObj] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+
+  const isQualified = selectedClient
+    ? DISCOVERY_STATUSES_SCRIPT.includes(selectedClient.status)
+    : false;
+
+  const visibleClients =
+    type === "sprzedazowa"
+      ? clients.filter((c) => DISCOVERY_STATUSES_SCRIPT.includes(c.status))
+      : clients;
+
+  const filteredClients = search.trim()
+    ? visibleClients.filter((c) =>
+        `${c.kontakt} ${c.firma}`.toLowerCase().includes(search.toLowerCase()),
+      )
+    : visibleClients;
 
   useEffect(() => {
     if (selectedClient) {
@@ -2583,8 +2610,35 @@ function ScriptTab({
     }
   }, [selectedClient?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const fill = (text: string) =>
-    vocative.trim() ? text.replace(/\{IMIĘ\}/g, vocative.trim()) : text;
+  const fill = (text: string): string => {
+    let out = text;
+    if (vocative.trim()) out = out.replace(/\{IMIĘ\}/g, vocative.trim());
+    if (selectedClient) {
+      const kwalNote = selectedClient.nastepnyKrok?.trim() ?? "";
+      const prob = selectedClient.liczbaProb ?? 0;
+      // [podsumowanie z kwalifikacji] — wyłącznie nastepnyKrok agenta 1 (NIGDY notatki)
+      out = out.replace(
+        /\[podsumowanie z kwalifikacji\]/g,
+        kwalNote ? `„${kwalNote}"` : "— brak danych z kwalifikacji w systemie —",
+      );
+      // [poprzednia próba] — wyłącznie liczbaProb (NIGDY notatki)
+      out = out.replace(
+        /\[poprzednia próba\]/g,
+        prob > 0
+          ? `(${prob} ${prob === 1 ? "poprzednia próba" : prob < 5 ? "poprzednie próby" : "poprzednich prób"} kontaktu bez odpowiedzi)`
+          : "— klient bez wcześniejszych prób kontaktu —",
+      );
+      // [kwota roczna] i [kwota]
+      out = out.replace(/\[kwota roczna\]/g, "— policz z kalkulatorem ROI —");
+      out = out.replace(/\[kwota\]/g, "— policz z kalkulatorem ROI —");
+      // [ocena ICP]
+      out = out.replace(
+        /\[ocena ICP\]/g,
+        selectedClient.ocenaICP?.trim() ? `ICP: ${selectedClient.ocenaICP}` : "— brak oceny ICP —",
+      );
+    }
+    return out;
+  };
 
   const copyText = (id: string, text: string) => {
     navigator.clipboard.writeText(fill(text)).then(() => {
@@ -2610,12 +2664,12 @@ function ScriptTab({
     "branch-bad": "var(--error-bg)",
   };
   const linePrefix: Record<ScriptLine["t"], React.ReactNode> = {
-    say: <MessageSquare size={11} color="var(--text-primary)" strokeWidth={1.5} />,
-    client: <Users size={11} color="var(--text-secondary)" strokeWidth={1.5} />,
-    note: <AlertTriangle size={11} color="var(--warning)" strokeWidth={1.5} />,
-    action: <Check size={11} color="var(--accent)" strokeWidth={2} />,
-    branch: <Check size={11} color="var(--success-text)" strokeWidth={2} />,
-    "branch-bad": <X size={11} color="var(--error)" strokeWidth={2} />,
+    say: <MessageSquare size={15} color="var(--accent)" strokeWidth={1.6} />,
+    client: <Users size={15} color="var(--text-primary)" strokeWidth={1.8} />,
+    note: <AlertTriangle size={14} color="var(--warning)" strokeWidth={1.6} />,
+    action: <Check size={14} color="var(--accent)" strokeWidth={2} />,
+    branch: <Check size={14} color="var(--success-text)" strokeWidth={2} />,
+    "branch-bad": <X size={14} color="var(--error)" strokeWidth={2} />,
   };
 
   return (
@@ -2653,48 +2707,157 @@ function ScriptTab({
             Klient:
           </span>
           {selectedClient ? (
-            <span
-              style={{
-                fontSize: 13,
-                fontWeight: 600,
-                color: "var(--text-primary)",
-                fontFamily: "var(--font-sans)",
-                flex: 1,
-              }}
-            >
-              {selectedClient.kontakt || selectedClient.firma || "—"}
-            </span>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1 }}>
+              <span
+                style={{
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: "var(--text-primary)",
+                  fontFamily: "var(--font-sans)",
+                  flex: 1,
+                }}
+              >
+                {selectedClient.kontakt || selectedClient.firma || "—"}
+              </span>
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 700,
+                  padding: "2px 7px",
+                  borderRadius: 99,
+                  background: isQualified ? "var(--success-bg)" : "var(--accent-muted)",
+                  color: isQualified ? "var(--success-text)" : "var(--accent)",
+                  fontFamily: "var(--font-sans)",
+                  letterSpacing: "0.04em",
+                  flexShrink: 0,
+                }}
+              >
+                {selectedClient.status}
+              </span>
+              <button
+                onClick={() => { onSelectClient(null); setSearch(""); }}
+                style={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: "var(--text-secondary)",
+                  fontFamily: "var(--font-sans)",
+                  background: "transparent",
+                  border: "1px solid var(--border)",
+                  borderRadius: "var(--radius-xs)",
+                  padding: "3px 8px",
+                  cursor: "pointer",
+                  flexShrink: 0,
+                }}
+              >
+                Zmień
+              </button>
+            </div>
           ) : (
-            <select
-              defaultValue=""
-              onChange={(e) => {
-                const c = clients.find((cl) => cl.id === e.target.value);
-                if (c) onSelectClient(c);
-              }}
-              style={{
-                flex: 1,
-                height: 30,
-                padding: "0 8px",
-                border: "1px solid var(--accent-border)",
-                borderRadius: "var(--radius-xs)",
-                background: "var(--accent-muted)",
-                color: "var(--accent)",
-                fontFamily: "var(--font-sans)",
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: "pointer",
-                outline: "none",
-              }}
-            >
-              <option value="" disabled>
-                — wybierz klienta z Pipeline —
-              </option>
-              {clients.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.kontakt || c.firma || c.id} {c.status ? `(${c.status})` : ""}
-                </option>
-              ))}
-            </select>
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
+              {type === "sprzedazowa" && visibleClients.length === 0 ? (
+                <div
+                  style={{
+                    fontSize: 12,
+                    color: "var(--warning)",
+                    fontFamily: "var(--font-sans)",
+                    padding: "6px 10px",
+                    background: "rgba(255,159,10,0.08)",
+                    border: "1px solid rgba(255,159,10,0.25)",
+                    borderRadius: "var(--radius-xs)",
+                  }}
+                >
+                  Brak klientów po kwalifikacji. Przeprowadź rozmowę kwalifikacyjną (Agent 1).
+                </div>
+              ) : (
+                <>
+                  <input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder={
+                      type === "sprzedazowa"
+                        ? "Szukaj klienta po kwalifikacji..."
+                        : "Szukaj klienta..."
+                    }
+                    style={{
+                      width: "100%",
+                      height: 30,
+                      padding: "0 10px",
+                      border: "1px solid var(--accent-border)",
+                      borderRadius: "var(--radius-xs)",
+                      background: "var(--accent-muted)",
+                      color: "var(--text-primary)",
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 12,
+                      outline: "none",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                  {filteredClients.length > 0 && (
+                    <div
+                      style={{
+                        maxHeight: 180,
+                        overflowY: "auto",
+                        border: "1px solid var(--border)",
+                        borderRadius: "var(--radius-xs)",
+                        background: "var(--bg-elevated)",
+                      }}
+                    >
+                      {filteredClients.map((c) => (
+                        <button
+                          key={c.id}
+                          onClick={() => { onSelectClient(c); setSearch(""); }}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                            width: "100%",
+                            padding: "7px 10px",
+                            border: "none",
+                            borderBottom: "1px solid var(--border)",
+                            background: "transparent",
+                            cursor: "pointer",
+                            textAlign: "left",
+                          }}
+                          onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "var(--bg-hover)"; }}
+                          onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
+                        >
+                          <span
+                            style={{
+                              fontSize: 13,
+                              fontWeight: 500,
+                              color: "var(--text-primary)",
+                              fontFamily: "var(--font-sans)",
+                              flex: 1,
+                            }}
+                          >
+                            {c.kontakt || c.firma}
+                          </span>
+                          <span
+                            style={{
+                              fontSize: 10,
+                              fontWeight: 700,
+                              padding: "2px 6px",
+                              borderRadius: 99,
+                              background: DISCOVERY_STATUSES_SCRIPT.includes(c.status)
+                                ? "var(--success-bg)"
+                                : "var(--bg)",
+                              color: DISCOVERY_STATUSES_SCRIPT.includes(c.status)
+                                ? "var(--success-text)"
+                                : "var(--text-tertiary)",
+                              fontFamily: "var(--font-sans)",
+                              border: "1px solid var(--border)",
+                              flexShrink: 0,
+                            }}
+                          >
+                            {c.status}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           )}
           <span
             style={{
@@ -2723,6 +2886,167 @@ function ScriptTab({
             }}
           />
         </div>
+
+        {/* Blokada dostępu do skryptu sprzedażowego dla niekwalifikowanych */}
+        {type === "sprzedazowa" && selectedClient && !isQualified && (
+          <div
+            style={{
+              marginBottom: 16,
+              padding: "12px 16px",
+              background: "rgba(255,159,10,0.08)",
+              border: "1px solid rgba(255,159,10,0.3)",
+              borderLeft: "3px solid var(--warning)",
+              borderRadius: "var(--radius-sm)",
+              display: "flex",
+              alignItems: "flex-start",
+              gap: 10,
+            }}
+          >
+            <AlertTriangle size={15} color="var(--warning)" style={{ flexShrink: 0, marginTop: 1 }} />
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "var(--warning)", fontFamily: "var(--font-sans)", marginBottom: 3 }}>
+                Klient nie przeszedł jeszcze kwalifikacji
+              </div>
+              <div style={{ fontSize: 11, color: "var(--text-secondary)", fontFamily: "var(--font-sans)", lineHeight: 1.5 }}>
+                Skrypt sprzedażowy wymaga statusu: <strong>Discovery umówione</strong> lub wyżej.<br />
+                Aktualny status: <strong>{selectedClient.status}</strong>. Najpierw przeprowadź rozmowę kwalifikacyjną.
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Kontekst klienta + ostrzeżenia */}
+        {selectedClient && (
+          <div style={{ marginBottom: 16, display: "flex", flexDirection: "column", gap: 6 }}>
+            {/* Kontekst z kwalifikacji — nastepnyKrok (output agenta 1) */}
+            {selectedClient.nastepnyKrok ? (
+              <div
+                style={{
+                  padding: "8px 12px",
+                  background: "var(--accent-muted)",
+                  border: "1px solid var(--accent-border)",
+                  borderLeft: "3px solid var(--accent)",
+                  borderRadius: "var(--radius-sm)",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 9,
+                    fontWeight: 700,
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                    color: "var(--accent)",
+                    marginBottom: 3,
+                    fontFamily: "var(--font-sans)",
+                  }}
+                >
+                  Kontekst z kwalifikacji (Agent 1)
+                </div>
+                <div
+                  style={{
+                    fontSize: 12,
+                    color: "var(--text-primary)",
+                    fontFamily: "var(--font-sans)",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {selectedClient.nastepnyKrok}
+                </div>
+              </div>
+            ) : (
+              <div
+                style={{
+                  padding: "8px 12px",
+                  background: "rgba(255,159,10,0.08)",
+                  border: "1px solid rgba(255,159,10,0.25)",
+                  borderLeft: "3px solid var(--warning)",
+                  borderRadius: "var(--radius-sm)",
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 8,
+                }}
+              >
+                <AlertTriangle
+                  size={13}
+                  color="var(--warning)"
+                  style={{ flexShrink: 0, marginTop: 1 }}
+                />
+                <div>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      color: "var(--warning)",
+                      fontFamily: "var(--font-sans)",
+                      marginBottom: 2,
+                    }}
+                  >
+                    Brak danych z kwalifikacji w systemie
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      color: "var(--text-secondary)",
+                      fontFamily: "var(--font-sans)",
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    {type === "sprzedazowa"
+                      ? "Przed prezentacją koniecznie sonduj ból — zastosuj kroki 2 i 2b. Nie pomiń diagnozy."
+                      : "Dokładnie przejdź przez krok ICP i kalkulator ROI."}
+                  </div>
+                </div>
+              </div>
+            )}
+            {/* Następny krok */}
+            {selectedClient.nastepnyKrok && (
+              <div
+                style={{
+                  padding: "6px 10px",
+                  background: "rgba(48,209,88,0.07)",
+                  border: "1px solid rgba(48,209,88,0.2)",
+                  borderRadius: "var(--radius-sm)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                }}
+              >
+                <Check size={11} color="var(--success)" />
+                <span
+                  style={{
+                    fontSize: 11,
+                    color: "var(--text-secondary)",
+                    fontFamily: "var(--font-sans)",
+                  }}
+                >
+                  Następny krok:{" "}
+                  <strong style={{ color: "var(--text-primary)" }}>
+                    {selectedClient.nastepnyKrok}
+                  </strong>
+                </span>
+              </div>
+            )}
+            {/* Liczba prób */}
+            {(selectedClient.liczbaProb ?? 0) > 0 && (
+              <div
+                style={{
+                  padding: "6px 10px",
+                  background: "rgba(239,68,68,0.06)",
+                  border: "1px solid rgba(239,68,68,0.18)",
+                  borderRadius: "var(--radius-sm)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                }}
+              >
+                <AlertTriangle size={11} color="#ef4444" />
+                <span style={{ fontSize: 11, color: "#ef4444", fontFamily: "var(--font-sans)" }}>
+                  {selectedClient.liczbaProb} poprzednia próba kontaktu — nawiąż do tego w openerze
+                </span>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Steps */}
         {steps.map((step) => (

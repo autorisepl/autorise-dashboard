@@ -208,13 +208,7 @@ function isActive(pathname: string, href: string, exact?: boolean): boolean {
   return pathname === href || pathname.startsWith(href + "/");
 }
 
-export function Sidebar({
-  open = false,
-  onNavigate,
-}: {
-  open?: boolean;
-  onNavigate?: () => void;
-}) {
+export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNavigate?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
   const weather = useWeather();
@@ -269,9 +263,9 @@ export function Sidebar({
         <Image
           src="/logo_autorise.png"
           alt="Autorise"
-          width={120}
-          height={30}
-          style={{ objectFit: "contain", objectPosition: "left" }}
+          width={34}
+          height={34}
+          style={{ objectFit: "contain", borderRadius: 6, flexShrink: 0 }}
           priority
         />
       </div>
@@ -416,7 +410,6 @@ export function Sidebar({
           </div>
         ))}
       </nav>
-
     </aside>
   );
 }

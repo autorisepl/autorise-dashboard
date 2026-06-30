@@ -82,7 +82,26 @@ export async function GET() {
       })
       .filter((c: PipelineClientDetailed) => c.firma !== "Bez nazwy");
 
-    return NextResponse.json({ success: true, clients });
+    // Deduplicate: same firma+kontakt combo → keep highest-status entry
+    const STATUS_ORDER = [
+      "Nowy lead", "Kwalifikacja", "Discovery umówione",
+      "Finalizacja", "Kickoff", "Wdrożenie", "Retainer", "Upsell", "Niekwalifikowany",
+    ];
+    const deduped = new Map<string, PipelineClientDetailed>();
+    for (const c of clients) {
+      const key = `${c.firma.toLowerCase().trim()}|${c.kontakt.toLowerCase().trim()}`;
+      const existing = deduped.get(key);
+      if (!existing) {
+        deduped.set(key, c);
+      } else {
+        const existingRank = STATUS_ORDER.indexOf(existing.status);
+        const currentRank = STATUS_ORDER.indexOf(c.status);
+        if (currentRank > existingRank) deduped.set(key, c);
+      }
+    }
+    const dedupedClients = Array.from(deduped.values());
+
+    return NextResponse.json({ success: true, clients: dedupedClients });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Błąd Notion";
     return NextResponse.json({ success: false, error: msg }, { status: 500 });
