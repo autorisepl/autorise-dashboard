@@ -2,11 +2,13 @@
 
 import {
   AlertCircle,
+  ChevronLeft,
   CheckCircle2,
   ExternalLink,
   Mail,
   Phone,
   RefreshCw,
+  RotateCcw,
   Search,
   TrendingUp,
   Upload,
@@ -470,8 +472,19 @@ export default function AgencjaPage() {
   const [selected, setSelected] = useState<SheetContact | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<SheetsSyncResult | null>(null);
+  const [resettingStages, setResettingStages] = useState(false);
+  const [windowWidth, setWindowWidth] = useState(1200);
 
   const SHEET_ID = "18BjXDFAWDVQnQkrE_1Kmvj0-ZJIGXQejLY6IJOOXnH0";
+
+  useEffect(() => {
+    setWindowWidth(window.innerWidth);
+    const onResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  const isMobile = windowWidth < 640;
 
   const syncLeads = useCallback(async () => {
     setSyncing(true);
@@ -521,6 +534,22 @@ export default function AgencjaPage() {
     load();
     const id = setInterval(load, 60_000);
     return () => clearInterval(id);
+  }, [load]);
+
+  const resetAllStages = useCallback(async () => {
+    if (
+      !window.confirm(
+        "Wyczyścić etapy wszystkich kontaktów w arkuszu?\nNotatki i nagrania pozostaną. Tylko checkboxy etapów zostaną zresetowane.",
+      )
+    )
+      return;
+    setResettingStages(true);
+    try {
+      await fetch("/api/google/sheets/reset-stages", { method: "POST" });
+      await load();
+    } finally {
+      setResettingStages(false);
+    }
   }, [load]);
 
   const displayHeaders = data ? getDisplayHeaders(data.headers) : [];
@@ -625,6 +654,32 @@ export default function AgencjaPage() {
         >
           <Upload size={11} style={{ animation: syncing ? "spin 0.8s linear infinite" : "none" }} />
           {syncing ? "Synchronizuję..." : "Synchronizuj leadów"}
+        </button>
+
+        <button
+          onClick={() => void resetAllStages()}
+          disabled={resettingStages || loading}
+          title="Wyczyść etapy (checkboxy) wszystkich kontaktów. Notatki i nagrania pozostaną."
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 5,
+            padding: "5px 10px",
+            background: "transparent",
+            border: "1px solid var(--border)",
+            borderRadius: "var(--radius-xs)",
+            cursor: resettingStages || loading ? "default" : "pointer",
+            fontFamily: "var(--font-sans)",
+            fontSize: 12,
+            color: "var(--error)",
+            opacity: resettingStages || loading ? 0.5 : 0.75,
+          }}
+        >
+          <RotateCcw
+            size={11}
+            style={{ animation: resettingStages ? "spin 0.8s linear infinite" : "none" }}
+          />
+          {resettingStages ? "Resetuję..." : "Wyczyść etapy"}
         </button>
 
         <button
@@ -804,11 +859,11 @@ export default function AgencjaPage() {
           {/* ── LEFT: contact list ── */}
           <div
             style={{
-              width: "clamp(240px, 28vw, 320px)",
+              width: isMobile ? (selected ? "0" : "100%") : "clamp(240px, 28vw, 320px)",
               flexShrink: 0,
-              display: "flex",
+              display: isMobile && selected ? "none" : "flex",
               flexDirection: "column",
-              borderRight: "1px solid var(--border)",
+              borderRight: isMobile ? "none" : "1px solid var(--border)",
               height: "100%",
               overflow: "hidden",
             }}
@@ -919,7 +974,7 @@ export default function AgencjaPage() {
             style={{
               flex: 1,
               minWidth: 0,
-              display: "flex",
+              display: isMobile && !selected ? "none" : "flex",
               flexDirection: "column",
               height: "100%",
               overflow: "hidden",
@@ -928,9 +983,41 @@ export default function AgencjaPage() {
           >
             {selected ? (
               <>
+                {isMobile && (
+                  <button
+                    onClick={() => setSelected(null)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      padding: "10px 14px",
+                      background: "none",
+                      border: "none",
+                      borderBottom: "1px solid var(--border)",
+                      cursor: "pointer",
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 13,
+                      color: "var(--accent)",
+                      fontWeight: 600,
+                      flexShrink: 0,
+                    }}
+                  >
+                    <ChevronLeft size={16} strokeWidth={2} />
+                    Wróć do listy
+                  </button>
+                )}
                 <DetailHeader row={selected} headers={displayHeaders} sheetId={SHEET_ID} />
-                <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
-                  <KartaKlienta clientName={selectedName ?? ""} />
+                <div style={{ flex: 1, overflowY: "auto", minHeight: 0, padding: "16px 20px" }}>
+                  {(() => {
+                    const { phone, email } = contactFields(selected, displayHeaders);
+                    return (
+                      <KartaKlienta
+                        clientName={selectedName ?? ""}
+                        phone={phone}
+                        email={email}
+                      />
+                    );
+                  })()}
                 </div>
               </>
             ) : (
