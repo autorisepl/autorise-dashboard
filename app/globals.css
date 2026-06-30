@@ -179,34 +179,31 @@ html, body {
     margin-left: 44px;
   }
 
-  /* Floating re-open button — only visible when collapsed */
+  /* Sidebar toggle — fixed position, always visible */
   .sidebar-toggle-btn {
     position: fixed;
-    top: 14px;
+    top: 11px;
     left: 7px;
-    z-index: 11;
+    z-index: 30;
     width: 30px;
     height: 30px;
     border-radius: 7px;
     border: 1px solid var(--border);
-    background: var(--bg-elevated);
+    background: rgba(255,255,255,0.72);
+    backdrop-filter: blur(12px) saturate(160%);
+    -webkit-backdrop-filter: blur(12px) saturate(160%);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     color: var(--text-secondary);
-    transition: opacity 200ms, background 120ms, color 120ms;
-    opacity: 0;
-    pointer-events: none;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-  }
-  .sidebar-collapsed .sidebar-toggle-btn {
-    opacity: 1;
-    pointer-events: auto;
+    transition: background 120ms, color 120ms, border-color 120ms;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.10);
   }
   .sidebar-toggle-btn:hover {
-    background: var(--bg-hover);
+    background: rgba(255,255,255,0.92);
     color: var(--accent);
+    border-color: var(--accent);
   }
 }
 

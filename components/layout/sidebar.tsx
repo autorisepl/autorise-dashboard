@@ -3,7 +3,6 @@
 import { motion } from "framer-motion";
 import {
   BarChart2,
-  Calculator,
   Calendar,
   CheckSquare,
   Files,
@@ -78,8 +77,7 @@ const NAV: {
     label: "Praca z klientami",
     items: [
       { href: "/sprzedaz", label: "Proces sprzedażowy", icon: Target },
-      { href: "/pipeline", label: "Pipeline", icon: GitBranch },
-      { href: "/narzedzia/kalkulator", label: "Kalkulator ROI", icon: Calculator, exact: true },
+      { href: "/mapa", label: "Mapa procesu", icon: GitBranch },
     ],
   },
   {
@@ -210,7 +208,13 @@ function isActive(pathname: string, href: string, exact?: boolean): boolean {
   return pathname === href || pathname.startsWith(href + "/");
 }
 
-export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNavigate?: () => void }) {
+export function Sidebar({
+  open = false,
+  onNavigate,
+}: {
+  open?: boolean;
+  onNavigate?: () => void;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const weather = useWeather();
@@ -251,13 +255,13 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
         zIndex: 10,
       }}
     >
-      {/* 1. Logo */}
+      {/* 1. Logo — paddingLeft 48px makes room for the fixed toggle button (30px at left:7px) */}
       <div
         style={{
           height: 52,
           display: "flex",
           alignItems: "center",
-          padding: "0 16px",
+          padding: "0 16px 0 48px",
           borderBottom: "1px solid var(--border)",
           flexShrink: 0,
         }}
@@ -412,6 +416,7 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
           </div>
         ))}
       </nav>
+
     </aside>
   );
 }
