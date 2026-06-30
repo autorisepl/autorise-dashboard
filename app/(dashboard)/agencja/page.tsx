@@ -801,10 +801,10 @@ export default function AgencjaPage() {
           }}
           className="responsive-split"
         >
-          {/* ── LEFT: contact list (320px) ── */}
+          {/* ── LEFT: contact list ── */}
           <div
             style={{
-              width: 320,
+              width: "clamp(240px, 28vw, 320px)",
               flexShrink: 0,
               display: "flex",
               flexDirection: "column",

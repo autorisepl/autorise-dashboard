@@ -1,10 +1,9 @@
 "use client";
 
+import { ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { HealthResponse } from "@/app/api/health/route";
-import { Button } from "@/components/ui/Button";
-import { Panel } from "@/components/ui/Panel";
 import { StatusDiode } from "@/components/ui/StatusDiode";
 
 // ── Agent definitions ───────────────────────────────────────────────
@@ -15,11 +14,11 @@ interface AgentDef {
   id: string;
   number: string;
   name: string;
+  description: string;
   steps: string[];
   apis: { key: ApiKey; label: string }[];
   model: string;
   trigger: string;
-  time: string;
   hasThinking?: boolean;
 }
 
@@ -48,6 +47,7 @@ const AGENTS: AgentDef[] = [
     id: "agent1",
     number: "01",
     name: "Kwalifikacja Rozmowy",
+    description: "Analizuje rozmowę telefoniczną i ocenia dopasowanie do ICP",
     steps: [
       "Analizuje transkrypt rozmowy kwalifikacyjnej.",
       "Weryfikuje kryteria ICP: flota, biuro, decyzyjność.",
@@ -60,12 +60,12 @@ const AGENTS: AgentDef[] = [
     ],
     model: formatModelId("claude-sonnet-4-6"),
     trigger: "Po rozmowie kwalifikacyjnej",
-    time: "ok. 60–90 sekund",
   },
   {
     id: "agent2",
     number: "02",
-    name: "Pre-Discovery Brief",
+    name: "Brief przed Discovery",
+    description: "Buduje strategię i Live Script przed rozmową Discovery",
     steps: [
       "Syntetyzuje dane z kwalifikacji i notatki wstępnej.",
       "Tworzy hipotezę problemu i plan strategiczny.",
@@ -78,13 +78,13 @@ const AGENTS: AgentDef[] = [
     ],
     model: formatModelId("claude-opus-4-8"),
     trigger: "Przed rozmową Discovery",
-    time: "ok. 2–4 minuty",
     hasThinking: true,
   },
   {
     id: "agent3",
     number: "03",
     name: "Personalizacja Prezentacji",
+    description: "Dostosowuje prezentację do profilu i branży klienta",
     steps: [
       "Pobiera dane klienta z wyników kwalifikacji.",
       "Identyfikuje sekcje prezentacji do personalizacji.",
@@ -97,12 +97,12 @@ const AGENTS: AgentDef[] = [
     ],
     model: formatModelId("claude-opus-4-8"),
     trigger: "Przed rozmową Discovery",
-    time: "ok. 45–60 sekund",
   },
   {
     id: "agent4",
     number: "04",
     name: "Analiza Discovery",
+    description: "Ocenia wynik Discovery Call i rekomenduje dalsze kroki",
     steps: [
       "Analizuje transkrypt rozmowy Discovery Call.",
       "Ocenia wynik rozmowy i potwierdzenie kryteriów.",
@@ -115,7 +115,6 @@ const AGENTS: AgentDef[] = [
     ],
     model: formatModelId("claude-sonnet-4-6"),
     trigger: "Po rozmowie Discovery",
-    time: "ok. 30–45 sekund",
   },
 ];
 
@@ -152,96 +151,132 @@ function AgentCard({
   }
 
   return (
-    <Panel
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       style={{
         display: "flex",
         flexDirection: "column",
-        padding: 0,
         overflow: "hidden",
         transition: "box-shadow 150ms, transform 150ms",
+        background: "var(--glass)",
+        backdropFilter: "var(--glass-blur)",
+        WebkitBackdropFilter: "var(--glass-blur)",
+        border: "1px solid var(--glass-border)",
+        borderRadius: "var(--radius-lg)",
         boxShadow: hovered
-          ? "0 8px 24px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.05)"
+          ? "0 12px 32px rgba(0,0,0,0.12), 0 0 0 1px rgba(81,112,255,0.10)"
           : "var(--glass-shadow)",
-        transform: hovered ? "translateY(-1px)" : "translateY(0)",
+        transform: hovered ? "translateY(-2px)" : "translateY(0)",
       }}
     >
+      {/* ── Top accent bar ── */}
       <div
-        style={{ padding: "14px 16px 0", cursor: "pointer", flex: 1 }}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
+        style={{
+          height: 3,
+          background: hovered
+            ? "linear-gradient(90deg, var(--accent), rgba(81,112,255,0.4))"
+            : "var(--border)",
+          transition: "background 200ms",
+          flexShrink: 0,
+        }}
+      />
+
+      {/* ── Main body (clickable) ── */}
+      <div
+        style={{ padding: "18px 20px 0", cursor: "pointer", flex: 1, display: "flex", flexDirection: "column" }}
         onClick={onOpen}
       >
         {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 14 }}>
           <span
             style={{
               fontFamily: "var(--font-sans)",
-              fontSize: 10,
-              fontWeight: 600,
-              color: "var(--text-tertiary)",
-              letterSpacing: "0.04em",
-              background: "rgba(0,0,0,0.04)",
-              padding: "2px 7px",
+              fontSize: 11,
+              fontWeight: 700,
+              color: hovered ? "var(--accent)" : "var(--text-tertiary)",
+              letterSpacing: "0.05em",
+              background: hovered ? "var(--accent-muted)" : "rgba(0,0,0,0.04)",
+              padding: "3px 8px",
               borderRadius: "var(--radius-xs)",
-              border: "1px solid var(--border)",
+              border: `1px solid ${hovered ? "var(--accent-border)" : "var(--border)"}`,
               flexShrink: 0,
+              marginTop: 2,
+              transition: "all 150ms",
             }}
           >
             {agent.number}
           </span>
-          <span
-            style={{
-              fontFamily: "var(--font-sans)",
-              fontSize: 13,
-              fontWeight: 600,
-              color: "var(--text-primary)",
-              letterSpacing: "-0.01em",
-              flex: 1,
-            }}
-          >
-            {agent.name}
-          </span>
-          {agent.hasThinking && (
-            <span
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              <span
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 16,
+                  fontWeight: 700,
+                  color: "var(--text-primary)",
+                  letterSpacing: "-0.02em",
+                  lineHeight: 1.2,
+                }}
+              >
+                {agent.name}
+              </span>
+              {agent.hasThinking && (
+                <span
+                  style={{
+                    fontSize: 9,
+                    fontWeight: 700,
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                    color: "var(--accent)",
+                    background: "var(--accent-muted)",
+                    padding: "2px 7px",
+                    borderRadius: "var(--radius-xs)",
+                    border: "1px solid var(--accent-border)",
+                    flexShrink: 0,
+                  }}
+                >
+                  Thinking
+                </span>
+              )}
+            </div>
+            <div
               style={{
-                fontSize: 9,
-                fontWeight: 600,
-                letterSpacing: "0.06em",
-                textTransform: "uppercase",
-                color: "var(--accent)",
-                background: "var(--accent-muted)",
-                padding: "2px 6px",
-                borderRadius: "var(--radius-xs)",
-                flexShrink: 0,
+                fontFamily: "var(--font-sans)",
+                fontSize: 12,
+                color: "var(--text-tertiary)",
+                marginTop: 3,
+                lineHeight: 1.4,
               }}
             >
-              Thinking
-            </span>
-          )}
+              {agent.description}
+            </div>
+          </div>
         </div>
 
         {/* Steps */}
         <ol
           style={{
-            margin: "0 0 10px 0",
+            margin: "0 0 16px 0",
             padding: 0,
             listStyle: "none",
             display: "flex",
             flexDirection: "column",
-            gap: 3,
+            gap: 6,
           }}
         >
           {agent.steps.map((step, i) => (
-            <li key={i} style={{ display: "flex", gap: 7, alignItems: "flex-start" }}>
+            <li key={i} style={{ display: "flex", gap: 9, alignItems: "flex-start" }}>
               <span
                 style={{
                   fontFamily: "var(--font-sans)",
-                  fontSize: 10,
-                  fontWeight: 600,
-                  color: "var(--text-tertiary)",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: "var(--accent)",
                   flexShrink: 0,
                   marginTop: 1,
-                  width: 14,
+                  width: 16,
+                  opacity: 0.7,
                 }}
               >
                 {i + 1}.
@@ -249,9 +284,9 @@ function AgentCard({
               <span
                 style={{
                   fontFamily: "var(--font-sans)",
-                  fontSize: 12,
+                  fontSize: 13,
                   color: "var(--text-secondary)",
-                  lineHeight: 1.4,
+                  lineHeight: 1.5,
                 }}
               >
                 {step}
@@ -261,23 +296,23 @@ function AgentCard({
         </ol>
 
         {/* Separator */}
-        <div style={{ height: 1, background: "var(--border)", margin: "0 -16px 10px" }} />
+        <div style={{ height: 1, background: "var(--border)", margin: "0 -20px 14px" }} />
 
-        {/* APIs */}
-        <div style={{ marginBottom: 10 }}>
+        {/* Integrations — horizontal row */}
+        <div style={{ marginBottom: 14 }}>
           <div
             style={{
               fontSize: 10,
-              fontWeight: 600,
-              letterSpacing: "0.07em",
+              fontWeight: 700,
+              letterSpacing: "0.08em",
               textTransform: "uppercase",
               color: "var(--text-tertiary)",
-              marginBottom: 5,
+              marginBottom: 7,
             }}
           >
             Integracje
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          <div style={{ display: "flex", gap: 14 }}>
             {agent.apis.map((api) => (
               <StatusDiode
                 key={api.key}
@@ -289,20 +324,19 @@ function AgentCard({
           </div>
         </div>
 
-        {/* Meta */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 3, marginBottom: 12 }}>
+        {/* Meta — 2 rows */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 5, marginBottom: 16 }}>
           {[
             { label: "Model", value: agent.model },
-            { label: "Uruchomienie", value: agent.trigger },
-            { label: "Czas pracy", value: agent.time },
+            { label: "Kiedy", value: agent.trigger },
           ].map(({ label, value }) => (
-            <div key={label} style={{ display: "flex", gap: 6, alignItems: "baseline" }}>
+            <div key={label} style={{ display: "flex", gap: 8, alignItems: "baseline" }}>
               <span
                 style={{
                   fontSize: 11,
                   color: "var(--text-tertiary)",
                   fontFamily: "var(--font-sans)",
-                  width: 86,
+                  width: 52,
                   flexShrink: 0,
                 }}
               >
@@ -310,9 +344,10 @@ function AgentCard({
               </span>
               <span
                 style={{
-                  fontSize: 12,
+                  fontSize: 13,
                   color: "var(--text-primary)",
                   fontFamily: "var(--font-sans)",
+                  fontWeight: 500,
                 }}
               >
                 {value}
@@ -322,13 +357,39 @@ function AgentCard({
         </div>
       </div>
 
-      {/* Action */}
-      <div style={{ padding: "0 16px 14px" }}>
-        <Button variant="primary" fullWidth size="sm" onClick={onOpen}>
+      {/* ── Action — left-aligned ── */}
+      <div
+        style={{
+          padding: "0 20px 18px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-start",
+        }}
+      >
+        <button
+          onClick={onOpen}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "8px 16px",
+            background: hovered ? "var(--accent)" : "transparent",
+            border: `1px solid ${hovered ? "var(--accent)" : "var(--border)"}`,
+            borderRadius: "var(--radius-sm)",
+            cursor: "pointer",
+            fontFamily: "var(--font-sans)",
+            fontSize: 13,
+            fontWeight: 600,
+            color: hovered ? "#fff" : "var(--text-secondary)",
+            transition: "all 150ms",
+            letterSpacing: "-0.01em",
+          }}
+        >
           Otwórz narzędzie
-        </Button>
+          <ChevronRight size={14} strokeWidth={2} />
+        </button>
       </div>
-    </Panel>
+    </div>
   );
 }
 
@@ -345,20 +406,21 @@ export function AgentsOverview() {
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
-        padding: "20px 24px",
+        padding: "24px 28px",
         boxSizing: "border-box",
       }}
     >
       {/* Header */}
-      <div style={{ marginBottom: 16, flexShrink: 0 }}>
+      <div style={{ marginBottom: 20, flexShrink: 0 }}>
         <h1
           style={{
             fontFamily: "var(--font-sans)",
-            fontSize: 18,
-            fontWeight: 600,
+            fontSize: 22,
+            fontWeight: 700,
             color: "var(--text-primary)",
-            letterSpacing: "-0.02em",
+            letterSpacing: "-0.03em",
             margin: 0,
+            lineHeight: 1.2,
           }}
         >
           Agenci wspomagania sprzedaży
@@ -366,25 +428,27 @@ export function AgentsOverview() {
         <p
           style={{
             fontFamily: "var(--font-sans)",
-            fontSize: 13,
+            fontSize: 14,
             color: "var(--text-secondary)",
-            margin: "4px 0 0",
+            margin: "5px 0 0",
+            lineHeight: 1.5,
           }}
         >
-          Zestaw narzędzi do kwalifikacji, analizy i przygotowania leadów transportowych.
+          Zestaw narzędzi AI do kwalifikacji, analizy i przygotowania leadów transportowych.
         </p>
       </div>
 
-      {/* Grid 3+2 */}
+      {/* Grid — responsive: 1→2→4 columns */}
       <div
-        className="responsive-grid-2"
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
-          gap: 14,
+          gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+          gap: 16,
           flex: 1,
-          overflow: "hidden",
+          overflowY: "auto",
+          overflowX: "hidden",
           alignContent: "start",
+          paddingBottom: 8,
         }}
       >
         {AGENTS.map((agent) => (

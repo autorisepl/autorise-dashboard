@@ -608,7 +608,9 @@ function WeekView({
   const staticRight = SB_W;
 
   return (
+    /* Outer wrapper: vertical flex, horizontally scrollable when window is narrow */
     <div style={{ display: "flex", flex: 1, overflow: "hidden", flexDirection: "column" }}>
+    <div style={{ display: "flex", flex: 1, flexDirection: "column", minWidth: 680, overflowX: "visible" }}>
       {/* ── Day headers (OUTSIDE the scroll container — no sticky needed) ── */}
       <div
         style={{
@@ -885,6 +887,7 @@ function WeekView({
           </div>
         ))}
       </div>
+    </div>
     </div>
   );
 }
@@ -1813,8 +1816,8 @@ export default function HarmonogramPage() {
         </button>
       </div>
 
-      {/* Body */}
-      <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+      {/* Body — horizontal scroll when window is narrow */}
+      <div style={{ flex: 1, overflowY: "hidden", overflowX: "auto", display: "flex", flexDirection: "column" }}>
         {error && (
           <Panel style={{ margin: 16, padding: 16, textAlign: "center" }}>
             <div
