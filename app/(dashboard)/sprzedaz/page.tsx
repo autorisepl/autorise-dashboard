@@ -8,7 +8,6 @@ import {
   Check,
   CheckCircle2,
   ChevronDown,
-  ExternalLink,
   GitBranch,
   Loader2,
   MapPin,
@@ -18,13 +17,12 @@ import {
   PhoneOff,
   RefreshCw,
   Target,
+  Users,
   X,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { PipelineClientDetailed } from "@/app/api/notion/pipeline/route";
 import { KalkulatorRoi } from "@/components/kalkulator/KalkulatorRoi";
-import { KartaKlienta } from "@/components/karta/KartaKlienta";
-import { LiveScript } from "@/components/LiveScript";
 import { formatPhone } from "@/lib/format/phone";
 
 // ── Types ─────────────────────────────────────────────────────────────
@@ -42,15 +40,32 @@ type QuickAction = "discovery" | "followup" | "niekwalifikowany" | "brak_odbioru
 // ── Constants ─────────────────────────────────────────────────────────
 
 const ACTIVE_STATUSES = ["Nowy lead", "Kwalifikacja", "Discovery umówione", "Finalizacja"];
+const ROW1 = ["Nowy lead", "Kwalifikacja", "Discovery umówione", "Finalizacja"];
+const ROW2 = ["Kickoff", "Wdrożenie", "Retainer", "Niekwalifikowany"];
+const ALL_STATUSES = [...ROW1, ...ROW2];
 
 const STATUS_COLORS: Record<string, string> = {
   "Nowy lead": "var(--accent)",
   Kwalifikacja: "#7c3aed",
   "Discovery umówione": "#0d9488",
   Finalizacja: "#d97706",
+  Kickoff: "#16a34a",
+  Wdrożenie: "#15803d",
+  Retainer: "#166534",
+  Niekwalifikowany: "var(--text-tertiary)",
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────
+
+function toVocative(name: string): string {
+  const first = name.trim().split(" ")[0];
+  if (!first) return name;
+  if (first.endsWith("ał")) return first.slice(0, -2) + "ale";
+  if (first.endsWith("eł")) return first.slice(0, -2) + "le";
+  if (first.endsWith("ek") && first.length > 3) return first.slice(0, -2) + "ku";
+  if (first.endsWith("a") && first.length > 2) return first.slice(0, -1) + "o";
+  return first;
+}
 
 function fmtDate(iso: string): string {
   if (!iso) return "";
@@ -74,7 +89,10 @@ function isOverdue(iso: string): boolean {
 
 function StatsBar({ clients }: { clients: PipelineClientDetailed[] }) {
   const active = clients.filter((c) => ACTIVE_STATUSES.includes(c.status)).length;
-  const dzisDo = clients.filter((c) => c.dataFollowup && c.dataFollowup === todayISO()).length;
+  const dzisDo = clients.filter((c) => {
+    if (c.dataFollowup) return c.dataFollowup === todayISO();
+    return c.status === "Nowy lead";
+  }).length;
   const przeterminowane = clients.filter((c) => c.dataFollowup && isOverdue(c.dataFollowup)).length;
 
   const stat = (label: string, value: number, color: string) => (
@@ -353,7 +371,7 @@ function QuickActionModal({
             }),
           });
         }
-        onDone("Status → Analiza umówiona. Termin dodany do kalendarza.");
+        onDone("Status: Analiza umówiona. Termin dodany do kalendarza.");
       } else if (action === "followup") {
         await fetch("/api/notion/pipeline-update", {
           method: "PATCH",
@@ -375,7 +393,7 @@ function QuickActionModal({
             powodNiekwalifikowania: powod || "Brak kwalifikacji",
           }),
         });
-        onDone("Status → Niekwalifikowany.");
+        onDone("Status: Niekwalifikowany.");
       } else if (action === "brak_odbioru") {
         await fetch("/api/notion/pipeline-update", {
           method: "PATCH",
@@ -683,6 +701,221 @@ function QuickActionModal({
   );
 }
 
+// ── Pipeline client panel ─────────────────────────────────────────────
+
+function PipelineClientPanel({
+  client,
+  onClose,
+  onOpenScript,
+}: {
+  client: PipelineClientDetailed;
+  onClose: () => void;
+  onOpenScript: () => void;
+}) {
+  const color = STATUS_COLORS[client.status] ?? "var(--text-tertiary)";
+  const rows = [
+    { label: "Firma", value: client.firma },
+    { label: "Kontakt", value: client.kontakt },
+    { label: "Telefon", value: client.telefon },
+    { label: "E-mail", value: client.email },
+    { label: "Status", value: client.status },
+    { label: "Ocena ICP", value: client.ocenaICP },
+    { label: "Data discovery", value: client.dataDiscovery ? fmtDate(client.dataDiscovery) : "" },
+    { label: "Następny krok", value: client.nastepnyKrok },
+    { label: "Ostatnia zmiana", value: client.lastModified ? fmtDate(client.lastModified) : "" },
+  ].filter((r) => r.value);
+
+  return (
+    <div
+      style={{
+        width: 320,
+        minWidth: 320,
+        height: "100%",
+        borderLeft: "1px solid var(--border)",
+        display: "flex",
+        flexDirection: "column",
+        background: "var(--bg-elevated)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+      }}
+    >
+      <div
+        style={{
+          padding: "12px 14px",
+          borderBottom: "1px solid var(--border)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexShrink: 0,
+        }}
+      >
+        <div>
+          <div
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 14,
+              fontWeight: 600,
+              color: "var(--text-primary)",
+              letterSpacing: "-0.01em",
+            }}
+          >
+            {client.kontakt || client.firma}
+          </div>
+          {client.firma && client.kontakt && client.firma !== client.kontakt && (
+            <div style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 1 }}>
+              {client.firma}
+            </div>
+          )}
+        </div>
+        <button
+          onClick={onClose}
+          style={{
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            color: "var(--text-tertiary)",
+            padding: 4,
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
+          <X size={15} />
+        </button>
+      </div>
+
+      <div style={{ padding: "12px 14px", flex: 1, overflowY: "auto" }}>
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "3px 9px",
+            borderRadius: "var(--radius-xs)",
+            background: `${color}18`,
+            border: `1px solid ${color}40`,
+            marginBottom: 14,
+          }}
+        >
+          <div style={{ width: 6, height: 6, borderRadius: "50%", background: color }} />
+          <span style={{ fontSize: 11, fontWeight: 600, color, fontFamily: "var(--font-sans)" }}>
+            {client.status}
+          </span>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {rows.map(({ label, value }) => (
+            <div key={label}>
+              <div
+                style={{
+                  fontSize: 10,
+                  fontWeight: 600,
+                  letterSpacing: "0.07em",
+                  textTransform: "uppercase",
+                  color: "var(--text-tertiary)",
+                  marginBottom: 2,
+                  fontFamily: "var(--font-sans)",
+                }}
+              >
+                {label}
+              </div>
+              <div style={{ fontSize: 12, color: "var(--text-primary)", fontFamily: "var(--font-sans)" }}>
+                {value}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ marginTop: 18, display: "flex", flexDirection: "column", gap: 8 }}>
+          <button
+            onClick={onOpenScript}
+            style={{
+              width: "100%",
+              padding: "8px 0",
+              background: "var(--accent)",
+              border: "none",
+              borderRadius: "var(--radius-sm)",
+              color: "#fff",
+              fontFamily: "var(--font-sans)",
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 6,
+            }}
+          >
+            <Phone size={12} />
+            Otwórz Live Script
+          </button>
+          <a
+            href={`https://notion.so/${client.id.replace(/-/g, "")}`}
+            target="_blank"
+            rel="noreferrer"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 5,
+              fontSize: 11,
+              color: "var(--text-secondary)",
+              textDecoration: "none",
+              padding: "6px 10px",
+              border: "1px solid var(--border)",
+              borderRadius: "var(--radius-sm)",
+              fontFamily: "var(--font-sans)",
+            }}
+          >
+            Otwórz w Notion
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Kanban row (2×4 grid) ─────────────────────────────────────────────
+
+function KanbanRow({
+  statuses,
+  grouped,
+  onSelect,
+}: {
+  statuses: string[];
+  grouped: Record<string, PipelineClientDetailed[]>;
+  onSelect: (c: PipelineClientDetailed) => void;
+}) {
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(4, 1fr)",
+        flex: 1,
+        minHeight: 0,
+      }}
+    >
+      {statuses.map((status, idx) => (
+        <div
+          key={status}
+          style={{
+            borderRight: idx < statuses.length - 1 ? "1px solid var(--border)" : "none",
+            padding: "8px 8px 12px",
+            overflow: "hidden",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <KanbanColumn
+            status={status}
+            clients={grouped[status] ?? []}
+            onSelect={onSelect}
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ── Tab 1: Pipeline ───────────────────────────────────────────────────
 
 function PipelineTab({
@@ -696,75 +929,69 @@ function PipelineTab({
   onRefresh: () => void;
   onSelectClient: (c: PipelineClientDetailed, switchTab?: boolean) => void;
 }) {
-  const activeClients = clients.filter((c) => ACTIVE_STATUSES.includes(c.status));
+  const [panelClient, setPanelClient] = useState<PipelineClientDetailed | null>(null);
+
+  const grouped = ALL_STATUSES.reduce<Record<string, PipelineClientDetailed[]>>((acc, s) => {
+    acc[s] = clients.filter((c) => c.status === s);
+    return acc;
+  }, {});
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
-      {/* Stats + refresh */}
-      <div style={{ display: "flex", alignItems: "center", flexShrink: 0 }}>
-        <div style={{ flex: 1 }}>
-          <StatsBar clients={clients} />
-        </div>
-        <button
-          onClick={onRefresh}
-          disabled={loading}
-          style={{
-            padding: "0 16px",
-            height: 44,
-            background: "none",
-            border: "none",
-            borderLeft: "1px solid var(--border)",
-            borderBottom: "1px solid var(--border)",
-            cursor: loading ? "not-allowed" : "pointer",
-            color: "var(--text-tertiary)",
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            flexShrink: 0,
-          }}
-        >
-          <RefreshCw
-            size={13}
-            style={{ animation: loading ? "spin 1s linear infinite" : "none" }}
-          />
-          <span
-            style={{ fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--text-secondary)" }}
-          >
-            Odśwież
-          </span>
-        </button>
-      </div>
-
-      {/* Kanban */}
-      <div
-        style={{
-          flex: 1,
-          display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
-          gap: 0,
-          overflow: "hidden",
-          borderBottom: "1px solid var(--border)",
-        }}
-      >
-        {ACTIVE_STATUSES.map((status, idx) => (
-          <div
-            key={status}
+    <div style={{ display: "flex", height: "100%", overflow: "hidden" }}>
+      {/* Main kanban area */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        {/* Stats + refresh */}
+        <div style={{ display: "flex", alignItems: "center", flexShrink: 0 }}>
+          <div style={{ flex: 1 }}>
+            <StatsBar clients={clients} />
+          </div>
+          <button
+            onClick={onRefresh}
+            disabled={loading}
             style={{
-              borderRight: idx < ACTIVE_STATUSES.length - 1 ? "1px solid var(--border)" : "none",
-              padding: "8px 8px 12px",
-              overflow: "hidden",
+              padding: "0 16px",
+              height: 44,
+              background: "none",
+              border: "none",
+              borderLeft: "1px solid var(--border)",
+              borderBottom: "1px solid var(--border)",
+              cursor: loading ? "not-allowed" : "pointer",
+              color: "var(--text-tertiary)",
               display: "flex",
-              flexDirection: "column",
+              alignItems: "center",
+              gap: 6,
+              flexShrink: 0,
             }}
           >
-            <KanbanColumn
-              status={status}
-              clients={activeClients.filter((c) => c.status === status)}
-              onSelect={(c) => onSelectClient(c, true)}
+            <RefreshCw
+              size={13}
+              style={{ animation: loading ? "spin 1s linear infinite" : "none" }}
             />
-          </div>
-        ))}
+            <span style={{ fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--text-secondary)" }}>
+              Odśwież
+            </span>
+          </button>
+        </div>
+
+        {/* Kanban 2×4 */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+          <KanbanRow statuses={ROW1} grouped={grouped} onSelect={setPanelClient} />
+          <div style={{ height: 1, background: "var(--border)", flexShrink: 0 }} />
+          <KanbanRow statuses={ROW2} grouped={grouped} onSelect={setPanelClient} />
+        </div>
       </div>
+
+      {/* Side panel */}
+      {panelClient && (
+        <PipelineClientPanel
+          client={panelClient}
+          onClose={() => setPanelClient(null)}
+          onOpenScript={() => {
+            onSelectClient(panelClient, true);
+            setPanelClient(null);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -852,7 +1079,7 @@ function MapaProcesuTab({
       ],
       exits: [
         { label: "Niekwalifikowany", reason: "Za mały, inny rynek, brak decydenta" },
-        { label: "Brak odbioru", reason: "Queue → retry D+1, D+3, D+7" },
+        { label: "Brak odbioru", reason: "Queue: retry D+1, D+3, D+7" },
       ],
       next: "Kwalifikacja ✓",
     },
@@ -996,7 +1223,9 @@ function MapaProcesuTab({
                   backdropFilter: "blur(20px) saturate(180%)",
                   WebkitBackdropFilter: "blur(20px) saturate(180%)",
                   border: `1px solid ${isCurrent ? stage.color : "var(--border)"}`,
-                  boxShadow: isCurrent ? `0 0 0 2px ${stage.color}22, var(--shadow-card)` : "var(--shadow-sm)",
+                  boxShadow: isCurrent
+                    ? `0 0 0 2px ${stage.color}22, var(--shadow-card)`
+                    : "var(--shadow-sm)",
                   opacity: isDone ? 0.65 : 1,
                   borderRadius: "var(--radius-md)",
                   overflow: "hidden",
@@ -1008,43 +1237,119 @@ function MapaProcesuTab({
                 {/* Colored top accent bar */}
                 <div style={{ height: 3, background: stage.color, flexShrink: 0 }} />
 
-                <div style={{ padding: "14px 16px", flex: 1, display: "flex", flexDirection: "column", gap: 0 }}>
+                <div
+                  style={{
+                    padding: "14px 16px",
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 0,
+                  }}
+                >
                   {/* Stage header */}
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
                     <div
                       style={{
-                        width: 26, height: 26, borderRadius: "50%", flexShrink: 0,
+                        width: 26,
+                        height: 26,
+                        borderRadius: "50%",
+                        flexShrink: 0,
                         border: `2px solid ${stage.color}`,
                         background: isDone || isCurrent ? stage.color : "transparent",
-                        display: "flex", alignItems: "center", justifyContent: "center",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
                       }}
                     >
                       {isDone ? (
                         <Check size={12} color="#fff" strokeWidth={3} />
                       ) : (
-                        <span style={{ fontFamily: "var(--font-sans)", fontSize: 10, fontWeight: 800, color: isCurrent ? "#fff" : stage.color }}>
+                        <span
+                          style={{
+                            fontFamily: "var(--font-sans)",
+                            fontSize: 10,
+                            fontWeight: 800,
+                            color: isCurrent ? "#fff" : stage.color,
+                          }}
+                        >
                           {idx + 1}
                         </span>
                       )}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", color: stage.color, marginBottom: 1 }}>
+                      <div
+                        style={{
+                          fontSize: 8.5,
+                          fontWeight: 800,
+                          letterSpacing: "0.12em",
+                          textTransform: "uppercase",
+                          color: stage.color,
+                          marginBottom: 1,
+                        }}
+                      >
                         {stage.etap}
                       </div>
-                      <div style={{ fontFamily: "var(--font-sans)", fontSize: 12, fontWeight: 700, color: "var(--text-primary)", lineHeight: 1.25, letterSpacing: "-0.01em" }}>
+                      <div
+                        style={{
+                          fontFamily: "var(--font-sans)",
+                          fontSize: 12,
+                          fontWeight: 700,
+                          color: "var(--text-primary)",
+                          lineHeight: 1.25,
+                          letterSpacing: "-0.01em",
+                        }}
+                      >
                         {stage.label}
                       </div>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 3, padding: "2px 7px", borderRadius: 99, background: "var(--bg-hover)", border: "1px solid var(--border)", flexShrink: 0 }}>
-                      <div style={{ width: 5, height: 5, borderRadius: "50%", background: stage.color }} />
-                      <span style={{ fontFamily: "var(--font-sans)", fontSize: 10, fontWeight: 600, color: counts[idx] > 0 ? "var(--text-primary)" : "var(--text-tertiary)" }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 3,
+                        padding: "2px 7px",
+                        borderRadius: 99,
+                        background: "var(--bg-hover)",
+                        border: "1px solid var(--border)",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 5,
+                          height: 5,
+                          borderRadius: "50%",
+                          background: stage.color,
+                        }}
+                      />
+                      <span
+                        style={{
+                          fontFamily: "var(--font-sans)",
+                          fontSize: 10,
+                          fontWeight: 600,
+                          color: counts[idx] > 0 ? "var(--text-primary)" : "var(--text-tertiary)",
+                        }}
+                      >
                         {counts[idx]}
                       </span>
                     </div>
                   </div>
 
                   {isCurrent && (
-                    <div style={{ padding: "3px 8px", borderRadius: 6, background: stage.color, color: "#fff", fontSize: 9.5, fontWeight: 800, textAlign: "center", marginBottom: 10, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+                    <div
+                      style={{
+                        padding: "3px 8px",
+                        borderRadius: 6,
+                        background: stage.color,
+                        color: "#fff",
+                        fontSize: 9.5,
+                        fontWeight: 800,
+                        textAlign: "center",
+                        marginBottom: 10,
+                        letterSpacing: "0.04em",
+                        textTransform: "uppercase",
+                      }}
+                    >
                       Tu jesteś
                     </div>
                   )}
@@ -1052,9 +1357,35 @@ function MapaProcesuTab({
                   {/* Steps */}
                   <div style={{ flex: 1, marginBottom: 10 }}>
                     {stage.steps.map((step, si) => (
-                      <div key={si} style={{ display: "flex", alignItems: "flex-start", gap: 6, marginBottom: 5 }}>
-                        <div style={{ width: 3.5, height: 3.5, borderRadius: "50%", background: stage.color, marginTop: 5.5, flexShrink: 0 }} />
-                        <span style={{ fontFamily: "var(--font-sans)", fontSize: 11.5, color: "var(--text-primary)", lineHeight: 1.5 }}>{step}</span>
+                      <div
+                        key={si}
+                        style={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          gap: 6,
+                          marginBottom: 5,
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: 3.5,
+                            height: 3.5,
+                            borderRadius: "50%",
+                            background: stage.color,
+                            marginTop: 5.5,
+                            flexShrink: 0,
+                          }}
+                        />
+                        <span
+                          style={{
+                            fontFamily: "var(--font-sans)",
+                            fontSize: 11.5,
+                            color: "var(--text-primary)",
+                            lineHeight: 1.5,
+                          }}
+                        >
+                          {step}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -1062,11 +1393,35 @@ function MapaProcesuTab({
                   {/* Exits */}
                   <div style={{ marginTop: "auto", marginBottom: 10 }}>
                     {stage.exits.map((exit, ei) => (
-                      <div key={ei} style={{ padding: "5px 8px", marginBottom: 4, background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.14)", borderRadius: "var(--radius-xs)" }}>
-                        <div style={{ fontFamily: "var(--font-sans)", fontSize: 10, fontWeight: 600, color: "#ef4444", marginBottom: 1 }}>
+                      <div
+                        key={ei}
+                        style={{
+                          padding: "5px 8px",
+                          marginBottom: 4,
+                          background: "rgba(239,68,68,0.05)",
+                          border: "1px solid rgba(239,68,68,0.14)",
+                          borderRadius: "var(--radius-xs)",
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontFamily: "var(--font-sans)",
+                            fontSize: 10,
+                            fontWeight: 600,
+                            color: "#ef4444",
+                            marginBottom: 1,
+                          }}
+                        >
                           × {exit.label}
                         </div>
-                        <div style={{ fontFamily: "var(--font-sans)", fontSize: 10, color: "var(--text-tertiary)", lineHeight: 1.4 }}>
+                        <div
+                          style={{
+                            fontFamily: "var(--font-sans)",
+                            fontSize: 10,
+                            color: "var(--text-tertiary)",
+                            lineHeight: 1.4,
+                          }}
+                        >
                           {exit.reason}
                         </div>
                       </div>
@@ -1074,13 +1429,28 @@ function MapaProcesuTab({
                   </div>
 
                   {/* Next */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 5, paddingTop: 8, borderTop: "1px solid var(--border)" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 5,
+                      paddingTop: 8,
+                      borderTop: "1px solid var(--border)",
+                    }}
+                  >
                     {idx === stages.length - 1 ? (
                       <CheckCircle2 size={10} color="#16a34a" />
                     ) : (
                       <ArrowRight size={10} color={stage.color} />
                     )}
-                    <span style={{ fontFamily: "var(--font-sans)", fontSize: 10.5, color: idx === stages.length - 1 ? "#16a34a" : "var(--text-secondary)", fontWeight: idx === stages.length - 1 ? 600 : 400 }}>
+                    <span
+                      style={{
+                        fontFamily: "var(--font-sans)",
+                        fontSize: 10.5,
+                        color: idx === stages.length - 1 ? "#16a34a" : "var(--text-secondary)",
+                        fontWeight: idx === stages.length - 1 ? 600 : 400,
+                      }}
+                    >
                       {stage.next}
                     </span>
                   </div>
@@ -1091,7 +1461,10 @@ function MapaProcesuTab({
             if (idx < stages.length - 1) {
               return [
                 card,
-                <div key={`arrow-${idx}`} style={{ display: "flex", alignItems: "center", padding: "0 6px", flexShrink: 0 }}>
+                <div
+                  key={`arrow-${idx}`}
+                  style={{ display: "flex", alignItems: "center", padding: "0 6px", flexShrink: 0 }}
+                >
                   <ArrowRight size={16} color="var(--text-tertiary)" strokeWidth={1.5} />
                 </div>,
               ];
@@ -1179,11 +1552,6 @@ export default function SprzedazPage() {
     setSelectedClient(c);
     if (switchTab) setTab("livescript");
   }, []);
-
-  // Inject selected client into LiveScriptTab
-  const clientsWithSelected = selectedClient
-    ? clients.map((c) => (c.id === selectedClient.id ? selectedClient : c))
-    : clients;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
@@ -1297,7 +1665,11 @@ export default function SprzedazPage() {
           />
         )}
         {tab === "livescript" && (
-          <LiveScriptTabWrapper clients={clientsWithSelected} preSelected={selectedClient} />
+          <LiveScriptTabWrapper
+            clients={clients}
+            preSelected={selectedClient}
+            onSelectClient={setSelectedClient}
+          />
         )}
         {tab === "mapa" && <MapaProcesuTab clients={clients} selectedClient={selectedClient} />}
         {tab === "roi" && (
@@ -1307,22 +1679,31 @@ export default function SprzedazPage() {
           />
         )}
         {tab === "kwalifikacyjna" && (
-          <ScriptTab type="kwalifikacyjna" selectedClient={selectedClient} clients={clients} onSelectClient={setSelectedClient} />
+          <ScriptTab
+            type="kwalifikacyjna"
+            selectedClient={selectedClient}
+            clients={clients}
+            onSelectClient={setSelectedClient}
+          />
         )}
-        {tab === "sprzedazowa" && <ScriptTab type="sprzedazowa" selectedClient={selectedClient} clients={clients} onSelectClient={setSelectedClient} />}
-        {tab === "wiadomosci" && <MessagesTab selectedClient={selectedClient} clients={clients} onSelectClient={setSelectedClient} />}
+        {tab === "sprzedazowa" && (
+          <ScriptTab
+            type="sprzedazowa"
+            selectedClient={selectedClient}
+            clients={clients}
+            onSelectClient={setSelectedClient}
+          />
+        )}
+        {tab === "wiadomosci" && (
+          <MessagesTab
+            selectedClient={selectedClient}
+            clients={clients}
+            onSelectClient={setSelectedClient}
+          />
+        )}
       </div>
     </div>
   );
-}
-
-// ── History types (mirroring lib/notion/client HistoryEntry) ─────────
-
-interface HistoryEntry {
-  id: string;
-  title: string;
-  date: string;
-  type: string;
 }
 
 // ── Tab 2: Live Script wrapper ────────────────────────────────────────
@@ -1330,22 +1711,16 @@ interface HistoryEntry {
 function LiveScriptTabWrapper({
   clients,
   preSelected,
+  onSelectClient,
 }: {
   clients: PipelineClientDetailed[];
   preSelected: PipelineClientDetailed | null;
+  onSelectClient: (c: PipelineClientDetailed) => void;
 }) {
-  const [selectedId, setSelectedId] = useState<string>(preSelected?.id ?? "");
-  const [plan, setPlan] = useState<string | null>(null);
-  const [planLoading, setPlanLoading] = useState(false);
+  const [manualType, setManualType] = useState<"kwalifikacyjna" | "sprzedazowa" | null>(null);
   const [activeAction, setActiveAction] = useState<QuickAction>(null);
   const [toast, setToast] = useState<string | null>(null);
-  const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [historyLoading, setHistoryLoading] = useState(false);
-  const [historyOpen, setHistoryOpen] = useState(false);
-  const [viewTab, setViewTab] = useState<"skrypt" | "karta">("skrypt");
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const selected = clients.find((c) => c.id === selectedId) ?? null;
 
   const showToast = useCallback((msg: string) => {
     setToast(msg);
@@ -1353,91 +1728,29 @@ function LiveScriptTabWrapper({
     toastTimer.current = setTimeout(() => setToast(null), 4000);
   }, []);
 
-  const loadPlan = useCallback(async (id: string) => {
-    setPlanLoading(true);
-    setPlan(null);
-    try {
-      const res = await fetch(`/api/notion/client-plan?pageId=${id}`);
-      const data = await res.json();
-      setPlan((data as { plan?: string | null }).plan ?? null);
-    } catch {
-      setPlan(null);
-    } finally {
-      setPlanLoading(false);
-    }
-  }, []);
-
-  const loadHistory = useCallback(async (id: string) => {
-    setHistoryLoading(true);
-    try {
-      const res = await fetch(`/api/notion/client-history?pageId=${id}`);
-      const data = await res.json();
-      setHistory((data as { history?: HistoryEntry[] }).history ?? []);
-    } catch {
-      setHistory([]);
-    } finally {
-      setHistoryLoading(false);
-    }
-  }, []);
-
-  const saveHistory = useCallback(
-    (id: string, type: string, summary: string) => {
-      fetch("/api/notion/client-history", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pageId: id, type, summary }),
-      })
-        .then(() => loadHistory(id))
-        .catch(() => {});
-    },
-    [loadHistory],
-  );
-
-  // Auto-load plan + history if pre-selected
+  // Reset manual type override when client changes.
   useEffect(() => {
-    if (preSelected?.id) {
-      setSelectedId(preSelected.id);
-      void loadPlan(preSelected.id);
-      void loadHistory(preSelected.id);
-    }
+    setManualType(null);
   }, [preSelected?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const id = e.target.value;
-    setSelectedId(id);
-    setHistory([]);
-    setHistoryOpen(false);
-    if (id) {
-      void loadPlan(id);
-      void loadHistory(id);
-    } else {
-      setPlan(null);
-    }
+  const DISCOVERY_STATUSES = [
+    "Discovery umówione",
+    "Finalizacja",
+    "Kickoff",
+    "Wdrożenie",
+    "Retainer",
+    "Upsell",
+  ];
+  const autoType: "kwalifikacyjna" | "sprzedazowa" =
+    preSelected && DISCOVERY_STATUSES.includes(preSelected.status)
+      ? "sprzedazowa"
+      : "kwalifikacyjna";
+  const scriptType = manualType ?? autoType;
+
+  const SCRIPT_LABELS: Record<"kwalifikacyjna" | "sprzedazowa", string> = {
+    kwalifikacyjna: "Kwalifikacyjna",
+    sprzedazowa: "Discovery / Sprzedażowa",
   };
-
-  const activeClients = clients.filter((c) =>
-    ["Nowy lead", "Kwalifikacja", "Discovery umówione", "Finalizacja"].includes(c.status),
-  );
-
-  const ACTION_HISTORY_LABELS: Record<NonNullable<QuickAction>, string> = {
-    discovery: "Akcja — Analiza diagnostyczna umówiona",
-    followup: "Akcja — Follow-up zaplanowany",
-    niekwalifikowany: "Akcja — Status: Niekwalifikowany",
-    brak_odbioru: "Akcja — Brak odbioru",
-  };
-
-  const HISTORY_TYPE_COLORS: Record<string, string> = {
-    "Agent 01": "#7c3aed",
-    "Agent 02": "#0d9488",
-    Akcja: "#d97706",
-  };
-
-  function historyTypeColor(type: string): string {
-    for (const [key, color] of Object.entries(HISTORY_TYPE_COLORS)) {
-      if (type.startsWith(key)) return color;
-    }
-    return "var(--text-tertiary)";
-  }
 
   return (
     <div
@@ -1449,284 +1762,73 @@ function LiveScriptTabWrapper({
         position: "relative",
       }}
     >
-      {/* Selector */}
-      <div
-        style={{
-          padding: "10px 16px",
-          borderBottom: "1px solid var(--border)",
-          background: "var(--bg-elevated)",
-          flexShrink: 0,
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-        }}
-      >
-        <Target size={14} color="var(--accent)" />
-        <span
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: 11,
-            fontWeight: 600,
-            color: "var(--text-secondary)",
-            textTransform: "uppercase",
-            letterSpacing: "0.05em",
-          }}
-        >
-          Klient
-        </span>
-        <div style={{ position: "relative", flex: 1, maxWidth: 320 }}>
-          <select
-            value={selectedId}
-            onChange={handleSelect}
-            style={{
-              width: "100%",
-              padding: "6px 30px 6px 10px",
-              background: "var(--bg-card)",
-              border: "1px solid var(--border)",
-              borderRadius: "var(--radius-sm)",
-              color: "var(--text-primary)",
-              fontFamily: "var(--font-sans)",
-              fontSize: 13,
-              outline: "none",
-              appearance: "none",
-              cursor: "pointer",
-            }}
-          >
-            <option value="">— Wybierz klienta —</option>
-            {activeClients.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.kontakt || c.firma}
-                {c.firma && c.kontakt && c.firma !== c.kontakt ? ` · ${c.firma}` : ""}
-              </option>
-            ))}
-          </select>
-          <ChevronDown
-            size={12}
-            style={{
-              position: "absolute",
-              right: 10,
-              top: "50%",
-              transform: "translateY(-50%)",
-              pointerEvents: "none",
-              color: "var(--text-tertiary)",
-            }}
-          />
-        </div>
-        {selected && (
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <div
-                style={{
-                  width: 7,
-                  height: 7,
-                  borderRadius: "50%",
-                  background: STATUS_COLORS[selected.status] ?? "var(--text-tertiary)",
-                }}
-              />
-              <span
-                style={{
-                  fontFamily: "var(--font-sans)",
-                  fontSize: 11,
-                  color: "var(--text-secondary)",
-                }}
-              >
-                {selected.status}
-              </span>
-            </div>
-            <a
-              href={`/skrypt?pageId=${selected.id}&name=${encodeURIComponent(selected.kontakt ?? "")}&firma=${encodeURIComponent(selected.firma ?? "")}`}
-              target="_blank"
-              rel="noreferrer"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 4,
-                padding: "4px 9px",
-                borderRadius: "var(--radius-xs)",
-                border: "1px solid var(--border)",
-                background: "var(--bg-card)",
-                textDecoration: "none",
-                fontFamily: "var(--font-sans)",
-                fontSize: 11,
-                fontWeight: 500,
-                color: "var(--text-secondary)",
-              }}
-            >
-              <ExternalLink size={10} />
-              Otwórz skrypt
-            </a>
-          </div>
-        )}
-      </div>
-
-      {/* Historia operacji */}
-      {selectedId && (
+      {/* Script type switcher */}
+      {preSelected && (
         <div
           style={{
+            padding: "7px 16px",
             borderBottom: "1px solid var(--border)",
             background: "var(--bg-elevated)",
             flexShrink: 0,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
           }}
         >
-          <button
-            onClick={() => setHistoryOpen((o) => !o)}
+          <span
             style={{
-              width: "100%",
-              padding: "7px 16px",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
+              fontSize: 11,
               color: "var(--text-secondary)",
+              fontFamily: "var(--font-sans)",
+              fontWeight: 500,
+              marginRight: 4,
             }}
           >
-            <ChevronDown
-              size={11}
+            Tryb skryptu:
+          </span>
+          {(["kwalifikacyjna", "sprzedazowa"] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setManualType(t === autoType && !manualType ? null : t)}
               style={{
-                transform: historyOpen ? "none" : "rotate(-90deg)",
-                transition: "transform 180ms",
-                color: "var(--text-tertiary)",
-              }}
-            />
-            <span
-              style={{
+                padding: "3px 10px",
+                borderRadius: "var(--radius-xs)",
+                border: `1px solid ${scriptType === t ? "var(--accent)" : "var(--border)"}`,
+                background: scriptType === t ? "var(--accent-muted)" : "transparent",
+                color: scriptType === t ? "var(--accent)" : "var(--text-tertiary)",
                 fontFamily: "var(--font-sans)",
                 fontSize: 11,
-                fontWeight: 600,
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
+                fontWeight: scriptType === t ? 600 : 400,
+                cursor: "pointer",
+                transition: "all 120ms",
               }}
             >
-              Historia operacji
-            </span>
-            {historyLoading ? (
-              <Loader2
-                size={10}
-                style={{ animation: "spin 1s linear infinite", color: "var(--text-tertiary)" }}
-              />
-            ) : (
-              <span
-                style={{
-                  fontFamily: "var(--font-sans)",
-                  fontSize: 10,
-                  fontWeight: 700,
-                  padding: "1px 6px",
-                  borderRadius: 99,
-                  background: history.length > 0 ? "rgba(26,86,255,0.1)" : "var(--bg-card)",
-                  color: history.length > 0 ? "var(--accent)" : "var(--text-tertiary)",
-                  border: `1px solid ${history.length > 0 ? "rgba(26,86,255,0.2)" : "var(--border)"}`,
-                }}
-              >
-                {history.length}
-              </span>
-            )}
-          </button>
-
-          {historyOpen && (
-            <div
+              {SCRIPT_LABELS[t]}
+            </button>
+          ))}
+          {manualType && (
+            <button
+              onClick={() => setManualType(null)}
               style={{
-                padding: "0 16px 10px",
-                display: "flex",
-                flexDirection: "column",
-                gap: 4,
-                maxHeight: 220,
-                overflow: "auto",
+                fontSize: 10,
+                color: "var(--text-tertiary)",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                fontFamily: "var(--font-sans)",
+                textDecoration: "underline",
+                marginLeft: 4,
               }}
             >
-              {history.length === 0 ? (
-                <div
-                  style={{
-                    fontFamily: "var(--font-sans)",
-                    fontSize: 12,
-                    color: "var(--text-placeholder)",
-                    padding: "4px 0",
-                  }}
-                >
-                  Brak zapisanych operacji dla tego klienta.
-                </div>
-              ) : (
-                history.map((entry) => (
-                  <div
-                    key={entry.id}
-                    style={{
-                      display: "flex",
-                      alignItems: "flex-start",
-                      gap: 10,
-                      padding: "7px 10px",
-                      background: "var(--bg-card)",
-                      border: "1px solid var(--border)",
-                      borderRadius: "var(--radius-sm)",
-                      borderLeft: `3px solid ${historyTypeColor(entry.type)}`,
-                    }}
-                  >
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div
-                        style={{
-                          fontFamily: "var(--font-sans)",
-                          fontSize: 12,
-                          fontWeight: 600,
-                          color: "var(--text-primary)",
-                          marginBottom: 1,
-                        }}
-                      >
-                        {entry.type}
-                      </div>
-                      <div
-                        style={{
-                          fontFamily: "var(--font-sans)",
-                          fontSize: 10,
-                          color: "var(--text-tertiary)",
-                        }}
-                      >
-                        {entry.date}
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
+              Resetuj (auto)
+            </button>
           )}
         </div>
       )}
 
-      {/* Sub-tab: Skrypt / Karta klienta */}
-      {selectedId && (
-        <div style={{ display: "flex", gap: 4, padding: "8px 16px 0", flexShrink: 0 }}>
-          {(
-            [
-              ["skrypt", "Skrypt"],
-              ["karta", "Karta klienta"],
-            ] as const
-          ).map(([key, lbl]) => (
-            <button
-              key={key}
-              onClick={() => setViewTab(key)}
-              style={{
-                padding: "6px 14px",
-                borderRadius: "var(--radius-sm) var(--radius-sm) 0 0",
-                border: "1px solid var(--border)",
-                borderBottom: viewTab === key ? "1px solid var(--bg)" : "1px solid var(--border)",
-                background: viewTab === key ? "var(--bg)" : "var(--bg-elevated)",
-                color: viewTab === key ? "var(--text-primary)" : "var(--text-secondary)",
-                fontFamily: "var(--font-sans)",
-                fontSize: 12,
-                fontWeight: viewTab === key ? 600 : 500,
-                cursor: "pointer",
-                position: "relative",
-                top: 1,
-              }}
-            >
-              {lbl}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Body: Skrypt or Karta klienta */}
-      <div style={{ flex: 1, overflow: "auto" }}>
-        {!selectedId ? (
+      {/* Script content */}
+      <div style={{ flex: 1, overflow: "hidden" }}>
+        {!preSelected ? (
           <div
             style={{
               display: "flex",
@@ -1740,66 +1842,21 @@ function LiveScriptTabWrapper({
           >
             <Target size={36} strokeWidth={1} />
             <span style={{ fontFamily: "var(--font-sans)", fontSize: 14 }}>
-              Wybierz klienta, żeby załadować skrypt
+              Wybierz klienta w Pipeline, żeby załadować skrypt
             </span>
           </div>
-        ) : viewTab === "karta" ? (
-          <div style={{ padding: 16 }}>
-            <KartaKlienta
-              clientName={selected?.kontakt || selected?.firma || ""}
-              phone={selected?.telefon}
-              email={selected?.email}
-            />
-          </div>
-        ) : planLoading ? (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              height: "100%",
-              gap: 10,
-              color: "var(--text-tertiary)",
-            }}
-          >
-            <Loader2 size={18} style={{ animation: "spin 1s linear infinite" }} />
-            <span style={{ fontFamily: "var(--font-sans)", fontSize: 13 }}>
-              Ładowanie skryptu z Notion…
-            </span>
-          </div>
-        ) : plan ? (
-          <LiveScript
-            plan={plan}
-            clientName={selected?.kontakt ?? ""}
-            firmaNazwa={selected?.firma ?? ""}
+        ) : (
+          <ScriptTab
+            type={scriptType}
+            selectedClient={preSelected}
+            clients={clients}
+            onSelectClient={onSelectClient}
           />
-        ) : selectedId ? (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              height: "100%",
-              gap: 12,
-              color: "var(--text-placeholder)",
-            }}
-          >
-            <AlertTriangle size={32} strokeWidth={1} color="var(--text-placeholder)" />
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontFamily: "var(--font-sans)", fontSize: 14, marginBottom: 6 }}>
-                Brak Pre-Discovery Brief
-              </div>
-              <div style={{ fontFamily: "var(--font-sans)", fontSize: 12 }}>
-                Uruchom Agenta 2 w zakładce Agenci dla tego klienta
-              </div>
-            </div>
-          </div>
-        ) : null}
+        )}
       </div>
 
       {/* Quick Actions */}
-      {selected && (
+      {preSelected && (
         <div
           style={{
             borderTop: "1px solid var(--border)",
@@ -1858,7 +1915,7 @@ function LiveScriptTabWrapper({
         <div
           style={{
             position: "absolute",
-            bottom: selected ? 64 : 16,
+            bottom: preSelected ? 64 : 16,
             left: "50%",
             transform: "translateX(-50%)",
             background: "#1a1a2e",
@@ -1881,16 +1938,14 @@ function LiveScriptTabWrapper({
         </div>
       )}
 
-      {activeAction && selected && (
+      {activeAction && preSelected && (
         <QuickActionModal
           action={activeAction}
-          client={selected}
+          client={preSelected}
           onClose={() => setActiveAction(null)}
           onDone={(msg) => {
-            const action = activeAction;
             setActiveAction(null);
             showToast(msg);
-            if (action) saveHistory(selected.id, ACTION_HISTORY_LABELS[action], msg);
           }}
         />
       )}
@@ -1919,11 +1974,6 @@ interface Objection {
   sms?: string;
   extra?: string;
   type?: "sms" | "fb";
-}
-interface SmsTemplate {
-  id: string;
-  label: string;
-  text: string;
 }
 interface IcpRule {
   ok: boolean;
@@ -1962,15 +2012,15 @@ const STEPS_K: Step[] = [
       },
       { t: "say", text: "Zgadza się?" },
       { t: "client", text: "Tak. / Hmm, nie pamiętam. / Że co?" },
-      { t: "branch", text: "Nie pamięta → obiekcja: Nie pamiętam formularza" },
+      { t: "branch", text: "Nie pamięta: użyj obiekcji 'Nie pamiętam formularza'" },
       { t: "say", text: "Ma Pan teraz 2–3 minuty?" },
-      { t: "branch", text: "TAK → Krok 2   |   NIE → obiekcja: Nie mam teraz czasu" },
+      { t: "branch", text: "TAK: Krok 2. NIE: użyj obiekcji 'Nie mam teraz czasu'" },
     ],
   },
   {
-    id: "diagnoza",
+    id: "sprzedaz",
     nr: "2",
-    label: "DIAGNOZA",
+    label: "SPRZEDAŻ",
     tag: "MÓWISZ",
     duration: "3–4 min",
     lines: [
@@ -2006,21 +2056,21 @@ const STEPS_K: Step[] = [
       { t: "client", text: "Mamy [liczba]." },
       {
         t: "branch-bad",
-        text: '< 10 pojazdów: oceń kalkulator. Jeśli potencjał < 80h z dostępnych modułów → "Nasze rozwiązanie najlepiej sprawdza się przy flotach 10 i więcej. Mogę wrócić do Pana za 3 miesiące?" → KONIEC',
+        text: 'Poniżej 10 pojazdów: oceń kalkulator. Jeśli potencjał poniżej 80h z dostępnych modułów, powiedz: "Nasze rozwiązanie najlepiej sprawdza się przy flotach 10 i więcej. Mogę wrócić do Pana za 3 miesiące?" Jeśli tak: zakończ rozmowę.',
       },
-      { t: "branch", text: "10–150 pojazdów → kontynuuj" },
+      { t: "branch", text: "10–150 pojazdów: kontynuuj rozmowę" },
       { t: "say", text: "I ile osób w biurze zajmuje się zleceniami i dokumentami?" },
       { t: "client", text: "Mamy [liczba] spedytorów / osób w biurze." },
       {
         t: "branch-bad",
-        text: "< 2 osoby w biurze → matematycznie nie osiągniesz 80h. Rozważ dyskwalifikację.",
+        text: "Poniżej 2 osób w biurze: matematycznie nie osiągniesz 80h. Rozważ dyskwalifikację.",
       },
       {
         t: "say",
         text: "Czy decyzja o inwestycji jest po Pana stronie, czy ktoś jeszcze musi to zaakceptować?",
       },
       { t: "client", text: "Ja decyduję. / Musiałbym porozmawiać z [ktoś]." },
-      { t: "branch", text: "Nie sam decyduje → zaproponuj żeby dołączył do Discovery Call" },
+      { t: "branch", text: "Jeśli nie decyduje sam: zaproponuj żeby dołączył do Discovery Call" },
     ],
   },
   {
@@ -2152,7 +2202,7 @@ const OBJECTIONS_K: Objection[] = [
   },
   {
     id: "ok10",
-    label: "Brak odbioru po 3 próbach → SMS",
+    label: "Brak odbioru po 3 próbach (wyślij SMS)",
     type: "sms" as const,
     sms: "Dzień dobry Panie {IMIĘ}, dzwoniłem ponieważ wypełnił Pan formularz w sprawie oszczędności czasu w firmie transportowej. Będę wdzięczny za oddzwonienie lub wskazanie terminu. Michał Roth, Autorise, +48 575 902 350",
   },
@@ -2163,34 +2213,6 @@ const OBJECTIONS_K: Objection[] = [
     script: 'Odpisujesz pod komentarzem: "Napisałem Panu wiadomość prywatną z odpowiedzią."',
     extra:
       "Dzień dobry Panie {IMIĘ}, piszę ponieważ zostawił Pan komentarz pod naszą reklamą w sprawie oszczędności czasu dla firm transportowych. Zanim opowiem więcej — chciałbym zadać kilka pytań. Czy mógłbym prosić o numer telefonu?",
-  },
-];
-
-const SMS_K: SmsTemplate[] = [
-  {
-    id: "sk1",
-    label: "Po umówieniu spotkania",
-    text: "Dzień dobry Panie {IMIĘ}, potwierdzam nasze spotkanie: [data] o [godzina] przez Google Meet. Link wyślę na Pana email. Proszę dołączyć z laptopa. Do zobaczenia — Michał Roth, Autorise",
-  },
-  {
-    id: "sk2",
-    label: "Reminder — dzień przed",
-    text: "Dzień dobry Panie {IMIĘ}, jutro o [godzina] mamy spotkanie przez Google Meet. Link jest w zaproszeniu na Pana skrzynce. Proszę dołączyć z laptopa — będę udostępniał ekran. Do zobaczenia — Michał Roth, Autorise",
-  },
-  {
-    id: "sk3",
-    label: "Reminder — rano w dniu spotkania",
-    text: "Dzień dobry Panie {IMIĘ}, dzisiaj o [godzina] nasze spotkanie Google Meet. Link w zaproszeniu email. Do zobaczenia — Michał",
-  },
-  {
-    id: "sk4",
-    label: "Brak odbioru (po 3 próbach)",
-    text: "Dzień dobry Panie {IMIĘ}, dzwoniłem ponieważ wypełnił Pan formularz w sprawie oszczędności czasu w firmie transportowej. Będę wdzięczny za oddzwonienie lub wskazanie terminu. Michał Roth, Autorise, +48 575 902 350",
-  },
-  {
-    id: "sk5",
-    label: "Klient nie pojawił się na spotkaniu",
-    text: "Dzień dobry Panie {IMIĘ}, widzę że nie mogło dojść do skutku nasze spotkanie. Czy możemy umówić się na inny termin? Michał Roth, Autorise",
   },
 ];
 
@@ -2227,7 +2249,7 @@ const STEPS_D: Step[] = [
       { t: "say", text: "Dzień dobry Panie {IMIĘ}! Słyszymy się, widzimy?" },
       { t: "client", text: "Tak, wszystko gra." },
       { t: "say", text: "Czy ktoś jeszcze od Pana dołączy, czy jesteśmy we dwóch?" },
-      { t: "note", text: "Jeśli wspólnik/żona dołącza → upewnij się że jest decydentem." },
+      { t: "note", text: "Jeśli wspólnik/żona dołącza: upewnij się że jest decydentem." },
       {
         t: "say",
         text: "Mamy tu Fathom który robi automatyczne notatki — jeśli Pan nie ma nic przeciwko, zostawiamy go?",
@@ -2312,7 +2334,7 @@ const STEPS_D: Step[] = [
       { t: "client", text: "Ja decyduję. / Powinienem porozmawiać z [ktoś]." },
       {
         t: "note",
-        text: "Musi z kimś → zaproponuj żeby ta osoba dołączyła teraz lub umów follow-up we dwoje.",
+        text: "Jeśli musi z kimś: zaproponuj żeby ta osoba dołączyła teraz lub umów follow-up we dwoje.",
       },
       { t: "say", text: "Na skali 1–10, jak pilny jest dla Pana ten problem?" },
     ],
@@ -2382,7 +2404,7 @@ const STEPS_D: Step[] = [
       },
       { t: "note", text: "Czekasz. Inicjatywa ze strony klienta." },
       { t: "action", text: "Udostępniasz ekran. Otwierasz prezentację Autorise." },
-      { t: "note", text: "Jeśli zabrakło czasu → umów drugie spotkanie, nie skracaj Kroku 2." },
+      { t: "note", text: "Jeśli zabrakło czasu: umów drugie spotkanie, nie skracaj Kroku 2." },
     ],
   },
   {
@@ -2440,7 +2462,7 @@ const STEPS_D: Step[] = [
       { t: "say", text: "Panie {IMIĘ}, inwestycja: 15 000 PLN jednorazowo za wdrożenie." },
       { t: "say", text: "Plus 4 000 PLN miesięcznie za obsługę i ciągły rozwój — minimum rok." },
       { t: "note", text: "CISZA. Minimum 20 sekund. Absolutnie nic nie mówisz. Czekasz." },
-      { t: "note", text: 'Jeśli po 6–8 sek klient się nie odzywa → "Jak to Pan widzi?"' },
+      { t: "note", text: 'Jeśli po 6–8 sek klient się nie odzywa, powiedz: "Jak to Pan widzi?"' },
     ],
   },
   {
@@ -2472,7 +2494,7 @@ const STEPS_D: Step[] = [
       { t: "say", text: "Startujemy w przyszły poniedziałek czy w ten?" },
       { t: "note", text: 'Dwie opcje — obie zakładają START. Nie pytasz "czy" tylko "kiedy".' },
       { t: "client", text: "Hmm, chyba w przyszły. / Muszę się jeszcze zastanowić." },
-      { t: "branch", text: "Obiekcja → Krok 6 (prawy panel)" },
+      { t: "branch", text: "Obiekcja: patrz Krok 6 w prawym panelu" },
     ],
   },
 ];
@@ -2528,24 +2550,6 @@ const OBJECTIONS_D: Objection[] = [
   },
 ];
 
-const SMS_D: SmsTemplate[] = [
-  {
-    id: "sd1",
-    label: "Po zamknięciu — potwierdzenie startu",
-    text: "Dzień dobry Panie {IMIĘ}, potwierdzam naszą decyzję o współpracy. W ciągu 24h skontaktuję się w sprawie umowy i szczegółów kickoffu. Michał Roth, Autorise",
-  },
-  {
-    id: "sd2",
-    label: 'Follow-up po "muszę pomyśleć"',
-    text: "Dzień dobry Panie {IMIĘ}, jak ustaliliśmy — piszę żeby sprawdzić czy miał Pan czas przemyśleć naszą rozmowę. Są pytania na które mogę odpowiedzieć? Michał Roth, Autorise",
-  },
-  {
-    id: "sd3",
-    label: "Przypomnienie po ustalonym follow-up",
-    text: "Dzień dobry Panie {IMIĘ}, jak ustaliliśmy — dzwonię dzisiaj o [godzina] w sprawie [temat z Notion]. Michał Roth, Autorise",
-  },
-];
-
 const ICP_RULES: IcpRule[] = [
   { ok: true, label: "Biuro", val: "Min. 2 osoby przy zleceniach (twardy disqualifier)" },
   { ok: true, label: "Decydent", val: "Właściciel lub wspólnik — weryfikuj na kwalifikacji" },
@@ -2567,10 +2571,17 @@ function ScriptTab({
 }) {
   const steps = type === "kwalifikacyjna" ? STEPS_K : STEPS_D;
   const objections = type === "kwalifikacyjna" ? OBJECTIONS_K : OBJECTIONS_D;
-  const smsTemplates = type === "kwalifikacyjna" ? SMS_K : SMS_D;
   const [vocative, setVocative] = useState("");
   const [openObj, setOpenObj] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (selectedClient) {
+      setVocative(toVocative(selectedClient.kontakt || selectedClient.firma || ""));
+    } else {
+      setVocative("");
+    }
+  }, [selectedClient?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fill = (text: string) =>
     vocative.trim() ? text.replace(/\{IMIĘ\}/g, vocative.trim()) : text;
@@ -2598,13 +2609,13 @@ function ScriptTab({
     branch: "var(--success-bg)",
     "branch-bad": "var(--error-bg)",
   };
-  const linePrefix: Record<ScriptLine["t"], string> = {
-    say: "➤",
-    client: "👤",
-    note: "📝",
-    action: "✅",
-    branch: "→",
-    "branch-bad": "✗",
+  const linePrefix: Record<ScriptLine["t"], React.ReactNode> = {
+    say: <MessageSquare size={11} color="var(--text-primary)" strokeWidth={1.5} />,
+    client: <Users size={11} color="var(--text-secondary)" strokeWidth={1.5} />,
+    note: <AlertTriangle size={11} color="var(--warning)" strokeWidth={1.5} />,
+    action: <Check size={11} color="var(--accent)" strokeWidth={2} />,
+    branch: <Check size={11} color="var(--success-text)" strokeWidth={2} />,
+    "branch-bad": <X size={11} color="var(--error)" strokeWidth={2} />,
   };
 
   return (
@@ -2642,7 +2653,15 @@ function ScriptTab({
             Klient:
           </span>
           {selectedClient ? (
-            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", fontFamily: "var(--font-sans)", flex: 1 }}>
+            <span
+              style={{
+                fontSize: 13,
+                fontWeight: 600,
+                color: "var(--text-primary)",
+                fontFamily: "var(--font-sans)",
+                flex: 1,
+              }}
+            >
               {selectedClient.kontakt || selectedClient.firma || "—"}
             </span>
           ) : (
@@ -2667,7 +2686,9 @@ function ScriptTab({
                 outline: "none",
               }}
             >
-              <option value="" disabled>— wybierz klienta z Pipeline —</option>
+              <option value="" disabled>
+                — wybierz klienta z Pipeline —
+              </option>
               {clients.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.kontakt || c.firma || c.id} {c.status ? `(${c.status})` : ""}
@@ -2936,76 +2957,6 @@ function ScriptTab({
           </div>
         </div>
 
-        {/* SMS templates */}
-        <div>
-          <div
-            style={{
-              fontSize: 11,
-              fontWeight: 800,
-              letterSpacing: "0.08em",
-              color: "var(--text-tertiary)",
-              fontFamily: "var(--font-sans)",
-              textTransform: "uppercase",
-              marginBottom: 10,
-            }}
-          >
-            Szablony SMS
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {smsTemplates.map((sms) => (
-              <div
-                key={sms.id}
-                style={{
-                  padding: "10px 12px",
-                  border: "1px solid var(--border)",
-                  borderRadius: "var(--radius-xs)",
-                  background: "var(--glass)",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 600,
-                    color: "var(--text-secondary)",
-                    fontFamily: "var(--font-sans)",
-                    marginBottom: 5,
-                  }}
-                >
-                  {sms.label}
-                </div>
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: 12,
-                    color: "var(--text-primary)",
-                    fontFamily: "var(--font-sans)",
-                    lineHeight: 1.6,
-                    marginBottom: 6,
-                  }}
-                >
-                  {fill(sms.text)}
-                </p>
-                <button
-                  onClick={() => copyText(sms.id, sms.text)}
-                  style={{
-                    fontSize: 11,
-                    padding: "2px 8px",
-                    border: "1px solid var(--border)",
-                    borderRadius: "var(--radius-xs)",
-                    background: copied === sms.id ? "var(--success-bg)" : "transparent",
-                    cursor: "pointer",
-                    color: copied === sms.id ? "var(--success-text)" : "var(--text-secondary)",
-                    fontFamily: "var(--font-sans)",
-                    transition: "all 120ms",
-                  }}
-                >
-                  {copied === sms.id ? "✓ Skopiowano" : "Kopiuj"}
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* ICP Quick Reference — only on kwalifikacyjna */}
         {type === "kwalifikacyjna" && (
           <div>
@@ -3070,38 +3021,113 @@ function ScriptTab({
 
 // ── MessagesTab ───────────────────────────────────────────────────────
 
-interface MsgItem { id: string; label: string; text: string; group: string }
+interface MsgItem {
+  id: string;
+  label: string;
+  text: string;
+  group: string;
+}
 
 const MESSAGES_DATA: Record<"sms" | "telefon" | "fb", MsgItem[]> = {
   sms: [
-    { id: "m1", group: "Kwalifikacja", label: "Brak odbioru — po 3 próbach", text: "Dzień dobry Panie {IMIĘ}, dzwoniłem ponieważ wypełnił Pan formularz w sprawie oszczędności czasu w firmie transportowej. Będę wdzięczny za oddzwonienie lub wskazanie terminu. Michał Roth, Autorise, +48 575 902 350" },
-    { id: "m2", group: "Przed Discovery", label: "Potwierdzenie spotkania Discovery", text: "Dzień dobry Panie {IMIĘ}, potwierdzam nasze spotkanie: [data] o [godzina] przez Google Meet. Link wyślę na Pana email. Proszę dołączyć z laptopa. Do zobaczenia — Michał Roth, Autorise" },
-    { id: "m3", group: "Przed Discovery", label: "Reminder — dzień przed Discovery", text: "Dzień dobry Panie {IMIĘ}, jutro o [godzina] mamy spotkanie przez Google Meet. Link jest w zaproszeniu na Pana skrzynce. Proszę dołączyć z laptopa. Do zobaczenia — Michał Roth, Autorise" },
-    { id: "m4", group: "Przed Discovery", label: "Reminder — rano w dniu Discovery", text: "Dzień dobry Panie {IMIĘ}, dzisiaj o [godzina] nasze spotkanie Google Meet. Link w zaproszeniu email. Do zobaczenia — Michał" },
-    { id: "m5", group: "Przed Discovery", label: "Klient nie pojawił się na spotkaniu", text: "Dzień dobry Panie {IMIĘ}, widzę że nie mogło dojść do skutku nasze spotkanie. Czy możemy umówić się na inny termin? Michał Roth, Autorise" },
-    { id: "m6", group: "Po Discovery", label: "Follow-up po Discovery — nie zamknął", text: "Dzień dobry Panie {IMIĘ}, jak ustaliliśmy — piszę żeby sprawdzić czy miał Pan czas przemyśleć naszą rozmowę. Są pytania na które mogę odpowiedzieć? Michał Roth, Autorise" },
-    { id: "m7", group: "Po Discovery", label: "Follow-up po ustalonym terminie oddzwonienia", text: "Dzień dobry Panie {IMIĘ}, jak ustaliliśmy — dzwonię dzisiaj o [godzina] w sprawie [temat]. Michał Roth, Autorise" },
-    { id: "m8", group: "Closing", label: "Zamknięcie — potwierdzenie startu współpracy", text: "Dzień dobry Panie {IMIĘ}, potwierdzam naszą decyzję o współpracy. W ciągu 24h skontaktuję się w sprawie umowy i szczegółów kickoffu. Michał Roth, Autorise" },
-    { id: "m9", group: "Re-engagement", label: "Re-engagement po 90 dniach", text: "Dzień dobry Panie {IMIĘ}, jakiś czas temu rozmawialiśmy o optymalizacji procesów w Pana firmie. Chciałem sprawdzić czy sytuacja się zmieniła i czy nie warto wrócić do tematu. Michał Roth, Autorise" },
+    {
+      id: "m1",
+      group: "Kwalifikacja",
+      label: "Brak odbioru — po 3 próbach",
+      text: "Dzień dobry Panie {IMIĘ}, dzwoniłem ponieważ wypełnił Pan formularz w sprawie oszczędności czasu w firmie transportowej. Będę wdzięczny za oddzwonienie lub wskazanie terminu. Michał Roth, Autorise, +48 575 902 350",
+    },
+    {
+      id: "m2",
+      group: "Przed Discovery",
+      label: "Potwierdzenie spotkania Discovery",
+      text: "Dzień dobry Panie {IMIĘ}, potwierdzam nasze spotkanie: [data] o [godzina] przez Google Meet. Link wyślę na Pana email. Proszę dołączyć z laptopa. Do zobaczenia — Michał Roth, Autorise",
+    },
+    {
+      id: "m3",
+      group: "Przed Discovery",
+      label: "Reminder — dzień przed Discovery",
+      text: "Dzień dobry Panie {IMIĘ}, jutro o [godzina] mamy spotkanie przez Google Meet. Link jest w zaproszeniu na Pana skrzynce. Proszę dołączyć z laptopa. Do zobaczenia — Michał Roth, Autorise",
+    },
+    {
+      id: "m4",
+      group: "Przed Discovery",
+      label: "Reminder — rano w dniu Discovery",
+      text: "Dzień dobry Panie {IMIĘ}, dzisiaj o [godzina] nasze spotkanie Google Meet. Link w zaproszeniu email. Do zobaczenia — Michał",
+    },
+    {
+      id: "m5",
+      group: "Przed Discovery",
+      label: "Klient nie pojawił się na spotkaniu",
+      text: "Dzień dobry Panie {IMIĘ}, widzę że nie mogło dojść do skutku nasze spotkanie. Czy możemy umówić się na inny termin? Michał Roth, Autorise",
+    },
+    {
+      id: "m6",
+      group: "Po Discovery",
+      label: "Follow-up po Discovery — nie zamknął",
+      text: "Dzień dobry Panie {IMIĘ}, jak ustaliliśmy — piszę żeby sprawdzić czy miał Pan czas przemyśleć naszą rozmowę. Są pytania na które mogę odpowiedzieć? Michał Roth, Autorise",
+    },
+    {
+      id: "m7",
+      group: "Po Discovery",
+      label: "Follow-up po ustalonym terminie oddzwonienia",
+      text: "Dzień dobry Panie {IMIĘ}, jak ustaliliśmy — dzwonię dzisiaj o [godzina] w sprawie [temat]. Michał Roth, Autorise",
+    },
+    {
+      id: "m8",
+      group: "Closing",
+      label: "Zamknięcie — potwierdzenie startu współpracy",
+      text: "Dzień dobry Panie {IMIĘ}, potwierdzam naszą decyzję o współpracy. W ciągu 24h skontaktuję się w sprawie umowy i szczegółów kickoffu. Michał Roth, Autorise",
+    },
+    {
+      id: "m9",
+      group: "Re-engagement",
+      label: "Re-engagement po 90 dniach",
+      text: "Dzień dobry Panie {IMIĘ}, jakiś czas temu rozmawialiśmy o optymalizacji procesów w Pana firmie. Chciałem sprawdzić czy sytuacja się zmieniła i czy nie warto wrócić do tematu. Michał Roth, Autorise",
+    },
   ],
   telefon: [
-    { id: "t1", group: "Przed Discovery", label: "Skrypt — telefon z przypomnieniem (dzień przed)", text: "Dzień dobry, Panie {IMIĘ}? Michał Roth z Autorise. Dzwonię żeby potwierdzić jutrzejsze spotkanie o [godzina]. Wszystko OK z dołączeniem przez Google Meet? Proszę pamiętać o laptopie — będę udostępniał ekran. Do zobaczenia jutro." },
-    { id: "t2", group: "Przed Discovery", label: "SMS jeśli nie odbiera (dzień przed)", text: "Dzień dobry Panie {IMIĘ}, próbowałem się dodzwonić żeby potwierdzić jutrzejsze spotkanie o [godzina]. Proszę odpisać lub zadzwonić jeśli coś się zmieniło. Michał Roth, Autorise" },
+    {
+      id: "t1",
+      group: "Przed Discovery",
+      label: "Skrypt — telefon z przypomnieniem (dzień przed)",
+      text: "Dzień dobry, Panie {IMIĘ}? Michał Roth z Autorise. Dzwonię żeby potwierdzić jutrzejsze spotkanie o [godzina]. Wszystko OK z dołączeniem przez Google Meet? Proszę pamiętać o laptopie — będę udostępniał ekran. Do zobaczenia jutro.",
+    },
+    {
+      id: "t2",
+      group: "Przed Discovery",
+      label: "SMS jeśli nie odbiera (dzień przed)",
+      text: "Dzień dobry Panie {IMIĘ}, próbowałem się dodzwonić żeby potwierdzić jutrzejsze spotkanie o [godzina]. Proszę odpisać lub zadzwonić jeśli coś się zmieniło. Michał Roth, Autorise",
+    },
   ],
   fb: [
-    { id: "fb1", group: "Pozyskanie", label: "Odpowiedź pod komentarzem (publiczna — krótka)", text: "Napisałem Panu wiadomość prywatną z odpowiedzią." },
-    { id: "fb2", group: "Pozyskanie", label: "Wiadomość prywatna po komentarzu", text: "Dzień dobry Panie {IMIĘ}, piszę ponieważ zostawił Pan komentarz pod naszą reklamą w sprawie oszczędności czasu dla firm transportowych. Zanim opowiem więcej — chciałbym zadać kilka pytań. Czy mógłbym prosić o numer telefonu?" },
-    { id: "fb3", group: "Pozyskanie", label: "DM po kliknięciu reklamy (bez komentarza)", text: "Dzień dobry Panie {IMIĘ}, widzę że zainteresowała Pana nasza reklama. Zajmuję się firmami transportowymi — konkretnie tym, że biura tracą za dużo czasu na ręczną robotę. Czy to temat który dotyczy Pana firmy?" },
+    {
+      id: "fb1",
+      group: "Pozyskanie",
+      label: "Odpowiedź pod komentarzem (publiczna — krótka)",
+      text: "Napisałem Panu wiadomość prywatną z odpowiedzią.",
+    },
+    {
+      id: "fb2",
+      group: "Pozyskanie",
+      label: "Wiadomość prywatna po komentarzu",
+      text: "Dzień dobry Panie {IMIĘ}, piszę ponieważ zostawił Pan komentarz pod naszą reklamą w sprawie oszczędności czasu dla firm transportowych. Zanim opowiem więcej — chciałbym zadać kilka pytań. Czy mógłbym prosić o numer telefonu?",
+    },
+    {
+      id: "fb3",
+      group: "Pozyskanie",
+      label: "DM po kliknięciu reklamy (bez komentarza)",
+      text: "Dzień dobry Panie {IMIĘ}, widzę że zainteresowała Pana nasza reklama. Zajmuję się firmami transportowymi — konkretnie tym, że biura tracą za dużo czasu na ręczną robotę. Czy to temat który dotyczy Pana firmy?",
+    },
   ],
 };
 
 const GROUP_COLORS: Record<string, string> = {
-  "Kwalifikacja": "var(--accent)",
+  Kwalifikacja: "var(--accent)",
   "Przed Discovery": "#f59e0b",
   "Po Discovery": "#8b5cf6",
-  "Closing": "var(--success-text)",
+  Closing: "var(--success-text)",
   "Re-engagement": "var(--text-tertiary)",
-  "Pozyskanie": "var(--accent)",
+  Pozyskanie: "var(--accent)",
 };
 
 type MsgTab = "sms" | "telefon" | "fb";
@@ -3119,6 +3145,14 @@ function MessagesTab({
   const [vocative, setVocative] = useState("");
   const [copied, setCopied] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (selectedClient) {
+      setVocative(toVocative(selectedClient.kontakt || selectedClient.firma || ""));
+    } else {
+      setVocative("");
+    }
+  }, [selectedClient?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const currentData = MESSAGES_DATA[msgTab];
 
@@ -3143,44 +3177,136 @@ function MessagesTab({
   // Group items
   const groups = Array.from(new Set(currentData.map((x) => x.group)));
 
-  const tabLabels: { key: MsgTab; label: string; icon: string }[] = [
-    { key: "sms", label: "SMS / WhatsApp", icon: "💬" },
-    { key: "telefon", label: "Telefon", icon: "📞" },
-    { key: "fb", label: "Facebook", icon: "👥" },
+  const tabLabels: { key: MsgTab; label: string; icon: React.ReactNode }[] = [
+    { key: "sms", label: "SMS / WhatsApp", icon: <MessageSquare size={13} strokeWidth={1.5} /> },
+    { key: "telefon", label: "Telefon", icon: <Phone size={13} strokeWidth={1.5} /> },
+    { key: "fb", label: "Facebook", icon: <Users size={13} strokeWidth={1.5} /> },
   ];
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
       {/* Top bar */}
-      <div style={{ padding: "11px 20px", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 20, flexShrink: 0, background: "var(--bg-elevated)" }}>
+      <div
+        style={{
+          padding: "11px 20px",
+          borderBottom: "1px solid var(--border)",
+          display: "flex",
+          alignItems: "center",
+          gap: 20,
+          flexShrink: 0,
+          background: "var(--bg-elevated)",
+        }}
+      >
         <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-          <span style={{ fontSize: 11.5, color: "var(--text-secondary)", fontFamily: "var(--font-sans)", fontWeight: 500 }}>Klient:</span>
+          <span
+            style={{
+              fontSize: 11.5,
+              color: "var(--text-secondary)",
+              fontFamily: "var(--font-sans)",
+              fontWeight: 500,
+            }}
+          >
+            Klient:
+          </span>
           {selectedClient ? (
-            <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)", fontFamily: "var(--font-sans)" }}>
+            <span
+              style={{
+                fontSize: 13,
+                fontWeight: 700,
+                color: "var(--text-primary)",
+                fontFamily: "var(--font-sans)",
+              }}
+            >
               {selectedClient.kontakt || selectedClient.firma || "—"}
             </span>
           ) : (
             <select
               defaultValue=""
-              onChange={(e) => { const c = clients.find((cl) => cl.id === e.target.value); if (c) onSelectClient(c); }}
-              style={{ height: 28, padding: "0 8px", border: "1px solid var(--accent-border)", borderRadius: "var(--radius-xs)", background: "var(--accent-muted)", color: "var(--accent)", fontFamily: "var(--font-sans)", fontSize: 12, fontWeight: 600, cursor: "pointer", outline: "none" }}
+              onChange={(e) => {
+                const c = clients.find((cl) => cl.id === e.target.value);
+                if (c) onSelectClient(c);
+              }}
+              style={{
+                height: 28,
+                padding: "0 8px",
+                border: "1px solid var(--accent-border)",
+                borderRadius: "var(--radius-xs)",
+                background: "var(--accent-muted)",
+                color: "var(--accent)",
+                fontFamily: "var(--font-sans)",
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: "pointer",
+                outline: "none",
+              }}
             >
-              <option value="" disabled>— wybierz klienta —</option>
-              {clients.map((c) => <option key={c.id} value={c.id}>{c.kontakt || c.firma || c.id}{c.status ? ` (${c.status})` : ""}</option>)}
+              <option value="" disabled>
+                — wybierz klienta —
+              </option>
+              {clients.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.kontakt || c.firma || c.id}
+                  {c.status ? ` (${c.status})` : ""}
+                </option>
+              ))}
             </select>
           )}
         </div>
         <div style={{ width: 1, height: 16, background: "var(--border)" }} />
         <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-          <span style={{ fontSize: 11.5, color: "var(--text-secondary)", fontFamily: "var(--font-sans)", fontWeight: 500 }}>Forma grzecz.:</span>
-          <input value={vocative} onChange={(e) => setVocative(e.target.value)} placeholder="np. Kowalski" style={{ width: 130, padding: "3px 8px", border: "1px solid var(--border)", borderRadius: "var(--radius-xs)", background: "var(--bg)", color: "var(--text-primary)", fontFamily: "var(--font-sans)", fontSize: 12, outline: "none" }} />
+          <span
+            style={{
+              fontSize: 11.5,
+              color: "var(--text-secondary)",
+              fontFamily: "var(--font-sans)",
+              fontWeight: 500,
+            }}
+          >
+            Forma grzecz.:
+          </span>
+          <input
+            value={vocative}
+            onChange={(e) => setVocative(e.target.value)}
+            placeholder="np. Kowalski"
+            style={{
+              width: 130,
+              padding: "3px 8px",
+              border: "1px solid var(--border)",
+              borderRadius: "var(--radius-xs)",
+              background: "var(--bg)",
+              color: "var(--text-primary)",
+              fontFamily: "var(--font-sans)",
+              fontSize: 12,
+              outline: "none",
+            }}
+          />
         </div>
         <div style={{ flex: 1 }} />
         {/* Channel selector */}
         <div style={{ display: "flex", gap: 4 }}>
           {tabLabels.map(({ key, label, icon }) => (
-            <button key={key} onClick={() => handleTabChange(key)} style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 12px", border: msgTab === key ? "1px solid var(--accent)" : "1px solid var(--border)", borderRadius: "var(--radius-sm)", background: msgTab === key ? "var(--accent-muted)" : "transparent", color: msgTab === key ? "var(--accent)" : "var(--text-secondary)", fontFamily: "var(--font-sans)", fontSize: 12, fontWeight: msgTab === key ? 600 : 400, cursor: "pointer", transition: "all 120ms", whiteSpace: "nowrap" }}>
-              <span>{icon}</span>{label}
+            <button
+              key={key}
+              onClick={() => handleTabChange(key)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 5,
+                padding: "5px 12px",
+                border: msgTab === key ? "1px solid var(--accent)" : "1px solid var(--border)",
+                borderRadius: "var(--radius-sm)",
+                background: msgTab === key ? "var(--accent-muted)" : "transparent",
+                color: msgTab === key ? "var(--accent)" : "var(--text-secondary)",
+                fontFamily: "var(--font-sans)",
+                fontSize: 12,
+                fontWeight: msgTab === key ? 600 : 400,
+                cursor: "pointer",
+                transition: "all 120ms",
+                whiteSpace: "nowrap",
+              }}
+            >
+              <span>{icon}</span>
+              {label}
             </button>
           ))}
         </div>
@@ -3189,15 +3315,47 @@ function MessagesTab({
       {/* Two-panel layout */}
       <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
         {/* Left: template list grouped */}
-        <div style={{ width: 260, flexShrink: 0, borderRight: "1px solid var(--border)", overflowY: "auto", padding: "12px 0" }}>
+        <div
+          style={{
+            width: 260,
+            flexShrink: 0,
+            borderRight: "1px solid var(--border)",
+            overflowY: "auto",
+            padding: "12px 0",
+          }}
+        >
           {groups.map((group) => {
             const items = currentData.filter((x) => x.group === group);
             const color = GROUP_COLORS[group] ?? "var(--text-tertiary)";
             return (
               <div key={group} style={{ marginBottom: 4 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 16px 4px 16px", marginBottom: 2 }}>
-                  <div style={{ width: 3, height: 3, borderRadius: "50%", background: color, flexShrink: 0 }} />
-                  <span style={{ fontSize: 9.5, fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", color }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    padding: "4px 16px 4px 16px",
+                    marginBottom: 2,
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 3,
+                      height: 3,
+                      borderRadius: "50%",
+                      background: color,
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span
+                    style={{
+                      fontSize: 9.5,
+                      fontWeight: 800,
+                      letterSpacing: "0.12em",
+                      textTransform: "uppercase",
+                      color,
+                    }}
+                  >
                     {group}
                   </span>
                 </div>
@@ -3207,9 +3365,27 @@ function MessagesTab({
                     <button
                       key={item.id}
                       onClick={() => setSelectedId(item.id)}
-                      style={{ width: "100%", textAlign: "left", padding: "7px 16px 7px 24px", border: "none", background: isActive ? "var(--bg-active)" : "transparent", borderLeft: isActive ? `2px solid ${color}` : "2px solid transparent", cursor: "pointer", transition: "background 100ms" }}
+                      style={{
+                        width: "100%",
+                        textAlign: "left",
+                        padding: "7px 16px 7px 24px",
+                        border: "none",
+                        background: isActive ? "var(--bg-active)" : "transparent",
+                        borderLeft: isActive ? `2px solid ${color}` : "2px solid transparent",
+                        cursor: "pointer",
+                        transition: "background 100ms",
+                      }}
                     >
-                      <span style={{ fontFamily: "var(--font-sans)", fontSize: 12, fontWeight: isActive ? 600 : 400, color: isActive ? "var(--text-primary)" : "var(--text-secondary)", lineHeight: 1.4, display: "block" }}>
+                      <span
+                        style={{
+                          fontFamily: "var(--font-sans)",
+                          fontSize: 12,
+                          fontWeight: isActive ? 600 : 400,
+                          color: isActive ? "var(--text-primary)" : "var(--text-secondary)",
+                          lineHeight: 1.4,
+                          display: "block",
+                        }}
+                      >
                         {item.label}
                       </span>
                     </button>
@@ -3221,27 +3397,91 @@ function MessagesTab({
         </div>
 
         {/* Right: message preview */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "28px 32px", display: "flex", flexDirection: "column", gap: 20 }}>
+        <div
+          style={{
+            flex: 1,
+            overflowY: "auto",
+            padding: "28px 32px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 20,
+          }}
+        >
           {selectedItem && (
             <>
               {/* Header */}
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                  <div style={{ width: 3, height: 14, borderRadius: 2, background: GROUP_COLORS[selectedItem.group] ?? "var(--accent)" }} />
-                  <span style={{ fontSize: 9.5, fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", color: GROUP_COLORS[selectedItem.group] ?? "var(--accent)" }}>{selectedItem.group}</span>
+                  <div
+                    style={{
+                      width: 3,
+                      height: 14,
+                      borderRadius: 2,
+                      background: GROUP_COLORS[selectedItem.group] ?? "var(--accent)",
+                    }}
+                  />
+                  <span
+                    style={{
+                      fontSize: 9.5,
+                      fontWeight: 800,
+                      letterSpacing: "0.12em",
+                      textTransform: "uppercase",
+                      color: GROUP_COLORS[selectedItem.group] ?? "var(--accent)",
+                    }}
+                  >
+                    {selectedItem.group}
+                  </span>
                 </div>
-                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "var(--text-primary)", fontFamily: "var(--font-sans)", letterSpacing: "-0.01em" }}>
+                <h3
+                  style={{
+                    margin: 0,
+                    fontSize: 16,
+                    fontWeight: 700,
+                    color: "var(--text-primary)",
+                    fontFamily: "var(--font-sans)",
+                    letterSpacing: "-0.01em",
+                  }}
+                >
                   {selectedItem.label}
                 </h3>
               </div>
 
               {/* Message bubble */}
-              <div style={{ background: "var(--glass)", backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: "20px 24px", position: "relative" }}>
-                <p style={{ margin: 0, fontSize: 14, color: "var(--text-primary)", fontFamily: "var(--font-sans)", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>
+              <div
+                style={{
+                  background: "var(--glass)",
+                  backdropFilter: "var(--glass-blur)",
+                  WebkitBackdropFilter: "var(--glass-blur)",
+                  border: "1px solid var(--border)",
+                  borderRadius: "var(--radius-md)",
+                  padding: "20px 24px",
+                  position: "relative",
+                }}
+              >
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: 14,
+                    color: "var(--text-primary)",
+                    fontFamily: "var(--font-sans)",
+                    lineHeight: 1.7,
+                    whiteSpace: "pre-wrap",
+                  }}
+                >
                   {fill(selectedItem.text)}
                 </p>
                 {vocative && selectedItem.text.includes("{IMIĘ}") && (
-                  <div style={{ position: "absolute", top: 10, right: 14, fontSize: 10, color: "var(--success-text)", fontFamily: "var(--font-sans)", fontWeight: 600 }}>
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: 10,
+                      right: 14,
+                      fontSize: 10,
+                      color: "var(--success-text)",
+                      fontFamily: "var(--font-sans)",
+                      fontWeight: 600,
+                    }}
+                  >
                     ✓ {vocative}
                   </div>
                 )}
@@ -3251,19 +3491,55 @@ function MessagesTab({
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <button
                   onClick={() => copyText(selectedItem.id, selectedItem.text)}
-                  style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 18px", border: "none", borderRadius: "var(--radius-sm)", background: copied === selectedItem.id ? "var(--success-bg)" : "var(--accent)", color: copied === selectedItem.id ? "var(--success-text)" : "#fff", fontFamily: "var(--font-sans)", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 150ms" }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    padding: "8px 18px",
+                    border: "none",
+                    borderRadius: "var(--radius-sm)",
+                    background: copied === selectedItem.id ? "var(--success-bg)" : "var(--accent)",
+                    color: copied === selectedItem.id ? "var(--success-text)" : "#fff",
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    transition: "all 150ms",
+                  }}
                 >
                   {copied === selectedItem.id ? "✓ Skopiowano" : "Kopiuj wiadomość"}
                 </button>
-                <span style={{ fontSize: 11, color: "var(--text-tertiary)", fontFamily: "var(--font-sans)" }}>
+                <span
+                  style={{
+                    fontSize: 11,
+                    color: "var(--text-tertiary)",
+                    fontFamily: "var(--font-sans)",
+                  }}
+                >
                   {fill(selectedItem.text).length} znaków
                 </span>
               </div>
 
               {/* Placeholders reminder */}
               {selectedItem.text.match(/\[[\w\s]+\]/g) && (
-                <div style={{ padding: "10px 14px", background: "var(--warning-bg)", border: "1px solid rgba(255,159,10,0.2)", borderRadius: "var(--radius-sm)", display: "flex", alignItems: "flex-start", gap: 8 }}>
-                  <span style={{ fontSize: 11, color: "var(--warning)", fontFamily: "var(--font-sans)" }}>
+                <div
+                  style={{
+                    padding: "10px 14px",
+                    background: "var(--warning-bg)",
+                    border: "1px solid rgba(255,159,10,0.2)",
+                    borderRadius: "var(--radius-sm)",
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 8,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: 11,
+                      color: "var(--warning)",
+                      fontFamily: "var(--font-sans)",
+                    }}
+                  >
                     Uzupełnij przed wysyłką: {selectedItem.text.match(/\[[\w\s]+\]/g)?.join(", ")}
                   </span>
                 </div>
