@@ -748,7 +748,7 @@ export function KalkulatorRoi({ embedded = false, initialClientName }: Kalkulato
                 color: "var(--text-secondary)",
               }}
             >
-              Klient (opcjonalnie)
+              Firma (opcjonalnie)
             </label>
             <div style={{ position: "relative" }}>
               <button
@@ -798,7 +798,7 @@ export function KalkulatorRoi({ embedded = false, initialClientName }: Kalkulato
                     ? "Ładowanie..."
                     : selectedClient
                       ? selectedClient.name
-                      : "— Wybierz klienta —"}
+                      : "— Wybierz firmę —"}
                 </span>
                 <ChevronDown
                   size={12}
@@ -966,7 +966,7 @@ export function KalkulatorRoi({ embedded = false, initialClientName }: Kalkulato
               </span>
             </div>
             <Field
-              label="Nazwa klienta"
+              label="Nazwa firmy"
               value={nazwaKlienta}
               onChange={setNazwaKlienta}
               type="text"

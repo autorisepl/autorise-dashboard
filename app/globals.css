@@ -179,31 +179,34 @@ html, body {
     margin-left: 44px;
   }
 
-  /* Sidebar toggle — fixed position, always visible */
+  /* Sidebar toggle — floats at the right edge of the sidebar, slides with collapse */
   .sidebar-toggle-btn {
     position: fixed;
     top: 11px;
-    left: 7px;
+    left: 245px;          /* centre at 260px sidebar edge: 260 - 15 (half of 30px btn) */
     z-index: 30;
     width: 30px;
     height: 30px;
-    border-radius: 7px;
+    border-radius: 50%;
     border: 1px solid var(--border);
-    background: rgba(255,255,255,0.72);
-    backdrop-filter: blur(12px) saturate(160%);
-    -webkit-backdrop-filter: blur(12px) saturate(160%);
+    background: var(--bg-elevated);
+    box-shadow: var(--shadow-card);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     color: var(--text-secondary);
-    transition: background 120ms, color 120ms, border-color 120ms;
-    box-shadow: 0 1px 6px rgba(0,0,0,0.10);
+    transition: left 240ms cubic-bezier(0.4, 0, 0.2, 1),
+                background 120ms, color 120ms, border-color 120ms, box-shadow 120ms;
+  }
+  .sidebar-collapsed .sidebar-toggle-btn {
+    left: 7px;            /* centred in the 44px gutter when collapsed */
   }
   .sidebar-toggle-btn:hover {
-    background: rgba(255,255,255,0.92);
+    background: var(--bg-elevated);
     color: var(--accent);
-    border-color: var(--accent);
+    border-color: var(--accent-border);
+    box-shadow: var(--shadow-elevated);
   }
 }
 

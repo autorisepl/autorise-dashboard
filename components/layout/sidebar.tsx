@@ -249,13 +249,13 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
         zIndex: 10,
       }}
     >
-      {/* 1. Logo — paddingLeft 48px makes room for the fixed toggle button (30px at left:7px) */}
+      {/* 1. Logo */}
       <div
         style={{
           height: 52,
           display: "flex",
           alignItems: "center",
-          padding: "0 16px 0 48px",
+          padding: "0 46px 0 14px",  /* right 46px clears the toggle button at left:245px */
           borderBottom: "1px solid var(--border)",
           flexShrink: 0,
         }}
