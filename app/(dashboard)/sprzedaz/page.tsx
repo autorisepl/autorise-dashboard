@@ -2285,12 +2285,18 @@ const STEPS_D: Step[] = [
         t: "say",
         text: "Czyli maile przychodzą, ktoś je przetwarza ręcznie — ile czasu zajmuje jedno zlecenie od maila do wprowadzenia do systemu?",
       },
-      { t: "branch-bad", text: "JEŚLI klient ma stałe trasy / Amazon Relay / brak zmiennych zleceń" },
+      {
+        t: "branch-bad",
+        text: "JEŚLI klient ma stałe trasy / Amazon Relay / brak zmiennych zleceń",
+      },
       {
         t: "say",
         text: "Rozumiem, stałe trasy — nie trafiają do Pana nowe zlecenia co dzień. To pokaż mi jak wygląda administracja: rozliczenia z kierowcami, dokumenty CMR, monitoring floty — co pochłania największy czas Pana zespołu?",
       },
-      { t: "note", text: "Przy stałych trasach / Amazon Relay: nie pytaj o maile. Skup się na dokumentacji, kierowcach, rozliczeniach." },
+      {
+        t: "note",
+        text: "Przy stałych trasach / Amazon Relay: nie pytaj o maile. Skup się na dokumentacji, kierowcach, rozliczeniach.",
+      },
       { t: "client", text: "Klient opisuje swój model." },
       {
         t: "say",
@@ -2324,7 +2330,10 @@ const STEPS_D: Step[] = [
         text: "Czyli do tej pory robił Pan to wszystko ręcznie — własnymi zasobami. Co sprawiło że w ogóle zaczął Pan teraz szukać rozwiązania?",
       },
       { t: "client", text: "Klient podaje powód (wzrost, brak rąk, chaos)." },
-      { t: "note", text: "Zapisz dokładne słowa klienta — użyjesz ich dosłownie w Kroku 4 (pitch)." },
+      {
+        t: "note",
+        text: "Zapisz dokładne słowa klienta — użyjesz ich dosłownie w Kroku 4 (pitch).",
+      },
     ],
   },
   {
@@ -2566,7 +2575,12 @@ const ICP_RULES: IcpRule[] = [
 ];
 
 const DISCOVERY_STATUSES_SCRIPT = [
-  "Discovery umówione", "Finalizacja", "Kickoff", "Wdrożenie", "Retainer", "Upsell",
+  "Discovery umówione",
+  "Finalizacja",
+  "Kickoff",
+  "Wdrożenie",
+  "Retainer",
+  "Upsell",
 ];
 
 function ScriptTab({
@@ -2614,19 +2628,23 @@ function ScriptTab({
     let out = text;
     if (vocative.trim()) out = out.replace(/\{IMIĘ\}/g, vocative.trim());
     if (selectedClient) {
+      const bolGlowny = selectedClient.bolGlowny?.trim() ?? "";
       const kwalNote = selectedClient.nastepnyKrok?.trim() ?? "";
+      const poprzednieProby = selectedClient.poprzednieProby?.trim() ?? "";
       const prob = selectedClient.liczbaProb ?? 0;
-      // [podsumowanie z kwalifikacji] — wyłącznie nastepnyKrok agenta 1 (NIGDY notatki)
+      // [podsumowanie z kwalifikacji] — bolGlowny primary, nastepnyKrok fallback
       out = out.replace(
         /\[podsumowanie z kwalifikacji\]/g,
-        kwalNote ? `„${kwalNote}"` : "— brak danych z kwalifikacji w systemie —",
+        bolGlowny ? `„${bolGlowny}"` : kwalNote ? `„${kwalNote}"` : "— brak danych z kwalifikacji —",
       );
-      // [poprzednia próba] — wyłącznie liczbaProb (NIGDY notatki)
+      // [poprzednia próba] — poprzednieProby primary, liczbaProb fallback
       out = out.replace(
         /\[poprzednia próba\]/g,
-        prob > 0
-          ? `(${prob} ${prob === 1 ? "poprzednia próba" : prob < 5 ? "poprzednie próby" : "poprzednich prób"} kontaktu bez odpowiedzi)`
-          : "— klient bez wcześniejszych prób kontaktu —",
+        poprzednieProby
+          ? `„${poprzednieProby}"`
+          : prob > 0
+            ? `(${prob} ${prob === 1 ? "poprzednia próba" : prob < 5 ? "poprzednie próby" : "poprzednich prób"} kontaktu bez odpowiedzi)`
+            : "— klient bez wcześniejszych prób kontaktu —",
       );
       // [kwota roczna] i [kwota]
       out = out.replace(/\[kwota roczna\]/g, "— policz z kalkulatorem ROI —");
@@ -2735,7 +2753,10 @@ function ScriptTab({
                 {selectedClient.status}
               </span>
               <button
-                onClick={() => { onSelectClient(null); setSearch(""); }}
+                onClick={() => {
+                  onSelectClient(null);
+                  setSearch("");
+                }}
                 style={{
                   fontSize: 11,
                   fontWeight: 600,
@@ -2805,7 +2826,10 @@ function ScriptTab({
                       {filteredClients.map((c) => (
                         <button
                           key={c.id}
-                          onClick={() => { onSelectClient(c); setSearch(""); }}
+                          onClick={() => {
+                            onSelectClient(c);
+                            setSearch("");
+                          }}
                           style={{
                             display: "flex",
                             alignItems: "center",
@@ -2818,8 +2842,13 @@ function ScriptTab({
                             cursor: "pointer",
                             textAlign: "left",
                           }}
-                          onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "var(--bg-hover)"; }}
-                          onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
+                          onMouseEnter={(e) => {
+                            (e.currentTarget as HTMLButtonElement).style.background =
+                              "var(--bg-hover)";
+                          }}
+                          onMouseLeave={(e) => {
+                            (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+                          }}
                         >
                           <span
                             style={{
@@ -2902,16 +2931,64 @@ function ScriptTab({
               gap: 10,
             }}
           >
-            <AlertTriangle size={15} color="var(--warning)" style={{ flexShrink: 0, marginTop: 1 }} />
+            <AlertTriangle
+              size={15}
+              color="var(--warning)"
+              style={{ flexShrink: 0, marginTop: 1 }}
+            />
             <div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: "var(--warning)", fontFamily: "var(--font-sans)", marginBottom: 3 }}>
+              <div
+                style={{
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: "var(--warning)",
+                  fontFamily: "var(--font-sans)",
+                  marginBottom: 3,
+                }}
+              >
                 Klient nie przeszedł jeszcze kwalifikacji
               </div>
-              <div style={{ fontSize: 11, color: "var(--text-secondary)", fontFamily: "var(--font-sans)", lineHeight: 1.5 }}>
-                Skrypt sprzedażowy wymaga statusu: <strong>Discovery umówione</strong> lub wyżej.<br />
-                Aktualny status: <strong>{selectedClient.status}</strong>. Najpierw przeprowadź rozmowę kwalifikacyjną.
+              <div
+                style={{
+                  fontSize: 11,
+                  color: "var(--text-secondary)",
+                  fontFamily: "var(--font-sans)",
+                  lineHeight: 1.5,
+                }}
+              >
+                Skrypt sprzedażowy wymaga statusu: <strong>Discovery umówione</strong> lub wyżej.
+                <br />
+                Aktualny status: <strong>{selectedClient.status}</strong>. Najpierw przeprowadź
+                rozmowę kwalifikacyjną.
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Warning: brak pola bolGlowny w Notion */}
+        {type === "sprzedazowa" && selectedClient && isQualified && !selectedClient.bolGlowny && (
+          <div
+            style={{
+              marginBottom: 12,
+              padding: "10px 14px",
+              background: "var(--warning-bg)",
+              border: "1px solid var(--warning-border)",
+              borderRadius: "var(--radius-sm)",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
+            <AlertTriangle size={14} color="var(--warning)" strokeWidth={2} style={{ flexShrink: 0 }} />
+            <span
+              style={{
+                fontSize: 12,
+                color: "var(--text-secondary)",
+                fontFamily: "var(--font-sans)",
+              }}
+            >
+              Brak pola "Ból główny" w Notion dla tego klienta. Uzupełnij kartę klienta przed rozmową Discovery.
+            </span>
           </div>
         )}
 

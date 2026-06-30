@@ -550,9 +550,9 @@ function EventPanel({
 // ── Week view ─────────────────────────────────────────────────────────
 
 const HOURS = Array.from({ length: 15 }, (_, i) => i + 7); // 07–21
-const GUTTER_W = 52;  // left time-label column width
-const ROW_H    = 56;  // each hour row height
-const SB_W     = 5;   // custom scrollbar width (globals.css)
+const GUTTER_W = 52; // left time-label column width
+const ROW_H = 56; // each hour row height
+const SB_W = 5; // custom scrollbar width (globals.css)
 
 function WeekView({
   weekStart,
@@ -590,8 +590,11 @@ function WeekView({
       const n = new Date();
       const h = n.getHours();
       const m = n.getMinutes();
-      if (h < 7 || h >= 21) { setNowPx(null); return; }
-      setNowPx(((h - 7) + m / 60) * ROW_H);
+      if (h < 7 || h >= 21) {
+        setNowPx(null);
+        return;
+      }
+      setNowPx((h - 7 + m / 60) * ROW_H);
     }
     update();
     const id = setInterval(update, 60_000);
@@ -606,7 +609,6 @@ function WeekView({
 
   return (
     <div style={{ display: "flex", flex: 1, overflow: "hidden", flexDirection: "column" }}>
-
       {/* ── Day headers (OUTSIDE the scroll container — no sticky needed) ── */}
       <div
         style={{
@@ -793,7 +795,6 @@ function WeekView({
           flex: 1,
           overflowY: "auto",
           overflowX: "hidden",
-          /* @ts-ignore — scrollbarGutter not yet in React's CSSProperties */
           scrollbarGutter: "stable",
           position: "relative",
         }}

@@ -22,6 +22,8 @@ export interface PipelineClientDetailed {
   dataFollowup: string;
   liczbaProb: number;
   notatki: string;
+  bolGlowny: string;
+  poprzednieProby: string;
 }
 
 function extractText(prop: PageObjectResponse["properties"][string] | undefined): string {
@@ -78,14 +80,23 @@ export async function GET() {
           dataFollowup: extractText(props["Data następnego kroku"]),
           liczbaProb: extractNumber(props["Liczba prób"]),
           notatki: extractText(props["Notatki"]),
+          bolGlowny: extractText(props["Ból główny"]),
+          poprzednieProby: extractText(props["Poprzednie próby"]),
         };
       })
       .filter((c: PipelineClientDetailed) => c.firma !== "Bez nazwy");
 
     // Deduplicate: same firma+kontakt combo → keep highest-status entry
     const STATUS_ORDER = [
-      "Nowy lead", "Kwalifikacja", "Discovery umówione",
-      "Finalizacja", "Kickoff", "Wdrożenie", "Retainer", "Upsell", "Niekwalifikowany",
+      "Nowy lead",
+      "Kwalifikacja",
+      "Discovery umówione",
+      "Finalizacja",
+      "Kickoff",
+      "Wdrożenie",
+      "Retainer",
+      "Upsell",
+      "Niekwalifikowany",
     ];
     const deduped = new Map<string, PipelineClientDetailed>();
     for (const c of clients) {
@@ -101,7 +112,27 @@ export async function GET() {
     }
     const dedupedClients = Array.from(deduped.values());
 
-    return NextResponse.json({ success: true, clients: dedupedClients });
+    // Second dedup pass: same phone (last 9 digits) → keep highest-status entry
+    const phoneDeduped = new Map<string, PipelineClientDetailed>();
+    for (const c of dedupedClients) {
+      const raw = c.telefon.replace(/\D/g, "");
+      const phoneKey = raw.length >= 9 ? raw.slice(-9) : raw;
+      if (!phoneKey) {
+        phoneDeduped.set(c.id, c);
+        continue;
+      }
+      const existing = phoneDeduped.get(phoneKey);
+      if (!existing) {
+        phoneDeduped.set(phoneKey, c);
+      } else {
+        const existingRank = STATUS_ORDER.indexOf(existing.status);
+        const currentRank = STATUS_ORDER.indexOf(c.status);
+        if (currentRank > existingRank) phoneDeduped.set(phoneKey, c);
+      }
+    }
+    const finalClients = Array.from(phoneDeduped.values());
+
+    return NextResponse.json({ success: true, clients: finalClients });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Błąd Notion";
     return NextResponse.json({ success: false, error: msg }, { status: 500 });
