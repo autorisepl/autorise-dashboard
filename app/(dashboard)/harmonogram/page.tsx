@@ -22,8 +22,10 @@ import { Panel } from "@/components/ui/Panel";
 
 // ── Konfiguracja ──────────────────────────────────────────────────────
 
-// Harmonogram pokazuje zadania wyłącznie z tej listy Google Tasks.
+// "Zadania (Domowe)" — wszystkie zadania (z datą i bez)
 const HOME_TASK_LIST = "Zadania (Domowe)";
+// "Rozmowy (Zaplanowane)" — tylko zadania z datą due
+const PLANNED_TASK_LIST = "Rozmowy (Zaplanowane)";
 
 // ── Date helpers ──────────────────────────────────────────────────────
 
@@ -157,7 +159,7 @@ function EventChip({
       <div
         style={{
           fontFamily: "var(--font-sans)",
-          fontSize: compact ? 10 : 11,
+          fontSize: compact ? 11 : 12,
           fontWeight: 500,
           color: "var(--text-primary)",
           overflow: "hidden",
@@ -200,7 +202,7 @@ function TaskChip({ task }: { task: GoogleTask }) {
       <div
         style={{
           fontFamily: "var(--font-sans)",
-          fontSize: 10,
+          fontSize: 11,
           fontWeight: 500,
           color: "var(--text-primary)",
           overflow: "hidden",
@@ -725,10 +727,12 @@ function WeekView({
                 display: "flex",
                 flexWrap: "wrap",
                 gap: 4,
-                alignItems: "center",
+                alignItems: "flex-start",
+                maxHeight: 100,
+                overflowY: "auto",
               }}
             >
-              {undatedTasks.slice(0, 8).map((t) => (
+              {undatedTasks.map((t) => (
                 <div
                   key={t.id}
                   style={{
@@ -737,7 +741,7 @@ function WeekView({
                     borderRadius: "var(--radius-xs)",
                     padding: "2px 8px",
                     fontFamily: "var(--font-sans)",
-                    fontSize: 10,
+                    fontSize: 11,
                     fontWeight: 500,
                     color: "var(--warning)",
                     whiteSpace: "nowrap",
@@ -746,17 +750,6 @@ function WeekView({
                   {t.title}
                 </div>
               ))}
-              {undatedTasks.length > 8 && (
-                <span
-                  style={{
-                    fontFamily: "var(--font-sans)",
-                    fontSize: 10,
-                    color: "var(--text-tertiary)",
-                  }}
-                >
-                  +{undatedTasks.length - 8} więcej
-                </span>
-              )}
             </div>
           </div>
         )}
@@ -1449,11 +1442,20 @@ export default function HarmonogramPage() {
         if (!res.ok) return;
         const d: GoogleTasksResponse = await res.json();
         if (d.lists && d.tasksByList) {
-          // tasksByList kluczowane po id listy — znajdź listę domową po tytule
           const homeList =
             d.lists.find((l) => l.title === HOME_TASK_LIST) ??
             d.lists.find((l) => l.title.toLowerCase().includes("domow"));
-          setTasks(homeList ? (d.tasksByList[homeList.id] ?? []) : []);
+          const plannedList =
+            d.lists.find((l) => l.title === PLANNED_TASK_LIST) ??
+            d.lists.find((l) => l.title.toLowerCase().includes("zaplanow"));
+
+          const homeTasks = homeList ? (d.tasksByList[homeList.id] ?? []) : [];
+          // Z listy "Rozmowy (Zaplanowane)" bierzemy tylko zadania z datą due
+          const plannedTasks = plannedList
+            ? (d.tasksByList[plannedList.id] ?? []).filter((t) => !!t.due)
+            : [];
+
+          setTasks([...homeTasks, ...plannedTasks]);
         }
       } catch {
         /* tasks are optional */

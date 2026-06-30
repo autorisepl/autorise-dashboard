@@ -66,7 +66,9 @@ function Field({
             borderTop: `1px solid ${focused && !readOnly ? ACCENT : "var(--border)"}`,
             borderLeft: `1px solid ${focused && !readOnly ? ACCENT : "var(--border)"}`,
             borderBottom: `1px solid ${focused && !readOnly ? ACCENT : "var(--border)"}`,
-            borderRight: suffix ? "none" : `1px solid ${focused && !readOnly ? ACCENT : "var(--border)"}`,
+            borderRight: suffix
+              ? "none"
+              : `1px solid ${focused && !readOnly ? ACCENT : "var(--border)"}`,
             borderRadius: suffix ? "9px 0 0 9px" : 9,
             color: readOnly ? "var(--text-tertiary)" : "var(--text-primary)",
             fontFamily: f.mono,
@@ -439,14 +441,28 @@ interface KalkulatorRoiProps {
 export function KalkulatorRoi({ embedded = false, initialClientName }: KalkulatorRoiProps) {
   const [selectedClientId, setSelectedClientId] = useState("");
   const [nazwaKlienta, setNazwaKlienta] = useState(initialClientName ?? "");
-  const [spedytorzy, setSpedytorzy] = useState("3");
-  const [czasManualny, setCzasManualny] = useState("60");
-  const [stawka, setStawka] = useState("8000");
-  const [fullMode, setFullMode] = useState(false);
+
+  // ── Universal field (zawsze aktywny) ──
+  const [godzinyTygodniowo, setGodzinyTygodniowo] = useState("10");
+  const [liczbaOsob, setLiczbaOsob] = useState("3");
+  const [stawkaH, setStawkaH] = useState("50");
+
+  // ── Optional sections ──
+  const [showMaile, setShowMaile] = useState(false);
   const [maile, setMaile] = useState("40");
   const [godzinyWpisywania, setGodzinyWpisywania] = useState("2");
+
+  const [showFaktury, setShowFaktury] = useState(false);
   const [fakturyPo, setFakturyPo] = useState("5");
   const [sredniaCena, setSredniaCena] = useState("15000");
+
+  const [showIntegracja, setShowIntegracja] = useState(false);
+  const [integracjaOpis, setIntegracjaOpis] = useState("");
+
+  const [showInne, setShowInne] = useState(false);
+  const [inneOpis, setInneOpis] = useState("");
+  const [inneGodziny, setInneGodziny] = useState("");
+
   const [copied, setCopied] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [clients, setClients] = useState<PipelineClient[]>([]);
@@ -456,7 +472,6 @@ export function KalkulatorRoi({ embedded = false, initialClientName }: Kalkulato
   const [saveError, setSaveError] = useState<string | null>(null);
   const [savedClient, setSavedClient] = useState<string | null>(null);
 
-  // Aktualizuj nazwę gdy zmieni się wybrany klient z zewnątrz (zakładka w Sprzedaży)
   useEffect(() => {
     if (initialClientName) setNazwaKlienta(initialClientName);
   }, [initialClientName]);
@@ -464,40 +479,80 @@ export function KalkulatorRoi({ embedded = false, initialClientName }: Kalkulato
   const n = (v: string) => parseFloat(v) || 0;
 
   const calc = useMemo(() => {
-    const s = n(spedytorzy);
-    const pct = n(czasManualny) / 100;
-    const st = n(stawka);
-    const kosztMc = Math.round(s * pct * st);
+    // Universal: godziny/tydzień × 4.33 tygodnie × liczba osób × stawka PLN/h
+    const universalMc = Math.round(n(godzinyTygodniowo) * 4.33 * n(liczbaOsob) * n(stawkaH));
+
+    // Optional: czas wpisywania zleceń z maili
+    const maileMc = showMaile
+      ? Math.round(n(godzinyWpisywania) * n(liczbaOsob) * 22 * n(stawkaH))
+      : 0;
+
+    // Optional: ryzyko faktur po terminie (15% wartości = domyślny wskaźnik windykacji)
+    const fakturyMc = showFaktury ? Math.round(n(fakturyPo) * n(sredniaCena) * 0.15) : 0;
+
+    // Optional: inne (custom godziny/tydzień)
+    const inneMc =
+      showInne && n(inneGodziny) > 0
+        ? Math.round(n(inneGodziny) * 4.33 * n(liczbaOsob) * n(stawkaH))
+        : 0;
+
+    const kosztMc = universalMc + maileMc + fakturyMc + inneMc;
     const kosztRok = kosztMc * 12;
-    const roi = st > 0 ? (kosztRok / 15000).toFixed(1) : "—";
+    const roi = kosztRok > 0 ? (kosztRok / 15000).toFixed(1) : "—";
     const pctKosztu = kosztRok > 0 ? ((15000 / kosztRok) * 100).toFixed(1) : "—";
-    const hMc = fullMode ? Math.round(s * n(godzinyWpisywania) * 22) : null;
-    const hRok = hMc != null ? hMc * 12 : null;
-    const ryzykoFaktur = fullMode ? Math.round(n(fakturyPo) * n(sredniaCena) * 0.15) : null;
-    const calkowityRok =
-      fullMode && ryzykoFaktur != null && kosztRok > 0
-        ? Math.round(kosztRok + ryzykoFaktur * 12)
-        : null;
-    return { kosztMc, kosztRok, roi, pctKosztu, hMc, hRok, ryzykoFaktur, calkowityRok };
-  }, [spedytorzy, czasManualny, stawka, fullMode, godzinyWpisywania, fakturyPo, sredniaCena]);
+
+    return {
+      kosztMc,
+      kosztRok,
+      roi,
+      pctKosztu,
+      universalMc,
+      maileMc,
+      fakturyMc,
+      inneMc,
+    };
+  }, [
+    godzinyTygodniowo,
+    liczbaOsob,
+    stawkaH,
+    showMaile,
+    maile,
+    godzinyWpisywania,
+    showFaktury,
+    fakturyPo,
+    sredniaCena,
+    showInne,
+    inneGodziny,
+  ]);
 
   const copyText = useCallback(() => {
     const lines = [
       `KOSZT BÓLU${nazwaKlienta ? ` — ${nazwaKlienta}` : ""}`,
-      `Spedytorzy: ${spedytorzy} | Czas manualny: ${czasManualny}% | Stawka: ${stawka} PLN`,
+      `Godziny manualne: ${godzinyTygodniowo}h/tydzień × ${liczbaOsob} os. × ${stawkaH} PLN/h`,
       `Miesięcznie: ${calc.kosztMc.toLocaleString("pl")} PLN | Rocznie: ${calc.kosztRok.toLocaleString("pl")} PLN`,
-      `ROI: ${calc.roi}x | 15 000 PLN = ${calc.pctKosztu}% kosztu rocznego`,
+      `ROI: ${calc.roi}× | 15 000 PLN = ${calc.pctKosztu}% kosztu rocznego`,
     ];
-    if (fullMode && calc.hMc) {
-      lines.push(`Godziny tracone: ${calc.hMc} h/mc | ${calc.hRok} h/rok`);
-      lines.push(`Ryzyko faktur po terminie: ${calc.ryzykoFaktur?.toLocaleString("pl")} PLN/mc`);
-      if (calc.calkowityRok)
-        lines.push(`Całkowity koszt roczny: ${calc.calkowityRok.toLocaleString("pl")} PLN/rok`);
-    }
+    if (showMaile) lines.push(`Analiza maili: ${calc.maileMc.toLocaleString("pl")} PLN/mc`);
+    if (showFaktury)
+      lines.push(`Faktury po terminie: ${calc.fakturyMc.toLocaleString("pl")} PLN/mc`);
+    if (showIntegracja && integracjaOpis) lines.push(`Integracja: ${integracjaOpis}`);
+    if (showInne && inneOpis) lines.push(`Inne: ${inneOpis}`);
     navigator.clipboard.writeText(lines.join("\n"));
     setCopied(true);
     setTimeout(() => setCopied(false), 2200);
-  }, [nazwaKlienta, spedytorzy, czasManualny, stawka, calc, fullMode]);
+  }, [
+    nazwaKlienta,
+    godzinyTygodniowo,
+    liczbaOsob,
+    stawkaH,
+    calc,
+    showMaile,
+    showFaktury,
+    showIntegracja,
+    integracjaOpis,
+    showInne,
+    inneOpis,
+  ]);
 
   const loadClients = useCallback(async () => {
     setClientsLoading(true);
@@ -559,8 +614,8 @@ export function KalkulatorRoi({ embedded = false, initialClientName }: Kalkulato
 
   const prezentacjaUrl = useMemo(() => {
     const p = new URLSearchParams();
-    if (n(spedytorzy) && n(czasManualny)) {
-      const dzis = Math.round(n(spedytorzy) * (n(czasManualny) / 100) * 22 * 8);
+    if (n(godzinyTygodniowo) && n(liczbaOsob)) {
+      const dzis = Math.round(n(godzinyTygodniowo) * 4.33 * n(liczbaOsob));
       p.set("roi", Math.min(dzis, 70).toString());
       p.set("po", "10");
     }
@@ -568,7 +623,7 @@ export function KalkulatorRoi({ embedded = false, initialClientName }: Kalkulato
     p.set("gwar", "95");
     p.set("start", calc.kosztRok > 0 ? "2" : "1");
     return `/prezentacja.html?${p.toString()}`;
-  }, [spedytorzy, czasManualny, calc.kosztRok]);
+  }, [godzinyTygodniowo, liczbaOsob, calc.kosztRok]);
 
   const selectedClient = clients.find((c) => c.id === selectedClientId);
 
@@ -874,7 +929,7 @@ export function KalkulatorRoi({ embedded = false, initialClientName }: Kalkulato
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, maxWidth: 900 }}>
         {/* LEFT — Inputs */}
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          {/* Quick mode card */}
+          {/* ── Universal section (zawsze aktywny) ── */}
           <div
             style={{
               padding: "22px",
@@ -904,10 +959,10 @@ export function KalkulatorRoi({ embedded = false, initialClientName }: Kalkulato
                   fontWeight: 700,
                   color: "var(--text-tertiary)",
                   letterSpacing: "0.06em",
-                  textTransform: "uppercase",
+                  textTransform: "uppercase" as const,
                 }}
               >
-                Podstawowe dane
+                Czas manualny — podstawa
               </span>
             </div>
             <Field
@@ -918,118 +973,390 @@ export function KalkulatorRoi({ embedded = false, initialClientName }: Kalkulato
               placeholder="np. Trans-Pol Sp. z o.o."
             />
             <Field
-              label="Liczba spedytorów"
-              value={spedytorzy}
-              onChange={setSpedytorzy}
+              label="Godziny manualne / tydzień"
+              value={godzinyTygodniowo}
+              onChange={setGodzinyTygodniowo}
+              suffix="h/tydz."
+              min={0}
+            />
+            <Field
+              label="Liczba osób dotkniętych problemem"
+              value={liczbaOsob}
+              onChange={setLiczbaOsob}
               suffix="os."
               min={1}
             />
             <Field
-              label="Czas pracy manualnej"
-              value={czasManualny}
-              onChange={setCzasManualny}
-              suffix="%"
-              min={0}
-            />
-            <Field
-              label="Stawka miesięczna / spedytor"
-              value={stawka}
-              onChange={setStawka}
-              suffix="PLN"
+              label="Stawka roboczogodziny"
+              value={stawkaH}
+              onChange={setStawkaH}
+              suffix="PLN/h"
               min={0}
             />
           </div>
 
-          {/* Full mode toggle */}
-          <button
-            onClick={() => setFullMode((v) => !v)}
-            style={{
-              width: "100%",
-              padding: "12px 16px",
-              background: fullMode ? "var(--accent-muted)" : "var(--bg-elevated)",
-              border: `1px solid ${fullMode ? "var(--accent-border)" : "var(--border)"}`,
-              borderRadius: 12,
-              cursor: "pointer",
-              color: fullMode ? ACCENT : "var(--text-secondary)",
-              fontFamily: f.system,
-              fontSize: 13,
-              fontWeight: 600,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              transition: "all 0.15s",
-            }}
-          >
-            <span>Tryb pełny — Discovery Call</span>
-            {fullMode ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-          </button>
-
-          {fullMode && (
+          {/* ── Optional sections ── */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <div
               style={{
-                padding: "22px",
-                background: "var(--bg-elevated)",
-                border: "1px solid var(--accent-border)",
-                borderRadius: 14,
-                display: "flex",
-                flexDirection: "column",
-                gap: 18,
-                boxShadow: "0 1px 4px rgba(10,132,255,0.07)",
+                fontFamily: f.system,
+                fontSize: 10,
+                fontWeight: 700,
+                color: "var(--text-tertiary)",
+                letterSpacing: "0.06em",
+                textTransform: "uppercase" as const,
+                paddingLeft: 4,
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              Dodatkowe koszty (opcjonalnie)
+            </div>
+
+            {/* Sekcja: Maile ze zleceniami */}
+            <div
+              style={{
+                background: "var(--bg-elevated)",
+                border: `1px solid ${showMaile ? "var(--accent-border)" : "var(--border)"}`,
+                borderRadius: 12,
+                overflow: "hidden",
+              }}
+            >
+              <button
+                onClick={() => setShowMaile((v) => !v)}
+                style={{
+                  width: "100%",
+                  padding: "12px 16px",
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  textAlign: "left" as const,
+                }}
+              >
                 <div
                   style={{
-                    width: 5,
-                    height: 5,
-                    borderRadius: "50%",
-                    background: ACCENT,
+                    width: 18,
+                    height: 18,
+                    borderRadius: 5,
+                    border: `1.5px solid ${showMaile ? ACCENT : "var(--border)"}`,
+                    background: showMaile ? ACCENT : "transparent",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                     flexShrink: 0,
+                    transition: "all 0.15s",
                   }}
-                />
+                >
+                  {showMaile && <Check size={11} color="#fff" strokeWidth={3} />}
+                </div>
                 <span
                   style={{
                     fontFamily: f.system,
-                    fontSize: 10,
-                    fontWeight: 700,
-                    color: ACCENT,
-                    letterSpacing: "0.06em",
-                    textTransform: "uppercase",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: showMaile ? ACCENT : "var(--text-secondary)",
                   }}
                 >
-                  Analiza rozszerzona
+                  Analiza maili ze zleceniami
                 </span>
-              </div>
-              <Field
-                label="Maile ze zleceniami / dzień"
-                value={maile}
-                onChange={setMaile}
-                suffix="szt."
-                min={0}
-              />
-              <Field
-                label="Godz. wpisywania / spedytor / dzień"
-                value={godzinyWpisywania}
-                onChange={setGodzinyWpisywania}
-                suffix="h"
-                min={0}
-              />
-              <Field
-                label="Faktury po terminie / miesiąc"
-                value={fakturyPo}
-                onChange={setFakturyPo}
-                suffix="szt."
-                min={0}
-              />
-              <Field
-                label="Średnia wartość faktury"
-                value={sredniaCena}
-                onChange={setSredniaCena}
-                suffix="PLN"
-                min={0}
-              />
+                {showMaile ? (
+                  <ChevronUp
+                    size={13}
+                    color="var(--text-tertiary)"
+                    style={{ marginLeft: "auto" }}
+                  />
+                ) : (
+                  <ChevronDown
+                    size={13}
+                    color="var(--text-tertiary)"
+                    style={{ marginLeft: "auto" }}
+                  />
+                )}
+              </button>
+              {showMaile && (
+                <div
+                  style={{
+                    padding: "0 16px 16px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 14,
+                  }}
+                >
+                  <Field
+                    label="Maile ze zleceniami / dzień"
+                    value={maile}
+                    onChange={setMaile}
+                    suffix="szt."
+                    min={0}
+                  />
+                  <Field
+                    label="Godz. wpisywania / os. / dzień"
+                    value={godzinyWpisywania}
+                    onChange={setGodzinyWpisywania}
+                    suffix="h"
+                    min={0}
+                  />
+                </div>
+              )}
             </div>
-          )}
+
+            {/* Sekcja: Faktury po terminie */}
+            <div
+              style={{
+                background: "var(--bg-elevated)",
+                border: `1px solid ${showFaktury ? "var(--accent-border)" : "var(--border)"}`,
+                borderRadius: 12,
+                overflow: "hidden",
+              }}
+            >
+              <button
+                onClick={() => setShowFaktury((v) => !v)}
+                style={{
+                  width: "100%",
+                  padding: "12px 16px",
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  textAlign: "left" as const,
+                }}
+              >
+                <div
+                  style={{
+                    width: 18,
+                    height: 18,
+                    borderRadius: 5,
+                    border: `1.5px solid ${showFaktury ? ACCENT : "var(--border)"}`,
+                    background: showFaktury ? ACCENT : "transparent",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                    transition: "all 0.15s",
+                  }}
+                >
+                  {showFaktury && <Check size={11} color="#fff" strokeWidth={3} />}
+                </div>
+                <span
+                  style={{
+                    fontFamily: f.system,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: showFaktury ? ACCENT : "var(--text-secondary)",
+                  }}
+                >
+                  Faktury po terminie
+                </span>
+                {showFaktury ? (
+                  <ChevronUp
+                    size={13}
+                    color="var(--text-tertiary)"
+                    style={{ marginLeft: "auto" }}
+                  />
+                ) : (
+                  <ChevronDown
+                    size={13}
+                    color="var(--text-tertiary)"
+                    style={{ marginLeft: "auto" }}
+                  />
+                )}
+              </button>
+              {showFaktury && (
+                <div
+                  style={{
+                    padding: "0 16px 16px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 14,
+                  }}
+                >
+                  <Field
+                    label="Faktury po terminie / miesiąc"
+                    value={fakturyPo}
+                    onChange={setFakturyPo}
+                    suffix="szt."
+                    min={0}
+                  />
+                  <Field
+                    label="Średnia wartość faktury"
+                    value={sredniaCena}
+                    onChange={setSredniaCena}
+                    suffix="PLN"
+                    min={0}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Sekcja: Integracja systemów */}
+            <div
+              style={{
+                background: "var(--bg-elevated)",
+                border: `1px solid ${showIntegracja ? "var(--accent-border)" : "var(--border)"}`,
+                borderRadius: 12,
+                overflow: "hidden",
+              }}
+            >
+              <button
+                onClick={() => setShowIntegracja((v) => !v)}
+                style={{
+                  width: "100%",
+                  padding: "12px 16px",
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  textAlign: "left" as const,
+                }}
+              >
+                <div
+                  style={{
+                    width: 18,
+                    height: 18,
+                    borderRadius: 5,
+                    border: `1.5px solid ${showIntegracja ? ACCENT : "var(--border)"}`,
+                    background: showIntegracja ? ACCENT : "transparent",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                    transition: "all 0.15s",
+                  }}
+                >
+                  {showIntegracja && <Check size={11} color="#fff" strokeWidth={3} />}
+                </div>
+                <span
+                  style={{
+                    fontFamily: f.system,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: showIntegracja ? ACCENT : "var(--text-secondary)",
+                  }}
+                >
+                  Integracja systemów
+                </span>
+                {showIntegracja ? (
+                  <ChevronUp
+                    size={13}
+                    color="var(--text-tertiary)"
+                    style={{ marginLeft: "auto" }}
+                  />
+                ) : (
+                  <ChevronDown
+                    size={13}
+                    color="var(--text-tertiary)"
+                    style={{ marginLeft: "auto" }}
+                  />
+                )}
+              </button>
+              {showIntegracja && (
+                <div style={{ padding: "0 16px 16px" }}>
+                  <Field
+                    label="Opis sytuacji / systemów"
+                    value={integracjaOpis}
+                    onChange={setIntegracjaOpis}
+                    type="text"
+                    placeholder="np. brak połączenia między TMS a fakturami..."
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Sekcja: Inne */}
+            <div
+              style={{
+                background: "var(--bg-elevated)",
+                border: `1px solid ${showInne ? "var(--accent-border)" : "var(--border)"}`,
+                borderRadius: 12,
+                overflow: "hidden",
+              }}
+            >
+              <button
+                onClick={() => setShowInne((v) => !v)}
+                style={{
+                  width: "100%",
+                  padding: "12px 16px",
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  textAlign: "left" as const,
+                }}
+              >
+                <div
+                  style={{
+                    width: 18,
+                    height: 18,
+                    borderRadius: 5,
+                    border: `1.5px solid ${showInne ? ACCENT : "var(--border)"}`,
+                    background: showInne ? ACCENT : "transparent",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                    transition: "all 0.15s",
+                  }}
+                >
+                  {showInne && <Check size={11} color="#fff" strokeWidth={3} />}
+                </div>
+                <span
+                  style={{
+                    fontFamily: f.system,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: showInne ? ACCENT : "var(--text-secondary)",
+                  }}
+                >
+                  Inne koszty
+                </span>
+                {showInne ? (
+                  <ChevronUp
+                    size={13}
+                    color="var(--text-tertiary)"
+                    style={{ marginLeft: "auto" }}
+                  />
+                ) : (
+                  <ChevronDown
+                    size={13}
+                    color="var(--text-tertiary)"
+                    style={{ marginLeft: "auto" }}
+                  />
+                )}
+              </button>
+              {showInne && (
+                <div
+                  style={{
+                    padding: "0 16px 16px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 14,
+                  }}
+                >
+                  <Field
+                    label="Opis problemu"
+                    value={inneOpis}
+                    onChange={setInneOpis}
+                    type="text"
+                    placeholder="np. ręczne raportowanie..."
+                  />
+                  <Field
+                    label="Godziny manualne / tydzień (opcjonalnie)"
+                    value={inneGodziny}
+                    onChange={setInneGodziny}
+                    suffix="h/tydz."
+                    min={0}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* RIGHT — Results */}
@@ -1063,8 +1390,8 @@ export function KalkulatorRoi({ embedded = false, initialClientName }: Kalkulato
             </div>
           </div>
 
-          {/* Full mode extended */}
-          {fullMode && (
+          {/* Breakdown sekcji opcjonalnych */}
+          {(showMaile || showFaktury || showInne) && (
             <div
               style={{
                 padding: "18px 22px",
@@ -1081,26 +1408,33 @@ export function KalkulatorRoi({ embedded = false, initialClientName }: Kalkulato
                   fontWeight: 700,
                   color: ACCENT,
                   letterSpacing: "0.06em",
-                  textTransform: "uppercase",
+                  textTransform: "uppercase" as const,
                   marginBottom: 12,
                 }}
               >
-                Analiza pełna
+                Rozkład kosztów
               </div>
-              <ResultRow label="Godziny tracone / miesiąc" value={`${calc.hMc ?? 0} h/mc`} />
-              <ResultRow label="Godziny tracone / rok" value={`${calc.hRok ?? 0} h/rok`} />
               <ResultRow
-                label="Ryzyko faktur po terminie"
-                value={`${calc.ryzykoFaktur?.toLocaleString("pl") ?? 0} PLN/mc`}
+                label="Czas manualny (podstawa)"
+                value={`${calc.universalMc.toLocaleString("pl")} PLN/mc`}
               />
-              {calc.calkowityRok != null && (
-                <div style={{ marginTop: 10 }}>
-                  <BigNumber
-                    label="Całkowity koszt roczny"
-                    value={`${calc.calkowityRok.toLocaleString("pl")} PLN`}
-                    accent
-                  />
-                </div>
+              {showMaile && (
+                <ResultRow
+                  label="Analiza maili ze zleceniami"
+                  value={`${calc.maileMc.toLocaleString("pl")} PLN/mc`}
+                />
+              )}
+              {showFaktury && (
+                <ResultRow
+                  label="Faktury po terminie"
+                  value={`${calc.fakturyMc.toLocaleString("pl")} PLN/mc`}
+                />
+              )}
+              {showInne && calc.inneMc > 0 && (
+                <ResultRow
+                  label="Inne koszty"
+                  value={`${calc.inneMc.toLocaleString("pl")} PLN/mc`}
+                />
               )}
             </div>
           )}
@@ -1176,7 +1510,7 @@ export function KalkulatorRoi({ embedded = false, initialClientName }: Kalkulato
                 transition: "border-color 0.15s",
               }}
             >
-              🖥️ Otwórz prezentację z tymi liczbami
+              Otwórz prezentację z tymi liczbami
             </a>
           </div>
         </div>

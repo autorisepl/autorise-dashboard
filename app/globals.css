@@ -163,6 +163,51 @@ html, body {
   height: 100dvh;
   overflow: hidden;
   background: var(--bg);
+  transition: margin-left 240ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Sidebar collapse — desktop only (≥769px) */
+@media (min-width: 769px) {
+  .app-sidebar {
+    transform: translateX(0);
+    transition: transform 240ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .sidebar-collapsed .app-sidebar {
+    transform: translateX(-260px);
+  }
+  .sidebar-collapsed .app-main {
+    margin-left: 44px;
+  }
+
+  /* Floating re-open button — only visible when collapsed */
+  .sidebar-toggle-btn {
+    position: fixed;
+    top: 14px;
+    left: 7px;
+    z-index: 11;
+    width: 30px;
+    height: 30px;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: opacity 200ms, background 120ms, color 120ms;
+    opacity: 0;
+    pointer-events: none;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+  .sidebar-collapsed .sidebar-toggle-btn {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .sidebar-toggle-btn:hover {
+    background: var(--bg-hover);
+    color: var(--accent);
+  }
 }
 
 .mobile-topbar { display: none; }

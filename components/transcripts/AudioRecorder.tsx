@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, Mic, Square, Trash2 } from "lucide-react";
+import { ChevronDown, Download, Mic, Square, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 
@@ -67,6 +67,8 @@ export function AudioRecorder() {
   const [filename, setFilename] = useState("nagranie");
   const [blob, setBlob] = useState<Blob | null>(null);
   const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
+  const [audioDevices, setAudioDevices] = useState<MediaDeviceInfo[]>([]);
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string>("");
 
   const mediaRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -75,19 +77,47 @@ export function AudioRecorder() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(0);
 
+  // Enumerate audio input devices on mount and after permissions.
+  const loadDevices = useCallback(async () => {
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const inputs = devices.filter((d) => d.kind === "audioinput");
+      setAudioDevices(inputs);
+      if (inputs.length > 0 && !selectedDeviceId) {
+        setSelectedDeviceId(inputs[0].deviceId);
+      }
+    } catch {
+      // enumerateDevices may fail without permissions — handled gracefully
+    }
+  }, [selectedDeviceId]);
+
+  useEffect(() => {
+    void loadDevices();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const stopAll = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
     if (mediaRef.current && mediaRef.current.state !== "inactive") mediaRef.current.stop();
-    if (streamRef.current) streamRef.current.getTracks().forEach((t) => t.stop());
+    if (streamRef.current) streamRef.current.getTracks().forEach((t) => { t.stop(); });
     if (audioCtxRef.current) audioCtxRef.current.close();
     setAnalyser(null);
   }, []);
 
   const startRecording = useCallback(async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: { sampleRate: 44100, channelCount: 1, echoCancellation: true, noiseSuppression: true },
-      });
+      const audioConstraints: MediaTrackConstraints = {
+        sampleRate: 44100,
+        channelCount: 1,
+        echoCancellation: true,
+        noiseSuppression: true,
+      };
+      if (selectedDeviceId) {
+        audioConstraints.deviceId = { exact: selectedDeviceId };
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints });
+      // After first getUserMedia call, re-enumerate to get labels.
+      void loadDevices();
       streamRef.current = stream;
 
       const audioCtx = new AudioContext();
@@ -108,7 +138,9 @@ export function AudioRecorder() {
       mediaRef.current = recorder;
       chunksRef.current = [];
 
-      recorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
       recorder.onstop = () => {
         const recorded = new Blob(chunksRef.current, { type: mimeType });
         setBlob(recorded);
@@ -126,7 +158,7 @@ export function AudioRecorder() {
     } catch {
       alert("Brak dostępu do mikrofonu.");
     }
-  }, []);
+  }, [selectedDeviceId, loadDevices]);
 
   const stopRecording = useCallback(() => {
     stopAll();
@@ -194,6 +226,46 @@ export function AudioRecorder() {
         )}
       </div>
 
+      {/* Microphone selector */}
+      {audioDevices.length > 1 && state === "idle" && (
+        <div style={{ position: "relative", marginBottom: 10 }}>
+          <select
+            value={selectedDeviceId}
+            onChange={(e) => setSelectedDeviceId(e.target.value)}
+            style={{
+              width: "100%",
+              padding: "6px 28px 6px 10px",
+              border: "1px solid var(--border)",
+              borderRadius: 8,
+              background: "var(--bg)",
+              color: "var(--text-primary)",
+              fontFamily: "var(--font-sans)",
+              fontSize: 12,
+              appearance: "none",
+              outline: "none",
+              cursor: "pointer",
+            }}
+          >
+            {audioDevices.map((d, i) => (
+              <option key={d.deviceId} value={d.deviceId}>
+                {d.label || `Mikrofon ${i + 1}`}
+              </option>
+            ))}
+          </select>
+          <ChevronDown
+            size={11}
+            style={{
+              position: "absolute",
+              right: 8,
+              top: "50%",
+              transform: "translateY(-50%)",
+              pointerEvents: "none",
+              color: "var(--text-tertiary)",
+            }}
+          />
+        </div>
+      )}
+
       {state === "idle" && (
         <Button variant="primary" onClick={startRecording} style={{ width: "100%" }}>
           <Mic size={13} style={{ marginRight: 6 }} />
@@ -204,7 +276,11 @@ export function AudioRecorder() {
       {state === "recording" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <WaveformCanvas analyser={analyser} />
-          <Button variant="primary" onClick={stopRecording} style={{ width: "100%", background: "var(--error)", borderColor: "var(--error)" }}>
+          <Button
+            variant="primary"
+            onClick={stopRecording}
+            style={{ width: "100%", background: "var(--error)", borderColor: "var(--error)" }}
+          >
             <Square size={12} style={{ marginRight: 6 }} fill="currentColor" />
             Zatrzymaj
           </Button>
@@ -213,6 +289,7 @@ export function AudioRecorder() {
 
       {state === "preview" && blob && (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {/* biome-ignore lint/a11y/useMediaCaption: audio preview for own recordings, no captions needed */}
           <audio
             controls
             src={URL.createObjectURL(blob)}
@@ -236,7 +313,14 @@ export function AudioRecorder() {
                 outline: "none",
               }}
             />
-            <span style={{ fontSize: 12, color: "var(--text-tertiary)", display: "flex", alignItems: "center" }}>
+            <span
+              style={{
+                fontSize: 12,
+                color: "var(--text-tertiary)",
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
               .mp3
             </span>
           </div>

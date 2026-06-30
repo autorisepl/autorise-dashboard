@@ -143,7 +143,7 @@ WYCIĄGNIJ:
    - właściciel czy manager (jeśli manager: kto jest decydentem?)
 
 3. BÓL I MOTYWACJA
-   - główny ból (dosłowne słowa klienta, nie interpretacja)
+   - główny ból (WYŁĄCZNIE dosłowne słowa klienta w cudzysłowie; jeśli żaden konkretny cytat nie padł → null, nie parafrazuj)
    - co powiedział że go skłoniło do zgłoszenia formularza
 
 4. HISTORIA PRÓB
@@ -162,14 +162,34 @@ WYCIĄGNIJ:
    koszt_roczny = koszt_miesiecznie × 12 (ZAWSZE mnóż przez 12, nie zostawiaj samego miesięcznego).
 
 6. TMS I INTEGRACJA
-   - nazwa TMS (jeśli padła)
-   - inne systemy w biurze (monitoring, księgowość, faktury — osobno czy zintegrowane)
-   - sugerowane podejście integracyjne:
-     * fireTMS, Trans.eu, Transporeon, Linkway → REST API (2-3 dni)
-     * SPEDTRANS, CarLo → SQL direct (3-5 dni)
-     * 4Trans → CSV export (2-3 dni)
-     * nieznany → "do weryfikacji"
-     * brak TMS → "dodatkowy zakres — wymaga wyceny"
+
+   WAŻNE: Transkrypty z rzeczywistych rozmów telefonicznych są często fragmentaryczne — klient może powiedzieć tylko część nazwy systemu, zmylić się w środku zdania lub użyć potocznego skrótu. Nie wymagaj pełnej, poprawnej nazwy. Rozpoznaj markę TMS na podstawie dowolnego fragmentu fonetycznego lub częściowego zapisu.
+
+   Znane polskie systemy TMS (rozpoznawaj warianty fonetyczne i skróty):
+   - fireTMS (też: "fire", "fire TMS", "firefighter TMS")
+   - Trans.eu (też: "trans.eu", "trans eu", "transeu")
+   - Transporeon (też: "transporeon", "transporteon", "transpro")
+   - Linkway (też: "link way", "linkway")
+   - SPEDTRANS (też: "sped trans", "spedtrans")
+   - CarLo (też: "carlo", "car lo")
+   - 4Trans (też: "cztery trans", "four trans", "4 trans")
+   - Speed TSL / SpeedTSL / Speed-TSL (też: "spid tsl", "speed te es el", "speed", "speedtsl")
+   - Sky-Pol (też: "skypol", "sky pol", "sky-pol")
+   - Tarvex (też: "tarvex", "tarveks")
+   - WebFlota (też: "web flota", "webflota")
+
+   Zasady wnioskowania:
+   - Jeśli klient wyraźnie potwierdził że używa TMS, ale nazwy nie można zidentyfikować z powyższej listy: pole tms = "ma TMS, nazwa nie podana"
+   - Jeśli klient nie wspomniał o TMS lub zaprzeczył: pole tms = null lub "brak"
+   - Jeśli nazwa jest częściowa ale rozpoznawalna (np. "speed"): wpisz pełną nazwę marki (np. "Speed TSL")
+
+   Sugerowane podejście integracyjne (wpisz w podejscie_integracyjne):
+   - fireTMS, Trans.eu, Transporeon, Linkway: REST API (2-3 dni)
+   - SPEDTRANS, CarLo, Speed TSL / SpeedTSL / Speed-TSL: SQL direct lub eksport (3-5 dni, zweryfikuj na Discovery)
+   - 4Trans: CSV export (2-3 dni)
+   - Sky-Pol, Tarvex, WebFlota: do weryfikacji na Discovery
+   - nieznany lub niepewny: "do weryfikacji na Discovery"
+   - brak TMS: "dodatkowy zakres — wymaga wyceny"
 
 7. PRE-COMMIT I PILNOŚĆ
    - odpowiedź na "gdyby rozwiązanie spełniało dokładnie to czego Pan szuka — jak szybko mógłby Pan zacząć?" (dosłownie)
@@ -238,6 +258,7 @@ WYCIĄGNIJ:
 
     Jeśli żaden nie pasuje: followup = null.
 
+    W "typ_followup" wpisz typ z powyższej listy (dokładna nazwa).
     W "kontekst_followup" zapisz dokładnie co powiedział i dlaczego potrzebny follow-up.
     W "data_followup" wpisz konkretną datę (DD.MM.YYYY) kiedy Michał ma się odezwać.
 
@@ -318,14 +339,14 @@ FORMAT ODPOWIEDZI: JSON. Pola bez danych: null. Nie dodawaj komentarzy poza pole
 
 PRZYKŁAD followup (gdy decydent nieobecny):
 "followup": {
-  "typ": "Dograne wspólnika/decydenta",
+  "typ_followup": "Dograne wspólnika/decydenta",
   "kontekst_followup": "Wspólniczka jest bardziej decyzyjna w kwestii zakupu. Klient obiecał oddzwonić po rozmowie z nią do 13:00 tego samego dnia. Brak konkretnej daty Discovery, brak obecności decydenta na kwalifikacji.",
   "data_followup": "25.06.2026"
 }
 
 PRZYKŁAD followup (poza ICP):
 "followup": {
-  "typ": "Poza ICP — re-engagement",
+  "typ_followup": "Poza ICP — re-engagement",
   "kontekst_followup": "Firma outsourcingowa wchodząca dopiero w transport. Brak własnej spedycji, brak własnych spedytorów, TMS nieznany. Za 3-6 miesięcy po uzyskaniu licencji i rozbudowie floty może być idealnym klientem.",
   "data_followup": "25.09.2026"
 }`;
@@ -422,6 +443,20 @@ W takim przypadku priorytet modułów:
 4. email-parser — drugi plan, dla tych zleceń co nadal przychodzą mailowo
 
 Zaznacz w pre_discovery_brief gdy ten przypadek zachodzi.
+
+PRIORYTETYZACJA DLA KLIENTÓW Z INNYM PROFILEM BÓLU:
+Nie każdy klient pasuje do standardowego zestawu 4 modułów. Gdy żaden z 4 modułów PR-0 nie odpowiada precyzyjnie na ból numer 1 zgłoszony przez klienta, nie wymuszaj dopasowania na siłę.
+
+W takiej sytuacji:
+- Wpisz w hipotezie modułu: "Niestandardowy profil bólu — nie pasuje do standardowych 4 modułów"
+- W sekcji RYZYKA dodaj: "UWAGA: Klient może wymagać modułu niestandardowego lub integracji dedykowanej. Na Discovery zidentyfikuj czy ból można zaadresować istniejącymi modułami w innej konfiguracji, czy wymaga to osobnej wyceny."
+- Zaproponuj pytania na Discovery które pomogą sprawdzić, czy któryś ze standardowych modułów jednak rozwiąże problem (nawet jeśli to nie jest oczywiste z kwalifikacji)
+- Jeśli klient ma kilka bólów i żaden nie jest dominujący: zaproponuj moduł combo i wyjaśnij logikę
+
+Przykłady niestandardowych przypadków:
+- Klient narzeka wyłącznie na komunikację z kierowcami: najbliżej jest whatsapp-alerts, ale dopytaj czy problem nie jest głębszy (spóźnione dokumenty, brak raportowania)
+- Klient ma własny TMS z API, chce synchronizację z innym systemem: to integracja dedykowana — zaznacz to wprost i nie wyceniaj modułów bez konsultacji technicznej
+- Klient nie ma żadnego TMS i dopiero zaczyna: email-parser może być wejściem, ale najpierw sprawdź czy w ogóle ma zlecenia mailowe
 
 5. TMS I PODEJŚCIE TECHNICZNE
    Potwierdź z danych Agenta 1. Jeśli "do weryfikacji" — dodaj pytanie do listy w punkcie 3.

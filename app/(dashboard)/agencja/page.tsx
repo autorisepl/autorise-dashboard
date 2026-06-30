@@ -12,9 +12,8 @@ import {
   Upload,
   UserPlus,
   Users,
-  X,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { SheetContact, SheetsResponse } from "@/app/api/google/sheets/route";
 import type { SheetsSyncResult } from "@/app/api/notion/sheets-sync/route";
 import { KartaKlienta } from "@/components/karta/KartaKlienta";
@@ -81,92 +80,6 @@ function initialsOf(name: string): string {
   );
 }
 
-function statusColor(value: string): { bg: string; color: string } {
-  const v = value.toLowerCase();
-  // Negative / lost
-  if (v.includes("niekwalifik")) return { bg: "var(--error-bg)", color: "var(--error)" };
-  // Active revenue stages
-  if (v.includes("retainer") || v.includes("upsell") || v.includes("wdrożenie") || v.includes("wdrozenie"))
-    return { bg: "var(--success-bg)", color: "var(--success-text)" };
-  // Closing stages
-  if (v.includes("kickoff") || v.includes("finalizacja"))
-    return { bg: "rgba(48,209,88,0.12)", color: "var(--success-text)" };
-  // Active sales stages
-  if (v.includes("discovery") || v.includes("kwalifikacja"))
-    return { bg: "var(--warning-bg)", color: "var(--warning)" };
-  // New / top of funnel
-  if (v.includes("nowy") || v.includes("lead") || v.includes("prospect"))
-    return { bg: "var(--accent-muted)", color: "var(--accent)" };
-  return { bg: "var(--bg-hover)", color: "var(--text-secondary)" };
-}
-
-function isStatusCol(h: string) {
-  return ["Status", "Etap", "Stage", "Faza"].includes(h);
-}
-
-function CellValue({ header, value }: { header: string; value: string }) {
-  const v = String(value ?? "");
-  if (!v || v === "—") return <span style={{ color: "var(--text-tertiary)" }}>—</span>;
-
-  if (isStatusCol(header)) {
-    const { bg, color } = statusColor(v);
-    return (
-      <span
-        style={{
-          display: "inline-block",
-          padding: "2px 8px",
-          borderRadius: 20,
-          background: bg,
-          fontFamily: "var(--font-sans)",
-          fontSize: 11,
-          fontWeight: 500,
-          color,
-        }}
-      >
-        {v}
-      </span>
-    );
-  }
-
-  if (v.includes("@") && v.includes(".")) {
-    return (
-      <a
-        href={`mailto:${v}`}
-        style={{
-          color: "var(--accent)",
-          textDecoration: "none",
-          fontFamily: "var(--font-sans)",
-          fontSize: 12,
-        }}
-      >
-        {v}
-      </a>
-    );
-  }
-
-  if (/^\+?[\d\s\-().]{7,}$/.test(v)) {
-    return (
-      <a
-        href={`tel:${v.replace(/\s/g, "")}`}
-        style={{
-          color: "var(--text-primary)",
-          textDecoration: "none",
-          fontFamily: "var(--font-sans)",
-          fontSize: 12,
-        }}
-      >
-        {v}
-      </a>
-    );
-  }
-
-  return (
-    <span style={{ fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--text-primary)" }}>
-      {v}
-    </span>
-  );
-}
-
 // ── Contact field extraction ──────────────────────────────────────────
 
 function contactFields(row: SheetContact, headers: string[]) {
@@ -203,19 +116,19 @@ function Kpi({
       style={{
         display: "flex",
         alignItems: "center",
-        gap: 12,
-        padding: "13px 16px",
+        gap: 10,
+        padding: "10px 12px",
         background: "var(--bg-elevated)",
         border: "1px solid var(--border)",
-        borderRadius: "var(--radius-md)",
+        borderRadius: "var(--radius-sm)",
         boxShadow: "var(--shadow-sm)",
       }}
     >
       <div
         style={{
-          width: 36,
-          height: 36,
-          borderRadius: 10,
+          width: 30,
+          height: 30,
+          borderRadius: 8,
           flexShrink: 0,
           background: t.bg,
           border: `1px solid ${t.border}`,
@@ -224,13 +137,13 @@ function Kpi({
           justifyContent: "center",
         }}
       >
-        <Icon size={17} color={t.color} strokeWidth={1.9} />
+        <Icon size={14} color={t.color} strokeWidth={1.9} />
       </div>
       <div>
         <div
           style={{
             fontFamily: "var(--font-sans)",
-            fontSize: 22,
+            fontSize: 18,
             fontWeight: 800,
             color: "var(--text-primary)",
             letterSpacing: "-0.03em",
@@ -242,9 +155,9 @@ function Kpi({
         <div
           style={{
             fontFamily: "var(--font-sans)",
-            fontSize: 11,
+            fontSize: 10,
             color: "var(--text-tertiary)",
-            marginTop: 3,
+            marginTop: 2,
           }}
         >
           {label}
@@ -280,42 +193,42 @@ function ContactRow({
       style={{
         display: "flex",
         alignItems: "center",
-        gap: 13,
-        padding: "11px 16px",
+        gap: 11,
+        padding: "10px 14px",
         cursor: "pointer",
         borderBottom: "1px solid var(--border)",
         background: selected ? "var(--bg-active)" : hov ? "var(--bg-hover)" : "transparent",
-        borderLeft: `2px solid ${selected ? "var(--accent)" : "transparent"}`,
+        borderLeft: `2px solid ${selected ? "var(--accent)" : tone.border}`,
         transition: "background 100ms",
       }}
     >
-      {/* Avatar */}
+      {/* Initials circle */}
       <div
         style={{
-          width: 38,
-          height: 38,
+          width: 34,
+          height: 34,
           borderRadius: "50%",
           flexShrink: 0,
-          background: selected ? "var(--accent)" : "var(--accent-muted)",
-          border: `1px solid ${selected ? "var(--accent)" : "var(--accent-border)"}`,
+          background: selected ? "var(--accent)" : tone.bg,
+          border: `1px solid ${selected ? "var(--accent)" : tone.border}`,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           fontFamily: "var(--font-sans)",
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: 700,
-          color: selected ? "#fff" : "var(--accent)",
+          color: selected ? "#fff" : tone.color,
         }}
       >
         {initialsOf(name)}
       </div>
 
-      {/* Name + company */}
+      {/* Name + company + contact info */}
       <div style={{ flex: "1 1 0", minWidth: 0 }}>
         <div
           style={{
             fontFamily: "var(--font-sans)",
-            fontSize: 13.5,
+            fontSize: 13,
             fontWeight: 600,
             color: "var(--text-primary)",
             overflow: "hidden",
@@ -341,55 +254,53 @@ function ContactRow({
             {firma}
           </div>
         )}
-      </div>
-
-      {/* Contact info */}
-      <div style={{ flex: "1 1 0", minWidth: 0, display: "flex", flexDirection: "column", gap: 3 }}>
-        {phone && (
-          <span
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 5,
-              fontFamily: "var(--font-sans)",
-              fontSize: 11.5,
-              color: "var(--text-secondary)",
-              fontVariantNumeric: "tabular-nums",
-            }}
-          >
-            <Phone size={11} color="var(--text-tertiary)" /> {formatPhone(phone)}
-          </span>
-        )}
-        {email && (
-          <span
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 5,
-              fontFamily: "var(--font-sans)",
-              fontSize: 11.5,
-              color: "var(--text-secondary)",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            <Mail size={11} color="var(--text-tertiary)" /> {email}
-          </span>
-        )}
+        <div style={{ display: "flex", gap: 10, marginTop: 3 }}>
+          {phone && (
+            <span
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+                fontFamily: "var(--font-sans)",
+                fontSize: 11,
+                color: "var(--text-tertiary)",
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              <Phone size={10} /> {formatPhone(phone)}
+            </span>
+          )}
+          {email && (
+            <span
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+                fontFamily: "var(--font-sans)",
+                fontSize: 11,
+                color: "var(--text-tertiary)",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              <Mail size={10} /> {email}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Stage badge */}
       <span
         style={{
           flexShrink: 0,
-          padding: "4px 11px",
+          padding: "3px 9px",
           borderRadius: 99,
           background: tone.bg,
           border: `1px solid ${tone.border}`,
           color: tone.color,
           fontFamily: "var(--font-sans)",
-          fontSize: 11,
+          fontSize: 10.5,
           fontWeight: 700,
           letterSpacing: "0.01em",
         }}
@@ -400,159 +311,152 @@ function ContactRow({
   );
 }
 
-// ── Slide-in panel ────────────────────────────────────────────────────
+// ── Right-panel header (when contact is selected) ─────────────────────
 
-function DetailPanel({
+function DetailHeader({
   row,
   headers,
-  onClose,
+  sheetId,
 }: {
   row: SheetContact;
   headers: string[];
-  onClose: () => void;
+  sheetId: string;
 }) {
-  const panelRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
-  const name = String(row["Nazwa"] ?? row["Firma"] ?? `Rekord #${row._row}`);
-
-  // Person name + contact for the interactive client card (matched by name in "Kontakty").
-  const personKey =
-    headers.find((h) => /imi[eę]\s*i\s*nazwisko/i.test(h)) ??
-    headers.find((h) => /^nazwa$/i.test(h));
-  const personName = personKey ? String(row[personKey] ?? "").trim() : "";
-  const phoneKey = headers.find((h) => /^numer$/i.test(h) || /telefon/i.test(h));
-  const emailKey = headers.find((h) => /e-?mail/i.test(h));
-  const phone = phoneKey ? String(row[phoneKey] ?? "") : undefined;
-  const email = emailKey ? String(row[emailKey] ?? "") : undefined;
+  const { name, firma, phone, email } = contactFields(row, headers);
+  const stage = deriveStage(row, headers);
+  const tone = STAGE_TONES[stage.tone];
 
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        onClick={onClose}
-        style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 40,
-          background: "rgba(0,0,0,0.12)",
-          backdropFilter: "blur(2px)",
-        }}
-      />
-
-      {/* Panel */}
-      <div
-        ref={panelRef}
-        style={{
-          position: "fixed",
-          top: 0,
-          right: 0,
-          bottom: 0,
-          width: 360,
-          zIndex: 41,
-          background: "var(--glass)",
-          backdropFilter: "blur(24px) saturate(180%)",
-          WebkitBackdropFilter: "blur(24px) saturate(180%)",
-          borderLeft: "1px solid var(--glass-border)",
-          boxShadow: "var(--shadow-menu)",
-          display: "flex",
-          flexDirection: "column",
-          overflowY: "auto",
-        }}
-      >
-        {/* Header */}
+    <div
+      style={{
+        padding: "16px 20px 14px",
+        borderBottom: "1px solid var(--border)",
+        flexShrink: 0,
+        background: "var(--glass)",
+        backdropFilter: "var(--glass-blur)",
+        WebkitBackdropFilter: "var(--glass-blur)",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+        {/* Large initials */}
         <div
           style={{
-            padding: "14px 16px",
-            borderBottom: "1px solid var(--border)",
+            width: 44,
+            height: 44,
+            borderRadius: "50%",
+            flexShrink: 0,
+            background: tone.bg,
+            border: `1px solid ${tone.border}`,
             display: "flex",
             alignItems: "center",
-            gap: 10,
-            flexShrink: 0,
+            justifyContent: "center",
+            fontFamily: "var(--font-sans)",
+            fontSize: 15,
+            fontWeight: 700,
+            color: tone.color,
           }}
         >
-          <div style={{ flex: 1 }}>
-            <div
+          {initialsOf(name)}
+        </div>
+
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <span
               style={{
                 fontFamily: "var(--font-sans)",
-                fontSize: 14,
-                fontWeight: 600,
+                fontSize: 16,
+                fontWeight: 700,
                 color: "var(--text-primary)",
-                letterSpacing: "-0.01em",
+                letterSpacing: "-0.02em",
               }}
             >
               {name}
+            </span>
+            <span
+              style={{
+                padding: "3px 9px",
+                borderRadius: 99,
+                background: tone.bg,
+                border: `1px solid ${tone.border}`,
+                color: tone.color,
+                fontFamily: "var(--font-sans)",
+                fontSize: 11,
+                fontWeight: 700,
+              }}
+            >
+              {stage.label}
+            </span>
+          </div>
+
+          {firma && firma !== name && (
+            <div
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 12,
+                color: "var(--text-tertiary)",
+                marginTop: 2,
+              }}
+            >
+              {firma}
             </div>
-            {row["Firma"] && row["Nazwa"] && row["Firma"] !== name && (
-              <div
+          )}
+
+          <div style={{ display: "flex", gap: 14, marginTop: 6, flexWrap: "wrap" }}>
+            {phone && (
+              <a
+                href={`tel:${phone.replace(/\s/g, "")}`}
                 style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 5,
                   fontFamily: "var(--font-sans)",
-                  fontSize: 11,
-                  color: "var(--text-tertiary)",
-                  marginTop: 2,
+                  fontSize: 12,
+                  color: "var(--text-secondary)",
+                  textDecoration: "none",
                 }}
               >
-                {String(row["Firma"])}
-              </div>
+                <Phone size={12} color="var(--text-tertiary)" />
+                {formatPhone(phone)}
+              </a>
             )}
+            {email && (
+              <a
+                href={`mailto:${email}`}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 5,
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 12,
+                  color: "var(--text-secondary)",
+                  textDecoration: "none",
+                }}
+              >
+                <Mail size={12} color="var(--text-tertiary)" />
+                {email}
+              </a>
+            )}
+            <a
+              href={`https://docs.google.com/spreadsheets/d/${sheetId}`}
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+                fontFamily: "var(--font-sans)",
+                fontSize: 12,
+                color: "var(--accent)",
+                textDecoration: "none",
+              }}
+            >
+              <ExternalLink size={12} />
+              Arkusz
+            </a>
           </div>
-          <button
-            onClick={onClose}
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: 4,
-              color: "var(--text-tertiary)",
-              display: "flex",
-              alignItems: "center",
-            }}
-          >
-            <X size={16} />
-          </button>
         </div>
-
-        {/* Interactive client card (Kontakty) */}
-        {personName ? (
-          <div style={{ padding: 16 }}>
-            <KartaKlienta clientName={personName} phone={phone} email={email} />
-          </div>
-        ) : (
-          /* Fallback: raw fields when no person name detected */
-          <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 14 }}>
-            {headers.map((h) => {
-              const val = String(row[h] ?? "");
-              if (!val || val === "—") return null;
-              return (
-                <div key={h}>
-                  <div
-                    style={{
-                      fontFamily: "var(--font-sans)",
-                      fontSize: 10,
-                      fontWeight: 600,
-                      color: "var(--text-tertiary)",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.07em",
-                      marginBottom: 3,
-                    }}
-                  >
-                    {h}
-                  </div>
-                  <CellValue header={h} value={val} />
-                </div>
-              );
-            })}
-          </div>
-        )}
       </div>
-    </>
+    </div>
   );
 }
 
@@ -631,38 +535,39 @@ export default function AgencjaPage() {
     );
   });
 
-  // KPI: rozkład etapów wśród widocznych rekordów.
   const stageTones = filtered.map((r) => deriveStage(r, displayHeaders).tone);
   const kpiClients = stageTones.filter((t) => t === "success").length;
   const kpiInProcess = stageTones.filter((t) => t === "amber" || t === "purple").length;
   const kpiFresh = stageTones.filter((t) => t === "accent" || t === "neutral").length;
 
+  const selectedName = selected ? contactFields(selected, displayHeaders).name : null;
+
   return (
     <div
       style={{
-        height: "100%",
+        height: "100dvh",
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
         background: "var(--bg)",
       }}
     >
-      {/* Top bar */}
+      {/* ── Top bar ── */}
       <div
         style={{
           height: 48,
           flexShrink: 0,
           display: "flex",
           alignItems: "center",
-          gap: 12,
-          padding: "0 20px",
+          gap: 10,
+          padding: "0 18px",
           background: "var(--glass)",
           backdropFilter: "var(--glass-blur)",
           WebkitBackdropFilter: "var(--glass-blur)",
           borderBottom: "1px solid var(--border)",
         }}
       >
-        <Users size={15} color="var(--accent)" />
+        <Users size={14} color="var(--accent)" />
         <span
           style={{
             fontFamily: "var(--font-sans)",
@@ -678,11 +583,7 @@ export default function AgencjaPage() {
 
         {data && (
           <span
-            style={{
-              fontFamily: "var(--font-sans)",
-              fontSize: 11,
-              color: "var(--text-tertiary)",
-            }}
+            style={{ fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--text-tertiary)" }}
           >
             {filtered.length} rekordów
           </span>
@@ -698,7 +599,7 @@ export default function AgencjaPage() {
             }}
           >
             {syncResult.errors.length > 0
-              ? `${syncResult.created} dodano · ${syncResult.errors.length} błędów`
+              ? `${syncResult.created} dodano, ${syncResult.errors.length} błędów`
               : `Dodano ${syncResult.created} leadów`}
           </span>
         )}
@@ -706,7 +607,7 @@ export default function AgencjaPage() {
         <button
           onClick={syncLeads}
           disabled={syncing || loading}
-          title="Dodaj wszystkich kontaktów z arkusza do Notion Pipeline jako Nowy lead"
+          title="Dodaj kontakty z arkusza do Notion Pipeline"
           style={{
             display: "flex",
             alignItems: "center",
@@ -725,28 +626,6 @@ export default function AgencjaPage() {
           <Upload size={11} style={{ animation: syncing ? "spin 0.8s linear infinite" : "none" }} />
           {syncing ? "Synchronizuję..." : "Synchronizuj leadów"}
         </button>
-
-        <a
-          href={`https://docs.google.com/spreadsheets/d/${SHEET_ID}`}
-          target="_blank"
-          rel="noreferrer"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 5,
-            padding: "5px 10px",
-            borderRadius: "var(--radius-xs)",
-            textDecoration: "none",
-            border: "1px solid var(--border)",
-            background: "transparent",
-            fontFamily: "var(--font-sans)",
-            fontSize: 12,
-            color: "var(--text-secondary)",
-          }}
-        >
-          <ExternalLink size={11} />
-          Arkusz
-        </a>
 
         <button
           onClick={load}
@@ -775,258 +654,324 @@ export default function AgencjaPage() {
         </button>
       </div>
 
-      {/* Body */}
-      <div style={{ flex: 1, overflow: "hidden", padding: 16 }}>
-        {/* Error states */}
-        {error === "not_connected" && (
-          <Panel style={{ padding: 20, textAlign: "center" }}>
-            <div
-              style={{
-                fontFamily: "var(--font-sans)",
-                fontSize: 13,
-                color: "var(--text-secondary)",
-                marginBottom: 12,
-                lineHeight: 1.6,
-              }}
-            >
-              Połącz konto Google, aby zobaczyć kontakty z arkusza.
-            </div>
-            <a
-              href="/profil"
-              style={{
-                display: "inline-block",
-                padding: "7px 16px",
-                borderRadius: "var(--radius-sm)",
-                background: "var(--accent)",
-                color: "#fff",
-                fontFamily: "var(--font-sans)",
-                fontSize: 12,
-                fontWeight: 600,
-                textDecoration: "none",
-              }}
-            >
-              Połącz Google
-            </a>
-          </Panel>
-        )}
-
-        {error === "scope_required" && (
-          <Panel style={{ padding: 16, borderLeft: "3px solid var(--warning)" }}>
-            <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-              <AlertCircle
-                size={15}
-                color="var(--warning)"
-                style={{ flexShrink: 0, marginTop: 1 }}
-              />
-              <div>
-                <div
-                  style={{
-                    fontFamily: "var(--font-sans)",
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: "var(--text-primary)",
-                    marginBottom: 4,
-                  }}
-                >
-                  Wymagane uprawnienia do arkuszy
-                </div>
-                <div
-                  style={{
-                    fontFamily: "var(--font-sans)",
-                    fontSize: 12,
-                    color: "var(--text-secondary)",
-                    marginBottom: 10,
-                    lineHeight: 1.5,
-                  }}
-                >
-                  Połączenie Google nie ma dostępu do Arkuszy. Rozłącz i połącz ponownie na stronie
-                  Profil.
-                </div>
-                <a
-                  href="/profil"
-                  style={{
-                    display: "inline-block",
-                    padding: "5px 12px",
-                    borderRadius: "var(--radius-xs)",
-                    background: "var(--warning)",
-                    color: "#fff",
-                    fontFamily: "var(--font-sans)",
-                    fontSize: 12,
-                    fontWeight: 600,
-                    textDecoration: "none",
-                  }}
-                >
-                  Idź do Profilu
-                </a>
-              </div>
-            </div>
-          </Panel>
-        )}
-
-        {error === "failed" && (
-          <Panel style={{ padding: 16 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <AlertCircle size={14} color="var(--error)" />
-              <span
+      {/* ── Body ── */}
+      {error === "not_connected" ||
+      error === "scope_required" ||
+      error === "failed" ||
+      (loading && !error) ? (
+        <div style={{ flex: 1, overflow: "auto", padding: 16 }}>
+          {error === "not_connected" && (
+            <Panel style={{ padding: 20, textAlign: "center" }}>
+              <div
                 style={{
                   fontFamily: "var(--font-sans)",
                   fontSize: 13,
                   color: "var(--text-secondary)",
+                  marginBottom: 12,
+                  lineHeight: 1.6,
                 }}
               >
-                Błąd ładowania arkusza.
-              </span>
-              <button
-                onClick={load}
+                Połącz konto Google, aby zobaczyć kontakty z arkusza.
+              </div>
+              <a
+                href="/profil"
                 style={{
-                  background: "none",
-                  border: "none",
-                  color: "var(--accent)",
-                  cursor: "pointer",
-                  fontSize: 13,
+                  display: "inline-block",
+                  padding: "7px 16px",
+                  borderRadius: "var(--radius-sm)",
+                  background: "var(--accent)",
+                  color: "#fff",
                   fontFamily: "var(--font-sans)",
-                  padding: 0,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  textDecoration: "none",
                 }}
               >
-                Spróbuj ponownie
-              </button>
-            </div>
-          </Panel>
-        )}
+                Połącz Google
+              </a>
+            </Panel>
+          )}
 
-        {loading && !error && (
-          <div
-            style={{
-              fontFamily: "var(--font-sans)",
-              fontSize: 13,
-              color: "var(--text-tertiary)",
-              textAlign: "center",
-              paddingTop: 40,
-            }}
-          >
-            Wczytywanie arkusza...
-          </div>
-        )}
+          {error === "scope_required" && (
+            <Panel style={{ padding: 16, borderLeft: "3px solid var(--warning)" }}>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                <AlertCircle
+                  size={15}
+                  color="var(--warning)"
+                  style={{ flexShrink: 0, marginTop: 1 }}
+                />
+                <div>
+                  <div
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: "var(--text-primary)",
+                      marginBottom: 4,
+                    }}
+                  >
+                    Wymagane uprawnienia do arkuszy
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 12,
+                      color: "var(--text-secondary)",
+                      marginBottom: 10,
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    Połączenie Google nie ma dostępu do Arkuszy. Rozłącz i połącz ponownie na
+                    stronie Profil.
+                  </div>
+                  <a
+                    href="/profil"
+                    style={{
+                      display: "inline-block",
+                      padding: "5px 12px",
+                      borderRadius: "var(--radius-xs)",
+                      background: "var(--warning)",
+                      color: "#fff",
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 12,
+                      fontWeight: 600,
+                      textDecoration: "none",
+                    }}
+                  >
+                    Idź do Profilu
+                  </a>
+                </div>
+              </div>
+            </Panel>
+          )}
 
-        {!loading && data && (
-          <div style={{ height: "100%", display: "flex", flexDirection: "column", gap: 12 }}>
-            {/* KPI strip */}
+          {error === "failed" && (
+            <Panel style={{ padding: 16 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <AlertCircle size={14} color="var(--error)" />
+                <span
+                  style={{
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 13,
+                    color: "var(--text-secondary)",
+                  }}
+                >
+                  Błąd ładowania arkusza.
+                </span>
+                <button
+                  onClick={load}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "var(--accent)",
+                    cursor: "pointer",
+                    fontSize: 13,
+                    fontFamily: "var(--font-sans)",
+                    padding: 0,
+                  }}
+                >
+                  Spróbuj ponownie
+                </button>
+              </div>
+            </Panel>
+          )}
+
+          {loading && !error && (
             <div
-              className="responsive-grid-2"
               style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(4, 1fr)",
-                gap: 10,
-                flexShrink: 0,
+                fontFamily: "var(--font-sans)",
+                fontSize: 13,
+                color: "var(--text-tertiary)",
+                textAlign: "center",
+                paddingTop: 40,
               }}
             >
-              <Kpi label="Łącznie kontaktów" value={filtered.length} tone="neutral" icon={Users} />
-              <Kpi
-                label="Pozyskani klienci"
-                value={kpiClients}
-                tone="success"
-                icon={CheckCircle2}
-              />
-              <Kpi
-                label="W procesie sprzedaży"
-                value={kpiInProcess}
-                tone="amber"
-                icon={TrendingUp}
-              />
-              <Kpi label="Nowi / kwalifikacja" value={kpiFresh} tone="accent" icon={UserPlus} />
+              Wczytywanie arkusza...
+            </div>
+          )}
+        </div>
+      ) : (
+        /* ── Split-view layout ── */
+        <div
+          style={{
+            flex: 1,
+            minHeight: 0,
+            display: "flex",
+            flexDirection: "row",
+          }}
+          className="responsive-split"
+        >
+          {/* ── LEFT: contact list (320px) ── */}
+          <div
+            style={{
+              width: 320,
+              flexShrink: 0,
+              display: "flex",
+              flexDirection: "column",
+              borderRight: "1px solid var(--border)",
+              height: "100%",
+              overflow: "hidden",
+            }}
+          >
+            {/* KPI 2×2 grid */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 8,
+                padding: "12px 12px 8px",
+                flexShrink: 0,
+                borderBottom: "1px solid var(--border)",
+              }}
+            >
+              <Kpi label="Łącznie" value={filtered.length} tone="neutral" icon={Users} />
+              <Kpi label="Klienci" value={kpiClients} tone="success" icon={CheckCircle2} />
+              <Kpi label="W procesie" value={kpiInProcess} tone="amber" icon={TrendingUp} />
+              <Kpi label="Nowi" value={kpiFresh} tone="accent" icon={UserPlus} />
             </div>
 
             {/* Search */}
-            <div style={{ position: "relative", maxWidth: 340, flexShrink: 0 }}>
-              <Search
-                size={13}
-                color="var(--text-tertiary)"
-                style={{
-                  position: "absolute",
-                  left: 10,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  pointerEvents: "none",
-                }}
-              />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Szukaj po nazwie, firmie, telefonie, e-mailu…"
-                style={{
-                  width: "100%",
-                  padding: "8px 10px 8px 32px",
-                  border: "1px solid var(--border)",
-                  borderRadius: "var(--radius-sm)",
-                  background: "var(--glass)",
-                  backdropFilter: "var(--glass-blur)",
-                  fontFamily: "var(--font-sans)",
-                  fontSize: 12,
-                  color: "var(--text-primary)",
-                  outline: "none",
-                  boxSizing: "border-box",
-                }}
-              />
-            </div>
-
-            {/* Contact list */}
-            <Panel
+            <div
               style={{
-                padding: 0,
-                overflow: "hidden",
-                flex: 1,
-                display: "flex",
-                flexDirection: "column",
-                minHeight: 0,
+                padding: "8px 12px",
+                flexShrink: 0,
+                borderBottom: "1px solid var(--border)",
               }}
             >
-              <div style={{ overflowY: "auto", flex: 1 }}>
-                {filtered.length === 0 ? (
-                  <div
-                    style={{
-                      padding: "40px 16px",
-                      textAlign: "center",
-                      fontFamily: "var(--font-sans)",
-                      fontSize: 13,
-                      color: "var(--text-tertiary)",
-                    }}
-                  >
-                    {search ? `Brak wyników dla „${search}"` : "Brak danych"}
-                  </div>
-                ) : (
-                  filtered.map((row) => (
-                    <ContactRow
-                      key={row._row}
-                      row={row}
-                      headers={displayHeaders}
-                      selected={selected?._row === row._row}
-                      onClick={() => setSelected(row)}
-                    />
-                  ))
-                )}
+              <div style={{ position: "relative" }}>
+                <Search
+                  size={12}
+                  color="var(--text-tertiary)"
+                  style={{
+                    position: "absolute",
+                    left: 9,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    pointerEvents: "none",
+                  }}
+                />
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Szukaj kontaktu..."
+                  style={{
+                    width: "100%",
+                    padding: "7px 9px 7px 28px",
+                    border: "1px solid var(--border)",
+                    borderRadius: "var(--radius-sm)",
+                    background: "var(--bg-elevated)",
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 12,
+                    color: "var(--text-primary)",
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                />
               </div>
-            </Panel>
+            </div>
 
-            {data.lastSync && (
+            {/* Contact list — scrollable */}
+            <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
+              {filtered.length === 0 ? (
+                <div
+                  style={{
+                    padding: "32px 16px",
+                    textAlign: "center",
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 13,
+                    color: "var(--text-tertiary)",
+                  }}
+                >
+                  {search ? `Brak wyników dla „${search}"` : "Brak danych"}
+                </div>
+              ) : (
+                filtered.map((row) => (
+                  <ContactRow
+                    key={row._row}
+                    row={row}
+                    headers={displayHeaders}
+                    selected={selected?._row === row._row}
+                    onClick={() => setSelected(row)}
+                  />
+                ))
+              )}
+            </div>
+
+            {/* Sync timestamp */}
+            {data?.lastSync && (
               <div
                 style={{
+                  padding: "6px 12px",
+                  flexShrink: 0,
+                  borderTop: "1px solid var(--border)",
                   fontFamily: "var(--font-sans)",
                   fontSize: 10,
                   color: "var(--text-tertiary)",
-                  textAlign: "right",
-                  flexShrink: 0,
                 }}
               >
                 Sync: {new Date(data.lastSync).toLocaleString("pl-PL")}
               </div>
             )}
           </div>
-        )}
-      </div>
 
-      {/* Slide-in detail panel */}
-      {selected && (
-        <DetailPanel row={selected} headers={displayHeaders} onClose={() => setSelected(null)} />
+          {/* ── RIGHT: detail / karta klienta ── */}
+          <div
+            style={{
+              flex: 1,
+              minWidth: 0,
+              display: "flex",
+              flexDirection: "column",
+              height: "100%",
+              overflow: "hidden",
+              background: "var(--bg)",
+            }}
+          >
+            {selected ? (
+              <>
+                <DetailHeader row={selected} headers={displayHeaders} sheetId={SHEET_ID} />
+                <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
+                  <KartaKlienta clientName={selectedName ?? ""} />
+                </div>
+              </>
+            ) : (
+              <div
+                style={{
+                  flex: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 10,
+                  padding: 32,
+                }}
+              >
+                <Users size={36} color="var(--border)" strokeWidth={1.2} />
+                <div
+                  style={{
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 14,
+                    fontWeight: 600,
+                    color: "var(--text-tertiary)",
+                  }}
+                >
+                  Wybierz kontakt z listy
+                </div>
+                <div
+                  style={{
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 12,
+                    color: "var(--text-tertiary)",
+                    textAlign: "center",
+                    maxWidth: 260,
+                    lineHeight: 1.6,
+                  }}
+                >
+                  Kliknij na kontakt po lewej, aby zobaczyć kartę klienta i historię rozmów.
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
