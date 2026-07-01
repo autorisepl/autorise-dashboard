@@ -1971,6 +1971,8 @@ interface Objection {
   sms?: string;
   extra?: string;
   type?: "sms" | "fb";
+  note?: string;
+  followup?: string;
 }
 interface IcpRule {
   ok: boolean;
@@ -2230,7 +2232,8 @@ const OBJECTIONS_K: Objection[] = [
     id: "ok9",
     label: "Muszę porozmawiać ze wspólnikiem / synem / żoną",
     script:
-      "Rozumiem. Na spotkaniu online mogliby Państwo dołączyć we dwoje — czy byłoby to możliwe? Albo może Pan najpierw zobaczyć jak to działa, a potem zdecydujecie?",
+      "Oczywiście. Czy mogliby Państwo dołączyć we dwoje na spotkanie przez internet? Mamy 45 minut, będzie prościej ocenić razem niż potem tłumaczyć. Który termin pasowałby Państwu — jutro czy pojutrze?",
+    note: "Jeśli partner/małżonek nie może dołączyć: 'Rozumiem. Mogę dołożyć 15 minut po naszym spotkaniu na pytania z jej/jego strony — jak będziecie razem. Pasuje?' Odnotuj w Pipeline: 'decydent niepewny'.",
   },
   {
     id: "ok10",
@@ -2542,12 +2545,24 @@ const STEPS_D: Step[] = [
     tag: "MÓWISZ" as const,
     duration: "~1 min",
     lines: [
-      { t: "note", text: "NIE przechodzisz do ceny bez tego pytania. To jest checkpoint który zabezpiecza closing. Klient który odpowie TAK sam sobie sprzedaje." },
-      { t: "say", text: "Zanim przejdę do ceny — jeżeli finanse okażą się być akceptowalne, czy ten model współpracy z Tobą rezonuje i widzisz siebie w tym rozwiązaniu?" },
+      {
+        t: "note",
+        text: "NIE przechodzisz do ceny bez tego pytania. To jest checkpoint który zabezpiecza closing. Klient który odpowie TAK sam sobie sprzedaje.",
+      },
+      {
+        t: "say",
+        text: "Zanim przejdę do ceny — jeżeli finanse okażą się być akceptowalne, czy ten model współpracy z Tobą rezonuje i widzisz siebie w tym rozwiązaniu?",
+      },
       { t: "client", text: "Tak, tak to widzę. / Musiałbym się jeszcze upewnić w jednej kwestii." },
       { t: "say", text: "A co spowodowało że to powiedziałeś?" },
-      { t: "note", text: "STOP. Czekasz. Klient mówi. Nie przerywasz. To zdanie jest najważniejsze w całym spotkaniu." },
-      { t: "branch-bad", text: "Jeśli klient NIE lub niepewny — wróć do Kroku 4. Zapytaj co jest niejasne. Nie idź do ceny." },
+      {
+        t: "note",
+        text: "STOP. Czekasz. Klient mówi. Nie przerywasz. To zdanie jest najważniejsze w całym spotkaniu.",
+      },
+      {
+        t: "branch-bad",
+        text: "Jeśli klient NIE lub niepewny — wróć do Kroku 4. Zapytaj co jest niejasne. Nie idź do ceny.",
+      },
     ],
   },
   {
@@ -2602,13 +2617,22 @@ const OBJECTIONS_D: Objection[] = [
     id: "od1",
     label: "Muszę się zastanowić",
     script:
-      "Rozumiem. Co konkretnie chciałby Pan przemyśleć — może mogę Panu pomóc to rozwiązać od razu?",
+      "Jasne. Większość osób które mówią że muszą to przemyśleć, ma w głowie albo konkretną wątpliwość co do rozwiązania, albo kwestię finansową, albo kogoś kto musi zaakceptować. Które z tych trzech to jest u Pana?",
+    note: "Branching: wątpliwość: 'Co konkretnie chciałby Pan mieć pewniejsze?' | finanse: obiekcja od3 | ktoś inny: objekcja od2 | brak konkretyzacji: 'Kiedy realnie ma Pan czas to przemyśleć — dni czy tydzień?' + konkretna data follow-up",
   },
   {
     id: "od2",
-    label: "Muszę porozmawiać z żoną / wspólnikiem",
-    script:
-      "Rozumiem. Kiedy planuje Pan tę rozmowę? Umówmy się że [data] zadzwonię aby móc odpowiedzieć na ewentualne pytania.",
+    label: "Muszę porozmawiać z żoną / partnerem życiowym",
+    script: "To rozumiem i szanuję. Kiedy macie Państwo chwilę żeby to razem przedyskutować — dziś wieczór?",
+    followup:
+      "Przygotuję Panu krótkie podsumowanie — co konkretnie omawialiśmy, jakie efekty i co inwestycja wynosi — żeby mógł Pan pokazać bez potrzeby tłumaczenia wszystkiego od zera. Wyślę na WhatsApp zaraz po naszej rozmowie. I zadzwonię [data 1-2 dni po ich rozmowie] — żeby wiedzieć jak poszło. Pasuje Panu rano czy wieczorem?",
+  },
+  {
+    id: "od2b",
+    label: "Muszę porozmawiać z partnerem biznesowym / wspólnikiem",
+    script: "Oczywiście. Kiedy macie Państwo czas żeby to omówić — dziś czy jutro?",
+    followup:
+      "Przygotuję krótkie 4-5 zdań podsumowania dla wspólnika — co ustaliliśmy i jaka jest inwestycja — żeby nie trzeba było wszystkiego tłumaczyć od zera. I umówmy się że [data] się odezwę żeby wiedzieć co postanowiliście. Rano czy po południu?",
   },
   {
     id: "od3",
@@ -3392,6 +3416,67 @@ function ScriptTab({
                       >
                         {fill(obj.script)}
                       </p>
+                    )}
+                    {obj.note && (
+                      <div
+                        style={{
+                          marginTop: 8,
+                          padding: "6px 10px",
+                          background: "var(--warning-bg)",
+                          borderRadius: "var(--radius-xs)",
+                          fontSize: 11,
+                          color: "var(--warning)",
+                          fontFamily: "var(--font-sans)",
+                          fontStyle: "italic",
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        {obj.note}
+                      </div>
+                    )}
+                    {obj.followup && (
+                      <div style={{ marginTop: 10 }}>
+                        <div
+                          style={{
+                            fontSize: 9,
+                            fontWeight: 700,
+                            letterSpacing: "0.08em",
+                            textTransform: "uppercase",
+                            color: "var(--text-tertiary)",
+                            marginBottom: 4,
+                            fontFamily: "var(--font-sans)",
+                          }}
+                        >
+                          Następnie powiedz
+                        </div>
+                        <p
+                          style={{
+                            margin: 0,
+                            fontSize: 12,
+                            color: "var(--text-secondary)",
+                            fontFamily: "var(--font-sans)",
+                            lineHeight: 1.6,
+                          }}
+                        >
+                          {fill(obj.followup)}
+                        </p>
+                        <button
+                          onClick={() => copyText(obj.id + "_followup", obj.followup!)}
+                          style={{
+                            marginTop: 6,
+                            fontSize: 11,
+                            padding: "2px 8px",
+                            border: "1px solid var(--border)",
+                            borderRadius: "var(--radius-xs)",
+                            background: "transparent",
+                            cursor: "pointer",
+                            color: "var(--text-secondary)",
+                            fontFamily: "var(--font-sans)",
+                          }}
+                        >
+                          {copied === obj.id + "_followup" ? "✓ Skopiowano" : "Kopiuj"}
+                        </button>
+                      </div>
                     )}
                     {obj.sms && (
                       <div style={{ marginTop: obj.script ? 8 : 0, position: "relative" }}>
