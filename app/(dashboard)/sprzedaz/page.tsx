@@ -2005,12 +2005,12 @@ const STEPS_K: Step[] = [
       { t: "client", text: "Tak, słucham." },
       {
         t: "say",
-        text: "Michał Roth z Autorise. Dzwonię, ponieważ wypełnił Pan formularz na Facebooku w sprawie odzyskania czasu w Pana firmie transportowej.",
+        text: "Michał Roth z Autorise. Dzwonię, ponieważ wypełnił Pan formularz na Facebooku w sprawie odzyskania minimum 80 godzin miesięcznie w Pana firmie transportowej.",
       },
       { t: "say", text: "Zgadza się?" },
       { t: "client", text: "Tak. / Hmm, nie pamiętam. / Że co?" },
       { t: "branch", text: "Nie pamięta: użyj obiekcji 'Nie pamiętam formularza'" },
-      { t: "say", text: "Ma Pan teraz 2–3 minuty?" },
+      { t: "say", text: "Ma Pan teraz 2 minuty?" },
       { t: "branch", text: "TAK: Krok 2. NIE: użyj obiekcji 'Nie mam teraz czasu'" },
     ],
   },
@@ -2297,7 +2297,7 @@ const STEPS_D: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Proponuję żebyśmy zaczęli od kilku pytań z mojej strony — chcę dobrze zrozumieć Pana sytuację.",
+        text: "Na naszej rozmowie telefonicznej zebrałem podstawowe informacje — dziś chcę zejść znacznie głębiej w to co jest dla Pana najważniejsze.",
       },
       {
         t: "say",
@@ -2533,6 +2533,21 @@ const STEPS_D: Step[] = [
         t: "say",
         text: "Widzi Pan jak to bezpośrednio rozwiązuje [ból który wymienił w Kroku 2]?",
       },
+    ],
+  },
+  {
+    id: "commitment_question",
+    nr: "5a",
+    label: "COMMITMENT QUESTION (OBOWIĄZKOWE PRZED CENĄ)",
+    tag: "MÓWISZ" as const,
+    duration: "~1 min",
+    lines: [
+      { t: "note", text: "NIE przechodzisz do ceny bez tego pytania. To jest checkpoint który zabezpiecza closing. Klient który odpowie TAK sam sobie sprzedaje." },
+      { t: "say", text: "Zanim przejdę do ceny — jeżeli finanse okażą się być akceptowalne, czy ten model współpracy z Tobą rezonuje i widzisz siebie w tym rozwiązaniu?" },
+      { t: "client", text: "Tak, tak to widzę. / Musiałbym się jeszcze upewnić w jednej kwestii." },
+      { t: "say", text: "A co spowodowało że to powiedziałeś?" },
+      { t: "note", text: "STOP. Czekasz. Klient mówi. Nie przerywasz. To zdanie jest najważniejsze w całym spotkaniu." },
+      { t: "branch-bad", text: "Jeśli klient NIE lub niepewny — wróć do Kroku 4. Zapytaj co jest niejasne. Nie idź do ceny." },
     ],
   },
   {

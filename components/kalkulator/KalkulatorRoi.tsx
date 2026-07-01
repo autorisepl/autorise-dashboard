@@ -28,6 +28,7 @@ function Field({
   placeholder,
   suffix,
   min,
+  max,
   readOnly,
 }: {
   label: string;
@@ -37,6 +38,7 @@ function Field({
   placeholder?: string;
   suffix?: string;
   min?: number;
+  max?: number;
   readOnly?: boolean;
 }) {
   const [focused, setFocused] = useState(false);
@@ -59,6 +61,7 @@ function Field({
           onChange={(e) => onChange?.(e.target.value)}
           placeholder={placeholder}
           min={min}
+          max={max}
           readOnly={readOnly}
           style={{
             flex: 1,
@@ -471,6 +474,15 @@ export function KalkulatorRoi({ embedded = false, initialClientName }: Kalkulato
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [savedClient, setSavedClient] = useState<string | null>(null);
+  const [windowWidth, setWindowWidth] = useState(
+    typeof window !== "undefined" ? window.innerWidth : 1200,
+  );
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     if (initialClientName) setNazwaKlienta(initialClientName);
@@ -759,7 +771,7 @@ export function KalkulatorRoi({ embedded = false, initialClientName }: Kalkulato
                   alignItems: "center",
                   gap: 8,
                   padding: "8px 12px",
-                  minWidth: 220,
+                  width: "100%",
                   background: "var(--bg-elevated)",
                   border: `1px solid ${clientDropdownOpen ? ACCENT : "var(--border)"}`,
                   borderRadius: 9,
@@ -926,7 +938,14 @@ export function KalkulatorRoi({ embedded = false, initialClientName }: Kalkulato
       </div>
 
       {/* ── Main grid ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, maxWidth: 900 }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: windowWidth < 680 ? "1fr" : "1fr 1fr",
+          gap: 24,
+          maxWidth: 900,
+        }}
+      >
         {/* LEFT — Inputs */}
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {/* ── Universal section (zawsze aktywny) ── */}
@@ -1096,7 +1115,13 @@ export function KalkulatorRoi({ embedded = false, initialClientName }: Kalkulato
                     onChange={setGodzinyWpisywania}
                     suffix="h"
                     min={0}
+                    max={8}
                   />
+                  {Number(godzinyWpisywania) > 8 && (
+                    <div style={{ color: "var(--error)", fontSize: 11, marginTop: 2 }}>
+                      Maksymalnie 8 godzin dziennie na osobę. Wpisałeś {godzinyWpisywania}h — czy chodziło o h/mc?
+                    </div>
+                  )}
                 </div>
               )}
             </div>
