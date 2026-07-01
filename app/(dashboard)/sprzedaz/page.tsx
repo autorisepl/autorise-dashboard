@@ -8,6 +8,7 @@ import {
   Check,
   CheckCircle2,
   ChevronDown,
+  FileText,
   GitBranch,
   Loader2,
   MessageSquare,
@@ -1520,7 +1521,14 @@ function TabBtn({
 // ── Page ──────────────────────────────────────────────────────────────
 
 export default function SprzedazPage() {
-  const [tab, setTab] = useState<Tab>("pipeline");
+  const [tab, setTab] = useState<Tab>(() => {
+    if (typeof window === "undefined") return "pipeline";
+    return (localStorage.getItem("sprzedaz_active_tab") as Tab) ?? "pipeline";
+  });
+  const changeTab = (t: Tab) => {
+    localStorage.setItem("sprzedaz_active_tab", t);
+    setTab(t);
+  };
   const [clients, setClients] = useState<PipelineClientDetailed[]>([]);
   const [loading, setLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -1558,7 +1566,7 @@ export default function SprzedazPage() {
   const handleSelectClient = useCallback((c: PipelineClientDetailed, switchTab?: boolean) => {
     setSelectedClient(c);
     if (switchTab) {
-      setTab(DISCOVERY_STATUSES.includes(c.status) ? "sprzedazowa" : "kwalifikacyjna");
+      changeTab(DISCOVERY_STATUSES.includes(c.status) ? "sprzedazowa" : "kwalifikacyjna");
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -1607,31 +1615,31 @@ export default function SprzedazPage() {
             icon={<GitBranch size={13} />}
             label="Pipeline"
             active={tab === "pipeline"}
-            onClick={() => setTab("pipeline")}
+            onClick={() => changeTab("pipeline")}
           />
           <TabBtn
             icon={<Phone size={13} />}
             label="Skrypt kwalifikacyjny"
             active={tab === "kwalifikacyjna"}
-            onClick={() => setTab("kwalifikacyjna")}
+            onClick={() => changeTab("kwalifikacyjna")}
           />
           <TabBtn
             icon={<Monitor size={13} />}
             label="Skrypt sprzedażowy"
             active={tab === "sprzedazowa"}
-            onClick={() => setTab("sprzedazowa")}
+            onClick={() => changeTab("sprzedazowa")}
           />
           <TabBtn
             icon={<Calculator size={13} />}
             label="Kalkulator ROI"
             active={tab === "roi"}
-            onClick={() => setTab("roi")}
+            onClick={() => changeTab("roi")}
           />
           <TabBtn
             icon={<MessageSquare size={13} />}
             label="Wiadomości"
             active={tab === "wiadomosci"}
-            onClick={() => setTab("wiadomosci")}
+            onClick={() => changeTab("wiadomosci")}
           />
         </div>
 
@@ -2015,7 +2023,11 @@ const STEPS_K: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Żebym dobrze zrozumiał Pana sytuację — jakie wyzwania ma Pan teraz w firmie z obsługą zleceń i dokumentacją?",
+        text: "Co spowodowało że właśnie teraz zdecydował się Pan wypełnić ten formularz?",
+      },
+      {
+        t: "note",
+        text: "To JEDNO pytanie. Nie pytasz o wyzwania. Pytasz co wywołało akcję. Klient opowie co go boli — sam, bez naprowadzania na konkretny obszar.",
       },
       { t: "note", text: "Słuchasz. Notujesz. NIE przerywasz." },
       { t: "client", text: "Klient opowiada." },
@@ -2097,6 +2109,37 @@ const STEPS_K: Step[] = [
       {
         t: "note",
         text: '"Od razu" = silna gotowość. "Musiałbym zobaczyć" = kontynuuj, zaproponuj Discovery.',
+      },
+    ],
+  },
+  {
+    id: "brak_bolu",
+    nr: "2x",
+    label: "KLIENT MÓWI ŻE NIE MA PROBLEMÓW",
+    tag: "AKCJA" as const,
+    lines: [
+      {
+        t: "note",
+        text: '"Nie ma problemów" = reakcja obronna jak "nie mam czasu". Drążysz DWA razy, potem wychodzisz gracefully.',
+      },
+      { t: "say", text: "To co spowodowało że w ogóle formularz Pan wypełnił?" },
+      {
+        t: "client",
+        text: "No, zobaczyłem reklamę i pomyślałem... / Po prostu sprawdzam co jest na rynku.",
+      },
+      {
+        t: "say",
+        text: "Rozumiem. A jak wygląda sytuacja kiedy nagle przychodzi dużo zleceń naraz albo spedytor jest nieobecny?",
+      },
+      { t: "client", text: "No, wtedy jest ciężej... / Dajemy radę jakoś." },
+      { t: "note", text: "Jeśli po DWÓCH próbach nadal brak bólu — graceful exit:" },
+      {
+        t: "say",
+        text: "Panie {IMIĘ}, jeśli u Pana wszystko gra sprawnie, to pewnie nie będę w stanie zaproponować czegoś co realnie zmieni sytuację. Nie chcę tracić Pana czasu. Jeśli coś się zmieni — jestem tutaj.",
+      },
+      {
+        t: "action",
+        text: 'AKCJA: Status "Nieaktywny (follow up)", re-engagement +90 dni. Koniec rozmowy.',
       },
     ],
   },
@@ -2265,45 +2308,69 @@ const STEPS_D: Step[] = [
     ],
   },
   {
+    id: "przejscie_k_info",
+    nr: "1c",
+    label: "PODSUMOWANIE Z KWALIFIKACJI",
+    tag: "MÓWISZ" as const,
+    duration: "~1 min",
+    lines: [
+      {
+        t: "note",
+        text: "Otwierasz notatkę z kwalifikacji (bolGlowny z Pipeline) i czytasz. To pokazuje że słuchałeś i się przygotowałeś.",
+      },
+      {
+        t: "say",
+        text: "Zanim zacznę pytać — chcę się upewnić że mam właściwy obraz. Z naszej rozmowy wynika że [bolGlowny z karty Pipeline]. Czy to jest najważniejszy temat na dziś, czy coś się zmieniło od czasu naszej rozmowy?",
+      },
+      { t: "client", text: "Tak, dokładnie. / Trochę się zmieniło, teraz jest jeszcze [coś]." },
+      {
+        t: "note",
+        text: "Jeśli coś nowego — notujesz i zaczynasz od tego. Jeśli bez zmian — idziesz do kroku 2 Information Gathering.",
+      },
+    ],
+  },
+  {
     id: "info",
     nr: "2",
     label: "ZBIERANIE INFORMACJI — POGŁĘBIENIE",
     tag: "MÓWISZ",
     duration: "20–25 min",
     lines: [
-      { t: "note", text: "NIE pytasz ponownie o flotę, TMS ani ból — masz to z kwalifikacji." },
       {
-        t: "say",
-        text: "Panie {IMIĘ}, z naszej rozmowy telefonicznej wiem że [podsumowanie z kwalifikacji]. Chciałbym dzisiaj pójść głębiej.",
+        t: "note",
+        text: "NIE powtarzasz pytań z kwalifikacji. Klient już powiedział co go boli. Dzisiaj schodzisz dwa poziomy głębiej w TEN JEDEN problem.",
       },
       {
         t: "say",
-        text: "Proszę mi opisać — jak wygląda u Pana w biurze typowy dzień gdy przychodzi nowe zlecenie?",
-      },
-      { t: "branch", text: "JEŚLI klient dostaje zlecenia mailowo / przez TMS / giełdę" },
-      {
-        t: "say",
-        text: "Czyli maile przychodzą, ktoś je przetwarza ręcznie — ile czasu zajmuje jedno zlecenie od maila do wprowadzenia do systemu?",
-      },
-      {
-        t: "branch-bad",
-        text: "JEŚLI klient ma stałe trasy / Amazon Relay / brak zmiennych zleceń",
+        text: "Z naszej rozmowy wiem już że [ból z kwalifikacji — konkretny, nie parafrazowany]. Dzisiaj nie chcę powtarzać pytań które już padły. Chcę zejść głębiej.",
       },
       {
         t: "say",
-        text: "Rozumiem, stałe trasy — nie trafiają do Pana nowe zlecenia co dzień. To pokaż mi jak wygląda administracja: rozliczenia z kierowcami, dokumenty CMR, monitoring floty — co pochłania największy czas Pana zespołu?",
+        text: "Proszę mi opisać krok po kroku co dokładnie dzieje się z [procesem] od momentu gdy [trigger]. Co się dzieje pierwszego, drugiego, gdzie coś może pójść nie tak?",
+      },
+      { t: "client", text: "Klient opisuje szczegółowo. Słuchasz. Notujesz dosłowne słowa." },
+      {
+        t: "say",
+        text: "W ostatnim miesiącu — ile razy coś faktycznie poszło nie tak w tym procesie?",
+      },
+      { t: "client", text: "Klient podaje konkrety." },
+      {
+        t: "say",
+        text: "Co był najdroższy błąd lub sytuacja która kosztowała najwięcej czasu albo pieniędzy?",
+      },
+      { t: "client", text: "Klient podaje przykład." },
+      {
+        t: "say",
+        text: "Dlaczego nie możecie tego rozwiązać samodzielnie albo z obecnym systemem?",
       },
       {
         t: "note",
-        text: "Przy stałych trasach / Amazon Relay: nie pytaj o maile. Skup się na dokumentacji, kierowcach, rozliczeniach.",
+        text: "Odpowiedź na to pytanie = fundament pitchu w Kroku 4. Zapisz dosłownie.",
       },
-      { t: "client", text: "Klient opisuje swój model." },
       {
         t: "say",
-        text: "Co się dzieje gdy spedytor / dyspozytor jest nieobecny — jak firma sobie wtedy radzi?",
+        text: "Co Pana najbardziej kosztuje w tej sytuacji — czas, pieniądze, stres, ryzyko?",
       },
-      { t: "say", text: "Jak długo ten problem trwa w tej formie?" },
-      { t: "say", text: "Co Pana najbardziej kosztuje — czas, pieniądze, nerwy?" },
     ],
   },
   {
@@ -2600,6 +2667,7 @@ function ScriptTab({
   const [openObj, setOpenObj] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [note, setNote] = useState("");
 
   const isQualified = selectedClient
     ? DISCOVERY_STATUSES_SCRIPT.includes(selectedClient.status)
@@ -2624,8 +2692,19 @@ function ScriptTab({
     }
   }, [selectedClient?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    const saved = localStorage.getItem(`script_notes_${selectedClient?.id ?? "global"}`);
+    setNote(saved ?? "");
+  }, [selectedClient?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const fill = (text: string): string => {
     let out = text;
+    // Nominative: "Pan Jacek" / "Pani Jacek" — before global vocative replacement
+    const nominative = (selectedClient?.kontakt ?? "").trim().split(/\s+/)[0];
+    if (nominative) {
+      out = out.replace(/Pan \{IMIĘ\}/g, `Pan ${nominative}`);
+      out = out.replace(/Pani \{IMIĘ\}/g, `Pani ${nominative}`);
+    }
     if (vocative.trim()) out = out.replace(/\{IMIĘ\}/g, vocative.trim());
     if (selectedClient) {
       const bolGlowny = selectedClient.bolGlowny?.trim() ?? "";
@@ -2635,7 +2714,11 @@ function ScriptTab({
       // [podsumowanie z kwalifikacji] — bolGlowny primary, nastepnyKrok fallback
       out = out.replace(
         /\[podsumowanie z kwalifikacji\]/g,
-        bolGlowny ? `„${bolGlowny}"` : kwalNote ? `„${kwalNote}"` : "— brak danych z kwalifikacji —",
+        bolGlowny
+          ? `„${bolGlowny}"`
+          : kwalNote
+            ? `„${kwalNote}"`
+            : "— brak danych z kwalifikacji —",
       );
       // [poprzednia próba] — poprzednieProby primary, liczbaProb fallback
       out = out.replace(
@@ -2979,7 +3062,12 @@ function ScriptTab({
               gap: 8,
             }}
           >
-            <AlertTriangle size={14} color="var(--warning)" strokeWidth={2} style={{ flexShrink: 0 }} />
+            <AlertTriangle
+              size={14}
+              color="var(--warning)"
+              strokeWidth={2}
+              style={{ flexShrink: 0 }}
+            />
             <span
               style={{
                 fontSize: 12,
@@ -2987,7 +3075,8 @@ function ScriptTab({
                 fontFamily: "var(--font-sans)",
               }}
             >
-              Brak pola "Ból główny" w Notion dla tego klienta. Uzupełnij kartę klienta przed rozmową Discovery.
+              Brak pola "Ból główny" w Notion dla tego klienta. Uzupełnij kartę klienta przed
+              rozmową Discovery.
             </span>
           </div>
         )}
@@ -3415,6 +3504,53 @@ function ScriptTab({
             </div>
           </div>
         )}
+
+        {/* Notatnik */}
+        <div>
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 800,
+              letterSpacing: "0.08em",
+              color: "var(--text-tertiary)",
+              fontFamily: "var(--font-sans)",
+              textTransform: "uppercase",
+              marginBottom: 8,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+          >
+            <FileText size={11} color="var(--text-tertiary)" />
+            Notatnik
+          </div>
+          <textarea
+            value={note}
+            onChange={(e) => {
+              setNote(e.target.value);
+              localStorage.setItem(
+                `script_notes_${selectedClient?.id ?? "global"}`,
+                e.target.value,
+              );
+            }}
+            placeholder="Notatki do rozmowy..."
+            style={{
+              width: "100%",
+              minHeight: 120,
+              padding: "10px 12px",
+              border: "1px solid var(--border)",
+              borderRadius: "var(--radius-sm)",
+              background: "var(--bg-elevated)",
+              color: "var(--text-primary)",
+              fontFamily: "var(--font-sans)",
+              fontSize: 12,
+              lineHeight: 1.6,
+              resize: "vertical",
+              outline: "none",
+              boxSizing: "border-box",
+            }}
+          />
+        </div>
       </div>
     </div>
   );

@@ -571,7 +571,23 @@ ZAKAZ: myślnik narracyjny (—) w środku zdania, wielokropek (...), "warto odn
 "należy podkreślić", "sugeruje to", "może wskazywać", "potencjalnie", zdania dłuższe niż 25 słów.
 Zamiast myślnika: używaj kropki lub dwukropka.
 
-FORMAT ODPOWIEDZI: JSON z dwoma kluczami.
+FORMAT ODPOWIEDZI: JSON z trzema kluczami.
+
+POLE pitch_recipe (wymagane):
+Zawiera cztery elementy, każdy jako osobna sekcja w stringu:
+
+1. MODUŁY DLA TEGO KLIENTA (max 3): lista modułów z uzasadnieniem "bo [konkretny ból z rozmowy]"
+   Format: "email-parser — bo [X maili dziennie / wpisują ręcznie / ...]"
+   Jeśli moduł NIE pasuje: napisz "POMIŃ [moduł] — bo [powód]"
+
+2. PITCH SENTENCE: jedno zdanie które Michał mówi na Discovery łącząc poprzednią próbę klienta z rozwiązaniem:
+   "Wcześniej próbował Pan [X z transkryptu]. To nie zadziałało ponieważ [Y z transkryptu]. My robimy to inaczej — [konkretne co robimy]."
+
+3. KLUCZOWY CYTAT: dosłowne zdanie klienta z transkryptu które Michał może przytoczyć w pitchu
+
+4. LICZBA DO PREZENTACJI: jedna konkretna kwota PLN/mc lub h/mc do wstawienia w prezentację
+
+Jeśli brak danych do któregokolwiek elementu — oznacz [DO WERYFIKACJI NA DISCOVERY].
 
 {
   "pre_discovery_brief": {
@@ -591,7 +607,8 @@ FORMAT ODPOWIEDZI: JSON z dwoma kluczami.
     "ryzyka_rozmowy": "",
     "uwagi_agenta": ""
   },
-  "plan_discovery": "[PEŁNY PLAN — string z formatowaniem, jak wzór wyżej]"
+  "plan_discovery": "[PEŁNY PLAN — string z formatowaniem, jak wzór wyżej]",
+  "pitch_recipe": "[MODUŁY / PITCH SENTENCE / KLUCZOWY CYTAT / LICZBA DO PREZENTACJI — string z formatowaniem]"
 }`;
 
 export const AGENT3_SYSTEM_PROMPT = `Jesteś analitykiem danych Autorise. Przygotowujesz personalizację prezentacji sprzedażowej (Autorise_Prezentacja.html) pod konkretnego klienta przed Discovery Call.
