@@ -2623,7 +2623,8 @@ const OBJECTIONS_D: Objection[] = [
   {
     id: "od2",
     label: "Muszę porozmawiać z żoną / partnerem życiowym",
-    script: "To rozumiem i szanuję. Kiedy macie Państwo chwilę żeby to razem przedyskutować — dziś wieczór?",
+    script:
+      "To rozumiem i szanuję. Kiedy macie Państwo chwilę żeby to razem przedyskutować — dziś wieczór?",
     followup:
       "Przygotuję Panu krótkie podsumowanie — co konkretnie omawialiśmy, jakie efekty i co inwestycja wynosi — żeby mógł Pan pokazać bez potrzeby tłumaczenia wszystkiego od zera. Wyślę na WhatsApp zaraz po naszej rozmowie. I zadzwonię [data 1-2 dni po ich rozmowie] — żeby wiedzieć jak poszło. Pasuje Panu rano czy wieczorem?",
   },
@@ -3248,6 +3249,128 @@ function ScriptTab({
                 <span style={{ fontSize: 11, color: "#ef4444", fontFamily: "var(--font-sans)" }}>
                   {selectedClient.liczbaProb} poprzednia próba kontaktu — nawiąż do tego w openerze
                 </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Agent 2 brief — Discovery tab only */}
+        {type === "sprzedazowa" && selectedClient?.hipotezaBolGlowny && (
+          <div
+            style={{
+              background: "var(--accent-muted)",
+              border: "1px solid var(--accent-border)",
+              borderLeft: "3px solid var(--accent)",
+              borderRadius: "var(--radius-sm)",
+              padding: "12px 16px",
+              marginBottom: 16,
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+            }}
+          >
+            <div
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                color: "var(--accent)",
+                textTransform: "uppercase",
+                letterSpacing: "0.1em",
+                fontFamily: "var(--font-sans)",
+              }}
+            >
+              Brief od Agenta 2 — Pytania priorytetowe
+            </div>
+            <div
+              style={{
+                fontSize: 12,
+                color: "var(--text-primary)",
+                lineHeight: 1.7,
+                fontFamily: "var(--font-sans)",
+                whiteSpace: "pre-line",
+              }}
+            >
+              {selectedClient.hipotezaBolGlowny}
+            </div>
+            {selectedClient.przewidywaneObiekcje && (
+              <div>
+                <div
+                  style={{
+                    fontSize: 9,
+                    fontWeight: 700,
+                    color: "var(--text-tertiary)",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em",
+                    marginBottom: 4,
+                    fontFamily: "var(--font-sans)",
+                  }}
+                >
+                  Przewidywane obiekcje
+                </div>
+                <div
+                  style={{
+                    fontSize: 11,
+                    color: "var(--text-secondary)",
+                    lineHeight: 1.6,
+                    fontFamily: "var(--font-sans)",
+                    whiteSpace: "pre-line",
+                  }}
+                >
+                  {selectedClient.przewidywaneObiekcje}
+                </div>
+              </div>
+            )}
+            {selectedClient.ryzyka && (
+              <div>
+                <div
+                  style={{
+                    fontSize: 9,
+                    fontWeight: 700,
+                    color: "var(--text-tertiary)",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em",
+                    marginBottom: 4,
+                    fontFamily: "var(--font-sans)",
+                  }}
+                >
+                  Ryzyka rozmowy
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                  {selectedClient.ryzyka
+                    .split(/(?=FLAGA|UWAGA|BORDERLINE|Bądź gotów|Pre-commit)/i)
+                    .map((item) => item.trim())
+                    .filter(Boolean)
+                    .map((item, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          padding: "4px 8px",
+                          background: /FLAGA/i.test(item) ? "rgba(255,69,58,0.08)" : "var(--warning-bg)",
+                          borderLeft: `3px solid ${/FLAGA/i.test(item) ? "var(--error)" : "var(--warning)"}`,
+                          borderRadius: "var(--radius-xs)",
+                          fontSize: 11,
+                          color: "var(--text-primary)",
+                          fontFamily: "var(--font-sans)",
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        {item}
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+            {selectedClient.uwagiFAgent2 && (
+              <div
+                style={{
+                  fontSize: 11,
+                  color: "var(--text-secondary)",
+                  fontStyle: "italic",
+                  fontFamily: "var(--font-sans)",
+                  lineHeight: 1.5,
+                }}
+              >
+                {selectedClient.uwagiFAgent2}
               </div>
             )}
           </div>

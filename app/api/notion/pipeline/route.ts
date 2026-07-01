@@ -24,6 +24,11 @@ export interface PipelineClientDetailed {
   notatki: string;
   bolGlowny: string;
   poprzednieProby: string;
+  hipotezaBolGlowny: string;
+  uwagiFAgent2: string;
+  przewidywaneObiekcje: string;
+  pitchRecipe: string;
+  ryzyka: string;
 }
 
 function extractText(prop: PageObjectResponse["properties"][string] | undefined): string {
@@ -78,10 +83,15 @@ export async function GET() {
           nastepnyKrok: extractText(props["Następny krok"]),
           ocenaICP: extractText(props["Ocena ICP"]),
           dataFollowup: extractText(props["Data następnego kroku"]),
-          liczbaProb: extractNumber(props["Liczba prób"]),
+          liczbaProb: extractNumber(props["Liczba prób kontaktu"]),
           notatki: extractText(props["Notatki"]),
           bolGlowny: extractText(props["Ból główny"]),
           poprzednieProby: extractText(props["Poprzednie próby"]),
+          hipotezaBolGlowny: extractText(props["Hipoteza ból główny"]),
+          uwagiFAgent2: extractText(props["Uwagi Agenta 2"]),
+          przewidywaneObiekcje: extractText(props["Przewidywane obiekcje"]),
+          pitchRecipe: extractText(props["Pitch Recipe"]),
+          ryzyka: extractText(props["Ryzyka rozmowy"]),
         };
       })
       .filter((c: PipelineClientDetailed) => c.firma !== "Bez nazwy");

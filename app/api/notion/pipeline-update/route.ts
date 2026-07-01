@@ -71,7 +71,7 @@ export async function PATCH(req: Request) {
         : { date: null };
     }
     if (d.liczbaProb !== undefined) {
-      properties["Liczba prób"] = { number: d.liczbaProb };
+      properties["Liczba prób kontaktu"] = { number: d.liczbaProb };
     }
     if (d.firma !== undefined && d.firma) {
       properties["Firma"] = { title: richText(d.firma) };

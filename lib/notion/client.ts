@@ -128,6 +128,21 @@ function anyDateToISO(raw: string | null | undefined): string | null {
     const month = POLISH_MONTHS[pl[2].toLowerCase()];
     if (month) return `${pl[3]}-${month}-${pl[1].padStart(2, "0")}`;
   }
+  const dayOfMonthPattern = s.match(
+    /(?:poniedziałek|wtorek|środa|czwartek|piątek|sobota|niedziela)\s+(\d{1,2})(?:\s*\(najbliższy\))?\s*[·\-]?\s*(?:\d{2}:\d{2})?/i,
+  );
+  if (dayOfMonthPattern) {
+    const targetDay = parseInt(dayOfMonthPattern[1]);
+    const now = new Date();
+    let candidate = new Date(now.getFullYear(), now.getMonth(), targetDay);
+    if (candidate <= now) {
+      candidate = new Date(now.getFullYear(), now.getMonth() + 1, targetDay);
+    }
+    const yyyy = candidate.getFullYear();
+    const mm = String(candidate.getMonth() + 1).padStart(2, "0");
+    const dd = String(candidate.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  }
   return null;
 }
 
@@ -450,6 +465,8 @@ export async function upsertLeadIntake(data: LeadIntakeData): Promise<string> {
   if (data.kontakt) props["Kontakt"] = { rich_text: richText(data.kontakt) };
   if (data.telefon) props["Telefon"] = { phone_number: data.telefon };
 
+  if (data.email) props["Email"] = { email: data.email };
+
   const notesLines: string[] = [];
   if (data.email) notesLines.push(`Email: ${data.email}`);
   if (data.nip) notesLines.push(`NIP: ${data.nip}`);
@@ -506,6 +523,7 @@ export async function saveAgent2Output(
     przewidywane_obiekcje?: Array<{ objekcja?: string }> | null;
     ryzyka_rozmowy?: string | null;
     uwagi_agenta?: string | null;
+    pitch_recipe?: string | null;
   };
 
   if (brief.hipoteza_bol_glowny) {
@@ -523,6 +541,9 @@ export async function saveAgent2Output(
   }
   if (brief.uwagi_agenta) {
     props["Uwagi Agenta 2"] = { rich_text: richText(brief.uwagi_agenta) };
+  }
+  if (brief.pitch_recipe) {
+    props["Pitch Recipe"] = { rich_text: richText(brief.pitch_recipe) };
   }
 
   await notion.pages.update({ page_id: pageId, properties: props });
@@ -627,6 +648,8 @@ export async function migrateNotionSchema(): Promise<{ added: string[]; errors: 
         Obiekcje: { rich_text: {} },
         Notatki: { rich_text: {} },
         "Następny krok": { rich_text: {} },
+        "Pitch Recipe": { rich_text: {} },
+        "Liczba prób kontaktu": { number: {} },
       },
     });
     added.push(
