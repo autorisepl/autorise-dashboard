@@ -236,7 +236,12 @@ WYCIĄGNIJ:
 10. STATUS PO ROZMOWIE (tylko jeśli nie zdyskwalifikowano)
     - umówiono Discovery Call: TAK/NIE
     - data i godzina (jeśli padła)
-    - status: "Kwalifikacja" (brak umówionego spotkania) albo "Discovery umówione" (umówiono)
+    - status: jeden z trzech:
+        "Kwalifikacja" — spełnia ICP, ale brak umówionego spotkania
+        "Discovery umówione" — spotkanie umówione i potwierdzone
+        "Nieaktywny (follow up)" — spełnia ICP ale wyraźne "nie teraz" z konkretnym powodem:
+            urlop dłuższy niż 2 tygodnie, aktualnie wdraża TMS, budżet dostępny dopiero za X mc, brak bólu po 2 próbach
+            UWAGA: przy tym statusie data_re_engagement jest OBOWIĄZKOWA. Jeśli klient nie podał daty — ustal ją samodzielnie (+30 dni od rozmowy) i wyjaśnij w nastepny_krok.
     - nastepny_krok: Jedno lub dwa zdania. Konkretna akcja, konkretny termin, kto robi co. Nie opisujesz sytuacji — piszesz co teraz się dzieje. Nigdy null jeśli cokolwiek ustalono.
       WZORZEC ZŁY: "Klient oddzwoni lub puści SMS po konsultacji z synem. Nie określił dokładnie kiedy."
       WZORZEC DOBRY: "Zadzwoń dziś po 17:00 — syn wraca z pracy. Jak cisza do 18:00, inicjatywa po Twojej stronie."

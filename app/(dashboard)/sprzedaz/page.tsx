@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   AlertTriangle,
@@ -35,7 +35,8 @@ type QuickAction = "discovery" | "followup" | "niekwalifikowany" | "brak_odbioru
 const ACTIVE_STATUSES = ["Nowy lead", "Kwalifikacja", "Discovery umówione", "Finalizacja"];
 const ROW1 = ["Nowy lead", "Kwalifikacja", "Discovery umówione", "Finalizacja"];
 const ROW2 = ["Kickoff", "Wdrożenie", "Retainer", "Niekwalifikowany"];
-const ALL_STATUSES = [...ROW1, ...ROW2];
+const ROW3 = ["Nieaktywny (follow up)", "Upsell"];
+const ALL_STATUSES = [...ROW1, ...ROW2, ...ROW3];
 
 const STATUS_COLORS: Record<string, string> = {
   "Nowy lead": "var(--accent)",
@@ -46,6 +47,8 @@ const STATUS_COLORS: Record<string, string> = {
   Wdrożenie: "#15803d",
   Retainer: "#166534",
   Niekwalifikowany: "var(--text-tertiary)",
+  "Nieaktywny (follow up)": "var(--warning)",
+  Upsell: "#8b5cf6",
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────
@@ -888,7 +891,7 @@ function KanbanRow({
     <div
       style={{
         display: "grid",
-        gridTemplateColumns: "repeat(4, 1fr)",
+        gridTemplateColumns: `repeat(${statuses.length}, 1fr)`,
         flex: 1,
         minHeight: 0,
       }}
@@ -974,11 +977,13 @@ function PipelineTab({
           </button>
         </div>
 
-        {/* Kanban 2×4 */}
+        {/* Kanban 3 rows */}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
           <KanbanRow statuses={ROW1} grouped={grouped} onSelect={setPanelClient} />
           <div style={{ height: 1, background: "var(--border)", flexShrink: 0 }} />
           <KanbanRow statuses={ROW2} grouped={grouped} onSelect={setPanelClient} />
+          <div style={{ height: 1, background: "var(--border)", flexShrink: 0 }} />
+          <KanbanRow statuses={ROW3} grouped={grouped} onSelect={setPanelClient} />
         </div>
       </div>
 
@@ -1043,435 +1048,273 @@ function QuickBtn({
 
 // ── Tab 3: Mapa Procesu ───────────────────────────────────────────────
 
-// Mapowanie statusu klienta (Notion) → indeks etapu mapy (0-3); -1 = poza ścieżką.
-function statusToStageIdx(status: string): number {
-  const s = (status ?? "").toLowerCase();
-  if (s.includes("nowy") || s.includes("kwalifik")) return 0;
-  if (s.includes("discovery") || s.includes("analiz") || s.includes("ofert")) return 1;
-  if (s.includes("finaliz") || s.includes("negocj")) return 2;
-  if (
-    s.includes("aktyw") ||
-    s.includes("pozysk") ||
-    s.includes("wdroż") ||
-    s.includes("wdroz") ||
-    s.includes("retainer") ||
-    s.includes("klient")
-  )
-    return 3;
-  return -1;
-}
 
 function MapaProcesuTab({
   clients,
-  selectedClient,
 }: {
   clients: PipelineClientDetailed[];
   selectedClient: PipelineClientDetailed | null;
 }) {
-  const stages = [
+  const PROCESS_STEPS = [
     {
-      etap: "ETAP 1",
-      label: "Zimny kontakt",
+      id: "reklama",
+      label: "Reklama",
+      sub: "META Ads / formularz kontaktowy",
       color: "var(--accent)",
-      steps: [
-        "Prospecting / META Ads",
-        "Pierwszy telefon (skrypt kwalifikacyjny)",
-        "Weryfikacja ICP — flota, TMS, decydent",
-      ],
-      exits: [
-        { label: "Niekwalifikowany", reason: "Za mały, inny rynek, brak decydenta" },
-        { label: "Brak odbioru", reason: "Queue: retry D+1, D+3, D+7" },
-      ],
-      next: "Kwalifikacja ✓",
+      agent: null,
+      exits: [] as { label: string; color: string; reason: string }[],
     },
     {
-      etap: "ETAP 2",
-      label: "Analiza diagnostyczna z ofertowaniem",
+      id: "kwalifikacja",
+      label: "Kwalifikacja",
+      sub: "Telefon + ICP + Agent 01",
       color: "#7c3aed",
-      steps: [
-        "Pre-Discovery Brief (Agent 2)",
-        "Diagnoza + ofertowanie wg Live Script",
-        "Kalkulator ROI + prezentacja modułów",
-      ],
+      agent: "Agent 01",
       exits: [
-        { label: "Niekwalifikowany", reason: "ICP nie pasuje, brak bólu, brak budżetu" },
-        { label: "Follow-up", reason: "Drugi decydent, budżet za X dni" },
+        { label: "Brak odbioru", color: "#f59e0b", reason: "3 próby + SMS. Status: Nieaktywny (follow up)" },
+        { label: "Niekwalifikowany", color: "var(--text-tertiary)", reason: "Za mały, inny rynek, brak decydenta, brak bólu" },
       ],
-      next: "Oferta / Finalizacja",
     },
     {
-      etap: "ETAP 3",
-      label: "Finalizacja",
+      id: "brief",
+      label: "Brief",
+      sub: "Pre-discovery brief",
+      color: "#0d9488",
+      agent: "Agent 02",
+      exits: [] as { label: string; color: string; reason: string }[],
+    },
+    {
+      id: "personalizacja",
+      label: "Personalizacja",
+      sub: "Deck + dane klienta",
+      color: "#0d9488",
+      agent: "Agent 03",
+      exits: [] as { label: string; color: string; reason: string }[],
+    },
+    {
+      id: "discovery",
+      label: "Discovery",
+      sub: "45-60 min: diagnoza + pitch + cena",
       color: "#d97706",
-      steps: ["Oferta spersonalizowana", "Rozmowa finalizacyjna", "Umowa / zamknięcie"],
+      agent: "Agent 04",
       exits: [
-        { label: "Odrzucenie", reason: "Re-engagement po 90 dniach" },
-        { label: "Negocjacje", reason: "Wariant cenowy / etapowanie" },
+        { label: "Nieaktywny (follow up)", color: "var(--warning)", reason: "Urlop, budżet, wdraża TMS. Data re-engagement obowiązkowa." },
+        { label: "Follow-up", color: "#f59e0b", reason: "Drugi decydent lub brak decyzji. Termin w pipeline." },
       ],
-      next: "Kickoff umówiony",
     },
     {
-      etap: "ETAP 4",
-      label: "Wdrożenie & Retainer",
+      id: "umowa",
+      label: "Umowa",
+      sub: "Podpisanie kontraktu",
       color: "#16a34a",
-      steps: ["Kickoff — onboarding", "Wdrożenie (4–8 tygodni)", "Retainer — opieka stała"],
-      exits: [{ label: "Pause", reason: "Renegocjacja zakresu" }],
-      next: "Klient aktywny ✓",
+      agent: null,
+      exits: [] as { label: string; color: string; reason: string }[],
+    },
+    {
+      id: "wdrozenie",
+      label: "Wdrożenie",
+      sub: "Kickoff + onboarding (4-8 tygodni)",
+      color: "#15803d",
+      agent: null,
+      exits: [] as { label: string; color: string; reason: string }[],
+    },
+    {
+      id: "retainer",
+      label: "Retainer",
+      sub: "Miesięczna opieka stała",
+      color: "#166534",
+      agent: null,
+      exits: [
+        { label: "Reengagement", color: "#8b5cf6", reason: "Po zakończeniu projektu. Nowa kampania lub rozszerzenie." },
+      ],
+    },
+    {
+      id: "upsell",
+      label: "Upsell",
+      sub: "Rozszerzenie współpracy",
+      color: "#8b5cf6",
+      agent: null,
+      exits: [] as { label: string; color: string; reason: string }[],
     },
   ];
 
-  // Liczniki klientów na każdym etapie + bieżący etap wybranego klienta.
-  const counts = [0, 0, 0, 0];
+  const statusCountMap: Record<string, number> = {};
   for (const c of clients) {
-    const idx = statusToStageIdx(c.status);
-    if (idx >= 0) counts[idx] += 1;
+    statusCountMap[c.status] = (statusCountMap[c.status] ?? 0) + 1;
   }
-  const currentIdx = selectedClient ? statusToStageIdx(selectedClient.status) : -1;
-  const selectedName = selectedClient ? selectedClient.kontakt || selectedClient.firma : null;
+
+  const stepStatusMap: Record<string, string[]> = {
+    reklama: ["Nowy lead"],
+    kwalifikacja: ["Kwalifikacja"],
+    brief: ["Kwalifikacja"],
+    personalizacja: ["Discovery umówione"],
+    discovery: ["Discovery umówione", "Finalizacja"],
+    umowa: ["Finalizacja"],
+    wdrozenie: ["Kickoff", "Wdrożenie"],
+    retainer: ["Retainer"],
+    upsell: ["Upsell"],
+  };
+
+  function countForStep(id: string) {
+    return (stepStatusMap[id] ?? []).reduce((acc, s) => acc + (statusCountMap[s] ?? 0), 0);
+  }
 
   return (
     <div style={{ padding: "24px 28px", overflow: "auto", height: "100%" }}>
-      <div style={{ maxWidth: 960, margin: "0 auto" }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
         <div
           style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 12,
-            marginBottom: 24,
-            flexWrap: "wrap",
+            fontFamily: "var(--font-sans)",
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            color: "var(--text-tertiary)",
+            marginBottom: 20,
           }}
         >
-          <div
-            style={{
-              fontFamily: "var(--font-sans)",
-              fontSize: 11,
-              fontWeight: 700,
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
-              color: "var(--text-tertiary)",
-            }}
-          >
-            Mapa procesu sprzedażowego
-          </div>
-          {selectedName ? (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "5px 12px",
-                borderRadius: 99,
-                background: "var(--accent-muted)",
-                border: "1px solid var(--accent-border)",
-              }}
-            >
-              <span
-                style={{
-                  fontFamily: "var(--font-sans)",
-                  fontSize: 11,
-                  color: "var(--text-tertiary)",
-                }}
-              >
-                Śledzony klient:
-              </span>
-              <span
-                style={{
-                  fontFamily: "var(--font-sans)",
-                  fontSize: 12,
-                  fontWeight: 700,
-                  color: "var(--accent)",
-                }}
-              >
-                {selectedName}
-              </span>
-              {currentIdx >= 0 && (
-                <span
-                  style={{
-                    fontFamily: "var(--font-sans)",
-                    fontSize: 11,
-                    color: "var(--text-secondary)",
-                  }}
-                >
-                  · {stages[currentIdx].etap}
-                </span>
-              )}
-            </div>
-          ) : (
-            <div
-              style={{
-                fontFamily: "var(--font-sans)",
-                fontSize: 11,
-                color: "var(--text-placeholder)",
-              }}
-            >
-              Wybierz klienta w Pipeline, aby zobaczyć jego etap
-            </div>
-          )}
+          Mapa procesu sprzedażowego
         </div>
 
-        <div style={{ display: "flex", alignItems: "stretch", gap: 0 }}>
-          {stages.flatMap((stage, idx) => {
-            const isCurrent = idx === currentIdx;
-            const isDone = currentIdx >= 0 && idx < currentIdx;
-
-            const card = (
-              <div
-                key={stage.etap}
-                style={{
-                  flex: 1,
-                  background: isCurrent ? "var(--bg-elevated)" : "rgba(255,255,255,0.72)",
-                  backdropFilter: "blur(20px) saturate(180%)",
-                  WebkitBackdropFilter: "blur(20px) saturate(180%)",
-                  border: `1px solid ${isCurrent ? stage.color : "var(--border)"}`,
-                  boxShadow: isCurrent
-                    ? `0 0 0 2px ${stage.color}22, var(--shadow-card)`
-                    : "var(--shadow-sm)",
-                  opacity: isDone ? 0.65 : 1,
-                  borderRadius: "var(--radius-md)",
-                  overflow: "hidden",
-                  display: "flex",
-                  flexDirection: "column",
-                  minWidth: 0,
-                }}
-              >
-                {/* Colored top accent bar */}
-                <div style={{ height: 3, background: stage.color, flexShrink: 0 }} />
-
+        {/* Main pipeline row */}
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 0, overflowX: "auto", paddingBottom: 8 }}>
+          {PROCESS_STEPS.map((step, idx) => {
+            const count = countForStep(step.id);
+            return (
+              <div key={step.id} style={{ display: "flex", alignItems: "flex-start", flexShrink: 0 }}>
                 <div
                   style={{
-                    padding: "14px 16px",
-                    flex: 1,
+                    width: 110,
+                    background: "rgba(255,255,255,0.78)",
+                    backdropFilter: "blur(16px)",
+                    WebkitBackdropFilter: "blur(16px)",
+                    border: "1px solid var(--border)",
+                    borderRadius: "var(--radius-md)",
+                    overflow: "hidden",
                     display: "flex",
                     flexDirection: "column",
-                    gap: 0,
                   }}
                 >
-                  {/* Stage header */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-                    <div
-                      style={{
-                        width: 26,
-                        height: 26,
-                        borderRadius: "50%",
-                        flexShrink: 0,
-                        border: `2px solid ${stage.color}`,
-                        background: isDone || isCurrent ? stage.color : "transparent",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      {isDone ? (
-                        <Check size={12} color="#fff" strokeWidth={3} />
-                      ) : (
-                        <span
-                          style={{
-                            fontFamily: "var(--font-sans)",
-                            fontSize: 10,
-                            fontWeight: 800,
-                            color: isCurrent ? "#fff" : stage.color,
-                          }}
-                        >
-                          {idx + 1}
-                        </span>
-                      )}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div
-                        style={{
-                          fontSize: 8.5,
-                          fontWeight: 800,
-                          letterSpacing: "0.12em",
-                          textTransform: "uppercase",
-                          color: stage.color,
-                          marginBottom: 1,
-                        }}
-                      >
-                        {stage.etap}
-                      </div>
+                  <div style={{ height: 3, background: step.color, flexShrink: 0 }} />
+                  <div style={{ padding: "10px 10px 8px" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 5 }}>
                       <div
                         style={{
                           fontFamily: "var(--font-sans)",
-                          fontSize: 12,
+                          fontSize: 11,
                           fontWeight: 700,
                           color: "var(--text-primary)",
-                          lineHeight: 1.25,
-                          letterSpacing: "-0.01em",
+                          lineHeight: 1.2,
                         }}
                       >
-                        {stage.label}
+                        {step.label}
                       </div>
-                    </div>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 3,
-                        padding: "2px 7px",
-                        borderRadius: 99,
-                        background: "var(--bg-hover)",
-                        border: "1px solid var(--border)",
-                        flexShrink: 0,
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: 5,
-                          height: 5,
-                          borderRadius: "50%",
-                          background: stage.color,
-                        }}
-                      />
-                      <span
-                        style={{
-                          fontFamily: "var(--font-sans)",
-                          fontSize: 10,
-                          fontWeight: 600,
-                          color: counts[idx] > 0 ? "var(--text-primary)" : "var(--text-tertiary)",
-                        }}
-                      >
-                        {counts[idx]}
-                      </span>
-                    </div>
-                  </div>
-
-                  {isCurrent && (
-                    <div
-                      style={{
-                        padding: "3px 8px",
-                        borderRadius: 6,
-                        background: stage.color,
-                        color: "#fff",
-                        fontSize: 9.5,
-                        fontWeight: 800,
-                        textAlign: "center",
-                        marginBottom: 10,
-                        letterSpacing: "0.04em",
-                        textTransform: "uppercase",
-                      }}
-                    >
-                      Tu jesteś
-                    </div>
-                  )}
-
-                  {/* Steps */}
-                  <div style={{ flex: 1, marginBottom: 10 }}>
-                    {stage.steps.map((step, si) => (
-                      <div
-                        key={si}
-                        style={{
-                          display: "flex",
-                          alignItems: "flex-start",
-                          gap: 6,
-                          marginBottom: 5,
-                        }}
-                      >
+                      {count > 0 && (
                         <div
                           style={{
-                            width: 3.5,
-                            height: 3.5,
-                            borderRadius: "50%",
-                            background: stage.color,
-                            marginTop: 5.5,
+                            minWidth: 18,
+                            height: 18,
+                            borderRadius: 9,
+                            background: step.color,
+                            color: "#fff",
+                            fontSize: 9,
+                            fontWeight: 800,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
                             flexShrink: 0,
-                          }}
-                        />
-                        <span
-                          style={{
-                            fontFamily: "var(--font-sans)",
-                            fontSize: 11.5,
-                            color: "var(--text-primary)",
-                            lineHeight: 1.5,
+                            paddingInline: 4,
                           }}
                         >
-                          {step}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Exits */}
-                  <div style={{ marginTop: "auto", marginBottom: 10 }}>
-                    {stage.exits.map((exit, ei) => (
-                      <div
-                        key={ei}
-                        style={{
-                          padding: "5px 8px",
-                          marginBottom: 4,
-                          background: "rgba(239,68,68,0.05)",
-                          border: "1px solid rgba(239,68,68,0.14)",
-                          borderRadius: "var(--radius-xs)",
-                        }}
-                      >
-                        <div
-                          style={{
-                            fontFamily: "var(--font-sans)",
-                            fontSize: 10,
-                            fontWeight: 600,
-                            color: "#ef4444",
-                            marginBottom: 1,
-                          }}
-                        >
-                          × {exit.label}
+                          {count}
                         </div>
-                        <div
-                          style={{
-                            fontFamily: "var(--font-sans)",
-                            fontSize: 10,
-                            color: "var(--text-tertiary)",
-                            lineHeight: 1.4,
-                          }}
-                        >
-                          {exit.reason}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Next */}
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 5,
-                      paddingTop: 8,
-                      borderTop: "1px solid var(--border)",
-                    }}
-                  >
-                    {idx === stages.length - 1 ? (
-                      <CheckCircle2 size={10} color="#16a34a" />
-                    ) : (
-                      <ArrowRight size={10} color={stage.color} />
-                    )}
-                    <span
+                      )}
+                    </div>
+                    <div
                       style={{
                         fontFamily: "var(--font-sans)",
-                        fontSize: 10.5,
-                        color: idx === stages.length - 1 ? "#16a34a" : "var(--text-secondary)",
-                        fontWeight: idx === stages.length - 1 ? 600 : 400,
+                        fontSize: 9.5,
+                        color: "var(--text-tertiary)",
+                        lineHeight: 1.4,
+                        marginBottom: step.agent ? 6 : 0,
                       }}
                     >
-                      {stage.next}
-                    </span>
+                      {step.sub}
+                    </div>
+                    {step.agent && (
+                      <div
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          padding: "1px 6px",
+                          borderRadius: 4,
+                          background: `${step.color}18`,
+                          border: `1px solid ${step.color}30`,
+                          fontSize: 9,
+                          fontWeight: 700,
+                          color: step.color,
+                          letterSpacing: "0.04em",
+                        }}
+                      >
+                        {step.agent}
+                      </div>
+                    )}
                   </div>
+
+                  {/* Exit paths */}
+                  {step.exits.length > 0 && (
+                    <div style={{ padding: "0 6px 8px", display: "flex", flexDirection: "column", gap: 4 }}>
+                      {step.exits.map((exit, ei) => (
+                        <div
+                          key={ei}
+                          style={{
+                            padding: "4px 6px",
+                            background: `rgba(0,0,0,0.03)`,
+                            border: `1px solid ${exit.color}30`,
+                            borderLeft: `2px solid ${exit.color}`,
+                            borderRadius: "var(--radius-xs)",
+                          }}
+                        >
+                          <div style={{ fontSize: 9, fontWeight: 700, color: exit.color, marginBottom: 1 }}>
+                            {exit.label}
+                          </div>
+                          <div style={{ fontSize: 8.5, color: "var(--text-tertiary)", lineHeight: 1.4 }}>
+                            {exit.reason}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
+
+                {idx < PROCESS_STEPS.length - 1 && (
+                  <div style={{ display: "flex", alignItems: "center", padding: "0 4px", marginTop: 22, flexShrink: 0 }}>
+                    <ArrowRight size={14} color="var(--text-tertiary)" strokeWidth={1.5} />
+                  </div>
+                )}
               </div>
             );
-
-            if (idx < stages.length - 1) {
-              return [
-                card,
-                <div
-                  key={`arrow-${idx}`}
-                  style={{ display: "flex", alignItems: "center", padding: "0 6px", flexShrink: 0 }}
-                >
-                  <ArrowRight size={16} color="var(--text-tertiary)" strokeWidth={1.5} />
-                </div>,
-              ];
-            }
-            return [card];
           })}
+        </div>
+
+        {/* Legend */}
+        <div style={{ display: "flex", gap: 16, marginTop: 20, flexWrap: "wrap" }}>
+          {[
+            { color: "var(--accent)", label: "Pozyskanie" },
+            { color: "#7c3aed", label: "Kwalifikacja" },
+            { color: "#0d9488", label: "Przygotowanie" },
+            { color: "#d97706", label: "Discovery" },
+            { color: "#16a34a", label: "Sprzedaż" },
+            { color: "#166534", label: "Retainer" },
+            { color: "#8b5cf6", label: "Upsell" },
+          ].map((item) => (
+            <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 5 }}>
+              <div style={{ width: 8, height: 8, borderRadius: 2, background: item.color, flexShrink: 0 }} />
+              <span style={{ fontFamily: "var(--font-sans)", fontSize: 10, color: "var(--text-tertiary)" }}>
+                {item.label}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
     </div>
@@ -1988,193 +1831,119 @@ const STEPS_K: Step[] = [
     tag: "AKCJA",
     lines: [
       { t: "action", text: "Włącz Fathom zanim zaczniesz dzwonić." },
-      {
-        t: "action",
-        text: "Wejdź na stronę firmy — 30 sekund. Flota? System do zarządzania widoczny?",
-      },
-      { t: "action", text: "Otwórz notatnik. Notuj podczas rozmowy." },
+      { t: "action", text: "Wejdź na stronę firmy — 30 sekund. Flota? TMS widoczny? Decydent?" },
+      { t: "action", text: "Sprawdź formularz: co napisał, skąd pochodzi, jaką firmę prowadzi." },
+      { t: "action", text: "Masz pod ręką: imię (nominatyw), nazwę firmy, numer telefonu." },
     ],
   },
   {
     id: "opener",
     nr: "1",
-    label: "OPENER",
+    label: "OTWARCIE",
     tag: "MÓWISZ",
-    duration: "~30 sek",
     lines: [
       { t: "say", text: "Dzień dobry, Pan {IMIĘ}?" },
-      { t: "note", text: "Pauza. Czekasz. Klient musi się odezwać." },
       { t: "client", text: "Tak, słucham." },
-      {
-        t: "say",
-        text: "Michał Roth z Autorise. Dzwonię, ponieważ wypełnił Pan formularz na Facebooku w sprawie odzyskania minimum 80 godzin miesięcznie w Pana firmie transportowej.",
-      },
-      { t: "say", text: "Zgadza się?" },
-      { t: "client", text: "Tak. / Hmm, nie pamiętam. / Że co?" },
-      { t: "branch", text: "Nie pamięta: użyj obiekcji 'Nie pamiętam formularza'" },
-      { t: "say", text: "Ma Pan teraz 2 minuty?" },
-      { t: "branch", text: "TAK: Krok 2. NIE: użyj obiekcji 'Nie mam teraz czasu'" },
+      { t: "say", text: "Dzień dobry, mówi [imię] z Autorise. Dzwonię bo przed chwilą wypełnił Pan formularz na naszej stronie dotyczący oszczędzania czasu w firmie transportowej. Mam dla Pana dosłownie 2 minuty — czy to dobry moment?" },
     ],
   },
   {
-    id: "sprzedaz",
+    id: "opener_branch",
+    nr: "1b",
+    label: "REAKCJA NA OTWARCIE",
+    tag: "GAŁĘZIE",
+    lines: [
+      { t: "branch", text: "Nie pamiętam żadnego formularza" },
+      { t: "say", text: "Rozumiem. Pewnie wypełnił Pan wiele rzeczy. Formularz pojawił się na Facebooku — dotyczył oszczędzania czasu w logistyce. To może 30 sekund?" },
+      { t: "branch", text: "O co chodzi? Co Pan sprzedaje?" },
+      { t: "say", text: "Automatyzujemy pracę biura spedycji — zlecenia, CMR, faktury. Jedna firma u nas odzyskała 80 godzin miesięcznie. Chciałem się dowiedzieć czy to temat dla Pana firmy." },
+      { t: "branch", text: "Od razu chce spotkanie" },
+      { t: "say", text: "Chętnie. Zanim zaproponuję termin — 2 pytania żeby spotkanie miało sens dla obu stron. Jak wygląda teraz zleceniowanie w Pana firmie?" },
+      { t: "branch", text: "Od razu pyta o cenę" },
+      { t: "say", text: "Zależy od skali i modułów. Powiem Panu wprost — najpierw chcę sprawdzić czy mamy rozwiązanie dla Pana firmy. Jeśli tak — cena jest na stronie i na spotkaniu. Ile pojazdów ma Pan teraz?" },
+      { t: "branch", text: "Wyślij na maila" },
+      { t: "say", text: "Oczywiście. Żeby wysłać coś trafnego, jedna kwestia: ile osób zajmuje się zleceniami w biurze?" },
+      { t: "note", text: "Jeśli nadal blokuje: 'Rozumiem. Wyślę. Na jaki adres?' — zapisz mail i zaplanuj follow-up." },
+    ],
+  },
+  {
+    id: "diagnoza",
     nr: "2",
-    label: "SPRZEDAŻ",
-    tag: "MÓWISZ",
-    duration: "3–4 min",
+    label: "DIAGNOZA",
+    tag: "PYTASZ",
     lines: [
-      {
-        t: "say",
-        text: "Co spowodowało że właśnie teraz zdecydował się Pan wypełnić ten formularz?",
-      },
-      {
-        t: "note",
-        text: "To JEDNO pytanie. Nie pytasz o wyzwania. Pytasz co wywołało akcję. Klient opowie co go boli — sam, bez naprowadzania na konkretny obszar.",
-      },
-      { t: "note", text: "Słuchasz. Notujesz. NIE przerywasz." },
-      { t: "client", text: "Klient opowiada." },
-      { t: "say", text: "Czyli dobrze rozumiem — [parafraza]. Zgadza się?" },
-      { t: "client", text: "Tak, dokładnie." },
-      { t: "say", text: "Co z tym problemem próbował Pan do tej pory robić?" },
-      { t: "client", text: "Klient odpowiada." },
-      {
-        t: "note",
-        text: "Zapamiętaj co próbował i dlaczego nie wyszło. To fundament pitchu na Discovery.",
-      },
-    ],
-  },
-  {
-    id: "icp",
-    nr: "2b",
-    label: "KWALIFIKACJA ICP",
-    tag: "MÓWISZ",
-    duration: "1–2 min",
-    lines: [
-      {
-        t: "say",
-        text: "Żeby sprawdzić czy jesteśmy w stanie Panu pomóc — jak Pan zarządza teraz zleceniami i dokumentami w firmie?",
-      },
-      { t: "client", text: "Mamy [opis systemu / Excel / nic]." },
-      { t: "say", text: "A ile pojazdów ma Pan w firmie?" },
-      { t: "client", text: "Mamy [liczba]." },
-      {
-        t: "branch-bad",
-        text: 'Poniżej 10 pojazdów: oceń kalkulator. Jeśli potencjał poniżej 80h z dostępnych modułów, powiedz: "Nasze rozwiązanie najlepiej sprawdza się przy flotach 10 i więcej. Mogę wrócić do Pana za 3 miesiące?" Jeśli tak: zakończ rozmowę.',
-      },
-      { t: "branch", text: "10–150 pojazdów: kontynuuj rozmowę" },
-      { t: "say", text: "I ile osób w biurze zajmuje się zleceniami i dokumentami?" },
-      { t: "client", text: "Mamy [liczba] spedytorów / osób w biurze." },
-      {
-        t: "branch-bad",
-        text: "Poniżej 2 osób w biurze: matematycznie nie osiągniesz 80h. Rozważ dyskwalifikację.",
-      },
-      {
-        t: "say",
-        text: "Czy decyzja o inwestycji jest po Pana stronie, czy ktoś jeszcze musi to zaakceptować?",
-      },
-      { t: "client", text: "Ja decyduję. / Musiałbym porozmawiać z [ktoś]." },
-      { t: "branch", text: "Jeśli nie decyduje sam: zaproponuj żeby dołączył do Discovery Call" },
-    ],
-  },
-  {
-    id: "roi",
-    nr: "2c",
-    label: "KALKULATOR ROI",
-    tag: "MÓWISZ",
-    duration: "~1 min",
-    lines: [
-      {
-        t: "say",
-        text: "Ile mniej więcej czasu dziennie jedna osoba spędza na ręcznym wpisywaniu zleceń?",
-      },
-      { t: "client", text: "Godzinę, może dwie..." },
-      {
-        t: "say",
-        text: "[X osób] × [Y godzin] × 22 dni robocze — to szacunkowo [kwota] PLN miesięcznie kosztu tego czasu.",
-      },
-      { t: "say", text: "Właśnie w to trafia nasze rozwiązanie." },
-      { t: "note", text: "Przykład: 2 os. × 2h × 22 × 40 zł = 3 520 PLN/mc. Liczysz w głowie." },
-    ],
-  },
-  {
-    id: "precommit",
-    nr: "2d",
-    label: "PRE-COMMIT",
-    tag: "MÓWISZ",
-    duration: "~30 sek",
-    lines: [
-      {
-        t: "say",
-        text: "Gdyby to faktycznie rozwiązało ten problem — jak szybko mógłby Pan zacząć?",
-      },
-      { t: "client", text: "No, jeśli to działa to od razu. / Musiałbym zobaczyć." },
-      {
-        t: "note",
-        text: '"Od razu" = silna gotowość. "Musiałbym zobaczyć" = kontynuuj, zaproponuj Discovery.',
-      },
+      { t: "say", text: "Co spowodowało że właśnie teraz wypełnił Pan ten formularz?" },
+      { t: "client", text: "[odpowiedź]" },
+      { t: "say", text: "Jak wygląda teraz proces: od momentu gdy dostajecie zlecenie do wystawienia faktury — ile kroków, ile osób, ile czasu?" },
+      { t: "client", text: "[odpowiedź]" },
+      { t: "say", text: "Ile godzin dziennie spędza biuro na ręcznym przepisywaniu?" },
+      { t: "client", text: "[odpowiedź]" },
+      { t: "note", text: "Jeśli mówi 'nie wiem' — doprecyzuj: 'CMR, POD, faktury, wpisywanie do Excela — łącznie?'" },
+      { t: "say", text: "Co byś zrobił z tymi godzinami gdybyś je odzyskał?" },
     ],
   },
   {
     id: "brak_bolu",
     nr: "2x",
-    label: "KLIENT MÓWI ŻE NIE MA PROBLEMÓW",
-    tag: "AKCJA" as const,
+    label: "BRAK BÓLU — wyjście",
+    tag: "UWAGA",
     lines: [
-      {
-        t: "note",
-        text: '"Nie ma problemów" = reakcja obronna jak "nie mam czasu". Drążysz DWA razy, potem wychodzisz gracefully.',
-      },
-      { t: "say", text: "To co spowodowało że w ogóle formularz Pan wypełnił?" },
-      {
-        t: "client",
-        text: "No, zobaczyłem reklamę i pomyślałem... / Po prostu sprawdzam co jest na rynku.",
-      },
-      {
-        t: "say",
-        text: "Rozumiem. A jak wygląda sytuacja kiedy nagle przychodzi dużo zleceń naraz albo spedytor jest nieobecny?",
-      },
-      { t: "client", text: "No, wtedy jest ciężej... / Dajemy radę jakoś." },
-      { t: "note", text: "Jeśli po DWÓCH próbach nadal brak bólu — graceful exit:" },
-      {
-        t: "say",
-        text: "Panie {IMIĘ}, jeśli u Pana wszystko gra sprawnie, to pewnie nie będę w stanie zaproponować czegoś co realnie zmieni sytuację. Nie chcę tracić Pana czasu. Jeśli coś się zmieni — jestem tutaj.",
-      },
-      {
-        t: "action",
-        text: 'AKCJA: Status "Nieaktywny (follow up)", re-engagement +90 dni. Koniec rozmowy.',
-      },
+      { t: "note", text: "Używaj po 2 nieudanych próbach ukazania bólu. Nie sprzedawaj na siłę." },
+      { t: "say", text: "Słyszę że u Pana to działa sprawnie. Nie chcę zajmować Pana czasu. Czy jest jakiś aspekt logistyki gdzie czujecie że traci się czas lub robi się za dużo ręcznie?" },
+      { t: "client", text: "Nie, wszystko gra." },
+      { t: "say", text: "Rozumiem. W takim razie prawdopodobnie nie jesteśmy teraz dla siebie. Mogę zadzwonić za kilka miesięcy gdy się coś zmieni — czy to ma sens?" },
+      { t: "note", text: "Jeśli zgadza się: status Nieaktywny (follow up), data re-engagement za 3 mc." },
+    ],
+  },
+  {
+    id: "icp",
+    nr: "3",
+    label: "WERYFIKACJA ICP",
+    tag: "PYTASZ",
+    lines: [
+      { t: "say", text: "Ile pojazdów ma teraz Pan flota?" },
+      { t: "client", text: "[odpowiedź]" },
+      { t: "say", text: "Czy korzystacie z TMS — programu do zarządzania flotą?" },
+      { t: "client", text: "[odpowiedź]" },
+      { t: "note", text: "TMS: nie wyklucza. Dopytaj jaki i co robi manualnie mimo TMS." },
+      { t: "say", text: "Jest Pan właścicielem firmy czy decyduje Pan o zakupach oprogramowania?" },
+      { t: "client", text: "[odpowiedź]" },
+      { t: "note", text: "Jeśli nie jest decydentem: 'Czy byłoby możliwe żebyśmy porozmawiali razem? Mam 45 minut spotkanie online — mogę dołączyć też właściciela.'" },
+    ],
+  },
+  {
+    id: "roi",
+    nr: "4",
+    label: "ROI — ZAPROSZENIE",
+    tag: "MÓWISZ",
+    lines: [
+      { t: "say", text: "Firmy transportowe podobne do Pana odzyskują średnio 80 godzin miesięcznie. Przy 2 osobach w biurze to około 2 etatów w skali roku." },
+      { t: "say", text: "Na 45-minutowym spotkaniu online pokażę Panu dokładnie jak to wygląda dla Pana firmy z prawdziwymi liczbami." },
+    ],
+  },
+  {
+    id: "precommit",
+    nr: "5",
+    label: "PRE-COMMITMENT",
+    tag: "PYTASZ",
+    lines: [
+      { t: "say", text: "Zanim umówimy termin — jedno pytanie. Jeśli to co Pan zobaczy na spotkaniu ma sens dla Pana firmy, czy jest Pan gotowy podjąć decyzję w ciągu tygodnia od spotkania?" },
+      { t: "client", text: "[odpowiedź]" },
+      { t: "note", text: "Jeśli 'nie' lub 'muszę z kimś' — dowiedz się z kim i zaproś tę osobę. Nie umawiaj bez decydenta." },
     ],
   },
   {
     id: "spotkanie",
-    nr: "3",
-    label: "SPOTKANIE JAKO ROZWIĄZANIE",
-    tag: "MÓWISZ",
-    duration: "1–2 min",
+    nr: "6",
+    label: "UMAWIANIE SPOTKANIA",
+    tag: "ZAMKNIĘCIE",
     lines: [
-      {
-        t: "say",
-        text: "Panie {IMIĘ}, z tego co Pan mówi widzę konkretne miejsca gdzie możemy odciążyć Pana biuro.",
-      },
-      {
-        t: "say",
-        text: "Proponuję 45-minutowe spotkanie przez internet — udostępniam ekran, pokazuję krok po kroku jak to działa dla firm transportowych.",
-      },
-      { t: "say", text: "Na końcu konkretna oferta dopasowana do Pana sytuacji." },
-      { t: "say", text: "Jutro o której ma Pan chwilę, czy bardziej pojutrze?" },
-      {
-        t: "client",
-        text: "Klient wybiera. Jeśli genuinely nie może wcześniej — dopasowujesz się do jego terminu.",
-      },
-      {
-        t: "say",
-        text: "Super. [Dzień] o [godzina]. Proszę dołączyć z laptopa — będę udostępniał ekran.",
-      },
+      { t: "say", text: "Kiedy ma Pan wolne 45 minut w tym lub przyszłym tygodniu — rano czy po południu?" },
+      { t: "client", text: "[proponuje termin]" },
+      { t: "say", text: "Świetnie. Zarezerwuję [dzień] o [godzina]. Wyślę zaproszenie Google Meet na tego maila co podał Pan w formularzu — zgadza się?" },
+      { t: "action", text: "Wyślij zaproszenie Google Meet natychmiast po rozmowie. Nie 'zaraz' — teraz." },
       { t: "say", text: "Dzień przed wyślę SMS z przypomnieniem." },
-      {
-        t: "action",
-        text: "AKCJA: Wyślij zaproszenie Google Meet. Zrób to zaraz po zakończeniu rozmowy.",
-      },
+      { t: "action", text: "Zmień status w Pipeline na 'Discovery umówione'. Data Discovery: [data spotkania]." },
     ],
   },
 ];
@@ -2184,70 +1953,48 @@ const OBJECTIONS_K: Objection[] = [
     id: "ok1",
     label: "Nie mam teraz czasu (pierwsze NIE)",
     script:
-      "Rozumiem. Powiem Panu jedno zdanie. Firmy transportowe z którymi pracuję tracą od kilku godzin dziennie na ręczne wpisywanie zleceń. Jeśli to dotyczy Pana firmy — 2 minuty mogą zaoszczędzić Panu kilka tysięcy złotych miesięcznie. Ma Pan teraz te 2 minuty?",
+      "Rozumiem. Firmy transportowe z którymi pracuję odzyskują od 80 godzin miesięcznie na samym zleceniowaniu. Jeśli to brzmi jak coś dla Pana — 2 minuty teraz mogą zaoszczędzić Panu kilka tysięcy złotych miesięcznie. Ma Pan te 2 minuty?",
   },
   {
     id: "ok2",
     label: "Nadal nie mam czasu (drugie NIE)",
-    script:
-      "Jasne, rozumiem. Jutro — rano czy po południu jest Pan bardziej dostępny? O której mogę zadzwonić?",
+    script: "Jasne. Jutro rano czy po południu jest Pan bardziej dostępny?",
+    note: "Zapisz dzień i godzinę. Follow-up w Pipeline.",
   },
   {
     id: "ok3",
-    label: "Nie pamiętam formularza",
+    label: "Mam już program do zarządzania",
     script:
-      "Rozumiem, tych reklam jest dużo. Zajmuję się firmami transportowymi — konkretnie tym, że biura tracą za dużo czasu na ręczną papierkologię. Czy to jest temat który dotyczy Pana firmy?",
+      "Większość firm z którymi pracuję ma program. My nie zastępujemy TMS — uzupełniamy go o automatyzację biurową: CMR, POD, faktury, komunikacja z klientem. Czy Pana TMS robi to automatycznie?",
+    note: "Jeśli tak: wróć do diagnozy i pytaj co robi ręcznie mimo TMS. Jeśli nie: 'To dobrze, w takim razie może nie będę marnował Pana czasu' — i zakończ uprzejmie.",
   },
   {
     id: "ok4",
-    label: "O co chodzi / Co to jest?",
-    script:
-      "Pomagamy biurom transportowym żeby nie traciły godzin dziennie na ręczne wpisywanie zleceń z maili. Zamiast tego dzieje się to automatycznie. Czy to brzmi jak coś co mogłoby Pana zainteresować?",
+    label: "Jadę na urlop / wracam za X tygodni",
+    script: "Rozumiem. Kiedy Pan wraca?",
+    followup: "Zapisuję. Zadzwonię do Pana [data po powrocie]. Życzę udanego urlopu.",
+    note: "Status: Nieaktywny (follow up). Data re-engagement: dzień po powrocie.",
   },
   {
     id: "ok5",
-    label: "Ile to kosztuje? / Podaj cenę",
+    label: "Muszę porozmawiać ze wspólnikiem / synem / żoną",
     script:
-      "Cenę omówimy podczas spotkania, bo zależy od Pana konkretnej sytuacji. Chcę zaproponować rozwiązanie które faktycznie się zwróci, nie podawać liczby w ciemno. Czy mogę umówić 45 minut?",
+      "Czy mogliby Państwo dołączyć we dwoje na spotkanie przez internet? Trwa 45 minut i mam przygotowane liczby konkretnie dla Pana firmy. Wtedy oboje macie pełen obraz i możecie zdecydować razem.",
+    note: "Jeśli nie może dołączyć: 'Rozumiem. Co musiałoby się wydarzyć na spotkaniu żeby [osoba] powiedziała tak?'",
   },
   {
     id: "ok6",
-    label: "Wyślij na maila",
-    script:
-      "Panie {IMIĘ}, przesyłam informacje klientom z którymi porozmawiałem i wiem że mogę im realnie pomóc. Żeby to ocenić — ma Pan teraz 2 minuty na kilka pytań?",
+    label: "Brak odbioru po 3 próbach",
+    type: "sms" as const,
+    sms: "Dzień dobry Panie {IMIĘ}, dzwoniłem 3× bo wypełnił Pan formularz w sprawie oszczędności czasu w firmie transportowej. Jeśli temat jest aktualny — proszę o SMS lub oddzwonienie. Jeśli nie — nie będę przeszkadzał.",
   },
   {
     id: "ok7",
-    label: "Mam już system / Nie potrzebuję",
-    script:
-      "Większość firm z którymi rozmawiam ma system. Problem zwykle nie jest w systemie — jest w tym że ktoś musi ręcznie przenieść zlecenie z maila do systemu. Ten czas gdzieś znika. Czy tak to wygląda u Pana?",
-  },
-  {
-    id: "ok8",
-    label: "Jadę na urlop / Za jakiś czas",
-    script:
-      "Rozumiem. Kiedy Pan wraca? [Odpowiedź]. Zapisuję — zadzwonię do Pana [data po powrocie]. O której zazwyczaj Pan dostępny — rano czy po południu?",
-  },
-  {
-    id: "ok9",
-    label: "Muszę porozmawiać ze wspólnikiem / synem / żoną",
-    script:
-      "Oczywiście. Czy mogliby Państwo dołączyć we dwoje na spotkanie przez internet? Mamy 45 minut, będzie prościej ocenić razem niż potem tłumaczyć. Który termin pasowałby Państwu — jutro czy pojutrze?",
-    note: "Jeśli partner/małżonek nie może dołączyć: 'Rozumiem. Mogę dołożyć 15 minut po naszym spotkaniu na pytania z jej/jego strony — jak będziecie razem. Pasuje?' Odnotuj w Pipeline: 'decydent niepewny'.",
-  },
-  {
-    id: "ok10",
-    label: "Brak odbioru po 3 próbach (wyślij SMS)",
-    type: "sms" as const,
-    sms: "Dzień dobry Panie {IMIĘ}, dzwoniłem ponieważ wypełnił Pan formularz w sprawie oszczędności czasu w firmie transportowej. Będę wdzięczny za oddzwonienie lub wskazanie terminu. Michał Roth, Autorise, +48 575 902 350",
-  },
-  {
-    id: "ok11",
     label: "Komentarz pod reklamą FB",
     type: "fb" as const,
-    script: 'Odpisujesz pod komentarzem: "Napisałem Panu wiadomość prywatną z odpowiedzią."',
+    script: "Pod komentarzem: 'Napisałem Panu wiadomość prywatną.'",
     extra:
-      "Dzień dobry Panie {IMIĘ}, piszę ponieważ zostawił Pan komentarz pod naszą reklamą w sprawie oszczędności czasu dla firm transportowych. Zanim opowiem więcej — chciałbym zadać kilka pytań. Czy mógłbym prosić o numer telefonu?",
+      "Dzień dobry Panie {IMIĘ}, piszę ponieważ zostawił Pan komentarz pod naszą reklamą dotyczącą oszczędności czasu w firmie transportowej. Zanim opowiem więcej — mam 2 pytania. Ile pojazdów ma Pan teraz i ile osób w biurze zajmuje się zleceniami?",
   },
 ];
 
@@ -2258,356 +2005,204 @@ const STEPS_D: Step[] = [
     label: "PRZYGOTOWANIE",
     tag: "AKCJA",
     lines: [
-      {
-        t: "action",
-        text: "Przeczytaj Pre-Discovery Brief (Agent 2) — cały, przed wejściem na Meet.",
-      },
-      { t: "action", text: "Otwórz prezentację Autorise (spersonalizowaną przez Agenta 3)." },
-      { t: "action", text: "Sprawdź że Fathom nagrywa." },
-      {
-        t: "action",
-        text: "Miej zapisane: flota, główny ból, poprzednie próby, kwota ROI z kwalifikacji.",
-      },
+      { t: "action", text: "Przeczytaj Brief Agenta 02 (zakładka Brief)." },
+      { t: "action", text: "Przeczytaj Pitch Recipe Agenta 02 — które moduły pokazać." },
+      { t: "action", text: "Sprawdź czy Agent 03 zaktualizował prezentację liczbami klienta." },
+      { t: "action", text: "Otwórz prezentację i kalkulator ROI. Fathom włączony." },
+      { t: "action", text: "Cel: diagnoza + pitch + cena + closing w jednym spotkaniu." },
     ],
   },
   {
     id: "intro",
     nr: "1",
-    label: "WPROWADZENIE + SMALL TALK",
+    label: "OTWARCIE I INTRO",
     tag: "MÓWISZ",
-    duration: "2–3 min",
     lines: [
-      {
-        t: "note",
-        text: "Klient dołącza. Kilka zdań naturalnie — nie zaczynaj od razu pitchować.",
-      },
-      { t: "say", text: "Dzień dobry Panie {IMIĘ}! Słyszymy się, widzimy?" },
-      { t: "client", text: "Tak, wszystko gra." },
-      { t: "say", text: "Czy ktoś jeszcze od Pana dołączy, czy jesteśmy we dwóch?" },
-      { t: "note", text: "Jeśli wspólnik/żona dołącza: upewnij się że jest decydentem." },
-      {
-        t: "say",
-        text: "Mamy tu Fathom który robi automatyczne notatki — jeśli Pan nie ma nic przeciwko, zostawiamy go?",
-      },
+      { t: "say", text: "Dzień dobry, Pan {IMIĘ}. Cieszę się że możemy porozmawiać. Przed chwilą przejrzałem stronę firmy — widzę że prowadzi Pan firmę [nazwa] z flotą [X] pojazdów. Dobrze widzę?" },
+      { t: "client", text: "[potwierdza lub koryguje]" },
+      { t: "say", text: "Autorise to system automatyzacji dla biur spedycji. Pracujemy głównie z firmami 10-150 pojazdów i odzyskujemy dla nich czas biura — średnio 80 godzin miesięcznie." },
     ],
   },
   {
     id: "agenda",
     nr: "1b",
-    label: "AGENDA",
+    label: "AGENDA SPOTKANIA",
     tag: "MÓWISZ",
-    duration: "~1 min",
     lines: [
-      {
-        t: "say",
-        text: "Na naszej rozmowie telefonicznej zebrałem podstawowe informacje — dziś chcę zejść znacznie głębiej w to co jest dla Pana najważniejsze.",
-      },
-      {
-        t: "say",
-        text: "Potem pokażę na ekranie jak to działa. Na końcu konkretna oferta. Całość 45–60 minut. Pasuje?",
-      },
+      { t: "say", text: "Na to spotkanie mam dla nas 45 minut. Plan: pierwsze 20 minut pytam Pana o firmę i jak działa biuro. Drugie 20 minut pokazuję co robimy dla Pana firmy. Ostatnie 5 minut pytania i decyzja co dalej. Pasuje Panu?" },
       { t: "client", text: "Tak, jasne." },
-      { t: "note", text: "Jesteś liderem. Kto zadaje pytania — ten kontroluje." },
     ],
   },
   {
-    id: "przejscie_k_info",
+    id: "podsumowanie_kwal",
     nr: "1c",
-    label: "PODSUMOWANIE Z KWALIFIKACJI",
-    tag: "MÓWISZ" as const,
-    duration: "~1 min",
+    label: "PODSUMOWANIE KWALIFIKACJI",
+    tag: "MÓWISZ",
     lines: [
-      {
-        t: "note",
-        text: "Otwierasz notatkę z kwalifikacji (bolGlowny z Pipeline) i czytasz. To pokazuje że słuchałeś i się przygotowałeś.",
-      },
-      {
-        t: "say",
-        text: "Zanim zacznę pytać — chcę się upewnić że mam właściwy obraz. Z naszej rozmowy wynika że [bolGlowny z karty Pipeline]. Czy to jest najważniejszy temat na dziś, czy coś się zmieniło od czasu naszej rozmowy?",
-      },
-      { t: "client", text: "Tak, dokładnie. / Trochę się zmieniło, teraz jest jeszcze [coś]." },
-      {
-        t: "note",
-        text: "Jeśli coś nowego — notujesz i zaczynasz od tego. Jeśli bez zmian — idziesz do kroku 2 Information Gathering.",
-      },
+      { t: "say", text: "Na rozmowie telefonicznej powiedział Pan że [podsumowanie z kwalifikacji]. Czy to nadal aktualne?" },
+      { t: "client", text: "[potwierdza lub aktualizuje]" },
+      { t: "note", text: "Słuchaj uważnie — zmiany w sytuacji klienta od kwalifikacji to cenny sygnał." },
     ],
   },
   {
     id: "info",
     nr: "2",
-    label: "ZBIERANIE INFORMACJI — POGŁĘBIENIE",
-    tag: "MÓWISZ",
-    duration: "20–25 min",
+    label: "DIAGNOZA — SYTUACJA DZIŚ",
+    tag: "PYTASZ",
     lines: [
-      {
-        t: "note",
-        text: "NIE powtarzasz pytań z kwalifikacji. Klient już powiedział co go boli. Dzisiaj schodzisz dwa poziomy głębiej w TEN JEDEN problem.",
-      },
-      {
-        t: "say",
-        text: "Z naszej rozmowy wiem już że [ból z kwalifikacji — konkretny, nie parafrazowany]. Dzisiaj nie chcę powtarzać pytań które już padły. Chcę zejść głębiej.",
-      },
-      {
-        t: "say",
-        text: "Proszę mi opisać krok po kroku co dokładnie dzieje się z [procesem] od momentu gdy [trigger]. Co się dzieje pierwszego, drugiego, gdzie coś może pójść nie tak?",
-      },
-      { t: "client", text: "Klient opisuje szczegółowo. Słuchasz. Notujesz dosłowne słowa." },
-      {
-        t: "say",
-        text: "W ostatnim miesiącu — ile razy coś faktycznie poszło nie tak w tym procesie?",
-      },
-      { t: "client", text: "Klient podaje konkrety." },
-      {
-        t: "say",
-        text: "Co był najdroższy błąd lub sytuacja która kosztowała najwięcej czasu albo pieniędzy?",
-      },
-      { t: "client", text: "Klient podaje przykład." },
-      {
-        t: "say",
-        text: "Dlaczego nie możecie tego rozwiązać samodzielnie albo z obecnym systemem?",
-      },
-      {
-        t: "note",
-        text: "Odpowiedź na to pytanie = fundament pitchu w Kroku 4. Zapisz dosłownie.",
-      },
-      {
-        t: "say",
-        text: "Co Pana najbardziej kosztuje w tej sytuacji — czas, pieniądze, stres, ryzyko?",
-      },
+      { t: "say", text: "Co spowodowało że właśnie teraz zdecydował się Pan na to spotkanie?" },
+      { t: "client", text: "[odpowiedź]" },
+      { t: "say", text: "Proszę opowiedzieć jak wygląda dzień pracy w biurze — od momentu gdy wpada zlecenie do wystawienia faktury. Krok po kroku." },
+      { t: "client", text: "[odpowiedź]" },
+      { t: "say", text: "Ile osób jest zaangażowanych w ten proces i ile czasu to zajmuje łącznie?" },
     ],
   },
   {
     id: "proby",
     nr: "2b",
-    label: "POPRZEDNIE PRÓBY (KLUCZOWE)",
-    tag: "MÓWISZ",
-    duration: "4–5 min",
+    label: "POPRZEDNIE PRÓBY ROZWIĄZANIA",
+    tag: "PYTASZ",
     lines: [
-      { t: "note", text: "Fundament pitchu. Cytujesz to w Kroku 4." },
-      { t: "branch", text: "JEŚLI klient miał wcześniejsze próby (liczbaProb > 0 w systemie)" },
-      {
-        t: "say",
-        text: "Wiem z naszej rozmowy że miał Pan [poprzednia próba]. Co konkretnie nie zadziałało — czego brakowało tamtemu rozwiązaniu?",
-      },
-      { t: "client", text: "No bo [powód]..." },
-      {
-        t: "say",
-        text: "Czyli problem był nie tyle w chęciach co w [powtarzasz jego słowa]. Dobrze rozumiem?",
-      },
-      { t: "branch-bad", text: "JEŚLI klient nigdy nie próbował żadnych narzędzi / automatyzacji" },
-      {
-        t: "say",
-        text: "Czyli do tej pory robił Pan to wszystko ręcznie — własnymi zasobami. Co sprawiło że w ogóle zaczął Pan teraz szukać rozwiązania?",
-      },
-      { t: "client", text: "Klient podaje powód (wzrost, brak rąk, chaos)." },
-      {
-        t: "note",
-        text: "Zapisz dokładne słowa klienta — użyjesz ich dosłownie w Kroku 4 (pitch).",
-      },
+      { t: "say", text: "Co Pan do tej pory próbował żeby to usprawnić?" },
+      { t: "client", text: "[odpowiedź]" },
+      { t: "say", text: "Dlaczego to nie zadziałało tak jak Pan chciał?" },
+      { t: "client", text: "[odpowiedź]" },
     ],
   },
   {
-    id: "decyzja",
+    id: "samodzielnie",
     nr: "2c",
-    label: "DECYZJA I GOTOWOŚĆ",
-    tag: "MÓWISZ",
-    duration: "2–3 min",
+    label: "DLACZEGO NIE SAMODZIELNIE",
+    tag: "PYTASZ",
     lines: [
-      {
-        t: "say",
-        text: "Gdyby zdecydował Pan się na rozwiązanie — decyzja jest po Pana stronie, czy ktoś jeszcze musi to zaakceptować?",
-      },
-      { t: "client", text: "Ja decyduję. / Powinienem porozmawiać z [ktoś]." },
-      {
-        t: "note",
-        text: "Jeśli musi z kimś: zaproponuj żeby ta osoba dołączyła teraz lub umów follow-up we dwoje.",
-      },
-      { t: "say", text: "Na skali 1–10, jak pilny jest dla Pana ten problem?" },
+      { t: "say", text: "Dlaczego nie możecie tego rozwiązać samodzielnie — wewnętrznie?" },
+      { t: "client", text: "[odpowiedź]" },
+      { t: "note", text: "To pytanie pokazuje głębię problemu i eliminuje 'zrobimy to sami' jako późniejszą obiekcję." },
     ],
   },
   {
     id: "koszt",
     nr: "2d",
-    label: "KOSZT NIEROZWIĄZANIA",
-    tag: "MÓWISZ",
-    duration: "2–3 min",
+    label: "KOSZT OBECNEJ SYTUACJI",
+    tag: "PYTASZ",
     lines: [
-      {
-        t: "say",
-        text: "Ile szacunkowo miesięcznie kosztuje Pana firmę to że ten problem istnieje — w czasie i pieniądzach?",
-      },
-      { t: "client", text: "Hmm, nie liczyłem..." },
-      {
-        t: "say",
-        text: "Policzyliśmy razem podczas kwalifikacji że to około [X] PLN miesięcznie. Rocznie to [Y] PLN.",
-      },
+      { t: "say", text: "Ile szacuje Pan że kosztuje firma ta ręczna praca miesięcznie — w godzinach, błędach, stresie?" },
+      { t: "client", text: "[odpowiedź]" },
+      { t: "note", text: "Pomóż klientowi policzyć: godziny × stawka + błędy + opóźnienia w fakturach." },
     ],
   },
   {
     id: "cel",
     nr: "2e",
-    label: "PUNKT B — CEL KLIENTA",
-    tag: "MÓWISZ",
-    duration: "~2 min",
+    label: "CEL — WIZJA PRZYSZŁOŚCI",
+    tag: "PYTASZ",
     lines: [
-      {
-        t: "say",
-        text: "Jak wyglądałaby Pana firma za pół roku, gdyby ten problem był rozwiązany?",
-      },
-      { t: "client", text: "Klient opisuje wizję." },
-      { t: "note", text: "To jest Punkt B — użyjesz go w pitchu." },
+      { t: "say", text: "Gdybyśmy to rozwiązali w ciągu 30 dni — jak wyglądałby dla Pana idealny wynik? Co by się zmieniło w firmie?" },
+      { t: "client", text: "[odpowiedź]" },
+    ],
+  },
+  {
+    id: "pilnosc",
+    nr: "2f",
+    label: "PILNOŚĆ",
+    tag: "PYTASZ",
+    lines: [
+      { t: "say", text: "Na skali 1-10 jak pilne jest dla Pana rozwiązanie tego teraz?" },
+      { t: "client", text: "[odpowiedź]" },
+      { t: "note", text: "Poniżej 7: 'Co musiałoby się wydarzyć żeby to było 9?' Poniżej 5: zastanów się czy warto kontynuować pitch dziś." },
     ],
   },
   {
     id: "parafraza",
-    nr: "2f",
-    label: "PARAFRAZA (OBOWIĄZKOWA)",
+    nr: "2g",
+    label: "PARAFRAZA — PODSUMOWANIE DIAGNOZY",
     tag: "MÓWISZ",
-    duration: "~2 min",
     lines: [
-      { t: "say", text: "Panie {IMIĘ}, chcę się upewnić że dobrze zrozumiałem." },
+      { t: "say", text: "Chcę się upewnić że dobrze rozumiem Pana sytuację. Proszę mnie poprawić jeśli coś pomylę." },
       {
         t: "say",
-        text: "[Aktualna sytuacja]. Największe wyzwanie to [ból]. Kosztuje Pana [kwota] miesięcznie.",
+        text: "Prowadzi Pan [nazwa firmy] z flotą [X] pojazdów. Biuro zajmuje się [opis pracy]. Problem to [ból główny]. Próbował Pan [poprzednie próby] ale to nie zadziałało bo [powód]. Samodzielnie trudno to rozwiązać bo [powód]. Idealnie chciałby Pan [cel]. To kosztuje firmę szacunkowo [kwota] miesięcznie. Zgadza się?",
       },
-      { t: "say", text: "Próbował Pan [poprzednia próba] i nie wyszło bo [powód który podał]." },
-      { t: "say", text: "Celem jest [marzony efekt]. Zgadza się? Jest coś co chciałby Pan dodać?" },
-      { t: "client", text: "Tak, dobrze Pan to podsumował. / Dodałbym jeszcze [coś]." },
+      { t: "client", text: "[potwierdza lub koryguje]" },
+      { t: "note", text: "Parafraza obowiązkowa przed pitchem. Klient który potwierdza własny ból kupuje ideę, nie produkt." },
     ],
   },
   {
     id: "przejscie",
     nr: "3",
-    label: "PRZEJŚCIE",
+    label: "PRZEJŚCIE DO PITCHU",
     tag: "MÓWISZ",
-    duration: "2–3 min",
     lines: [
-      { t: "say", text: "Dziękuję — to mi bardzo pomogło." },
-      { t: "say", text: "Na podstawie tego co Pan powiedział mam dla Pana konkretne rozwiązanie." },
-      {
-        t: "say",
-        text: "Czy jest jeszcze coś o czym chciałby Pan porozmawiać zanim przejdziemy do prezentacji?",
-      },
-      { t: "note", text: "Czekasz. Inicjatywa ze strony klienta." },
-      { t: "action", text: "Udostępniasz ekran. Otwierasz prezentację Autorise." },
-      { t: "note", text: "Jeśli zabrakło czasu: umów drugie spotkanie, nie skracaj Kroku 2." },
+      { t: "say", text: "Dziękuję za szczerość. Mam przygotowaną prezentację specjalnie dla [nazwa firmy] — z Pana liczbami. Mogę ją teraz pokazać?" },
     ],
   },
   {
     id: "pitch",
     nr: "4",
-    label: "PREZENTACJA ROZWIĄZANIA",
-    tag: "MÓWISZ",
-    duration: "15–20 min",
+    label: "PITCH",
+    tag: "PREZENTACJA",
     lines: [
-      {
-        t: "say",
-        text: "Kilka słów o nas — Autorise działa wyłącznie z firmami transportowymi. Nic innego. Rozumiemy Pana branżę od środka.",
-      },
-      {
-        t: "note",
-        text: "Personalizacja kluczowa. Dane klienta, nie ogólniki. Pokaż screeny lub demo.",
-      },
-      {
-        t: "say",
-        text: "Wcześniej próbował Pan [poprzednia próba]. To nie zadziałało ponieważ [powód który Pan podał]. My robimy to inaczej — [krótkie wyjaśnienie].",
-      },
-      { t: "say", text: "Jak to wygląda u Pana w praktyce. Moduły dobrane do Pana firmy:" },
-      { t: "say", text: "Krok 1: [moduł A — opisany korzyścią, nie nazwą techniczną]." },
-      { t: "say", text: "Krok 2: [moduł B]." },
-      { t: "say", text: "Krok 3: [alert i kontrola]." },
-      { t: "say", text: "Pan pracuje dokładnie tak jak teraz. System robi resztę." },
-      {
-        t: "say",
-        text: "Efekt po 30 dniach: minimum 80 godzin miesięcznie wraca do firmy — na zleceniach, klientach, odpoczynku.",
-      },
+      { t: "action", text: "SLAJD 1: Okładka z nazwą firmy klienta. Przewiń gdy skończysz intro o firmie." },
+      { t: "action", text: "SLAJD 2: Sytuacja dziś. Pokaż 4 problem-cards. Wskaż TYLKO te które dotyczą tego klienta." },
+      { t: "action", text: "SLAJD 3: System. Pokaż TYLKO moduły z pitch recipe Agenta 02. Pomiń moduły które nie dotyczą klienta." },
+      { t: "action", text: "SLAJD 5: Efekt. Wykres ROI z liczbami tego klienta. Sprawdź czy Agent 03 je wstawił." },
+      { t: "action", text: "SLAJD 6: Inwestycja. Cena na ekranie. CISZA 20 sekund." },
+      { t: "action", text: "SLAJD 7: Gwarancja 80h. Ten slajd zamyka pitch. Nie przewijaj dalej." },
+      { t: "say", text: "To jest to co przygotowałem dla Pana firmy. Jak Pan to widzi?" },
     ],
   },
   {
     id: "temperatura",
     nr: "5",
-    label: "SPRAWDZENIE TEMPERATURY",
-    tag: "MÓWISZ",
-    duration: "3–5 min",
+    label: "TEMPERATURA",
+    tag: "PYTASZ",
     lines: [
-      { t: "say", text: "Panie {IMIĘ} — jak to do tej pory brzmi?" },
-      { t: "client", text: "Brzmi interesująco. / Hmm, zastanawiam się..." },
-      {
-        t: "say",
-        text: "Widzi Pan jak to bezpośrednio rozwiązuje [ból który wymienił w Kroku 2]?",
-      },
+      { t: "say", text: "Na skali 1-10 — gdzie jesteśmy?" },
+      { t: "client", text: "[odpowiedź]" },
+      { t: "note", text: "7+: idź do commitment. 5-6: 'Co musiałoby się zmienić żeby to było 9?' Poniżej 5: wróć do parafrazy bólu." },
     ],
   },
   {
-    id: "commitment_question",
+    id: "commitment",
     nr: "5a",
-    label: "COMMITMENT QUESTION (OBOWIĄZKOWE PRZED CENĄ)",
-    tag: "MÓWISZ" as const,
-    duration: "~1 min",
+    label: "COMMITMENT — DECYDENT",
+    tag: "PYTASZ",
     lines: [
-      {
-        t: "note",
-        text: "NIE przechodzisz do ceny bez tego pytania. To jest checkpoint który zabezpiecza closing. Klient który odpowie TAK sam sobie sprzedaje.",
-      },
-      {
-        t: "say",
-        text: "Zanim przejdę do ceny — jeżeli finanse okażą się być akceptowalne, czy ten model współpracy z Tobą rezonuje i widzisz siebie w tym rozwiązaniu?",
-      },
-      { t: "client", text: "Tak, tak to widzę. / Musiałbym się jeszcze upewnić w jednej kwestii." },
-      { t: "say", text: "A co spowodowało że to powiedziałeś?" },
-      {
-        t: "note",
-        text: "STOP. Czekasz. Klient mówi. Nie przerywasz. To zdanie jest najważniejsze w całym spotkaniu.",
-      },
-      {
-        t: "branch-bad",
-        text: "Jeśli klient NIE lub niepewny — wróć do Kroku 4. Zapytaj co jest niejasne. Nie idź do ceny.",
-      },
+      { t: "say", text: "Czy jest Pan osobą która podejmuje tę decyzję, czy potrzebujemy kogoś jeszcze?" },
+      { t: "client", text: "[odpowiedź]" },
+      { t: "note", text: "Jeśli 'muszę z żoną / wspólnikiem' — użyj obiekcji od2 lub od2b. Nie przechodź do ceny bez decydenta." },
+      { t: "say", text: "Jeśli zdecyduje się Pan dziś — możemy zacząć wdrożenie w tym tygodniu. Co Pan myśli?" },
     ],
   },
   {
     id: "cena",
     nr: "5b",
-    label: "OFERTA CENOWA",
+    label: "CENA",
     tag: "MÓWISZ",
-    duration: "~30 sek + cisza",
     lines: [
-      { t: "say", text: "Panie {IMIĘ}, inwestycja: 15 000 PLN jednorazowo za wdrożenie." },
-      { t: "say", text: "Plus 4 000 PLN miesięcznie za obsługę i ciągły rozwój — minimum rok." },
-      { t: "note", text: "CISZA. Minimum 20 sekund. Absolutnie nic nie mówisz. Czekasz." },
-      { t: "note", text: 'Jeśli po 6–8 sek klient się nie odzywa, powiedz: "Jak to Pan widzi?"' },
+      { t: "say", text: "Inwestycja to 15 000 zł jednorazowo lub dwie raty po 7 500 zł. Plus 4 000 zł miesięcznie opieki. Gwarancja: jeśli w 30 dni nie odzyska Pan 80 godzin — zwrot 100% bez pytań." },
+      { t: "action", text: "CISZA. Poczekaj. Nie wypełniaj ciszy." },
     ],
   },
   {
     id: "roi_d",
     nr: "5c",
-    label: "ROI + GWARANCJA",
+    label: "ROI W LICZBACH",
     tag: "MÓWISZ",
-    duration: "~2 min",
     lines: [
-      {
-        t: "say",
-        text: "Policzyliśmy razem że ten problem kosztuje Pana firmę [kwota roczna] PLN rocznie.",
-      },
-      { t: "say", text: "15 000 PLN to [X]% tej kwoty — jednorazowo." },
-      {
-        t: "say",
-        text: "I gwarancja: jeśli po 30 dniach Pana biuro nie zaoszczędzi minimum 80 godzin miesięcznie — zwracam 100% inwestycji.",
-      },
-      { t: "say", text: "Sprawdzamy razem na Pana realnych zleceniach z ostatniego miesiąca." },
+      { t: "say", text: "Przy [kwota oszczędności] miesięcznie, inwestycja zwraca się w [X] miesięcy. Czy to ma sens dla Pana firmy?" },
     ],
   },
   {
     id: "closing",
     nr: "5d",
     label: "CLOSING",
-    tag: "MÓWISZ",
-    duration: "~30 sek",
+    tag: "ZAMKNIĘCIE",
     lines: [
-      { t: "say", text: "Startujemy w przyszły poniedziałek czy w ten?" },
-      { t: "note", text: 'Dwie opcje — obie zakładają START. Nie pytasz "czy" tylko "kiedy".' },
-      { t: "client", text: "Hmm, chyba w przyszły. / Muszę się jeszcze zastanowić." },
-      { t: "branch", text: "Obiekcja: patrz Krok 6 w prawym panelu" },
+      { t: "say", text: "Co potrzebuje Pan żeby podjąć decyzję dziś?" },
+      { t: "client", text: "[odpowiedź]" },
+      { t: "note", text: "Jeśli brak obiekcji: 'Super. Prześlę umowę na maila. Mogę teraz?' Jeśli jest obiekcja — użyj sekcji Obiekcje." },
+      { t: "say", text: "Zaczynamy. Prześlę umowę i fakturę na [email]. Kickoff umawiamy na [termin]. Pasuje?" },
     ],
   },
 ];
@@ -2617,61 +2212,98 @@ const OBJECTIONS_D: Objection[] = [
     id: "od1",
     label: "Muszę się zastanowić",
     script:
-      "Jasne. Większość osób które mówią że muszą to przemyśleć, ma w głowie albo konkretną wątpliwość co do rozwiązania, albo kwestię finansową, albo kogoś kto musi zaakceptować. Które z tych trzech to jest u Pana?",
-    note: "Branching: wątpliwość: 'Co konkretnie chciałby Pan mieć pewniejsze?' | finanse: obiekcja od3 | ktoś inny: objekcja od2 | brak konkretyzacji: 'Kiedy realnie ma Pan czas to przemyśleć — dni czy tydzień?' + konkretna data follow-up",
+      "Oczywiście. Żebym wiedział jak Panu pomóc — co konkretnie wymaga zastanowienia? Czy to kwestia budżetu, kwestia czy to zadziała u Pana, czy może chce Pan porozmawiać z kimś bliskim?",
+    note: "3 gałęzie: (A) wątpliwość co do produktu — wróć do wartości i gwarancji; (B) finanse — zaproponuj raty; (C) partner — przejdź do od2 lub od2b.",
   },
   {
     id: "od2",
-    label: "Muszę porozmawiać z żoną / partnerem życiowym",
+    label: "Muszę porozmawiać z żoną",
     script:
-      "To rozumiem i szanuję. Kiedy macie Państwo chwilę żeby to razem przedyskutować — dziś wieczór?",
+      "Gdyby Pana żona była dzisiaj na tym spotkaniu i miała pełen kontekst tak jak Pan, co myśli Pan że by powiedziała?",
     followup:
-      "Przygotuję Panu krótkie podsumowanie — co konkretnie omawialiśmy, jakie efekty i co inwestycja wynosi — żeby mógł Pan pokazać bez potrzeby tłumaczenia wszystkiego od zera. Wyślę na WhatsApp zaraz po naszej rozmowie. I zadzwonię [data 1-2 dni po ich rozmowie] — żeby wiedzieć jak poszło. Pasuje Panu rano czy wieczorem?",
+      "A jeśli mimo pełnego kontekstu z jakiegoś powodu powiedziałaby nie, co Pan wtedy robi?",
+    note: "Anchor decision przed rozłączeniem: 'Kiedy rozmawia Pan z żoną — dziś wieczór czy jutro?' Zapisz konkretną datę follow-up.",
   },
   {
     id: "od2b",
-    label: "Muszę porozmawiać z partnerem biznesowym / wspólnikiem",
-    script: "Oczywiście. Kiedy macie Państwo czas żeby to omówić — dziś czy jutro?",
-    followup:
-      "Przygotuję krótkie 4-5 zdań podsumowania dla wspólnika — co ustaliliśmy i jaka jest inwestycja — żeby nie trzeba było wszystkiego tłumaczyć od zera. I umówmy się że [data] się odezwę żeby wiedzieć co postanowiliście. Rano czy po południu?",
+    label: "Muszę porozmawiać ze wspólnikiem / partnerem biznesowym",
+    script:
+      "Rozumiem. Czy możemy umówić drugie spotkanie razem ze wspólnikiem — tak żeby miał ten sam kontekst co Pan?",
+    note: "Opcja A: umów 2. spotkanie z decydentem. Opcja B: reframing — 'Co musiałoby się wydarzyć żeby Pan mógł podjąć tę decyzję samodzielnie?'",
   },
   {
     id: "od3",
-    label: "Za drogo / Nie mam budżetu",
+    label: "Za drogo",
     script:
-      "Rozumiem. Policzyliśmy razem że ten problem kosztuje Pana [kwota roczna] PLN rocznie. 15 000 PLN to jednorazowa inwestycja. Co konkretnie jest problemem — gotówka teraz, czy wątpliwości co do efektów?",
+      "Rozumiem. Chcę się upewnić że dobrze rozumiem. Czy to kwestia samej kwoty, czy kwestia czy inwestycja się zwróci, czy porównuje Pan nas z inną ofertą?",
+    note: "LOGISTYKA (kwota): 'Mamy raty: 2 × 7 500 zł. Zwrot w [X] mc.' WARTOŚĆ (zwrot): wróć do ROI z liczbami klienta. KONKURENCJA: 'Kto i co oferuje za tę cenę? Czy mają gwarancję zwrotu 80h?'",
   },
   {
     id: "od4",
-    label: "Nie jestem przekonany czy to zadziała",
-    script:
-      "Dlatego mamy gwarancję: jeśli po 30 dniach Pana biuro nie zaoszczędzi 80 godzin miesięcznie — zwracam 100%. Sprawdzamy razem na Pana realnych zleceniach. Ryzyko jest po mojej stronie.",
+    label: "Jestem już przekonany, ale...",
+    script: "Słyszę 'ale' — co konkretnie stoi na przeszkodzie żeby zdecydować się dziś?",
+    note: "To najczęściej zamaskowana obiekcja od1, od3 lub od2. Słuchaj co pojawi się po 'ale'.",
   },
   {
     id: "od5",
     label: "Mam teraz inne priorytety",
     script:
-      "Rozumiem. Kiedy te priorytety się ustabilizują? Umówmy się na konkretną datę żebyśmy nie tracili impetu.",
+      "Rozumiem. Ile czasu zajmie Panu te priorytety? A czy w tym czasie biuro nadal traci te [X] godzin tygodniowo?",
+    note: "Cel: pokazać koszt zwlekania. Nie naciskaj — zaproponuj konkretną datę powrotu.",
   },
   {
     id: "od6",
-    label: "Dam znać za tydzień",
+    label: "Chcę najpierw zobaczyć demo / testować",
     script:
-      "Jasne. Żeby nie gubić kontaktu — mogę zadzwonić w [konkretny dzień] o [godzina]? Który termin bardziej pasuje — rano czy po południu?",
+      "Nasze demo to realne wdrożenie z Pana danymi — dlatego mamy gwarancję 30-dniową z 100% zwrotem. Nie pokazujemy sandboxa — wdrażamy i Pan ocenia na żywych danych. Czy to zmienia Pana perspektywę?",
   },
   {
     id: "od7",
-    label: "Chcę najpierw zobaczyć coś za darmo",
+    label: "Mam pracownika który to robi",
     script:
-      "Dlatego mamy gwarancję 30-dniową z 100% zwrotem — to jest bezpieczne testowanie na realnych danych. Nie demo, tylko prawdziwe wdrożenie bez ryzyka finansowego.",
+      "Dobrze. I właśnie o to chodzi — ta osoba robi coś co można zautomatyzować. Co mogłaby robić zamiast tego, gdyby miała te [X] godzin dziennie z powrotem?",
   },
   {
     id: "od8",
-    label: "Mam pracownika który to robi",
+    label: "Mam dwie firmy, nie wiem dla której",
     script:
-      "Dobrze. I właśnie o to chodzi — ta osoba robi coś co można zautomatyzować. Co mogłaby robić zamiast tego, gdyby miała te 2–3 godziny dziennie z powrotem?",
+      "Dla której z firm ból jest większy — gdzie traci się więcej czasu? Możemy zacząć od jednej i rozszerzyć na drugą po 30 dniach.",
+  },
+  {
+    id: "od9",
+    label: "Korzystam już z konkurencji",
+    script:
+      "Rozumiem. Co Pan od nich dostaje i co działa dobrze? A czego Panu brakuje?",
+    note: "Nie atakuj konkurencji. Szukaj luki — co nasze rozwiązanie robi czego tamto nie robi. Zaproponuj 30-dniowy test równoległy z gwarancją.",
+  },
+  {
+    id: "od10",
+    label: "Muszę to przespać",
+    script: "Oczywiście. Co musiałoby się stać żeby jutro rano powiedział Pan 'tak'?",
+    followup: "Zadzwonię jutro o [godzina]. Pasuje Panu?",
+    note: "Anchor konkretnego czasu. Jeśli nie chce jutro — zapisz w pipeline jako follow-up z datą.",
+  },
+  {
+    id: "od11",
+    label: "Mogę płacić w ratach?",
+    script:
+      "Tak — mamy opcję 2 × 7 500 zł zamiast 15 000 zł jednorazowo. Retainer pozostaje 4 000 zł / mc. Przy ratach zaczynacie wdrożenie po pierwszej wpłacie. Pasuje Panu?",
   },
 ];
+
+function objectionColor(label: string): { bg: string; accent: string; category: string } {
+  if (/czas|odbioru|komentarz|urlop/i.test(label))
+    return { bg: "rgba(59,130,246,0.06)", accent: "#3b82f6", category: "Logistyczne" };
+  if (/zastanow|pomyśl|przemyśl|priorytety|tydzień|znać|przespać/i.test(label))
+    return { bg: "rgba(251,191,36,0.08)", accent: "#f59e0b", category: "Niezdecydowanie" };
+  if (/drogo|budżet|finans|przekonany|raty/i.test(label))
+    return { bg: "rgba(239,68,68,0.06)", accent: "#ef4444", category: "Finanse" };
+  if (/żon|partner|wspólnik|decydent|syn/i.test(label))
+    return { bg: "rgba(139,92,246,0.06)", accent: "#8b5cf6", category: "Decydenci" };
+  if (/system|program|pracownik|firm|demo|konkurencj/i.test(label))
+    return { bg: "rgba(20,184,166,0.06)", accent: "#14b8a6", category: "Produkt" };
+  return { bg: "transparent", accent: "var(--text-tertiary)", category: "Inne" };
+}
 
 const ICP_RULES: IcpRule[] = [
   { ok: true, label: "Biuro", val: "Min. 2 osoby przy zleceniach (twardy disqualifier)" },
@@ -3345,7 +2977,9 @@ function ScriptTab({
                         key={i}
                         style={{
                           padding: "4px 8px",
-                          background: /FLAGA/i.test(item) ? "rgba(255,69,58,0.08)" : "var(--warning-bg)",
+                          background: /FLAGA/i.test(item)
+                            ? "rgba(255,69,58,0.08)"
+                            : "var(--warning-bg)",
                           borderLeft: `3px solid ${/FLAGA/i.test(item) ? "var(--error)" : "var(--warning)"}`,
                           borderRadius: "var(--radius-xs)",
                           fontSize: 11,
@@ -3481,13 +3115,17 @@ function ScriptTab({
             Obiekcje
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            {objections.map((obj) => (
+            {objections.map((obj) => {
+              const oc = objectionColor(obj.label);
+              return (
               <div
                 key={obj.id}
                 style={{
                   border: "1px solid var(--border)",
+                  borderLeft: `3px solid ${oc.accent}`,
                   borderRadius: "var(--radius-xs)",
                   overflow: "hidden",
+                  background: openObj === obj.id ? oc.bg : "transparent",
                 }}
               >
                 <button
@@ -3495,35 +3133,53 @@ function ScriptTab({
                   style={{
                     width: "100%",
                     display: "flex",
-                    alignItems: "center",
+                    alignItems: "flex-start",
                     justifyContent: "space-between",
                     padding: "7px 10px",
-                    background: openObj === obj.id ? "var(--accent-muted)" : "transparent",
+                    background: "transparent",
                     border: "none",
                     cursor: "pointer",
                     textAlign: "left",
                     gap: 8,
+                    flexDirection: "column",
                   }}
                 >
-                  <span
-                    style={{
-                      fontSize: 12,
-                      color: "var(--text-primary)",
-                      fontFamily: "var(--font-sans)",
-                      fontWeight: openObj === obj.id ? 600 : 400,
-                    }}
-                  >
-                    {obj.label}
-                  </span>
-                  <ChevronDown
-                    size={12}
-                    color="var(--text-tertiary)"
-                    style={{
-                      flexShrink: 0,
-                      transform: openObj === obj.id ? "rotate(180deg)" : "none",
-                      transition: "transform 120ms",
-                    }}
-                  />
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                      <span
+                        style={{
+                          fontSize: 9,
+                          fontWeight: 700,
+                          letterSpacing: "0.08em",
+                          textTransform: "uppercase",
+                          color: oc.accent,
+                          fontFamily: "var(--font-sans)",
+                        }}
+                      >
+                        {oc.category}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: 12,
+                          color: "var(--text-primary)",
+                          fontFamily: "var(--font-sans)",
+                          fontWeight: openObj === obj.id ? 600 : 400,
+                        }}
+                      >
+                        {obj.label}
+                      </span>
+                    </div>
+                    <ChevronDown
+                      size={12}
+                      color="var(--text-tertiary)"
+                      style={{
+                        flexShrink: 0,
+                        transform: openObj === obj.id ? "rotate(180deg)" : "none",
+                        transition: "transform 120ms",
+                        marginTop: 2,
+                      }}
+                    />
+                  </div>
                 </button>
                 {openObj === obj.id && (
                   <div style={{ padding: "8px 10px 10px", borderTop: "1px solid var(--border)" }}>
@@ -3666,7 +3322,8 @@ function ScriptTab({
                   </div>
                 )}
               </div>
-            ))}
+            );
+            })}
           </div>
         </div>
 
