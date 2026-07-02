@@ -1,5 +1,5 @@
-# AUTORISE DASHBOARD — Stan systemu v7
-**Data:** 2026-07-01 | **Wersja:** v7 (agents redesign + mobile agencja + reset stages)
+# AUTORISE DASHBOARD — Stan systemu v8
+**Data:** 2026-07-03 | **Wersja:** v8 (scripts-v3 + Robert AAA objections + mapa 9 nodów + ROW3 kanban + Agent1 3 statusy)
 
 ---
 
@@ -115,10 +115,24 @@ Wszystkie agenty: `metadata: { user_id: "autorise-agentN" }` + `stop_reason` che
 - 4-tier: czerwony (overdue), pomarańczowy (today), zielony (week), szary (future)
 - Filtr list: pokazuje wszystkie z wyjątkiem "Pomysły i inspiracje"
 
-### Pipeline Kanban (v4)
-- 2×4 grid (bez horizontal scroll), per-column internal scroll
-- Dane z Notion: kontakt, firma, telefon, email, status, ICP, lastModified
+### Pipeline Kanban (v5 — ROW3)
+- Trzy wiersze: ROW1 (4 statusy: Nowy lead, Kwalifikacja, Discovery umówione, Finalizacja), ROW2 (4: Kickoff, Wdrożenie, Retainer, Niekwalifikowany), ROW3 (2: Nieaktywny follow up, Upsell)
+- Dynamic `gridTemplateColumns: repeat(N, 1fr)` per KanbanRow
+- Separator `1px var(--border)` między wierszami
 - ClientPanel (slide-in 340px): pokazuje tylko niepuste pola + link do Notion
+
+### /sprzedaz — Skrypty v3
+- **STEPS_K:** 9 kroków (0-Przygotowanie → 6-Umawianie przez pre-commitment w kroku 5)
+- **STEPS_D:** 18 kroków (framework Robert — krok 1c podsumowanie kwalifikacji, 4-Pitch z 6 action notes dla slajdów 1/2/3/5/6/7, 5a-Commitment przed ceną, 7-Handling, 8-Closing, 9-Kontrakt)
+- **OBJECTIONS_K:** ok1-ok7 (Logistyczne + Decydenci + SMS/FB)
+- **OBJECTIONS_D:** od1-od11 (Robert AAA full — Niezdecydowanie, Decydenci, Finanse, Produkt, Logistyczne)
+- **objectionColor():** 5 kategorii (Logistyczne=blue, Niezdecydowanie=amber, Finanse=red, Decydenci=purple, Produkt=teal) + left-border + bg tint na open
+- **MapaProcesuTab:** 9 nodów flexbox (reklama→kwalifikacja→brief→personalizacja→discovery→umowa→wdrozenie→retainer→upsell), exit paths z kolorami, legenda 7 kolorów, liczniki klientów per nod, horizontal scroll
+
+### Agent 1 — trzeci status
+- 3 statusy: "Kwalifikacja" | "Discovery umówione" | "Nieaktywny (follow up)"
+- "Nieaktywny (follow up)": wymagana `data_re_engagement` (obowiązkowa, agent ustala +30 dni jeśli klient nie podał)
+- Kryteria: urlop 2+ tygodnie, aktualnie wdraża TMS, budżet za X mc, brak bólu po 2 próbach
 
 ---
 
