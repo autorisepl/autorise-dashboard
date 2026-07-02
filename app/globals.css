@@ -8,24 +8,24 @@
 
 :root {
   /* Fonty */
-  --font-sans:   -apple-system, BlinkMacSystemFont, "SF Pro Display", var(--font-geist-sans), "Helvetica Neue", Arial, sans-serif;
+  --font-sans:   var(--font-roboto), "Roboto", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
   --font-mono:   "SF Mono", var(--font-geist-mono), "Fira Code", Menlo, Consolas, monospace;
   /* Alias dla komponentów używających starszej nazwy */
-  --font-system: -apple-system, BlinkMacSystemFont, "SF Pro Display", var(--font-geist-sans), "Helvetica Neue", Arial, sans-serif;
+  --font-system: var(--font-roboto), "Roboto", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
 
   /* Tła */
   --bg:              #f5f5f7;
   --bg-elevated:     #ffffff;
   --bg-sidebar:      rgba(246, 246, 248, 0.94);
   --bg-hover:        rgba(0, 0, 0, 0.04);
-  --bg-active:       rgba(81, 112, 255, 0.08);
+  --bg-active:       rgba(10, 132, 255, 0.08);
   --bg-card:         #ffffff;
 
   /* Obramowania */
   --border:          rgba(0, 0, 0, 0.08);
   --border-hover:    rgba(0, 0, 0, 0.14);
   --border-sidebar:  rgba(0, 0, 0, 0.09);
-  --border-focus:    rgba(81, 112, 255, 0.45);
+  --border-focus:    rgba(10, 132, 255, 0.45);
 
   /* Tekst */
   --text-primary:    #1d1d1f;
@@ -35,22 +35,22 @@
   --text-on-accent:  #ffffff;
 
   /* Akcent */
-  --accent:          #5170ff;
-  --accent-hover:    #3a55e8;
-  --accent-muted:    rgba(81, 112, 255, 0.10);
-  --accent-border:   rgba(81, 112, 255, 0.25);
+  --accent:          #0a84ff;
+  --accent-hover:    #0071e3;
+  --accent-muted:    rgba(10, 132, 255, 0.10);
+  --accent-border:   rgba(10, 132, 255, 0.25);
 
   /* Statusy */
-  --success:         #30d158;                  /* kropki / wskaźniki / akcenty */
+  --success:         #34c759;                  /* iOS green */
   --success-text:    #1a7f37;                  /* tekst i ikony na jasnym tle (kontrast AA) */
-  --success-bg:      rgba(48, 209, 88, 0.12);
-  --success-border:  rgba(48, 209, 88, 0.32);
-  --error:           #ff453a;
-  --error-bg:        rgba(255, 69, 58, 0.10);
-  --error-border:    rgba(255, 69, 58, 0.25);
-  --warning:         #ff9f0a;
-  --warning-bg:      rgba(255, 159, 10, 0.10);
-  --warning-border:  rgba(255, 159, 10, 0.25);
+  --success-bg:      rgba(52, 199, 89, 0.12);
+  --success-border:  rgba(52, 199, 89, 0.32);
+  --error:           #ff3b30;                  /* iOS red */
+  --error-bg:        rgba(255, 59, 48, 0.10);
+  --error-border:    rgba(255, 59, 48, 0.25);
+  --warning:         #ff9500;                  /* iOS orange */
+  --warning-bg:      rgba(255, 149, 0, 0.10);
+  --warning-border:  rgba(255, 149, 0, 0.25);
 
   /* Glassmorphism */
   --glass:           rgba(255, 255, 255, 0.72);
@@ -80,9 +80,9 @@
 
   /* Gradient tła strony */
   --page-gradient:
-    radial-gradient(ellipse 70% 60% at 5% 5%,  rgba(81, 112, 255, 0.022) 0%, transparent 65%),
-    radial-gradient(ellipse 55% 50% at 95% 92%, rgba(175, 82, 222, 0.015) 0%, transparent 65%),
-    radial-gradient(ellipse 45% 40% at 70% 15%, rgba(81, 112, 255, 0.012) 0%, transparent 55%);
+    radial-gradient(ellipse 70% 60% at 5% 5%,  rgba(10, 132, 255, 0.020) 0%, transparent 65%),
+    radial-gradient(ellipse 55% 50% at 95% 92%, rgba(52, 199, 89, 0.012) 0%, transparent 65%),
+    radial-gradient(ellipse 45% 40% at 70% 15%, rgba(10, 132, 255, 0.010) 0%, transparent 55%);
 
   color-scheme: light;
 }

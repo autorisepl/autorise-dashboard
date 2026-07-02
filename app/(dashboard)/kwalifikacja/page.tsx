@@ -6,15 +6,11 @@ import {
   CheckCircle2,
   ChevronDown,
   Copy,
-  ExternalLink,
   FileText,
-  Loader2,
   MessageSquare,
-  Monitor,
   Phone,
   RefreshCw,
   Search,
-  Target,
   Users,
   X,
 } from "lucide-react";
@@ -22,12 +18,12 @@ import { useCallback, useEffect, useState } from "react";
 import type { PipelineClientDetailed } from "@/app/api/notion/pipeline/route";
 import { KalkulatorRoi } from "@/components/kalkulator/KalkulatorRoi";
 import { formatPhone } from "@/lib/format/phone";
-import { DISCOVERY_STATUSES, OBJECTIONS_D, STEPS_D } from "@/lib/scripts/discovery";
+import { ICP_RULES, OBJECTIONS_K, STEPS_K } from "@/lib/scripts/kwalifikacyjna";
 import { MESSAGES_DATA, GROUP_COLORS } from "@/lib/scripts/messages";
 import { objectionColor } from "@/lib/scripts/types";
 import type { ScriptLine } from "@/lib/scripts/types";
 
-// ── Helpers ───────────────────────────────────────────────────────────
+// ── Helpers ──────────────────────────────────────────────────────────
 
 function toVocative(name: string): string {
   const first = name.trim().split(" ")[0];
@@ -39,17 +35,7 @@ function toVocative(name: string): string {
   return first;
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  Kwalifikacja: "#7c3aed",
-  "Discovery umówione": "#0d9488",
-  Finalizacja: "#d97706",
-  Kickoff: "#16a34a",
-  Wdrożenie: "#15803d",
-  Retainer: "#166534",
-  Upsell: "#8b5cf6",
-};
-
-// ── Line styles ───────────────────────────────────────────────────────
+// ── Line colors ───────────────────────────────────────────────────────
 
 const LINE_COLOR: Record<ScriptLine["t"], string> = {
   say: "var(--text-primary)",
@@ -141,7 +127,7 @@ function ScriptStep({
   onCopy,
   copiedId,
 }: {
-  step: (typeof STEPS_D)[0];
+  step: (typeof STEPS_K)[0];
   fill: (t: string) => string;
   onCopy: (id: string, text: string) => void;
   copiedId: string | null;
@@ -155,7 +141,6 @@ function ScriptStep({
     UWAGA: "var(--warning)",
     GAŁĘZIE: "var(--success-text)",
     ZAMKNIĘCIE: "#16a34a",
-    PARAFRAZA: "#0d9488",
   };
 
   return (
@@ -185,7 +170,7 @@ function ScriptStep({
             fontSize: 10,
             fontWeight: 800,
             color: "#AEAEB2",
-            minWidth: 20,
+            minWidth: 18,
           }}
         >
           {step.nr}
@@ -201,11 +186,6 @@ function ScriptStep({
         >
           {step.label}
         </span>
-        {step.duration && (
-          <span style={{ fontSize: 10, color: "var(--text-tertiary)", fontFamily: "var(--font-sans)" }}>
-            {step.duration}
-          </span>
-        )}
         <span
           style={{
             fontFamily: "var(--font-sans)",
@@ -276,90 +256,21 @@ function ScriptStep({
                     color: copiedId === `${step.id}-${li}` ? "var(--success-text)" : "var(--text-tertiary)",
                     display: "flex",
                     alignItems: "center",
+                    gap: 3,
+                    fontSize: 10,
                   }}
                 >
-                  {copiedId === `${step.id}-${li}` ? <CheckCircle2 size={10} /> : <Copy size={10} />}
+                  {copiedId === `${step.id}-${li}` ? (
+                    <CheckCircle2 size={10} />
+                  ) : (
+                    <Copy size={10} />
+                  )}
                 </button>
               )}
             </div>
           ))}
         </div>
       )}
-    </div>
-  );
-}
-
-// ── Brief Agent 02 ────────────────────────────────────────────────────
-
-function BriefSection({ client }: { client: PipelineClientDetailed | null }) {
-  if (!client) {
-    return (
-      <div style={{ padding: "20px 0", textAlign: "center", color: "var(--text-tertiary)", fontSize: 13, fontFamily: "var(--font-sans)" }}>
-        Wybierz klienta, aby zobaczyć Brief Agenta 02.
-      </div>
-    );
-  }
-
-  const hasBrief = !!(client.uwagiFAgent2 || client.hipotezaBolGlowny || client.pitchRecipe);
-
-  if (!hasBrief) {
-    return (
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        <div style={{ padding: "14px 16px", background: "var(--warning-bg)", border: "1px solid var(--warning-border)", borderRadius: 8, fontSize: 13, color: "var(--warning)", fontFamily: "var(--font-sans)" }}>
-          Brief Agenta 02 nie jest dostępny dla tego klienta. Uruchom Agenta 02 na stronie Agenci AI.
-        </div>
-        <a
-          href="/agenci"
-          style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 8, border: "1px solid var(--accent-border)", background: "var(--accent-muted)", color: "var(--accent)", textDecoration: "none", fontFamily: "var(--font-sans)", fontSize: 13, fontWeight: 500 }}
-        >
-          <ExternalLink size={13} />
-          Uruchom Agent 02 dla {client.kontakt || client.firma}
-        </a>
-      </div>
-    );
-  }
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      {client.hipotezaBolGlowny && (
-        <div>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-tertiary)", marginBottom: 6 }}>Hipoteza bólu głównego</div>
-          <p style={{ margin: 0, fontSize: 13, lineHeight: 1.65, color: "var(--text-primary)", fontFamily: "var(--font-sans)", whiteSpace: "pre-wrap" }}>
-            {client.hipotezaBolGlowny}
-          </p>
-        </div>
-      )}
-      {client.pitchRecipe && (
-        <div>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-tertiary)", marginBottom: 6 }}>Pitch Recipe</div>
-          <p style={{ margin: 0, fontSize: 13, lineHeight: 1.65, color: "var(--text-primary)", fontFamily: "var(--font-sans)", whiteSpace: "pre-wrap" }}>
-            {client.pitchRecipe}
-          </p>
-        </div>
-      )}
-      {client.przewidywaneObiekcje && (
-        <div>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-tertiary)", marginBottom: 6 }}>Przewidywane obiekcje</div>
-          <p style={{ margin: 0, fontSize: 13, lineHeight: 1.65, color: "var(--warning)", fontFamily: "var(--font-sans)", whiteSpace: "pre-wrap" }}>
-            {client.przewidywaneObiekcje}
-          </p>
-        </div>
-      )}
-      {client.uwagiFAgent2 && (
-        <div>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-tertiary)", marginBottom: 6 }}>Uwagi Agenta 02</div>
-          <p style={{ margin: 0, fontSize: 13, lineHeight: 1.65, color: "var(--text-secondary)", fontFamily: "var(--font-sans)", whiteSpace: "pre-wrap" }}>
-            {client.uwagiFAgent2}
-          </p>
-        </div>
-      )}
-      <a
-        href="/agenci"
-        style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 12px", borderRadius: 7, border: "1px solid #E5E5EA", background: "transparent", color: "var(--text-secondary)", textDecoration: "none", fontFamily: "var(--font-sans)", fontSize: 12 }}
-      >
-        <ExternalLink size={11} />
-        Otwórz w Agenci AI
-      </a>
     </div>
   );
 }
@@ -379,7 +290,7 @@ function ObjectionsPanel({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-      {OBJECTIONS_D.map((obj) => {
+      {OBJECTIONS_K.map((obj) => {
         const oc = objectionColor(obj.label);
         const isOpen = openId === obj.id;
         return (
@@ -395,11 +306,38 @@ function ObjectionsPanel({
           >
             <div
               onClick={() => setOpenId(isOpen ? null : obj.id)}
-              style={{ padding: "8px 12px", display: "flex", alignItems: "center", gap: 8, cursor: "pointer", userSelect: "none" }}
+              style={{
+                padding: "8px 12px",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                cursor: "pointer",
+                userSelect: "none",
+              }}
             >
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: oc.accent, marginBottom: 1 }}>{oc.category}</div>
-                <div style={{ fontFamily: "var(--font-sans)", fontSize: 12, fontWeight: 500, color: "var(--text-primary)" }}>{obj.label}</div>
+                <div
+                  style={{
+                    fontSize: 9,
+                    fontWeight: 700,
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    color: oc.accent,
+                    marginBottom: 1,
+                  }}
+                >
+                  {oc.category}
+                </div>
+                <div
+                  style={{
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 12,
+                    fontWeight: 500,
+                    color: "var(--text-primary)",
+                  }}
+                >
+                  {obj.label}
+                </div>
               </div>
               <ChevronDown
                 size={12}
@@ -435,7 +373,17 @@ function ObjectionsPanel({
                 {obj.sms && (
                   <div style={{ background: "var(--accent-muted)", padding: "8px 10px", borderRadius: 6 }}>
                     <div style={{ fontSize: 9, fontWeight: 700, color: "var(--accent)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 4 }}>SMS</div>
-                    <p style={{ margin: 0, fontSize: 12, color: "var(--text-primary)", lineHeight: 1.55, fontFamily: "var(--font-sans)" }}>{fill(obj.sms)}</p>
+                    <p style={{ margin: 0, fontSize: 12, color: "var(--text-primary)", lineHeight: 1.55, fontFamily: "var(--font-sans)" }}>
+                      {fill(obj.sms)}
+                    </p>
+                  </div>
+                )}
+                {obj.extra && (
+                  <div style={{ background: "var(--bg-hover)", padding: "8px 10px", borderRadius: 6 }}>
+                    <div style={{ fontSize: 9, fontWeight: 700, color: "var(--text-secondary)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 4 }}>Wiadomość prywatna</div>
+                    <p style={{ margin: 0, fontSize: 12, color: "var(--text-primary)", lineHeight: 1.55, fontFamily: "var(--font-sans)" }}>
+                      {fill(obj.extra)}
+                    </p>
                   </div>
                 )}
               </div>
@@ -447,7 +395,7 @@ function ObjectionsPanel({
   );
 }
 
-// ── SMS panel ─────────────────────────────────────────────────────────
+// ── SMS templates ─────────────────────────────────────────────────────
 
 function SmsPanel({
   fill,
@@ -458,105 +406,78 @@ function SmsPanel({
   onCopy: (id: string, text: string) => void;
   copiedId: string | null;
 }) {
-  const discoveryItems = MESSAGES_DATA.sms.filter((m) =>
-    ["Przed Discovery", "Po Discovery"].includes(m.group)
-  );
-  const telefonItems = MESSAGES_DATA.telefon;
+  const kwalItems = MESSAGES_DATA.sms.filter((m) => m.group === "Kwalifikacja");
+  const fbItems = MESSAGES_DATA.fb;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-      {["Przed Discovery", "Po Discovery"].map((group) => {
-        const items = discoveryItems.filter((m) => m.group === group);
-        if (!items.length) return null;
-        return (
-          <div key={group}>
-            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: GROUP_COLORS[group] ?? "var(--text-tertiary)", marginBottom: 6 }}>{group}</div>
-            {items.map((item) => (
-              <div key={item.id} style={{ background: "#F5F5F7", borderRadius: 8, padding: "10px 12px", marginBottom: 6 }}>
-                <div style={{ fontSize: 11, fontWeight: 600, color: "var(--text-secondary)", marginBottom: 4 }}>{item.label}</div>
-                <p style={{ margin: "0 0 8px", fontSize: 12, lineHeight: 1.55, color: "var(--text-primary)", fontFamily: "var(--font-sans)" }}>{fill(item.text)}</p>
-                <button
-                  onClick={() => onCopy(`sms-${item.id}`, item.text)}
-                  style={{ display: "flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 6, border: "1px solid #E5E5EA", background: "#fff", cursor: "pointer", fontSize: 11, color: copiedId === `sms-${item.id}` ? "var(--success-text)" : "var(--text-secondary)", fontFamily: "var(--font-sans)" }}
-                >
-                  {copiedId === `sms-${item.id}` ? <CheckCircle2 size={11} /> : <Copy size={11} />}
-                  {copiedId === `sms-${item.id}` ? "Skopiowano" : "Kopiuj"}
-                </button>
-              </div>
-            ))}
-          </div>
-        );
-      })}
-      {telefonItems.length > 0 && (
-        <div>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-tertiary)", marginBottom: 6 }}>Skrypty telefoniczne</div>
-          {telefonItems.map((item) => (
-            <div key={item.id} style={{ background: "#F5F5F7", borderRadius: 8, padding: "10px 12px", marginBottom: 6 }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: "var(--text-secondary)", marginBottom: 4 }}>{item.label}</div>
-              <p style={{ margin: "0 0 8px", fontSize: 12, lineHeight: 1.55, color: "var(--text-primary)", fontFamily: "var(--font-sans)" }}>{fill(item.text)}</p>
-              <button
-                onClick={() => onCopy(`tel-${item.id}`, item.text)}
-                style={{ display: "flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 6, border: "1px solid #E5E5EA", background: "#fff", cursor: "pointer", fontSize: 11, color: copiedId === `tel-${item.id}` ? "var(--success-text)" : "var(--text-secondary)", fontFamily: "var(--font-sans)" }}
-              >
-                {copiedId === `tel-${item.id}` ? <CheckCircle2 size={11} /> : <Copy size={11} />}
-                {copiedId === `tel-${item.id}` ? "Skopiowano" : "Kopiuj"}
-              </button>
-            </div>
-          ))}
+      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-tertiary)", marginBottom: 2 }}>SMS / WhatsApp</div>
+      {kwalItems.map((item) => (
+        <div key={item.id} style={{ background: "#F5F5F7", borderRadius: 8, padding: "10px 12px" }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: GROUP_COLORS[item.group] ?? "var(--accent)", marginBottom: 4 }}>{item.label}</div>
+          <p style={{ margin: "0 0 8px", fontSize: 12, lineHeight: 1.55, color: "var(--text-primary)", fontFamily: "var(--font-sans)" }}>{fill(item.text)}</p>
+          <button
+            onClick={() => onCopy(`sms-${item.id}`, item.text)}
+            style={{ display: "flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 6, border: "1px solid #E5E5EA", background: "#fff", cursor: "pointer", fontSize: 11, color: copiedId === `sms-${item.id}` ? "var(--success-text)" : "var(--text-secondary)", fontFamily: "var(--font-sans)" }}
+          >
+            {copiedId === `sms-${item.id}` ? <CheckCircle2 size={11} /> : <Copy size={11} />}
+            {copiedId === `sms-${item.id}` ? "Skopiowano" : "Kopiuj"}
+          </button>
         </div>
-      )}
+      ))}
+      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-tertiary)", marginTop: 8, marginBottom: 2 }}>Facebook</div>
+      {fbItems.map((item) => (
+        <div key={item.id} style={{ background: "#F5F5F7", borderRadius: 8, padding: "10px 12px" }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: GROUP_COLORS[item.group] ?? "var(--accent)", marginBottom: 4 }}>{item.label}</div>
+          <p style={{ margin: "0 0 8px", fontSize: 12, lineHeight: 1.55, color: "var(--text-primary)", fontFamily: "var(--font-sans)" }}>{fill(item.text)}</p>
+          <button
+            onClick={() => onCopy(`fb-${item.id}`, item.text)}
+            style={{ display: "flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 6, border: "1px solid #E5E5EA", background: "#fff", cursor: "pointer", fontSize: 11, color: copiedId === `fb-${item.id}` ? "var(--success-text)" : "var(--text-secondary)", fontFamily: "var(--font-sans)" }}
+          >
+            {copiedId === `fb-${item.id}` ? <CheckCircle2 size={11} /> : <Copy size={11} />}
+            {copiedId === `fb-${item.id}` ? "Skopiowano" : "Kopiuj"}
+          </button>
+        </div>
+      ))}
     </div>
   );
 }
 
-// ── Prezentacja sync ──────────────────────────────────────────────────
+// ── ICP Quick Reference ───────────────────────────────────────────────
 
-function PrezentacjaSection({ client }: { client: PipelineClientDetailed | null }) {
+function IcpPanel() {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      <div style={{ padding: "10px 12px", background: "#F5F5F7", borderRadius: 8, display: "flex", alignItems: "center", gap: 10 }}>
-        <Monitor size={14} color="var(--accent)" />
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-primary)", fontFamily: "var(--font-sans)" }}>Prezentacja personalizowana</div>
-          <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 1 }}>
-            {client ? `Agent 03 dla: ${client.kontakt || client.firma}` : "Wybierz klienta"}
+    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      {ICP_RULES.map((rule, i) => (
+        <div
+          key={i}
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: 8,
+            padding: "8px 10px",
+            borderRadius: 8,
+            background: rule.ok ? "var(--success-bg)" : "var(--error-bg)",
+            border: `1px solid ${rule.ok ? "var(--success-border)" : "var(--error-border)"}`,
+          }}
+        >
+          <div style={{ flexShrink: 0, marginTop: 1 }}>
+            {rule.ok ? <Check size={12} color="var(--success-text)" strokeWidth={2.5} /> : <X size={12} color="var(--error)" strokeWidth={2.5} />}
+          </div>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: rule.ok ? "var(--success-text)" : "var(--error)", marginBottom: 1 }}>{rule.label}</div>
+            <div style={{ fontSize: 11, color: "var(--text-secondary)", lineHeight: 1.45, fontFamily: "var(--font-sans)" }}>{rule.val}</div>
           </div>
         </div>
-        <a
-          href="/agenci"
-          style={{ display: "flex", alignItems: "center", gap: 4, padding: "6px 10px", borderRadius: 7, border: "1px solid var(--accent-border)", background: "var(--accent-muted)", color: "var(--accent)", textDecoration: "none", fontSize: 11, fontFamily: "var(--font-sans)", fontWeight: 500, flexShrink: 0 }}
-        >
-          <ExternalLink size={11} />
-          Agent 03
-        </a>
-      </div>
-      <div style={{ padding: "10px 12px", background: "#F5F5F7", borderRadius: 8, display: "flex", alignItems: "center", gap: 10 }}>
-        <Target size={14} color="var(--success-text)" />
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-primary)", fontFamily: "var(--font-sans)" }}>Pipeline klienta</div>
-          <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 1 }}>Status, notatki, historia kontaktu</div>
-        </div>
-        <a
-          href="/pipeline"
-          style={{ display: "flex", alignItems: "center", gap: 4, padding: "6px 10px", borderRadius: 7, border: "1px solid #E5E5EA", background: "transparent", color: "var(--text-secondary)", textDecoration: "none", fontSize: 11, fontFamily: "var(--font-sans)", fontWeight: 500, flexShrink: 0 }}
-        >
-          <ExternalLink size={11} />
-          Pipeline
-        </a>
-      </div>
+      ))}
     </div>
   );
 }
 
-// ── Dalsze kroki Discovery ────────────────────────────────────────────
+// ── Dalsze kroki ──────────────────────────────────────────────────────
 
-function DalszeKrokiDiscovery({ client }: { client: PipelineClientDetailed | null }) {
-  const [checks, setChecks] = useState({
-    fathom: false,
-    brief: false,
-    agent3: false,
-    closing: false,
-  });
+function DalszeKroki({ client }: { client: PipelineClientDetailed | null }) {
+  const [checks, setChecks] = useState({ fathom: false, zaproszenie: false, sms: false });
   const toggle = (k: keyof typeof checks) => setChecks((p) => ({ ...p, [k]: !p[k] }));
 
   const Chk = ({ k, label }: { k: keyof typeof checks; label: string }) => (
@@ -579,28 +500,90 @@ function DalszeKrokiDiscovery({ client }: { client: PipelineClientDetailed | nul
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        <Chk k="fathom" label="Fathom włączony przed spotkaniem" />
-        <Chk k="brief" label="Brief Agenta 02 przeczytany" />
-        <Chk k="agent3" label="Prezentacja zaktualizowana przez Agenta 03" />
-        <Chk k="closing" label="Closing i cena zamknięte na tym spotkaniu" />
+        <Chk k="fathom" label="Fathom włączony" />
+        <Chk k="zaproszenie" label="Zaproszenie Google Meet wysłane" />
+        <Chk k="sms" label="SMS potwierdzający wysłany" />
       </div>
       <div style={{ height: 1, background: "#E5E5EA" }} />
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <a
+          href="https://calendar.google.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 14px", borderRadius: 8, border: "1px solid #E5E5EA", background: "#fff", cursor: "pointer", fontSize: 13, color: "var(--text-primary)", fontFamily: "var(--font-sans)", textDecoration: "none", fontWeight: 500 }}
+        >
+          <Phone size={13} color="var(--accent)" />
+          Otwórz Google Calendar
+        </a>
+        <a
           href="/agenci"
           style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 14px", borderRadius: 8, border: "1px solid var(--accent-border)", background: "var(--accent-muted)", cursor: "pointer", fontSize: 13, color: "var(--accent)", fontFamily: "var(--font-sans)", textDecoration: "none", fontWeight: 500 }}
         >
-          <Phone size={13} color="var(--accent)" />
-          Uruchom Agent 04 po Discovery ({client ? client.kontakt || client.firma : "wybierz klienta"})
-        </a>
-        <a
-          href="/pipeline"
-          style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 14px", borderRadius: 8, border: "1px solid #E5E5EA", background: "transparent", cursor: "pointer", fontSize: 13, color: "var(--text-primary)", fontFamily: "var(--font-sans)", textDecoration: "none", fontWeight: 500 }}
-        >
-          <Target size={13} color="var(--text-secondary)" />
-          Przejdź do Pipelinen
+          <MessageSquare size={13} color="var(--accent)" />
+          Uruchom Agent 01 ({client ? client.kontakt || client.firma : "wybierz klienta"})
         </a>
       </div>
+    </div>
+  );
+}
+
+// ── Przypadki specjalne ───────────────────────────────────────────────
+
+const SPECIAL_CASES = [
+  {
+    id: "prev",
+    label: "Klient był wcześniej na starym skrypcie",
+    content: [
+      "Sprawdź Pipeline — czy ma notatkę z poprzedniej rozmowy.",
+      "Zapytaj na początku: 'Rozmawialiśmy już — czy sytuacja się zmieniła od tamtej rozmowy?'",
+      "Nie powtarzaj diagnozy jeśli ból jest potwierdzony — idź do ICP i zaproszenia.",
+    ],
+  },
+  {
+    id: "nobrak",
+    label: "Klient nie odbiera (3 próby)",
+    content: [
+      "Wyślij SMS z szablonu 'Brak odbioru po 3 próbach'.",
+      "Zmień status na 'Nieaktywny (follow up)'.",
+      "Ustaw data re-engagement za 14 dni.",
+    ],
+  },
+  {
+    id: "reeng",
+    label: "Klient wraca po re-engagement",
+    content: [
+      "Sprawdź notatkę z poprzedniej rozmowy w Pipeline.",
+      "Zacznij od: 'Rozmawialiśmy [kiedy] — czy sytuacja się zmieniła?'",
+      "Jeśli ból aktualny — skróć diagnozę i przejdź do ICP i zaproszenia.",
+      "Jeśli sytuacja niezmieniona — zakwalifikuj lub odrzuć.",
+    ],
+  },
+];
+
+function PrzypadkiSpecjalne() {
+  const [openId, setOpenId] = useState<string | null>(null);
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      {SPECIAL_CASES.map((c) => (
+        <div key={c.id} style={{ border: "1px solid #E5E5EA", borderRadius: 8, overflow: "hidden" }}>
+          <div
+            onClick={() => setOpenId(openId === c.id ? null : c.id)}
+            style={{ padding: "9px 12px", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", userSelect: "none", background: openId === c.id ? "#F5F5F7" : "#fff" }}
+          >
+            <span style={{ fontFamily: "var(--font-sans)", fontSize: 13, fontWeight: 500, color: "var(--text-primary)" }}>{c.label}</span>
+            <ChevronDown size={12} color="var(--text-tertiary)" style={{ transform: openId === c.id ? "rotate(180deg)" : "none", transition: "transform 150ms" }} />
+          </div>
+          {openId === c.id && (
+            <div style={{ padding: "8px 12px 12px" }}>
+              <ol style={{ margin: 0, paddingLeft: 18 }}>
+                {c.content.map((line, i) => (
+                  <li key={i} style={{ fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: 4 }}>{line}</li>
+                ))}
+              </ol>
+            </div>
+          )}
+        </div>
+      ))}
     </div>
   );
 }
@@ -623,18 +606,12 @@ function ClientSidebar({
   const [search, setSearch] = useState("");
 
   const filtered = clients
-    .filter((c) => DISCOVERY_STATUSES.includes(c.status ?? ""))
+    .filter((c) => c.status === "Nowy lead")
     .filter((c) =>
       search.trim()
         ? `${c.kontakt} ${c.firma}`.toLowerCase().includes(search.toLowerCase())
         : true
     );
-
-  // Group by status
-  const grouped = DISCOVERY_STATUSES.reduce<Record<string, PipelineClientDetailed[]>>((acc, s) => {
-    acc[s] = filtered.filter((c) => c.status === s);
-    return acc;
-  }, {});
 
   return (
     <div
@@ -651,7 +628,7 @@ function ClientSidebar({
       <div style={{ padding: "12px 12px 8px", borderBottom: "1px solid #E5E5EA", flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
           <span style={{ fontFamily: "var(--font-sans)", fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-tertiary)" }}>
-            Klienci ({filtered.length})
+            Nowy lead ({filtered.length})
           </span>
           <button
             onClick={onRefresh}
@@ -673,52 +650,40 @@ function ClientSidebar({
       </div>
 
       <div style={{ flex: 1, overflowY: "auto", padding: "6px 8px" }}>
-        {DISCOVERY_STATUSES.map((status) => {
-          const group = grouped[status] ?? [];
-          if (!group.length) return null;
-          const color = STATUS_COLORS[status] ?? "var(--text-tertiary)";
+        {filtered.length === 0 && (
+          <div style={{ padding: "20px 8px", textAlign: "center", color: "var(--text-tertiary)", fontSize: 12, fontFamily: "var(--font-sans)" }}>
+            Brak klientów "Nowy lead"
+          </div>
+        )}
+        {filtered.map((c) => {
+          const isSelected = selected?.id === c.id;
           return (
-            <div key={status} style={{ marginBottom: 8 }}>
-              <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color, padding: "3px 8px 4px" }}>
-                {status} ({group.length})
+            <div
+              key={c.id}
+              onClick={() => onSelect(isSelected ? null : c)}
+              style={{
+                padding: "9px 10px",
+                borderRadius: 8,
+                marginBottom: 2,
+                cursor: "pointer",
+                background: isSelected ? "var(--accent-muted)" : "transparent",
+                border: isSelected ? "1px solid var(--accent-border)" : "1px solid transparent",
+              }}
+            >
+              <div style={{ fontFamily: "var(--font-sans)", fontSize: 13, fontWeight: 600, color: isSelected ? "var(--accent)" : "var(--text-primary)", marginBottom: 2 }}>
+                {c.kontakt || c.firma || "—"}
               </div>
-              {group.map((c) => {
-                const isSelected = selected?.id === c.id;
-                return (
-                  <div
-                    key={c.id}
-                    onClick={() => onSelect(isSelected ? null : c)}
-                    style={{
-                      padding: "8px 10px",
-                      borderRadius: 8,
-                      marginBottom: 2,
-                      cursor: "pointer",
-                      background: isSelected ? "var(--accent-muted)" : "transparent",
-                      border: isSelected ? "1px solid var(--accent-border)" : "1px solid transparent",
-                    }}
-                  >
-                    <div style={{ fontFamily: "var(--font-sans)", fontSize: 13, fontWeight: 600, color: isSelected ? "var(--accent)" : "var(--text-primary)", marginBottom: 2 }}>
-                      {c.kontakt || c.firma || "—"}
-                    </div>
-                    {c.firma && c.kontakt && c.firma !== c.kontakt && (
-                      <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>{c.firma}</div>
-                    )}
-                    {c.telefon && (
-                      <div style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 1, fontFamily: "var(--font-sans)" }}>
-                        {formatPhone(c.telefon)}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+              {c.firma && c.kontakt && c.firma !== c.kontakt && (
+                <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>{c.firma}</div>
+              )}
+              {c.telefon && (
+                <div style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 2, fontFamily: "var(--font-sans)" }}>
+                  {formatPhone(c.telefon)}
+                </div>
+              )}
             </div>
           );
         })}
-        {filtered.length === 0 && (
-          <div style={{ padding: "20px 8px", textAlign: "center", color: "var(--text-tertiary)", fontSize: 12, fontFamily: "var(--font-sans)" }}>
-            Brak klientów Discovery
-          </div>
-        )}
       </div>
 
       {selected && (
@@ -739,12 +704,10 @@ function ClientSidebar({
 // ── Right panel ───────────────────────────────────────────────────────
 
 function RightPanel({
-  client,
   fill,
   onCopy,
   copiedId,
 }: {
-  client: PipelineClientDetailed | null;
   fill: (t: string) => string;
   onCopy: (id: string, text: string) => void;
   copiedId: string | null;
@@ -761,14 +724,14 @@ function RightPanel({
         background: "#fff",
       }}
     >
-      <Card title="Obiekcje Discovery">
+      <Card title="Obiekcje kwalifikacja">
         <ObjectionsPanel fill={fill} onCopy={onCopy} copiedId={copiedId} />
       </Card>
       <Card title="SMS / Wiadomości" collapsible defaultOpen={false}>
         <SmsPanel fill={fill} onCopy={onCopy} copiedId={copiedId} />
       </Card>
-      <Card title="Prezentacja i synchronizacja" collapsible defaultOpen={false}>
-        <PrezentacjaSection client={client} />
+      <Card title="ICP Quick Reference" collapsible defaultOpen={false}>
+        <IcpPanel />
       </Card>
     </div>
   );
@@ -776,7 +739,7 @@ function RightPanel({
 
 // ── Page ──────────────────────────────────────────────────────────────
 
-export default function SprzedazPage() {
+export default function KwalifikacjaPage() {
   const [clients, setClients] = useState<PipelineClientDetailed[]>([]);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<PipelineClientDetailed | null>(null);
@@ -807,7 +770,7 @@ export default function SprzedazPage() {
   }, [selected?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    const saved = localStorage.getItem(`discovery_note_${selected?.id ?? "global"}`);
+    const saved = localStorage.getItem(`kwal_note_${selected?.id ?? "global"}`);
     setNote(saved ?? "");
   }, [selected?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -819,16 +782,6 @@ export default function SprzedazPage() {
       out = out.replace(/Pani \{IMIĘ\}/g, `Pani ${nominative}`);
     }
     if (vocative.trim()) out = out.replace(/\{IMIĘ\}/g, vocative.trim());
-    if (selected) {
-      const bolGlowny = selected.bolGlowny?.trim() ?? "";
-      const kwalNote = selected.nastepnyKrok?.trim() ?? "";
-      out = out.replace(
-        /\[podsumowanie z kwalifikacji\]/g,
-        bolGlowny ? `„${bolGlowny}"` : kwalNote ? `„${kwalNote}"` : "— brak danych z kwalifikacji —",
-      );
-      out = out.replace(/\[kwota roczna\]/g, "— policz z kalkulatorem ROI —");
-      out = out.replace(/\[kwota\]/g, "— policz z kalkulatorem ROI —");
-    }
     return out;
   };
 
@@ -854,13 +807,13 @@ export default function SprzedazPage() {
           gap: 16,
         }}
       >
-        <Target size={16} color="var(--accent)" strokeWidth={1.8} />
+        <Phone size={16} color="var(--accent)" strokeWidth={1.8} />
         <span style={{ fontFamily: "var(--font-sans)", fontSize: 16, fontWeight: 700, color: "var(--text-primary)", letterSpacing: "-0.01em" }}>
-          Sprzedaż
+          Kwalifikacja
         </span>
         <div style={{ height: 20, width: 1, background: "#E5E5EA", marginLeft: 4 }} />
         <span style={{ fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--text-tertiary)" }}>
-          {selected ? (selected.kontakt || selected.firma) : "Discovery Call"}
+          {selected ? (selected.kontakt || selected.firma) : "Wybierz klienta z listy"}
         </span>
         {selected && (
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: "auto" }}>
@@ -891,14 +844,10 @@ export default function SprzedazPage() {
           onRefresh={fetchClients}
         />
 
-        {/* Main: brief + script + roi + dalsze kroki */}
+        {/* Main: script + roi + dalsze kroki */}
         <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px", background: "#F5F5F7" }}>
-          <Card title="Brief Agenta 02" collapsible defaultOpen={true}>
-            <BriefSection client={selected} />
-          </Card>
-
-          <Card title="Skrypt Discovery">
-            {STEPS_D.map((step) => (
+          <Card title="Skrypt kwalifikacyjny">
+            {STEPS_K.map((step) => (
               <ScriptStep
                 key={step.id}
                 step={step}
@@ -913,18 +862,22 @@ export default function SprzedazPage() {
             <KalkulatorRoi embedded initialClientName={selected?.kontakt || selected?.firma || ""} />
           </Card>
 
-          <Card title="Dalsze kroki po Discovery">
-            <DalszeKrokiDiscovery client={selected} />
+          <Card title="Dalsze kroki">
+            <DalszeKroki client={selected} />
           </Card>
 
-          <Card title="Notatki z Discovery" collapsible defaultOpen={false}>
+          <Card title="Przypadki specjalne" collapsible defaultOpen={false}>
+            <PrzypadkiSpecjalne />
+          </Card>
+
+          <Card title="Notatki z rozmowy" collapsible defaultOpen={false}>
             <textarea
               value={note}
               onChange={(e) => {
                 setNote(e.target.value);
-                localStorage.setItem(`discovery_note_${selected?.id ?? "global"}`, e.target.value);
+                localStorage.setItem(`kwal_note_${selected?.id ?? "global"}`, e.target.value);
               }}
-              placeholder="Notatki ze spotkania Discovery..."
+              placeholder="Notatki z rozmowy kwalifikacyjnej..."
               style={{
                 width: "100%", minHeight: 120, resize: "vertical",
                 fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--text-primary)",
@@ -942,8 +895,8 @@ export default function SprzedazPage() {
           </Card>
         </div>
 
-        {/* Right: objections + SMS + prezentacja */}
-        <RightPanel client={selected} fill={fill} onCopy={onCopy} copiedId={copiedId} />
+        {/* Right: objections + SMS + ICP */}
+        <RightPanel fill={fill} onCopy={onCopy} copiedId={copiedId} />
       </div>
     </div>
   );

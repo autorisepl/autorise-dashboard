@@ -3,19 +3,22 @@
 import { motion } from "framer-motion";
 import {
   BarChart2,
+  BookOpen,
   Calendar,
   CheckSquare,
   Files,
   GitBranch,
   GraduationCap,
+  Kanban,
   LayoutDashboard,
   Mic,
   Monitor,
+  Phone,
+  Presentation,
   Target,
   UserCircle2,
   Users,
 } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -76,44 +79,37 @@ const NAV: {
   {
     label: "Praca z klientami",
     items: [
-      { href: "/sprzedaz", label: "Proces sprzedażowy", icon: Target },
-      { href: "/mapa", label: "Mapa procesu", icon: GitBranch },
-    ],
-  },
-  {
-    label: "Wdrożenia AI",
-    items: [
-      {
-        href: "/agenci",
-        label: "Agenci wspomagania sprzedaży",
-        icon: LayoutDashboard,
-        exact: false,
-      },
-      { href: "/sesje", label: "Sesje szkoleniowe", icon: GraduationCap },
-      { href: "/analiza-narzedzi", label: "Analiza nowych narzędzi", icon: BarChart2 },
+      { href: "/kwalifikacja", label: "Kwalifikacja", icon: Phone },
+      { href: "/sprzedaz", label: "Sprzedaż", icon: Target },
+      { href: "/pipeline", label: "Pipeline", icon: Kanban },
+      { href: "/agenci", label: "Agenci AI", icon: LayoutDashboard, exact: false },
+      { href: "/mapa", label: "Mapa procesów", icon: GitBranch, exact: true },
     ],
   },
   {
     label: "Obszar Roboczy",
     items: [
-      { href: "/pliki", label: "Najważniejsze pliki", icon: Files },
-      { href: "/kontrola", label: "Kontrola obszaru roboczego", icon: Monitor },
-    ],
-  },
-  {
-    label: "Kalendarz i Zadania",
-    items: [
       { href: "/harmonogram", label: "Harmonogram", icon: Calendar },
       { href: "/zadania", label: "Zadania", icon: CheckSquare },
+      { href: "/pliki", label: "Pliki", icon: Files },
+      { href: "/kontrola", label: "Kontrola", icon: Monitor },
     ],
   },
   {
-    label: "Współpraca z Agency Leaders",
-    items: [{ href: "/agencja", label: "Nasza karta", icon: Users }],
+    label: "Narzędzia i Marka",
+    items: [
+      { href: "/narzedzia", label: "Transkrypcja", icon: Mic, exact: true },
+      { href: "/brand-book", label: "Brand Book", icon: BookOpen, exact: true },
+      { href: "/sesje", label: "Sesje szkoleniowe", icon: GraduationCap },
+      { href: "/analiza-narzedzi", label: "Analiza narzędzi", icon: BarChart2 },
+    ],
   },
   {
-    label: "Narzędzia",
-    items: [{ href: "/narzedzia", label: "Transkrypcja", icon: Mic, exact: true }],
+    label: "Współpraca",
+    items: [
+      { href: "/agencja", label: "Nasza karta", icon: Users },
+      { href: "/prezentacja", label: "Prezentacja", icon: Presentation },
+    ],
   },
 ];
 
@@ -255,19 +251,39 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
           height: 52,
           display: "flex",
           alignItems: "center",
-          padding: "0 46px 0 14px",  /* right 46px clears the toggle button at left:245px */
+          padding: "0 46px 0 14px" /* right 46px clears the toggle button at left:245px */,
           borderBottom: "1px solid var(--border)",
           flexShrink: 0,
         }}
       >
-        <Image
-          src="/logo_autorise.png"
-          alt="Autorise"
-          width={34}
-          height={34}
-          style={{ objectFit: "contain", borderRadius: 6, flexShrink: 0 }}
-          priority
-        />
+        <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          <span
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 12,
+              fontWeight: 800,
+              letterSpacing: "0.08em",
+              color: "var(--text-primary)",
+              textTransform: "uppercase",
+              lineHeight: 1,
+            }}
+          >
+            AUTORISE
+          </span>
+          <span
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 9,
+              fontWeight: 600,
+              letterSpacing: "0.10em",
+              color: "var(--text-tertiary)",
+              textTransform: "uppercase",
+              lineHeight: 1,
+            }}
+          >
+            DASHBOARD
+          </span>
+        </div>
       </div>
 
       {/* 2. Profil */}
