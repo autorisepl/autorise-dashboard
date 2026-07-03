@@ -65,42 +65,153 @@ export const STEPS_K: Step[] = [
     id: "diagnoza_tms",
     nr: "2.2",
     label: "TMS I PRACA MANUALNA",
-    tag: "PYTASZ",
+    tag: "MÓWISZ",
     lines: [
       {
         t: "say",
-        text: "Czy korzystacie z TMS, czyli programu do zarządzania flotą i zleceniami?",
+        text: "Czy korzystacie z TMS-u, czyli programu do zarządzania flotą i zleceniami, na przykład coś w rodzaju Trans.eu, TIMOCOM, Sky-Pol, WEB-TRANS albo podobnego systemu?",
       },
-      { t: "client", text: "[Tak / Nie / Nie wiem co to]" },
       {
         t: "note",
-        text: "Jeśli tak: zapytaj jaki system. TMS nie wyklucza współpracy — uzupełniamy go o automatyzację biurową, nie zastępujemy.",
+        text: "Jeśli klient poda inną nazwę programu, zaakceptuj ją, nie poprawiaj, zanotuj nazwę dosłownie. Jeśli mówi że nie ma żadnego programu i wszystko idzie przez Excela, WhatsApp albo telefon, to też jest ważna informacja, zapisz to jako 'brak TMS'.",
       },
-      { t: "say", text: "Co robi Pan teraz ręcznie mimo tego systemu?" },
       {
-        t: "note",
-        text: "Jeśli milczy, podpowiedz: 'Na przykład: wpisywanie zleceń z maila, przepisywanie CMR i POD po kursie, sprawdzanie faktur, wysyłanie dokumentów do klientów?'",
+        t: "say",
+        text: "Rozumiem że macie [nazwa TMS]. Teraz zapytam o konkretne rzeczy, jedna po drugiej, żeby dokładnie zobaczyć gdzie mimo tego programu ktoś nadal robi coś ręcznie.",
       },
-      { t: "client", text: "[wymienia operacje]" },
-      { t: "branch", text: "Klient odpowiedział: przejdź do kroku 2.3 Rozpoznanie dokumentów" },
+      { t: "branch", text: "Klient odpowiedział: przejdź do kroku 2.3a Zlecenie transportowe" },
     ],
   },
   {
-    id: "diagnoza_dokumenty",
-    nr: "2.3",
-    label: "ROZPOZNANIE DOKUMENTÓW",
-    tag: "PYTASZ",
+    id: "diagnoza_dokumenty_zlecenie",
+    nr: "2.3a",
+    label: "ZLECENIE TRANSPORTOWE",
+    tag: "MÓWISZ",
     lines: [
       {
         t: "say",
-        text: "Co z dokumentami po kursie — CMR, POD, faktury? Jak wygląda ten proces teraz?",
+        text: "Pierwsza rzecz: zlecenie transportowe, czyli dokument w którym zleceniodawca zamawia u Was przewóz i podaje trasę, towar, terminy. Jak takie zlecenie do Was trafia, mailem, przez program, telefonicznie?",
+      },
+      {
+        t: "note",
+        text: "Wariant A, klient mówi że zlecenie przychodzi mailem w PDF lub jako zdjęcie: to jest typowy przypadek dla email-parser i document-ocr, klient ręcznie przepisuje dane z tego pliku do swojego systemu lub Excela.",
+      },
+      {
+        t: "note",
+        text: "Wariant B, klient mówi że zlecenie wchodzi bezpośrednio do TMS przez integrację z giełdą transportową: to znaczy że ten konkretny etap jest już zautomatyzowany, nie licz go do kalkulatora, ale dopytaj czy dane z tego zlecenia i tak trzeba gdzieś ręcznie przepisać, np. do systemu księgowego.",
+      },
+      {
+        t: "note",
+        text: "Wariant C, klient nie rozumie pytania lub miesza to ze zleceniem na kierowcę: doprecyzuj, 'mam na myśli dokument od klienta zamawiającego transport, nie polecenie wyjazdu dla kierowcy'.",
+      },
+      { t: "client", text: "[opisuje]" },
+      { t: "branch", text: "Zanotowane: przejdź do kroku 2.3b List przewozowy CMR" },
+    ],
+  },
+  {
+    id: "diagnoza_dokumenty_cmr",
+    nr: "2.3b",
+    label: "LIST PRZEWOZOWY CMR",
+    tag: "MÓWISZ",
+    lines: [
+      {
+        t: "say",
+        text: "Druga rzecz: list przewozowy, czyli CMR, to dokument który kierowca ma przy sobie podczas kursu i który potwierdza że towar został przyjęty do przewozu i dostarczony. Po zakończonym kursie, jak taki CMR trafia do Was z powrotem, kierowca przywozi papier, robi zdjęcie, skanuje?",
+      },
+      {
+        t: "note",
+        text: "Wariant A, papier fizyczny który ktoś w biurze musi przepisać do systemu lub podpiąć do faktury ręcznie: to jest document-ocr, klasyczny przypadek.",
+      },
+      {
+        t: "note",
+        text: "Wariant B, zdjęcie na WhatsApp lub mailem, ktoś je odbiera i zapisuje ręcznie w odpowiednim miejscu: też document-ocr, tylko inny kanał wejścia, zapytaj czy chcą to zautomatyzować z poziomu zdjęcia z telefonu kierowcy.",
+      },
+      {
+        t: "note",
+        text: "Wariant C, klient mówi że nie używa fizycznych CMR bo wszystko jest elektroniczne, np. eCMR: zanotuj to, to inny profil klienta, mniej papieru, ale sprawdź czy dane z eCMR i tak trzeba ręcznie przenieść do rozliczeń.",
+      },
+      { t: "client", text: "[opisuje]" },
+      { t: "branch", text: "Zanotowane: przejdź do kroku 2.3c Potwierdzenie dostawy" },
+    ],
+  },
+  {
+    id: "diagnoza_dokumenty_pod",
+    nr: "2.3c",
+    label: "POTWIERDZENIE DOSTAWY",
+    tag: "MÓWISZ",
+    lines: [
+      {
+        t: "say",
+        text: "Trzecia rzecz: potwierdzenie dostawy, czyli podpis lub pieczątka odbiorcy na dokumencie, że towar dotarł w całości. Jak to u Was wygląda, kierowca przywozi podpisany papier, czy zostaje to tylko w formie zdjęcia?",
+      },
+      {
+        t: "note",
+        text: "To jest zwykle ten sam dokument co CMR, podpisany przez odbiorcę na miejscu rozładunku, w Polsce rzadko traktowany jako osobny formularz. Jeśli klient rozróżnia CMR i osobne potwierdzenie dostawy (zdarza się przy niektórych zleceniodawcach, np. sieciach handlowych z własnym drukiem), zapytaj o to jako osobną rzecz i zanotuj osobno.",
+      },
+      { t: "client", text: "[opisuje]" },
+      { t: "branch", text: "Zanotowane: przejdź do kroku 2.3d Faktury i rozliczenia" },
+    ],
+  },
+  {
+    id: "diagnoza_dokumenty_faktura",
+    nr: "2.3d",
+    label: "FAKTURY I ROZLICZENIA",
+    tag: "MÓWISZ",
+    lines: [
+      {
+        t: "say",
+        text: "Czwarta rzecz: faktury, zarówno te które Wy wystawiacie zleceniodawcom za przewóz, jak i te które dostajecie od podwykonawców lub przewoźników zewnętrznych. Kto to sprawdza i wpisuje do systemu księgowego?",
+      },
+      {
+        t: "note",
+        text: "Wariant A, jedna osoba ręcznie sprawdza faktury i wpisuje dane do księgowości lub arkusza: payment-monitor plus document-ocr, sprawdź ile miesięcznie takich faktur jest po obu stronach (wystawione i otrzymane).",
+      },
+      {
+        t: "note",
+        text: "Wariant B, mają księgową zewnętrzną lub biuro rachunkowe które się tym zajmuje: to nie znaczy że nie ma pracy manualnej po stronie klienta, dopytaj kto w firmie przygotowuje dane i dokumenty dla księgowej, to zwykle ta sama osoba co reszta administracji.",
       },
       { t: "client", text: "[opisuje]" },
       {
-        t: "note",
-        text: "Zanotuj konkretnie: papierowe czy elektroniczne CMR, czy są zdjęcia od kierowców, ile dokumentów dziennie, ile czasu zajmuje weryfikacja jednego kompletu. Te dane wejdą do kalkulatora.",
+        t: "say",
+        text: "A czy pilnujecie ręcznie, które faktury od klientów są już opłacone a które nie, czy to ktoś sprawdza w systemie bankowym co jakiś czas?",
       },
-      { t: "branch", text: "Zanotowane: przejdź do kroku 2.4 ICP: flota i biuro" },
+      {
+        t: "note",
+        text: "To jest bezpośrednie pytanie o payment-monitor. Jeśli klient mówi że nikt tego nie pilnuje systematycznie tylko 'jakoś to ogarniamy', to jest mocny sygnał bólu, zanotuj to wprost.",
+      },
+      { t: "client", text: "[opisuje]" },
+      { t: "branch", text: "Zanotowane: przejdź do kroku 2.3e Widoczność statusu zlecenia" },
+    ],
+  },
+  {
+    id: "diagnoza_dokumenty_status",
+    nr: "2.3e",
+    label: "WIDOCZNOŚĆ STATUSU ZLECENIA",
+    tag: "MÓWISZ",
+    lines: [
+      {
+        t: "say",
+        text: "Piąta rzecz, ostatnia: jak Pan sam, jako właściciel, sprawdza dziś status konkretnego zlecenia, czy trzeba zadzwonić do spedytora, czy widać to w systemie?",
+      },
+      {
+        t: "note",
+        text: "To jest pytanie o whatsapp-alerts i widoczność operacyjną. Jeśli właściciel musi dzwonić lub pytać osobiście żeby wiedzieć co się dzieje, to jest osobny, ważny ból, niezależny od dokumentów, zanotuj osobno.",
+      },
+      { t: "client", text: "[opisuje]" },
+      { t: "branch", text: "Zanotowane: przejdź do kroku 2.3f Podsumowanie do kalkulatora" },
+    ],
+  },
+  {
+    id: "diagnoza_podsumowanie_dokumentow",
+    nr: "2.3f",
+    label: "PODSUMOWANIE DO KALKULATORA",
+    tag: "AKCJA",
+    lines: [
+      {
+        t: "action",
+        text: "W kalkulatorze zaznacz checkboxy dokładnie na podstawie odpowiedzi z 2.3a-2.3e: zlecenie transportowe ręcznie (jeśli wariant A), CMR/dokumenty po kursie ręcznie (jeśli wariant A lub B), faktury i płatności ręcznie (jeśli wariant A lub B), brak widoczności statusu (jeśli właściciel musi dzwonić). Nie zaznaczaj niczego czego klient wprost nie potwierdził.",
+      },
+      { t: "branch", text: "Zaznaczone: przejdź do kroku 2.4 ICP: flota i biuro" },
     ],
   },
   {
@@ -126,7 +237,32 @@ export const STEPS_K: Step[] = [
       },
       {
         t: "branch-bad",
-        text: "Poniżej progu (1 osoba, brak planu zatrudnienia): zakończ uprzejmie, status Niekwalifikowany",
+        text: "Poniżej progu (1 osoba w biurze, brak planu zatrudnienia w najbliższych miesiącach): przejdź do zakończenia poniżej.",
+      },
+    ],
+  },
+  {
+    id: "zakonczenie_ponizej_progu",
+    nr: "2.4x",
+    label: "ZAKOŃCZENIE: KLIENT PONIŻEJ PROGU",
+    tag: "MÓWISZ",
+    lines: [
+      {
+        t: "say",
+        text: "Panie [Imię], dziękuję za szczerą rozmowę. Powiem wprost: nasze rozwiązanie sprawdza się najlepiej przy biurach które mają co najmniej dwie osoby zajmujące się administracją, bo dopiero wtedy realnie da się odzyskać wystarczająco dużo czasu żeby to się opłacało. U Pana na ten moment tej skali jeszcze nie ma.",
+      },
+      {
+        t: "say",
+        text: "Nie chcę Panu sprzedawać czegoś co się nie zwróci. Jeśli firma urośnie i dojdzie druga osoba do biura, chętnie wrócę do rozmowy.",
+      },
+      {
+        t: "say",
+        text: "Czy mogę zapisać Pana kontakt i odezwać się za około 3 miesiące, sprawdzić czy coś się zmieniło?",
+      },
+      { t: "client", text: "[zgoda lub odmowa]" },
+      {
+        t: "action",
+        text: "Status: Niekwalifikowany. Jeśli klient zgodził się na kontakt za 3 miesiące: dodatkowo ustaw pole re-engagement +90 dni i zanotuj w Pipeline 'zgoda na ponowny kontakt'. Jeśli klient nie chce dalszego kontaktu: zapisz tylko Niekwalifikowany, bez daty re-engagement.",
       },
     ],
   },

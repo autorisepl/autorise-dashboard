@@ -59,6 +59,10 @@ export const STEPS_D: Step[] = [
         t: "note",
         text: "Słuchaj uważnie — zmiany w sytuacji klienta od kwalifikacji to cenny sygnał.",
       },
+      {
+        t: "note",
+        text: "Jeśli w trakcie rozmowy klient zareaguje 'ale ja już to mówiłem' lub podobnie: nie tłumacz się i nie przepraszaj długo, jedno zdanie wystarczy. 'Ma Pan rację, przepraszam, chciałem się tylko upewnić że dobrze to zrozumiałem, idźmy dalej.' Natychmiast przejdź do kolejnego pytania z innej kategorii, nie wracaj do tego samego wątku.",
+      },
     ],
   },
   {
