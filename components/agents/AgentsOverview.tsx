@@ -184,7 +184,13 @@ function AgentCard({
 
       {/* ── Main body (clickable) ── */}
       <div
-        style={{ padding: "18px 20px 0", cursor: "pointer", flex: 1, display: "flex", flexDirection: "column" }}
+        style={{
+          padding: "18px 20px 0",
+          cursor: "pointer",
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+        }}
         onClick={onOpen}
       >
         {/* Header */}

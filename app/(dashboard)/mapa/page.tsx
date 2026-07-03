@@ -1,0 +1,993 @@
+"use client";
+
+import { ArrowRight, Check, CheckCircle2, Database, GitBranch, Loader2, RefreshCw, X, Zap } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import type { PipelineClientDetailed } from "@/app/api/notion/pipeline/route";
+
+// ── Blueprint danych — DATA_FLOW ──────────────────────────────────────
+
+type NodeKind = "input" | "process" | "storage";
+
+interface DataNode {
+  id: string;
+  label: string;
+  sublabel: string;
+  kind: NodeKind;
+  connections: string[];
+  usedBy: string[];
+}
+
+const NODE_COLOR: Record<NodeKind, string> = {
+  input: "#0a84ff",
+  process: "#7c3aed",
+  storage: "#16a34a",
+};
+
+const NODE_BG: Record<NodeKind, string> = {
+  input: "rgba(10,132,255,0.06)",
+  process: "rgba(124,58,237,0.06)",
+  storage: "rgba(22,163,74,0.06)",
+};
+
+const NODE_LABEL: Record<NodeKind, string> = {
+  input: "Wejście",
+  process: "Agent / Proces",
+  storage: "Dane",
+};
+
+const NODE_ICON = {
+  input: <GitBranch size={14} />,
+  process: <Zap size={14} />,
+  storage: <Database size={14} />,
+};
+
+const DATA_FLOW: DataNode[] = [
+  {
+    id: "formularz",
+    label: "Formularz META / Strona",
+    sublabel: "Lead z reklamy Facebook lub strony landing",
+    kind: "input",
+    connections: ["agent0", "pipeline"],
+    usedBy: [],
+  },
+  {
+    id: "agent0",
+    label: "Agent 0 — Enrichment",
+    sublabel: "KRS / MF API — weryfikacja firmy i VAT",
+    kind: "process",
+    connections: ["pipeline"],
+    usedBy: ["agent1"],
+  },
+  {
+    id: "transkrypt_k",
+    label: "Transkrypt kwalifikacji",
+    sublabel: "Nagranie z AudioRecorder → Groq Whisper",
+    kind: "input",
+    connections: ["agent1"],
+    usedBy: [],
+  },
+  {
+    id: "agent1",
+    label: "Agent 1 — Kwalifikacja",
+    sublabel: "Analiza transkryptu → karta klienta + status ICP",
+    kind: "process",
+    connections: ["pipeline"],
+    usedBy: ["/kwalifikacja", "/pipeline"],
+  },
+  {
+    id: "pipeline",
+    label: "Notion Pipeline",
+    sublabel: "Centralna baza klientów — 15+ pól, 8 statusów",
+    kind: "storage",
+    connections: [],
+    usedBy: ["agent1", "agent2", "agent3", "agent4", "/mapa", "/pipeline"],
+  },
+  {
+    id: "agent2",
+    label: "Agent 2 — Pre-Discovery Brief",
+    sublabel: "Opus 4.8 + thinking — brief + pitch_recipe",
+    kind: "process",
+    connections: ["pipeline"],
+    usedBy: ["/sprzedaz"],
+  },
+  {
+    id: "agent3",
+    label: "Agent 3 — Personalizacja prezentacji",
+    sublabel: "Opus 4.8 — dane do Autorise_Prezentacja.html",
+    kind: "process",
+    connections: ["prezentacja"],
+    usedBy: ["/sprzedaz"],
+  },
+  {
+    id: "transkrypt_d",
+    label: "Transkrypt Discovery Call",
+    sublabel: "Nagranie z Fathom → pełny transkrypt spotkania",
+    kind: "input",
+    connections: ["agent4"],
+    usedBy: [],
+  },
+  {
+    id: "agent4",
+    label: "Agent 4 — Analiza Discovery",
+    sublabel: "Sonnet 4.6 — analiza rozmowy + wynik + re-engagement",
+    kind: "process",
+    connections: ["pipeline"],
+    usedBy: ["/agenci"],
+  },
+  {
+    id: "prezentacja",
+    label: "Prezentacja HTML",
+    sublabel: "autorise.pl/prezentacja — spersonalizowana dla klienta",
+    kind: "storage",
+    connections: [],
+    usedBy: ["agent3", "/sprzedaz"],
+  },
+  {
+    id: "agent5",
+    label: "Agent 5 — Agency Leaders",
+    sublabel: "Opus 4.8 + thinking — Knowledge Report ze spotkania",
+    kind: "process",
+    connections: ["raport"],
+    usedBy: ["/sesje"],
+  },
+];
+
+function BlueprintView() {
+  const rows: NodeKind[] = ["input", "process", "storage"];
+
+  return (
+    <div style={{ padding: "24px", overflowY: "auto", flex: 1 }}>
+      {rows.map((kind) => {
+        const nodes = DATA_FLOW.filter((n) => n.kind === kind);
+        const color = NODE_COLOR[kind];
+        return (
+          <div key={kind} style={{ marginBottom: 28 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                marginBottom: 12,
+                color,
+                fontFamily: "var(--font-sans)",
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+              }}
+            >
+              {NODE_ICON[kind]}
+              {NODE_LABEL[kind]}
+            </div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+                gap: 12,
+              }}
+            >
+              {nodes.map((node) => (
+                <div
+                  key={node.id}
+                  style={{
+                    background: NODE_BG[kind],
+                    border: `1px solid ${color}30`,
+                    borderLeft: `3px solid ${color}`,
+                    borderRadius: 10,
+                    padding: "12px 14px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 6,
+                  }}
+                >
+                  <div
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: "var(--text-primary)",
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    {node.label}
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 11,
+                      color: "var(--text-secondary)",
+                      lineHeight: 1.45,
+                    }}
+                  >
+                    {node.sublabel}
+                  </div>
+
+                  {node.connections.length > 0 && (
+                    <div style={{ marginTop: 4 }}>
+                      <div
+                        style={{
+                          fontFamily: "var(--font-sans)",
+                          fontSize: 9,
+                          fontWeight: 700,
+                          letterSpacing: "0.08em",
+                          textTransform: "uppercase",
+                          color: "var(--text-tertiary)",
+                          marginBottom: 4,
+                        }}
+                      >
+                        Przekazuje do
+                      </div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                        {node.connections.map((cid) => {
+                          const target = DATA_FLOW.find((n) => n.id === cid);
+                          const tcolor = target ? NODE_COLOR[target.kind] : "var(--text-tertiary)";
+                          return (
+                            <span
+                              key={cid}
+                              style={{
+                                fontFamily: "var(--font-sans)",
+                                fontSize: 10,
+                                fontWeight: 600,
+                                color: tcolor,
+                                background: `${tcolor}12`,
+                                border: `1px solid ${tcolor}30`,
+                                borderRadius: 5,
+                                padding: "2px 7px",
+                              }}
+                            >
+                              {target?.label ?? cid}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {node.usedBy.length > 0 && (
+                    <div style={{ marginTop: node.connections.length > 0 ? 2 : 4 }}>
+                      <div
+                        style={{
+                          fontFamily: "var(--font-sans)",
+                          fontSize: 9,
+                          fontWeight: 700,
+                          letterSpacing: "0.08em",
+                          textTransform: "uppercase",
+                          color: "var(--text-tertiary)",
+                          marginBottom: 4,
+                        }}
+                      >
+                        Używany przez
+                      </div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                        {node.usedBy.map((u) => (
+                          <span
+                            key={u}
+                            style={{
+                              fontFamily: "var(--font-sans)",
+                              fontSize: 10,
+                              color: "var(--text-secondary)",
+                              background: "var(--bg-hover)",
+                              border: "1px solid var(--border)",
+                              borderRadius: 5,
+                              padding: "2px 7px",
+                            }}
+                          >
+                            {u}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// Mapowanie statusu → indeks etapu (0-3)
+function statusToStageIdx(status: string): number {
+  const s = (status ?? "").toLowerCase();
+  if (s.includes("nowy") || s.includes("kwalifik")) return 0;
+  if (s.includes("discovery") || s.includes("analiz") || s.includes("ofert")) return 1;
+  if (s.includes("finaliz") || s.includes("negocj")) return 2;
+  if (
+    s.includes("aktyw") ||
+    s.includes("pozysk") ||
+    s.includes("wdroż") ||
+    s.includes("wdroz") ||
+    s.includes("retainer") ||
+    s.includes("klient")
+  )
+    return 3;
+  return -1;
+}
+
+const STAGES = [
+  {
+    etap: "ETAP 1",
+    label: "Zimny kontakt",
+    sublabel: "Kwalifikacja telefoniczna",
+    color: "#0a84ff",
+    steps: [
+      "Prospecting — META Ads / baza własna",
+      "Pierwszy telefon (skrypt kwalifikacyjny)",
+      "Weryfikacja ICP — flota, TMS, decydent",
+      "Kalkulator ROI — min. 80h/mc potencjału",
+      "Umówienie Analizy diagnostycznej",
+    ],
+    exits: [
+      { label: "Niekwalifikowany", reason: "Za mały, inny rynek, brak decydenta, potencjał < 80h" },
+      { label: "Brak odbioru", reason: "Kolejka: ponów D+1, D+3, D+7, SMS po 3 próbach" },
+    ],
+    next: "Kwalifikacja: Discovery umówione",
+  },
+  {
+    etap: "ETAP 2",
+    label: "Analiza diagnostyczna",
+    sublabel: "Discovery Call — diagnoza + ofertowanie",
+    color: "#7c3aed",
+    steps: [
+      "Pre-Discovery Brief — Agent 2 (przeczytaj w całości)",
+      "Personalizacja prezentacji — Agent 3",
+      "Zbieranie informacji — ból, poprzednie próby, decydent",
+      "Prezentacja Autorise + demo modułów",
+      "Kalkulator ROI na żywo + gwarancja",
+    ],
+    exits: [
+      { label: "Niekwalifikowany", reason: "ICP nie pasuje, brak bólu, brak budżetu" },
+      { label: "Follow-up", reason: "Drugi decydent, budżet za X dni — ustal konkretną datę" },
+    ],
+    next: "Oferta złożona — Finalizacja",
+  },
+  {
+    etap: "ETAP 3",
+    label: "Finalizacja",
+    sublabel: "Negocjacje i zamknięcie",
+    color: "#d97706",
+    steps: [
+      "Odpowiedź na obiekcje cenowe i wątpliwości",
+      "Oferta spersonalizowana — warianty jeśli potrzeba",
+      "Rozmowa finalizacyjna — closing",
+      "Umowa podpisana / przedpłata",
+    ],
+    exits: [
+      { label: "Odrzucenie", reason: "Re-engagement po 90 dniach — nie trać kontaktu" },
+      { label: "Negocjacje", reason: "Wariant cenowy / etapowanie płatności" },
+    ],
+    next: "Kickoff umówiony",
+  },
+  {
+    etap: "ETAP 4",
+    label: "Wdrożenie i Retainer",
+    sublabel: "Klient aktywny — opieka stała",
+    color: "#16a34a",
+    steps: [
+      "Kickoff — onboarding, dostępy, harmonogram",
+      "Wdrożenie modułów — 4–8 tygodni",
+      "Weryfikacja: min. 80h/mc zaoszczędzonych",
+      "Przejście na Retainer — opieka stała",
+      "Upsell — kolejne moduły i referrals",
+    ],
+    exits: [{ label: "Pause", reason: "Renegocjacja zakresu lub budżetu — działaj proaktywnie" }],
+    next: "Klient aktywny",
+  },
+];
+
+export default function MapaPage() {
+  const [clients, setClients] = useState<PipelineClientDetailed[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedId, setSelectedId] = useState<string>("");
+  const [view, setView] = useState<"etapy" | "blueprint">("etapy");
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/notion/pipeline");
+      const data = await res.json();
+      if (data.success && data.clients) setClients(data.clients);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const selectedClient = clients.find((c) => c.id === selectedId) ?? null;
+
+  const counts = [0, 0, 0, 0];
+  for (const c of clients) {
+    const idx = statusToStageIdx(c.status);
+    if (idx >= 0) counts[idx] += 1;
+  }
+  const currentIdx = selectedClient ? statusToStageIdx(selectedClient.status) : -1;
+
+  return (
+    <div
+      style={{
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+        background: "var(--bg)",
+      }}
+    >
+      {/* Header */}
+      <div
+        style={{
+          height: 52,
+          flexShrink: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "0 24px",
+          borderBottom: "1px solid var(--border)",
+          background: "var(--bg-elevated)",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <span
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 15,
+              fontWeight: 600,
+              color: "var(--text-primary)",
+              letterSpacing: "-0.01em",
+            }}
+          >
+            Mapa procesu sprzedażowego
+          </span>
+          {/* Tab switcher */}
+          <div
+            style={{
+              display: "flex",
+              background: "var(--bg-hover)",
+              borderRadius: 8,
+              padding: 2,
+              gap: 2,
+            }}
+          >
+            {(["etapy", "blueprint"] as const).map((v) => (
+              <button
+                key={v}
+                onClick={() => setView(v)}
+                style={{
+                  padding: "4px 12px",
+                  borderRadius: 6,
+                  border: "none",
+                  background: view === v ? "#fff" : "transparent",
+                  boxShadow: view === v ? "0 1px 4px rgba(0,0,0,0.10)" : "none",
+                  color: view === v ? "var(--text-primary)" : "var(--text-tertiary)",
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 12,
+                  fontWeight: view === v ? 600 : 400,
+                  cursor: "pointer",
+                  transition: "all 120ms",
+                }}
+              >
+                {v === "etapy" ? "Widok etapów" : "Blueprint danych"}
+              </button>
+            ))}
+          </div>
+          {!loading && view === "etapy" && (
+            <span
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 11,
+                color: "var(--text-tertiary)",
+              }}
+            >
+              {clients.filter((c) => c.status !== "Niekwalifikowany").length} aktywnych klientów
+            </span>
+          )}
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {/* Client picker */}
+          {!loading && clients.length > 0 && (
+            <select
+              value={selectedId}
+              onChange={(e) => setSelectedId(e.target.value)}
+              style={{
+                height: 32,
+                padding: "0 10px",
+                border: "1px solid var(--border)",
+                borderRadius: "var(--radius-sm)",
+                background: "var(--bg)",
+                color: selectedId ? "var(--text-primary)" : "var(--text-tertiary)",
+                fontFamily: "var(--font-sans)",
+                fontSize: 12,
+                outline: "none",
+                cursor: "pointer",
+                minWidth: 200,
+              }}
+            >
+              <option value="">Śledź klienta na mapie...</option>
+              {clients
+                .filter((c) => c.status !== "Niekwalifikowany")
+                .map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.kontakt || c.firma} — {c.status}
+                  </option>
+                ))}
+            </select>
+          )}
+          {selectedId && (
+            <button
+              onClick={() => setSelectedId("")}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "var(--text-tertiary)",
+                display: "flex",
+                alignItems: "center",
+                padding: 4,
+              }}
+            >
+              <X size={14} />
+            </button>
+          )}
+          <button
+            onClick={() => void load()}
+            disabled={loading}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              padding: "5px 10px",
+              background: "transparent",
+              border: "1px solid var(--border)",
+              borderRadius: "var(--radius-xs)",
+              cursor: loading ? "default" : "pointer",
+              color: "var(--text-secondary)",
+              fontSize: 12,
+              fontFamily: "var(--font-sans)",
+            }}
+          >
+            <RefreshCw
+              size={12}
+              style={loading ? { animation: "spin 1s linear infinite" } : undefined}
+            />
+            Odśwież
+          </button>
+        </div>
+      </div>
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+
+      {/* Selected client banner */}
+      {selectedClient && (
+        <div
+          style={{
+            padding: "10px 24px",
+            borderBottom: "1px solid var(--border)",
+            background: "var(--accent-muted)",
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            flexShrink: 0,
+          }}
+        >
+          <div
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: "50%",
+              background: "var(--accent)",
+              flexShrink: 0,
+            }}
+          />
+          <span
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 12,
+              fontWeight: 600,
+              color: "var(--accent)",
+            }}
+          >
+            {selectedClient.kontakt || selectedClient.firma}
+          </span>
+          <span
+            style={{ fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--text-secondary)" }}
+          >
+            — aktualny etap: {currentIdx >= 0 ? STAGES[currentIdx].etap : "nieznany"}
+          </span>
+          {selectedClient.nastepnyKrok && (
+            <>
+              <div style={{ width: 1, height: 14, background: "var(--border)" }} />
+              <span
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 11,
+                  color: "var(--text-tertiary)",
+                }}
+              >
+                Następny krok: {selectedClient.nastepnyKrok}
+              </span>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Blueprint view */}
+      {view === "blueprint" && <BlueprintView />}
+
+      {/* Stages */}
+      {view === "etapy" && (loading ? (
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 10,
+          }}
+        >
+          <Loader2
+            size={20}
+            color="var(--text-tertiary)"
+            style={{ animation: "spin 1s linear infinite" }}
+          />
+          <span
+            style={{ fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--text-tertiary)" }}
+          >
+            Ładowanie...
+          </span>
+        </div>
+      ) : (
+        <div style={{ flex: 1, overflow: "auto", padding: "24px" }}>
+          <div
+            style={{
+              display: "flex",
+              gap: 0,
+              alignItems: "stretch",
+              minHeight: "100%",
+              height: "calc(100vh - 180px)",
+            }}
+          >
+            {STAGES.map((stage, idx) => {
+              const isCurrent = idx === currentIdx;
+              const isDone = currentIdx >= 0 && idx < currentIdx;
+              const count = counts[idx];
+
+              return (
+                <div
+                  key={stage.etap}
+                  style={{ display: "flex", alignItems: "stretch", flex: 1, minWidth: 0 }}
+                >
+                  {/* Stage card */}
+                  <div
+                    style={{
+                      flex: 1,
+                      display: "flex",
+                      flexDirection: "column",
+                      background: isCurrent
+                        ? `linear-gradient(160deg, ${stage.color}08 0%, rgba(255,255,255,0.9) 60%)`
+                        : "rgba(255,255,255,0.8)",
+                      backdropFilter: "blur(20px) saturate(180%)",
+                      WebkitBackdropFilter: "blur(20px) saturate(180%)",
+                      border: `1.5px solid ${isCurrent ? stage.color : "var(--border)"}`,
+                      boxShadow: isCurrent
+                        ? `0 0 0 3px ${stage.color}20, 0 8px 32px rgba(0,0,0,0.10)`
+                        : "0 2px 8px rgba(0,0,0,0.04)",
+                      opacity: isDone ? 0.6 : 1,
+                      borderRadius: "var(--radius-md)",
+                      overflow: "hidden",
+                      transition: "all 200ms",
+                    }}
+                  >
+                    {/* Top accent bar */}
+                    <div style={{ height: 5, background: stage.color, flexShrink: 0 }} />
+
+                    <div
+                      style={{
+                        padding: "20px 20px 16px",
+                        flex: 1,
+                        display: "flex",
+                        flexDirection: "column",
+                      }}
+                    >
+                      {/* Stage header */}
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          gap: 12,
+                          marginBottom: 16,
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: "50%",
+                            flexShrink: 0,
+                            border: `2.5px solid ${stage.color}`,
+                            background: isDone || isCurrent ? stage.color : "transparent",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          {isDone ? (
+                            <Check size={16} color="#fff" strokeWidth={3} />
+                          ) : (
+                            <span
+                              style={{
+                                fontFamily: "var(--font-sans)",
+                                fontSize: 14,
+                                fontWeight: 800,
+                                color: isCurrent ? "#fff" : stage.color,
+                              }}
+                            >
+                              {idx + 1}
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div
+                            style={{
+                              fontSize: 9,
+                              fontWeight: 800,
+                              letterSpacing: "0.14em",
+                              textTransform: "uppercase",
+                              color: stage.color,
+                              marginBottom: 3,
+                            }}
+                          >
+                            {stage.etap}
+                          </div>
+                          <div
+                            style={{
+                              fontFamily: "var(--font-sans)",
+                              fontSize: 15,
+                              fontWeight: 700,
+                              color: "var(--text-primary)",
+                              lineHeight: 1.2,
+                              letterSpacing: "-0.01em",
+                            }}
+                          >
+                            {stage.label}
+                          </div>
+                          <div
+                            style={{
+                              fontFamily: "var(--font-sans)",
+                              fontSize: 11,
+                              color: "var(--text-secondary)",
+                              marginTop: 2,
+                              lineHeight: 1.3,
+                            }}
+                          >
+                            {stage.sublabel}
+                          </div>
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 4,
+                            padding: "3px 9px",
+                            borderRadius: 99,
+                            background: count > 0 ? `${stage.color}15` : "var(--bg-hover)",
+                            border: `1px solid ${count > 0 ? `${stage.color}40` : "var(--border)"}`,
+                            flexShrink: 0,
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: 6,
+                              height: 6,
+                              borderRadius: "50%",
+                              background: count > 0 ? stage.color : "var(--text-placeholder)",
+                            }}
+                          />
+                          <span
+                            style={{
+                              fontFamily: "var(--font-sans)",
+                              fontSize: 12,
+                              fontWeight: 700,
+                              color: count > 0 ? stage.color : "var(--text-tertiary)",
+                            }}
+                          >
+                            {count}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* "Tu jesteś" badge */}
+                      {isCurrent && (
+                        <div
+                          style={{
+                            padding: "5px 12px",
+                            borderRadius: 8,
+                            background: stage.color,
+                            color: "#fff",
+                            fontSize: 10,
+                            fontWeight: 800,
+                            textAlign: "center",
+                            marginBottom: 14,
+                            letterSpacing: "0.06em",
+                            textTransform: "uppercase",
+                            fontFamily: "var(--font-sans)",
+                          }}
+                        >
+                          {selectedClient
+                            ? `${selectedClient.kontakt || selectedClient.firma} — tu jesteś`
+                            : "Tu jesteś"}
+                        </div>
+                      )}
+
+                      {/* Steps */}
+                      <div style={{ flex: 1, marginBottom: 14 }}>
+                        <div
+                          style={{
+                            fontSize: 9,
+                            fontWeight: 700,
+                            letterSpacing: "0.10em",
+                            textTransform: "uppercase",
+                            color: "var(--text-tertiary)",
+                            marginBottom: 8,
+                            fontFamily: "var(--font-sans)",
+                          }}
+                        >
+                          Kroki
+                        </div>
+                        {stage.steps.map((step, si) => (
+                          <div
+                            key={si}
+                            style={{
+                              display: "flex",
+                              alignItems: "flex-start",
+                              gap: 8,
+                              marginBottom: 7,
+                            }}
+                          >
+                            <div
+                              style={{
+                                width: 18,
+                                height: 18,
+                                borderRadius: "50%",
+                                background: `${stage.color}18`,
+                                border: `1px solid ${stage.color}40`,
+                                flexShrink: 0,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                              }}
+                            >
+                              <span
+                                style={{
+                                  fontFamily: "var(--font-sans)",
+                                  fontSize: 9,
+                                  fontWeight: 700,
+                                  color: stage.color,
+                                }}
+                              >
+                                {si + 1}
+                              </span>
+                            </div>
+                            <span
+                              style={{
+                                fontFamily: "var(--font-sans)",
+                                fontSize: 12.5,
+                                color: "var(--text-primary)",
+                                lineHeight: 1.5,
+                                paddingTop: 1,
+                              }}
+                            >
+                              {step}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Exits */}
+                      <div style={{ marginBottom: 14 }}>
+                        <div
+                          style={{
+                            fontSize: 9,
+                            fontWeight: 700,
+                            letterSpacing: "0.10em",
+                            textTransform: "uppercase",
+                            color: "var(--text-tertiary)",
+                            marginBottom: 8,
+                            fontFamily: "var(--font-sans)",
+                          }}
+                        >
+                          Możliwe wyjścia
+                        </div>
+                        {stage.exits.map((exit, ei) => (
+                          <div
+                            key={ei}
+                            style={{
+                              padding: "7px 10px",
+                              marginBottom: 5,
+                              background: "rgba(239,68,68,0.05)",
+                              border: "1px solid rgba(239,68,68,0.18)",
+                              borderRadius: "var(--radius-xs)",
+                              borderLeft: "3px solid rgba(239,68,68,0.5)",
+                            }}
+                          >
+                            <div
+                              style={{
+                                fontFamily: "var(--font-sans)",
+                                fontSize: 11,
+                                fontWeight: 700,
+                                color: "#ef4444",
+                                marginBottom: 2,
+                              }}
+                            >
+                              {exit.label}
+                            </div>
+                            <div
+                              style={{
+                                fontFamily: "var(--font-sans)",
+                                fontSize: 11,
+                                color: "var(--text-secondary)",
+                                lineHeight: 1.4,
+                              }}
+                            >
+                              {exit.reason}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Next step */}
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 7,
+                          paddingTop: 12,
+                          borderTop: "1px solid var(--border)",
+                          marginTop: "auto",
+                        }}
+                      >
+                        {idx === STAGES.length - 1 ? (
+                          <CheckCircle2 size={13} color="#16a34a" />
+                        ) : (
+                          <ArrowRight size={13} color={stage.color} />
+                        )}
+                        <span
+                          style={{
+                            fontFamily: "var(--font-sans)",
+                            fontSize: 11.5,
+                            fontWeight: 600,
+                            color: idx === STAGES.length - 1 ? "#16a34a" : stage.color,
+                          }}
+                        >
+                          {stage.next}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Arrow between cards */}
+                  {idx < STAGES.length - 1 && (
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        padding: "0 10px",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <ArrowRight size={20} color="var(--text-tertiary)" strokeWidth={1.5} />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}

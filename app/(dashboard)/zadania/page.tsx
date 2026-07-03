@@ -57,7 +57,10 @@ function formatDue(iso: string | undefined): { label: string; status: DueStatus 
   const todayLocal = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const diffDays = Math.round((dueLocal.getTime() - todayLocal.getTime()) / (1000 * 60 * 60 * 24));
 
-  if (diffDays < 0) return { label: "po terminie", status: "overdue" };
+  if (diffDays < 0) {
+    const days = Math.abs(diffDays);
+    return { label: `po terminie (${days} ${days === 1 ? "dzień" : "dni"})`, status: "overdue" };
+  }
   if (diffDays === 0) return { label: "dziś", status: "today" };
   if (diffDays === 1) return { label: "jutro", status: "week" };
 
@@ -694,6 +697,9 @@ export default function ZadaniaPage() {
   const [data, setData] = useState<GoogleTasksResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [windowWidth, setWindowWidth] = useState(
+    typeof window !== "undefined" ? window.innerWidth : 1200,
+  );
 
   const fetchTasks = useCallback(async (background = false) => {
     if (!background) setLoading(true);
@@ -715,6 +721,12 @@ export default function ZadaniaPage() {
     } finally {
       if (!background) setLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   useEffect(() => {
@@ -982,11 +994,9 @@ export default function ZadaniaPage() {
 
         {!loading && !error && lists.length > 0 && (
           <div
-            className="responsive-grid"
             style={{
               display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gridTemplateRows: lists.length > 2 ? "1fr 1fr" : "1fr",
+              gridTemplateColumns: windowWidth < 700 ? "1fr" : "1fr 1fr",
               gap: 14,
               height: "100%",
             }}

@@ -1,11 +1,12 @@
 // Shared transcript filename parsing.
-// Filenames look like: "transkrypt-michal-gierka-kwalifikacja.mp3" / ".txt"
+// Filenames look like: "transkrypt-michal-gierka-kwalifikacja.mp3" / "transkrypt-jan-nowak-sprzedaz.txt"
 // We extract a human display name, a stage tag, and a normalized base key
 // (used to pair an MP3 recording with its TXT transcript).
 
 export const TRANSCRIPT_QUALIFIERS = [
   "kwalifikacja",
-  "diagnoza",
+  "sprzedaz",
+  "diagnoza", // legacy — kept for backward compat with existing Drive files
   "discovery",
   "analiza",
   "spotkanie",

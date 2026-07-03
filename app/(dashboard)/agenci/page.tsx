@@ -1,9 +1,8 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { BookOpen, FileText, Mic, Monitor, Phone, Search } from "lucide-react";
+import { type ReactNode, Suspense, useCallback, useEffect, useState } from "react";
 import type { HealthResponse } from "@/app/api/health/route";
-import { AgentsOverview } from "@/components/agents/AgentsOverview";
 import type { AgentId, AgentState, CardStage } from "@/components/agents/AgentWorkspace";
 import { AgentWorkspace, CARD_STAGE_BY_AGENT } from "@/components/agents/AgentWorkspace";
 import type { CardState } from "@/lib/google/sheets-card";
@@ -82,38 +81,92 @@ function makeInitialStates(): Record<AgentId, AgentState> {
   >;
 }
 
-// ── Page inner (uses useSearchParams) ─────────────────────────────
+// ── Tab configuration ──────────────────────────────────────────────
+
+type TabConfig = { id: AgentId; label: string; icon: ReactNode };
+
+const TABS: TabConfig[] = [
+  { id: "agent1", label: "01 Kwalifikacja", icon: <Phone size={13} /> },
+  { id: "agent2", label: "02 Brief", icon: <FileText size={13} /> },
+  { id: "agent3", label: "03 Personalizacja", icon: <Monitor size={13} /> },
+  { id: "agent4", label: "04 Analiza Discovery", icon: <Mic size={13} /> },
+  { id: "agent5", label: "05 Training", icon: <BookOpen size={13} /> },
+  { id: "agent6", label: "06 Ewaluacja", icon: <Search size={13} /> },
+];
+
+function TabBtn({
+  icon,
+  label,
+  active,
+  onClick,
+}: {
+  icon: ReactNode;
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        padding: "0 14px",
+        height: 36,
+        border: "none",
+        borderRadius: "var(--radius-sm)",
+        background: active ? "var(--accent)" : "transparent",
+        color: active ? "#fff" : "var(--text-secondary)",
+        fontFamily: "var(--font-sans)",
+        fontSize: 11,
+        fontWeight: active ? 700 : 500,
+        letterSpacing: "0.03em",
+        cursor: "pointer",
+        whiteSpace: "nowrap",
+        transition: "background 150ms, color 150ms",
+        flexShrink: 0,
+      }}
+    >
+      {icon}
+      {label}
+    </button>
+  );
+}
+
+// ── Page inner ─────────────────────────────────────────────────────
 
 function AgenciPageInner() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
+  const [activeAgent, setActiveAgent] = useState<AgentId>(() => {
+    if (typeof window === "undefined") return "agent1";
+    return (localStorage.getItem("agenci_active_tab") as AgentId) ?? "agent1";
+  });
 
-  const paramAgent = searchParams.get("agent") as AgentId | null;
-  const activeAgent: AgentId | null = AGENT_IDS.includes(paramAgent as AgentId) ? paramAgent : null;
+  const changeAgent = (id: AgentId) => {
+    localStorage.setItem("agenci_active_tab", id);
+    setActiveAgent(id);
+  };
 
   const [agentStates, setAgentStates] = useState<Record<AgentId, AgentState>>(makeInitialStates);
   const [clients, setClients] = useState<PipelineClient[]>([]);
-  const [clientsLoading, setClientsLoading] = useState(true);
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [healthLoading, setHealthLoading] = useState(true);
   const [selectedClientIds, setSelectedClientIds] = useState<Record<AgentId, string>>(
     () => Object.fromEntries(AGENT_IDS.map((id) => [id, ""])) as Record<AgentId, string>,
   );
   const [copied, setCopied] = useState(false);
+  const [verificationMode, setVerificationMode] = useState(false);
 
   // ── Data fetching ──────────────────────────────────────────────
 
   useEffect(() => {
     async function fetchClients() {
-      setClientsLoading(true);
       try {
         const res = await fetch("/api/notion/clients");
         const data = await res.json();
         if (data.success) setClients(data.clients ?? []);
       } catch {
         /* silent */
-      } finally {
-        setClientsLoading(false);
       }
     }
     fetchClients();
@@ -137,12 +190,6 @@ function AgenciPageInner() {
     return () => clearInterval(interval);
   }, []);
 
-  // ── Navigation ─────────────────────────────────────────────────
-
-  const goBack = useCallback(() => {
-    router.push("/agenci");
-  }, [router]);
-
   // ── State helpers ──────────────────────────────────────────────
 
   const updateAgentState = useCallback((agentId: AgentId, patch: Partial<AgentState>) => {
@@ -154,7 +201,6 @@ function AgenciPageInner() {
 
   const handleFieldChange = useCallback(
     (field: keyof AgentState, value: string) => {
-      if (!activeAgent) return;
       updateAgentState(activeAgent, { [field]: value });
     },
     [activeAgent, updateAgentState],
@@ -162,7 +208,6 @@ function AgenciPageInner() {
 
   const handleClientSelect = useCallback(
     (id: string) => {
-      if (!activeAgent) return;
       setSelectedClientIds((prev) => ({ ...prev, [activeAgent]: id }));
     },
     [activeAgent],
@@ -211,7 +256,6 @@ function AgenciPageInner() {
   // ── Run agent ──────────────────────────────────────────────────
 
   const handleRun = useCallback(async () => {
-    if (!activeAgent) return;
     const state = agentStates[activeAgent];
     const primaryInput = state.transcript.trim();
     if (!primaryInput) return;
@@ -234,6 +278,10 @@ function AgenciPageInner() {
       const payload: Record<string, string | undefined> = {
         notion_page_id: selectedClientId || undefined,
       };
+
+      if (activeAgent === "agent1" && verificationMode) {
+        payload.mode = "weryfikacja";
+      }
 
       if (activeAgent === "agent2") {
         payload.transcript = state.transcript;
@@ -271,11 +319,9 @@ function AgenciPageInner() {
           setSelectedClientIds((prev) => ({ ...prev, [activeAgent]: data.notion_page_id }));
         }
 
-        // Auto-propagate output to downstream agents
         const outputStr = JSON.stringify(data.output, null, 2);
         const downstreamClientId = selectedClientId || data.notion_page_id;
         if (activeAgent === "agent1") {
-          // Agent 2 gets agent1Json pre-filled; Agent 3 gets its "transcript" field (which maps to agent1_json)
           updateAgentState("agent2", { agent1Json: outputStr });
           updateAgentState("agent3", { transcript: outputStr });
           if (downstreamClientId) {
@@ -283,11 +329,9 @@ function AgenciPageInner() {
           }
         }
         if (activeAgent === "agent2") {
-          // Agent 3 gets agent2Json pre-filled
           updateAgentState("agent3", { agent2Json: outputStr });
         }
 
-        // Auto-update the "Kontakty" client card for stage agents (01/04).
         const stage = CARD_STAGE_BY_AGENT[activeAgent];
         if (stage) {
           const clientName = (state.attachedClientName || data.notion_client_name || "").trim();
@@ -310,12 +354,11 @@ function AgenciPageInner() {
         elapsed,
       });
     }
-  }, [activeAgent, agentStates, selectedClientIds, updateAgentState, writeCard]);
+  }, [activeAgent, agentStates, selectedClientIds, updateAgentState, verificationMode, writeCard]);
 
   // ── Notion push ────────────────────────────────────────────────
 
   const handleNotionPush = useCallback(async () => {
-    if (!activeAgent) return;
     const state = agentStates[activeAgent];
     if (!state.output) return;
 
@@ -355,7 +398,6 @@ function AgenciPageInner() {
   // ── Copy ───────────────────────────────────────────────────────
 
   const handleCopy = useCallback(async () => {
-    if (!activeAgent) return;
     const output = agentStates[activeAgent].output;
     if (!output) return;
     const text = typeof output === "string" ? output : JSON.stringify(output, null, 2);
@@ -366,26 +408,105 @@ function AgenciPageInner() {
 
   // ── Render ─────────────────────────────────────────────────────
 
-  if (!activeAgent) {
-    return <AgentsOverview />;
-  }
-
   return (
-    <AgentWorkspace
-      agentId={activeAgent}
-      state={agentStates[activeAgent]}
-      clients={clients}
-      health={health}
-      healthLoading={healthLoading}
-      selectedClientId={selectedClientIds[activeAgent]}
-      onBack={goBack}
-      onFieldChange={handleFieldChange}
-      onClientSelect={handleClientSelect}
-      onRun={handleRun}
-      onNotionPush={handleNotionPush}
-      onCopy={handleCopy}
-      copied={copied}
-    />
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
+      {/* Tab bar */}
+      <div
+        style={{
+          height: 52,
+          minHeight: 52,
+          display: "flex",
+          alignItems: "center",
+          gap: 4,
+          padding: "0 20px",
+          borderBottom: "1px solid var(--border)",
+          background: "var(--bg-elevated)",
+          overflowX: "auto",
+          scrollbarWidth: "none",
+        }}
+      >
+        {TABS.map((tab) => (
+          <TabBtn
+            key={tab.id}
+            icon={tab.icon}
+            label={tab.label}
+            active={activeAgent === tab.id}
+            onClick={() => changeAgent(tab.id)}
+          />
+        ))}
+        {activeAgent === "agent1" && (
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              marginLeft: "auto",
+              cursor: "pointer",
+              userSelect: "none",
+              paddingRight: 4,
+            }}
+          >
+            <div
+              onClick={() => setVerificationMode((v) => !v)}
+              style={{
+                width: 36,
+                height: 20,
+                borderRadius: 10,
+                background: verificationMode ? "var(--accent)" : "var(--border)",
+                position: "relative",
+                transition: "background 150ms",
+                cursor: "pointer",
+                flexShrink: 0,
+              }}
+            >
+              <div
+                style={{
+                  position: "absolute",
+                  top: 2,
+                  left: verificationMode ? 18 : 2,
+                  width: 16,
+                  height: 16,
+                  borderRadius: "50%",
+                  background: "#fff",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.18)",
+                  transition: "left 150ms",
+                }}
+              />
+            </div>
+            <span
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 11,
+                color: verificationMode ? "var(--accent)" : "var(--text-tertiary)",
+                fontWeight: verificationMode ? 600 : 400,
+                whiteSpace: "nowrap",
+              }}
+            >
+              Tryb weryfikacji
+            </span>
+          </label>
+        )}
+      </div>
+
+      {/* Workspace */}
+      <div style={{ flex: 1, overflow: "hidden" }}>
+        <AgentWorkspace
+          agentId={activeAgent}
+          state={agentStates[activeAgent]}
+          clients={clients}
+          health={health}
+          healthLoading={healthLoading}
+          selectedClientId={selectedClientIds[activeAgent]}
+          onBack={() => {}}
+          onFieldChange={handleFieldChange}
+          onClientSelect={handleClientSelect}
+          onRun={handleRun}
+          onNotionPush={handleNotionPush}
+          onCopy={handleCopy}
+          copied={copied}
+        />
+      </div>
+    </div>
   );
 }
 

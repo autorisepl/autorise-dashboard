@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { extractAndParseJson } from "@/lib/agents/parseJson";
 import { AGENT_MODELS, AGENT0_SYSTEM_PROMPT } from "@/lib/agents/prompts";
 import { enrichByNIP } from "@/lib/krs/enrichClient";
 import { upsertLeadIntake } from "@/lib/notion/client";
@@ -61,15 +62,16 @@ export async function POST(req: Request) {
       .map((b) => (b as { type: "text"; text: string }).text)
       .join("");
 
-    const jsonMatch = rawText.match(/```(?:json)?\s*([\s\S]*?)```/);
-    const jsonText = jsonMatch ? jsonMatch[1].trim() : rawText.trim();
-
     let output: Record<string, unknown>;
     try {
-      output = JSON.parse(jsonText);
-    } catch {
+      output = extractAndParseJson(rawText);
+    } catch (parseErr) {
       return NextResponse.json(
-        { success: false, error: "Agent zwrócił nieprawidłowy JSON", raw: rawText },
+        {
+          success: false,
+          error: parseErr instanceof Error ? parseErr.message : "Agent zwrócił nieprawidłowy JSON",
+          raw: rawText.slice(0, 500),
+        },
         { status: 500 },
       );
     }

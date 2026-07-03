@@ -98,7 +98,10 @@ export function AudioRecorder() {
   const stopAll = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
     if (mediaRef.current && mediaRef.current.state !== "inactive") mediaRef.current.stop();
-    if (streamRef.current) streamRef.current.getTracks().forEach((t) => { t.stop(); });
+    if (streamRef.current)
+      streamRef.current.getTracks().forEach((t) => {
+        t.stop();
+      });
     if (audioCtxRef.current) audioCtxRef.current.close();
     setAnalyser(null);
   }, []);

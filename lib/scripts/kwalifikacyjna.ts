@@ -120,8 +120,14 @@ export const STEPS_K: Step[] = [
         t: "note",
         text: "ICP minimum: 2 osoby w biurze. Jeśli 1 osoba: zapytaj czy jest sezonowość lub plan zatrudnienia. Poniżej progu po weryfikacji: uprzejmie zakończ rozmowę.",
       },
-      { t: "branch", text: "ICP biura spełnione lub do dalszej weryfikacji: przejdź do kroku 2.5 ICP: decydent" },
-      { t: "branch-bad", text: "Poniżej progu (1 osoba, brak planu zatrudnienia): zakończ uprzejmie, status Niekwalifikowany" },
+      {
+        t: "branch",
+        text: "ICP biura spełnione lub do dalszej weryfikacji: przejdź do kroku 2.5 ICP: decydent",
+      },
+      {
+        t: "branch-bad",
+        text: "Poniżej progu (1 osoba, brak planu zatrudnienia): zakończ uprzejmie, status Niekwalifikowany",
+      },
     ],
   },
   {
@@ -136,7 +142,10 @@ export const STEPS_K: Step[] = [
         t: "note",
         text: "Jeśli nie jest właścicielem: 'Kto u Pana podejmuje decyzję o zakupie oprogramowania? Czy byłoby możliwe żebyśmy porozmawiali razem na spotkaniu?'",
       },
-      { t: "branch", text: "Decydent obecny lub zgoda na wspólne spotkanie: przejdź do kroku 2.6 Kalkulator ROI" },
+      {
+        t: "branch",
+        text: "Decydent obecny lub zgoda na wspólne spotkanie: przejdź do kroku 2.6 Kalkulator ROI",
+      },
     ],
   },
   {
@@ -191,7 +200,19 @@ export const STEPS_K: Step[] = [
       { t: "client", text: "[odpowiedź]" },
       {
         t: "note",
-        text: "Jeśli mówi 'nie wiem' lub 'i tak nie zwolnię pracowników': 'Rozumiem — chodzi o inne rzeczy. Więcej zleceń przy tej samej ekipie, mniej błędów w dokumentach, szybsza obsługa klientów. Który z tych kierunków jest dla Pana teraz ważny?'",
+        text: "Wariant A, klient odpowiada konkretnie (więcej zleceń, mniej błędów, szybsza obsługa): potwierdź i przejdź dalej, to jest gotowy materiał do Kroku 3.",
+      },
+      {
+        t: "note",
+        text: "Wariant B, klient milczy lub mówi 'nie wiem, nie myślałem o tym': 'Rozumiem, chodzi o inne rzeczy niż redukcja etatów. Na przykład: więcej zleceń przy tej samej ekipie, mniej błędów w dokumentach, szybsza obsługa klientów, mniej nadgodzin dla zespołu. Który z tych kierunków jest dla Pana teraz ważny?'",
+      },
+      {
+        t: "note",
+        text: "Wariant C, klient reaguje obronnie ('i tak nie zwolnię pracowników', boi się że pytanie zmierza do redukcji etatów): 'Jasne, nie chodzi o zwalnianie nikogo. Chodzi o to, żeby ten sam zespół miał więcej przestrzeni na obsługę klientów zamiast tonąć w papierach. Czy to jest coś co miałoby dla Pana znaczenie?'",
+      },
+      {
+        t: "note",
+        text: "Wariant D, klient przeskakuje od razu do pytania o cenę żeby uciec od tematu: nie walcz z tym, przejdź do Kroku 3 normalnie, ale zanotuj w Pipeline że pytanie o korzyść czasu nie padło, może się przydać na Discovery.",
       },
       { t: "branch", text: "Odpowiedź uzyskana: przejdź do kroku 3 Spotkanie jako rozwiązanie" },
     ],

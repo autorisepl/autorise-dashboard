@@ -1,6 +1,14 @@
 "use client";
 
-import { AlertTriangle, Check, CheckCircle2, ExternalLink, Loader2, RefreshCw, RotateCcw } from "lucide-react";
+import {
+  AlertTriangle,
+  Check,
+  CheckCircle2,
+  ExternalLink,
+  Loader2,
+  RefreshCw,
+  RotateCcw,
+} from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CardState } from "@/lib/google/sheets-card";
 
@@ -149,28 +157,13 @@ export function KartaKlienta({ clientName, phone, email }: KartaKlientaProps) {
     [card, clientName, phone, email, flashSaved],
   );
 
-  if (loading) {
-    return (
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          padding: 20,
-          color: "var(--text-tertiary)",
-        }}
-      >
-        <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />
-        <span style={{ fontFamily: "var(--font-sans)", fontSize: 13 }}>
-          Ładowanie karty klienta…
-        </span>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      </div>
-    );
-  }
-
   const resetCard = useCallback(async () => {
-    if (!window.confirm(`Wyczyścić dane karty klienta "${clientName}"? Zostaną skasowane wszystkie notatki, nagrania i statusy etapów.`)) return;
+    if (
+      !window.confirm(
+        `Wyczyścić dane karty klienta "${clientName}"? Zostaną skasowane wszystkie notatki, nagrania i statusy etapów.`,
+      )
+    )
+      return;
     setResetPending(true);
     await save({
       rozmowaKwalifikacyjna: false,
@@ -193,6 +186,26 @@ export function KartaKlienta({ clientName, phone, email }: KartaKlientaProps) {
     });
     setResetPending(false);
   }, [clientName, save]);
+
+  if (loading) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          padding: 20,
+          color: "var(--text-tertiary)",
+        }}
+      >
+        <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />
+        <span style={{ fontFamily: "var(--font-sans)", fontSize: 13 }}>
+          Ładowanie karty klienta…
+        </span>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
 
   const c = card ?? emptyCard(clientName);
 
@@ -676,9 +689,7 @@ function DateField({
   useEffect(() => setDraft(value), [value]);
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-      <label style={{ fontSize: 10.5, fontWeight: 600, color: "var(--accent)" }}>
-        {label}
-      </label>
+      <label style={{ fontSize: 10.5, fontWeight: 600, color: "var(--accent)" }}>{label}</label>
       <input
         type="date"
         value={draft}
@@ -702,7 +713,10 @@ function DateField({
       />
       {draft && (
         <button
-          onClick={() => { setDraft(""); onSave(""); }}
+          onClick={() => {
+            setDraft("");
+            onSave("");
+          }}
           style={{
             alignSelf: "flex-start",
             fontSize: 10.5,

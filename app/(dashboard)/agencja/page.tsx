@@ -2,8 +2,8 @@
 
 import {
   AlertCircle,
-  ChevronLeft,
   CheckCircle2,
+  ChevronLeft,
   ExternalLink,
   Mail,
   Phone,
@@ -1011,11 +1011,7 @@ export default function AgencjaPage() {
                   {(() => {
                     const { phone, email } = contactFields(selected, displayHeaders);
                     return (
-                      <KartaKlienta
-                        clientName={selectedName ?? ""}
-                        phone={phone}
-                        email={email}
-                      />
+                      <KartaKlienta clientName={selectedName ?? ""} phone={phone} email={email} />
                     );
                   })()}
                 </div>

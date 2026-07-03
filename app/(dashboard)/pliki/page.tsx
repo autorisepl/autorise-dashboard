@@ -537,14 +537,10 @@ export default function PlikiPage() {
                         ? "done"
                         : "todo"
                     }
-                    onClick={() =>
-                      void loadPreview({
-                        type: "mp3",
-                        id: f.id,
-                        name: f.name,
-                        webViewLink: f.webViewLink,
-                      })
-                    }
+                    onClick={() => {
+                      if (f.webViewLink)
+                        window.open(f.webViewLink, "_blank", "noopener noreferrer");
+                    }}
                   />
                 ))
               )}

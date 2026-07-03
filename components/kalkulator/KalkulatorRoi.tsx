@@ -1119,7 +1119,8 @@ export function KalkulatorRoi({ embedded = false, initialClientName }: Kalkulato
                   />
                   {Number(godzinyWpisywania) > 8 && (
                     <div style={{ color: "var(--error)", fontSize: 11, marginTop: 2 }}>
-                      Maksymalnie 8 godzin dziennie na osobę. Wpisałeś {godzinyWpisywania}h — czy chodziło o h/mc?
+                      Maksymalnie 8 godzin dziennie na osobę. Wpisałeś {godzinyWpisywania}h — czy
+                      chodziło o h/mc?
                     </div>
                   )}
                 </div>

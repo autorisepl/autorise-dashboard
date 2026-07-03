@@ -6,54 +6,77 @@
 - **Vercel** (GitHub integration) — auto-deploy przy każdym push do `main`, `maxDuration` do 300s
   - **URL produkcyjny: app.autorise.pl** (DNS przez Cloudflare, CNAME → cname.vercel-dns.com, DNS only)
   - Produkcyjna gałąź na Vercel to `main`; lokalnie pracujesz na `master` → deploy: `git push origin master:main`
-- **UI**: var(--font-sans) WSZĘDZIE. ZERO var(--font-mono) w UI labels/number/time
+- **UI**: var(--font-sans) WSZĘDZIE (Roboto). ZERO var(--font-mono) w UI labels/number/time
 - **Design tokens**: CSS custom properties w `app/globals.css`
 - **Animation**: framer-motion, lucide-react icons
 - **Validation**: Zod on all API routes
 
 ## Design System
 
-- macOS Glassmorphism light theme — single theme, no dark mode toggle
-- CSS custom properties in `app/globals.css`: `var(--bg)`, `var(--glass)`, `var(--accent)`, `var(--border)`, `var(--text-primary)`, etc.
-- Accent: `#0a84ff`; SUCCESS `var(--success)` `#30d158`, ERROR `var(--error)` `#ff453a`, WARNING `var(--warning)` `#ff9f0a`
-- Text: `--text-secondary: #3a3a3c`, `--text-tertiary: #6e6e73`
-- Sidebar: 260px, 5 stref (WDROŻENIA AI / OBSZAR ROBOCZY / KALENDARZ I ZADANIA / WSPÓŁPRACA / NARZĘDZIA)
-- UI components: `Panel`, `Button`, `StatusDiode`, `SectionLabel` in `components/ui/`
+- macOS/Apple light theme — single theme, no dark mode toggle, no exceptions
+- Font: Roboto (next/font/google)
+- CSS custom properties w `app/globals.css`: `var(--bg)`, `var(--accent)`, `var(--border)`, `var(--text-primary)`, etc.
+- Accent: `#0a84ff`; SUCCESS `#34c759`, ERROR `#ff3b30`, WARNING `#ff9500`
+- Text: `--text-secondary`, `--text-tertiary`
+- UI components: `Panel`, `Button`, `StatusDiode`, `SectionLabel` w `components/ui/`
 - Model names: "Claude Sonnet 4.6", "Claude Opus 4.8" — nigdy z myślnikami, nigdy lowercase
 - Buttons sync/odśwież: transparent bg, var(--border), var(--text-secondary)
 - Timestamps: ZAWSZE HH:MM:SS z sekundami
+- Design system live preview: `/brand-book`
 
-## Nawigacja (sidebar)
+## Nawigacja (sidebar) — 4 grupy, zgodne z `components/layout/sidebar.tsx`
 
 ```
-WDROŻENIA AI
-  /agenci          → "Agenci wspomagania sprzedaży"
-  /sesje           → "Sesje szkoleniowe"
-  /analiza-narzedzi → "Analiza nowych narzędzi"
+PRACA Z KLIENTAMI
+  /kwalifikacja    → widok etapowy: skrypt kwalifikacyjny + kalkulator inline (krok 2.6) + dalsze kroki
+  /sprzedaz        → widok etapowy: brief Agent 2 + skrypt Discovery + kalkulator + prezentacja sync
+  /pipeline        → Pipeline Kanban (3 rzędy: ROW1/ROW2/ROW3 z "Nieaktywny follow up" + "Upsell")
+  /agenci          → Agenci wspomagania sprzedaży (6 tabów, agent0 ukryty)
+  /mapa            → Mapa procesu sprzedażowego (4 etapy, live client tracking)
 
 OBSZAR ROBOCZY
-  /pliki           → "Najważniejsze pliki"
-  /pipeline        → "Pipeline" (Kanban Notion, 2×4)
-  /kontrola        → "Kontrola obszaru roboczego"
+  /harmonogram     → Harmonogram (Google Calendar + Tasks)
+  /zadania         → Zadania (Google Tasks, 4 listy)
+  /pliki           → Najważniejsze pliki
+  /kontrola        → Kontrola obszaru roboczego (v6)
 
-KALENDARZ I ZADANIA
-  /harmonogram     → "Harmonogram" (Google Calendar + Tasks)
-  /zadania         → "Zadania" (Google Tasks, 4 listy)
+NARZĘDZIA I MARKA
+  /narzedzia       → Transkrypcja (AudioRecorder + Drive picker + Groq Whisper)
+  /brand-book      → Design system live preview
+  /sesje           → Sesje szkoleniowe (Agency Leaders)
+  /analiza-narzedzi → Analiza nowych narzędzi
 
-WSPÓŁPRACA Z AGENCY LEADERS
-  /agencja         → "Nasza karta"
-
-NARZĘDZIA
-  /narzedzia       → "Transkrypcja"
+WSPÓŁPRACA
+  /agencja         → Nasza karta (Sheets sync)
+  /prezentacja     → link do prezentacja.html
 ```
+
+UWAGA: `/narzedzia/kalkulator` to osierocona strona z wcześniejszej sesji, bez linku w nawigacji. Kalkulator ROI właściwy żyje inline w `/kwalifikacja` (krok 2.6) i `/sprzedaz`. Jeśli osierocona strona nie jest jeszcze usunięta, usuń ją przy najbliższej okazji, żeby uniknąć dwóch wersji tego samego narzędzia.
+
+## Skrypty sprzedażowe — struktura danych
+
+```
+lib/scripts/types.ts           — Step, Line, Objection, IcpRule interfaces
+lib/scripts/kwalifikacyjna.ts  — STEPS_K (12 kroków V4), OBJECTIONS_K (12), ICP_RULES
+lib/scripts/discovery.ts       — STEPS_D, OBJECTIONS_D (framework Robert AAA, od1-od11)
+lib/scripts/messages.ts        — MESSAGES_DATA (SMS/WhatsApp/FB templates)
+```
+
+Struktura `STEPS_K` V4: Opening (krok 1) → Diagnoza z ICP i kalkulatorem wbudowanym (kroki 2.1-2.8, w tym `hasCalculator: true` w kroku 2.6) → Spotkanie (krok 3, Calendly nie Google Meet). ICP NIE jest osobnym krokiem przed diagnozą — jest jej częścią (Miro framework: Opening, Diagnoza, Spotkanie, trzy kroki).
+
+Zasada stała wpisana jako komentarz na górze obu plików skryptów: jeśli Agency Leaders nie dał gotowej instrukcji na konkretną sytuację, rozwiązanie buduje się z ich zasad ogólnych (personalizacja, konkret zamiast ogólnika, klient sam dochodzi do wniosku przez pytania), nie jako coś oderwanego od frameworku.
+
+Każdy krok diagnozy ma jawny `branch` na końcu `lines` pokazujący dokąd przejść po odpowiedzi klienta (wzorzec z kroku "opener"). Obiekcje otwierające (`ok_em`, `ok_cc`, `ok_ms`, `ok_cp`, `ok_nb`) zawsze kończą się przejściem do kroku 2.1, nigdy nie zadają diagnostycznego pytania w oderwaniu od struktury.
+
+Nagrywanie: kwalifikacja to komputerowa nagrywarka (AudioRecorder w `/narzedzia`), NIE Fathom. Fathom jest wyłącznie dla Discovery Call (Google Meet).
 
 ## Agents
 
 | ID | Model | Thinking | Notes |
 |---|---|---|---|
 | agent0 | claude-sonnet-4-6 | no | KRS + MF API enrichment (hidden in UI) |
-| agent1 | claude-sonnet-4-6 | no | ICP qualification → Notion Pipeline |
-| agent2 | claude-opus-4-8 | **adaptive** | Pre-discovery brief |
+| agent1 | claude-sonnet-4-6 | no | ICP qualification → Notion Pipeline. Trzy statusy wyjściowe: Kwalifikacja / Niekwalifikowany / Nieaktywny (follow up) z obowiązkową data_re_engagement |
+| agent2 | claude-opus-4-8 | **adaptive** | Pre-discovery brief + pitch_recipe (moduły + pitch sentence + cytat + liczba) |
 | agent3 | claude-opus-4-8 | no | Presentation personalization |
 | agent4 | claude-sonnet-4-6 | no | Discovery call analysis |
 | agent5 | claude-opus-4-8 | **adaptive** | Agency Leaders training |
@@ -75,6 +98,10 @@ NARZĘDZIA
 - `PIPELINE_DB_ID = "75ac8bc6fd6d4c36934bedc1270217eb"` w `lib/notion/client.ts` — **never change**
 - `PIPELINE_DATA_SOURCE_ID = "2ea38355-7529-48f9-8d7f-1c62f5570df3"`
 - `upsertClientInPipeline` ma graceful fallback na unknown property errors
+- Email zapisywany do dedykowanego pola Notion (nie tylko do Notatek)
+- "Liczba prób kontaktu" — dokładna nazwa pola, nie "Liczba prób"
+- `anyDateToISO` obsługuje format "wtorek 16 (najbliższy) · 16:30"
+- Claude Code NIE ma bezpośredniego zapisu do Notion — to celowe. Zapis idzie przez API routes agentów (`/api/agents/agent[0-6]`), wywoływane z dashboardu, nie z sesji kodowania. Rozdzielenie: Claude Code = kod przez git, dashboard + agenci = dane biznesowe. Nie instaluj Notion MCP pluginów do Claude Code bez wyraźnej decyzji, bo to łamie to rozdzielenie.
 
 ## Google Integration
 
@@ -86,6 +113,11 @@ NARZĘDZIA
 - Required: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
 - `GOOGLE_REDIRECT_URI = https://app.autorise.pl/api/auth/google/callback` (prod; redirect_uri liczone też dynamicznie z origin)
 - `GOOGLE_SHEETS_ID = 18BjXDFAWDVQnQkrE_1Kmvj0-ZJIGXQejLY6IJOOXnH0`
+
+## Calendly
+
+- Zaproszenia na Discovery Call idą przez Calendly, NIE przez ręcznie tworzone wydarzenie Google Meet
+- `CALENDLY_URL` const w kroku "Spotkanie jako rozwiązanie" (`lib/scripts/kwalifikacyjna.ts`)
 
 ## Sheets Sync (Agencja)
 
@@ -102,15 +134,14 @@ NARZĘDZIA
 - Cloudflare Tunnel: `mcp.autorise.pl` → `localhost:3010`
 - Status sprawdzany live przez `/api/health` endpoint
 
-## Kontrola page (v6 — redesign)
+## Kontrola page (v6)
 
-**Layout:**
 - Wiersz 1 (3 kolumny): autorise-mcp | autorise-dashboard | Integracje (5 API statusów)
 - Wiersz 2 (40/60): Zmienne środowiskowe (grid badge'ów) | Claude Code (agenci/skills/modele)
 - Polling: 20s + focus listener
 - Claude-config: max 20 agentów i 20 skills, filtr RELEVANT_KEYWORDS
 
-## Harmonogram (v5 — layout fix)
+## Harmonogram (v5)
 
 - Sticky headers w jednym scrollable container (eliminuje misalignment kolumn)
 - All-day section: NA GÓRZE (przed siatką godzinową)
@@ -139,25 +170,46 @@ NARZĘDZIA
 - ZERO hardcode secrets — zawsze `process.env.XXX`
 - ZERO `console.log` w production
 
+## UI — ZASADY BEZWZGLĘDNE
+
+- **ZERO emojis** w UI — zawsze Lucide React icons (MessageSquare, Phone, Users, Check, X, AlertTriangle itd.)
+- **ZERO strzałek →** w UI i w tekstach — zamiast "A → B" pisz "A: B" lub "Jeśli A, to B"
+- **ZERO myślnika narracyjnego —** w środku zdania — zamiast tego użyj kropki lub dwukropka
+- React hooks muszą być zdefiniowane PRZED każdym conditional `return` (Rules of Hooks)
+- Wszystkie buttony/inputy/selecty: ten sam height (36px), border-radius (8px), font-size (13px) w całym dashboardzie, żeby zachować jeden spójny wygląd
+
+## Skills (lokalne w Claude Code)
+
+Zainstalowane w `~/.claude/skills/`: `taste-skill`, `redesign-skill`, `impeccable`. Te są niezależne od projektu Claude.ai (który ma osobny zestaw: `agency-leaders-analysis`, `humanizer`, `stop-slop`, `frontend-design`). Oba systemy się nie widzą nawzajem, każdy czyta tylko ze swojego środowiska.
+
 ## File Locations
 
 ```
-app/(dashboard)/agenci/page.tsx       — agents page (6 agents, agent0 ukryty)
-app/(dashboard)/pipeline/page.tsx     — Pipeline Kanban (2×4)
-app/(dashboard)/kontrola/page.tsx     — Kontrola (v6 redesign)
-app/(dashboard)/harmonogram/page.tsx  — Calendar + Google Tasks
-app/(dashboard)/zadania/page.tsx      — Google Tasks (4 listy)
-app/(dashboard)/agencja/page.tsx      — Nasza karta + Sheets sync
-app/api/agents/agent[0-6]/route.ts    — agent API routes
-app/api/health/route.ts               — health check (Anthropic/Notion/Google/Groq/MCP)
-app/api/env-check/route.ts            — env vars check
-app/api/claude-config/route.ts        — Claude Code agents/skills (filtered)
-app/api/notion/pipeline/route.ts      — Pipeline clients
-app/api/notion/sheets-sync/route.ts   — Sheets → Notion sync
-components/layout/sidebar.tsx         — navigation sidebar (260px)
-lib/agents/prompts.ts                 — all system prompts
-lib/notion/client.ts                  — Notion API client
-context/AUTORISE_DASHBOARD_STATE_v6.md — stan systemu dla Claude AI
+app/(dashboard)/kwalifikacja/page.tsx     — widok etapowy Kwalifikacja
+app/(dashboard)/sprzedaz/page.tsx         — widok etapowy Discovery/Sprzedaż
+app/(dashboard)/pipeline/page.tsx         — Pipeline Kanban (3 rzędy)
+app/(dashboard)/mapa/page.tsx             — Mapa procesu sprzedażowego
+app/(dashboard)/agenci/page.tsx           — agents page (6 agents, agent0 ukryty)
+app/(dashboard)/brand-book/page.tsx       — design system live preview
+app/(dashboard)/narzedzia/page.tsx        — Transkrypcja (AudioRecorder + Drive)
+app/(dashboard)/narzedzia/kalkulator/page.tsx — OSIEROCONA strona, do usunięcia
+app/(dashboard)/kontrola/page.tsx         — Kontrola (v6 redesign)
+app/(dashboard)/harmonogram/page.tsx      — Calendar + Google Tasks
+app/(dashboard)/zadania/page.tsx          — Google Tasks (4 listy)
+app/(dashboard)/agencja/page.tsx          — Nasza karta + Sheets sync
+app/api/agents/agent[0-6]/route.ts        — agent API routes
+app/api/health/route.ts                   — health check (Anthropic/Notion/Google/Groq/MCP)
+app/api/env-check/route.ts                — env vars check
+app/api/claude-config/route.ts            — Claude Code agents/skills (filtered)
+app/api/notion/pipeline/route.ts          — Pipeline clients
+app/api/notion/sheets-sync/route.ts       — Sheets → Notion sync
+components/layout/sidebar.tsx             — navigation sidebar (260px, 4 grupy)
+components/kalkulator/KalkulatorRoi.tsx   — kalkulator ROI (inline w skryptach)
+lib/agents/prompts.ts                     — all system prompts
+lib/scripts/{types,kwalifikacyjna,discovery,messages}.ts — dane skryptów
+lib/notion/client.ts                      — Notion API client
+context/AUTORISE_DASHBOARD_STATE_v6.md    — stan systemu dla Claude AI
+context/AUTORISE_SESSION_LOG.md           — log sesji, czytaj na starcie każdej sesji
 ```
 
 ## Historia zmian
@@ -170,3 +222,10 @@ context/AUTORISE_DASHBOARD_STATE_v6.md — stan systemu dla Claude AI
 | 2026-06-27 | Agent 1 — dyskwalifikacja (zła osoba/brak zainteresowania) → Niekwalifikowany; nazwa = osoba nie firma |
 | 2026-06-27 | KartaKlienta NoteField — auto-resize textarea |
 | 2026-06-27 | Responsywność mobilna — drawer sidebar + adaptacyjne układy |
+| 2026-07-01 | Sprint v2: tab persist, Pan fix, notepad, logo text, calendar fix, overdue days, responsive grids, MP3→Drive, agenci tabs, JSON parsing, transkrypcja cleanup, OAuth errors |
+| 2026-07-03 | MEGA PATCH scripts-v3 + Sesja 2 redesign etapowy: /kwalifikacja, /sprzedaz, /mapa, /brand-book jako nowe widoki; Roboto; nawigacja 4 grupy |
+| 2026-07-03 | Skrypt Kwalifikacyjny V4: 12 kroków, ICP wbudowane w diagnozę, kalkulator inline krok 2.6, Calendly, Fathom usunięty z kwalifikacji, jawne branch notes 2.1-2.8, fix ok_em/ok7 |
+
+## LOGI SESJI (OBOWIĄZKOWE)
+
+Na końcu każdej sesji: zaktualizuj `context/AUTORISE_SESSION_LOG.md` (1 wiersz tabeli) i tę sekcję "Nawigacja" / "File Locations" w CLAUDE.md, jeśli struktura stron się zmieniła. Ten plik ma być zawsze zgodny z rzeczywistym `sidebar.tsx` — jeśli się rozjeżdżają, każda następna sesja zaczyna z błędnym obrazem systemu.

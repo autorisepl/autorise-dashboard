@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import type { PipelineClientDetailed } from "@/app/api/notion/pipeline/route";
-import { KalkulatorRoi } from "@/components/kalkulator/KalkulatorRoi";
 import { formatPhone } from "@/lib/format/phone";
 import { ICP_RULES, OBJECTIONS_K, STEPS_K } from "@/lib/scripts/kwalifikacyjna";
 import { GROUP_COLORS, MESSAGES_DATA } from "@/lib/scripts/messages";
@@ -115,6 +114,295 @@ function Card({
         )}
       </div>
       {open && <div style={{ padding: 16 }}>{children}</div>}
+    </div>
+  );
+}
+
+// ── Inline kalkulator wbudowany w skrypt ─────────────────────────────
+
+const PRACA_TYPES = [
+  { id: "zlecenia", label: "Wpisywanie zleceń" },
+  { id: "cmr", label: "CMR / POD" },
+  { id: "faktury", label: "Faktury" },
+  { id: "komunikacja", label: "Komunikacja z klientami" },
+  { id: "inne", label: "Inne dokumenty" },
+] as const;
+
+function ScriptKalkulator({ clientName }: { clientName: string }) {
+  const [osoby, setOsoby] = useState(2);
+  const [godziny, setGodziny] = useState(3);
+  const [selected, setSelected] = useState<Set<string>>(
+    new Set(["zlecenia", "cmr", "faktury"]),
+  );
+
+  const toggle = (id: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  const miesiecznieH = osoby * godziny * 22;
+  const miesieczniePLN = miesiecznieH * 50;
+  const rocznie = miesieczniePLN * 12;
+
+  const fmt = (n: number) =>
+    n.toLocaleString("pl-PL", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
+  const wynikZdanie = `Przy ${osoby} ${osoby === 1 ? "osobie" : "osobach"} i ${godziny} ${godziny === 1 ? "godzinie" : "godzinach"} dziennie — to ${fmt(miesiecznieH)} godzin miesięcznie, czyli ${fmt(miesieczniePLN)} zł kosztu pracy. Rocznie ${fmt(rocznie)} zł.`;
+
+  return (
+    <div
+      style={{
+        border: "1px solid #E5E5EA",
+        borderRadius: 10,
+        overflow: "hidden",
+        background: "#fff",
+      }}
+    >
+      <div
+        style={{
+          padding: "10px 14px",
+          background: "rgba(10,132,255,0.04)",
+          borderBottom: "1px solid #E5E5EA",
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "var(--font-sans)",
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: "0.07em",
+            textTransform: "uppercase",
+            color: "var(--accent)",
+          }}
+        >
+          Kalkulator ROI
+        </span>
+        {clientName && (
+          <span
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 11,
+              color: "var(--text-tertiary)",
+            }}
+          >
+            — {clientName}
+          </span>
+        )}
+      </div>
+
+      <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 12 }}>
+        {/* Inputs */}
+        <div style={{ display: "flex", gap: 12 }}>
+          <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
+            <span
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 10,
+                fontWeight: 600,
+                color: "var(--text-tertiary)",
+                textTransform: "uppercase",
+                letterSpacing: "0.07em",
+              }}
+            >
+              Osoby w biurze
+            </span>
+            <input
+              type="number"
+              min={1}
+              max={50}
+              value={osoby}
+              onChange={(e) => setOsoby(Math.max(1, Number(e.target.value) || 1))}
+              style={{
+                height: 36,
+                borderRadius: 8,
+                border: "1px solid #E5E5EA",
+                padding: "0 10px",
+                fontFamily: "var(--font-sans)",
+                fontSize: 14,
+                fontWeight: 600,
+                color: "var(--text-primary)",
+                background: "#F5F5F7",
+                outline: "none",
+                width: "100%",
+              }}
+            />
+          </label>
+          <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
+            <span
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 10,
+                fontWeight: 600,
+                color: "var(--text-tertiary)",
+                textTransform: "uppercase",
+                letterSpacing: "0.07em",
+              }}
+            >
+              Godziny dziennie
+            </span>
+            <input
+              type="number"
+              min={0.5}
+              max={12}
+              step={0.5}
+              value={godziny}
+              onChange={(e) => setGodziny(Math.max(0.5, Number(e.target.value) || 0.5))}
+              style={{
+                height: 36,
+                borderRadius: 8,
+                border: "1px solid #E5E5EA",
+                padding: "0 10px",
+                fontFamily: "var(--font-sans)",
+                fontSize: 14,
+                fontWeight: 600,
+                color: "var(--text-primary)",
+                background: "#F5F5F7",
+                outline: "none",
+                width: "100%",
+              }}
+            />
+          </label>
+        </div>
+
+        {/* Typy pracy */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          <span
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 10,
+              fontWeight: 600,
+              color: "var(--text-tertiary)",
+              textTransform: "uppercase",
+              letterSpacing: "0.07em",
+            }}
+          >
+            Rodzaj pracy (zaznacz co dotyczy)
+          </span>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {PRACA_TYPES.map((pt) => {
+              const on = selected.has(pt.id);
+              return (
+                <button
+                  key={pt.id}
+                  onClick={() => toggle(pt.id)}
+                  style={{
+                    padding: "5px 10px",
+                    borderRadius: 20,
+                    border: on ? "1px solid var(--accent)" : "1px solid #E5E5EA",
+                    background: on ? "rgba(10,132,255,0.08)" : "#F5F5F7",
+                    color: on ? "var(--accent)" : "var(--text-secondary)",
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 11,
+                    fontWeight: on ? 600 : 400,
+                    cursor: "pointer",
+                    transition: "all 120ms",
+                  }}
+                >
+                  {pt.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Wynik */}
+        <div
+          style={{
+            background: "rgba(10,132,255,0.05)",
+            border: "1px solid rgba(10,132,255,0.18)",
+            borderRadius: 8,
+            padding: "10px 14px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 6,
+          }}
+        >
+          <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+            <div>
+              <div
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 10,
+                  color: "var(--text-tertiary)",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.07em",
+                  fontWeight: 600,
+                }}
+              >
+                Miesięcznie
+              </div>
+              <div
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 20,
+                  fontWeight: 700,
+                  color: "var(--accent)",
+                  lineHeight: 1.2,
+                }}
+              >
+                {fmt(miesieczniePLN)} zł
+              </div>
+              <div
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 11,
+                  color: "var(--text-tertiary)",
+                }}
+              >
+                {fmt(miesiecznieH)} h × 50 zł/h
+              </div>
+            </div>
+            <div>
+              <div
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 10,
+                  color: "var(--text-tertiary)",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.07em",
+                  fontWeight: 600,
+                }}
+              >
+                Rocznie
+              </div>
+              <div
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 20,
+                  fontWeight: 700,
+                  color: "var(--text-primary)",
+                  lineHeight: 1.2,
+                }}
+              >
+                {fmt(rocznie)} zł
+              </div>
+            </div>
+          </div>
+
+          {/* Gotowe zdanie do wypowiedzenia */}
+          <div
+            style={{
+              marginTop: 4,
+              padding: "8px 10px",
+              borderRadius: 6,
+              background: "#fff",
+              border: "1px solid #E5E5EA",
+              fontFamily: "var(--font-sans)",
+              fontSize: 12,
+              lineHeight: 1.55,
+              color: "var(--text-primary)",
+            }}
+          >
+            {wynikZdanie}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -1055,6 +1343,22 @@ function ClientSidebar({
                   {formatPhone(c.telefon)}
                 </div>
               )}
+              {c.email && (
+                <div
+                  style={{
+                    fontSize: 11,
+                    color: "var(--text-tertiary)",
+                    marginTop: 1,
+                    fontFamily: "var(--font-sans)",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    maxWidth: 200,
+                  }}
+                >
+                  {c.email}
+                </div>
+              )}
             </div>
           );
         })}
@@ -1263,32 +1567,11 @@ export default function KwalifikacjaPage() {
         <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px", background: "#F5F5F7" }}>
           <Card title="Skrypt kwalifikacyjny">
             {STEPS_K.map((step) => (
-              <ScriptStep
-                key={step.id}
-                step={step}
-                fill={fill}
-                onCopy={onCopy}
-                copiedId={copiedId}
-              >
+              <ScriptStep key={step.id} step={step} fill={fill} onCopy={onCopy} copiedId={copiedId}>
                 {step.hasCalculator && (
-                  <div>
-                    <div
-                      style={{
-                        fontSize: 10,
-                        fontWeight: 700,
-                        letterSpacing: "0.08em",
-                        textTransform: "uppercase",
-                        color: "#0d9488",
-                        marginBottom: 10,
-                      }}
-                    >
-                      Kalkulator ROI — wypełniaj w trakcie rozmowy
-                    </div>
-                    <KalkulatorRoi
-                      embedded
-                      initialClientName={selected?.kontakt || selected?.firma || ""}
-                    />
-                  </div>
+                  <ScriptKalkulator
+                    clientName={selected?.kontakt || selected?.firma || ""}
+                  />
                 )}
               </ScriptStep>
             ))}

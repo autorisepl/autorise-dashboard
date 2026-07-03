@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  BookOpen,
-  Check,
-  Copy,
-  CheckCircle2,
-} from "lucide-react";
+import { BookOpen, Check, CheckCircle2, Copy } from "lucide-react";
 import { useState } from "react";
 
 // ── Token viewer ──────────────────────────────────────────────────────
@@ -21,7 +16,19 @@ function CopyBtn({ value }: { value: string }) {
   return (
     <button
       onClick={handleCopy}
-      style={{ padding: "3px 8px", borderRadius: 5, border: "1px solid #E5E5EA", background: "transparent", cursor: "pointer", color: copied ? "var(--success-text)" : "var(--text-tertiary)", display: "flex", alignItems: "center", gap: 3, fontSize: 10, fontFamily: "var(--font-sans)" }}
+      style={{
+        padding: "3px 8px",
+        borderRadius: 5,
+        border: "1px solid #E5E5EA",
+        background: "transparent",
+        cursor: "pointer",
+        color: copied ? "var(--success-text)" : "var(--text-tertiary)",
+        display: "flex",
+        alignItems: "center",
+        gap: 3,
+        fontSize: 10,
+        fontFamily: "var(--font-sans)",
+      }}
     >
       {copied ? <CheckCircle2 size={9} /> : <Copy size={9} />}
       {copied ? "OK" : "Kopiuj"}
@@ -89,10 +96,33 @@ function ColorSwatches() {
             }}
           />
           <div style={{ padding: "8px 10px" }}>
-            <div style={{ fontFamily: "var(--font-sans)", fontSize: 12, fontWeight: 600, color: "var(--text-primary)", marginBottom: 2 }}>{c.name}</div>
-            <div style={{ fontFamily: "var(--font-sans)", fontSize: 10, color: "var(--text-tertiary)", marginBottom: 4 }}>var({c.var})</div>
+            <div
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 12,
+                fontWeight: 600,
+                color: "var(--text-primary)",
+                marginBottom: 2,
+              }}
+            >
+              {c.name}
+            </div>
+            <div
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 10,
+                color: "var(--text-tertiary)",
+                marginBottom: 4,
+              }}
+            >
+              var({c.var})
+            </div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <span style={{ fontFamily: "monospace", fontSize: 10, color: "var(--text-secondary)" }}>{c.value}</span>
+              <span
+                style={{ fontFamily: "monospace", fontSize: 10, color: "var(--text-secondary)" }}
+              >
+                {c.value}
+              </span>
               <CopyBtn value={`var(${c.var})`} />
             </div>
           </div>
@@ -109,8 +139,18 @@ function TypographyShowcase() {
     { label: "H1 — Nagłówek strony", size: 24, weight: 700, example: "Autorise Dashboard" },
     { label: "H2 — Sekcja", size: 18, weight: 600, example: "Praca z klientami" },
     { label: "H3 — Karta / Panel", size: 15, weight: 600, example: "Skrypt kwalifikacyjny" },
-    { label: "Body — Treść", size: 13, weight: 400, example: "Dzień dobry, Pan Jacek? Mówi Michał z Autorise." },
-    { label: "Caption — Opis / Meta", size: 11, weight: 400, example: "Discovery umówione · 3 dni temu" },
+    {
+      label: "Body — Treść",
+      size: 13,
+      weight: 400,
+      example: "Dzień dobry, Pan Jacek? Mówi Michał z Autorise.",
+    },
+    {
+      label: "Caption — Opis / Meta",
+      size: 11,
+      weight: 400,
+      example: "Discovery umówione · 3 dni temu",
+    },
     { label: "Label — Badge / Tag", size: 10, weight: 700, example: "NOWY LEAD · KWALIFIKACJA" },
     { label: "Micro — Metadata", size: 9, weight: 600, example: "MÓWISZ · AKCJA · UWAGA" },
   ];
@@ -131,12 +171,36 @@ function TypographyShowcase() {
           }}
         >
           <div style={{ width: 180, flexShrink: 0 }}>
-            <div style={{ fontSize: 10, color: "var(--text-tertiary)", fontFamily: "var(--font-sans)" }}>{s.label}</div>
-            <div style={{ fontSize: 10, color: "var(--text-tertiary)", fontFamily: "monospace", marginTop: 2 }}>
+            <div
+              style={{
+                fontSize: 10,
+                color: "var(--text-tertiary)",
+                fontFamily: "var(--font-sans)",
+              }}
+            >
+              {s.label}
+            </div>
+            <div
+              style={{
+                fontSize: 10,
+                color: "var(--text-tertiary)",
+                fontFamily: "monospace",
+                marginTop: 2,
+              }}
+            >
               {s.size}px / {s.weight}
             </div>
           </div>
-          <div style={{ fontFamily: "var(--font-sans)", fontSize: s.size, fontWeight: s.weight, color: "var(--text-primary)", flex: 1, letterSpacing: s.weight >= 700 ? "0.01em" : "normal" }}>
+          <div
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: s.size,
+              fontWeight: s.weight,
+              color: "var(--text-primary)",
+              flex: 1,
+              letterSpacing: s.weight >= 700 ? "0.01em" : "normal",
+            }}
+          >
             {s.example}
           </div>
           <CopyBtn value={`fontSize: ${s.size}, fontWeight: ${s.weight}`} />
@@ -154,7 +218,10 @@ function SpacingScale() {
   return (
     <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "flex-end" }}>
       {SPACING.map((s) => (
-        <div key={s} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+        <div
+          key={s}
+          style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}
+        >
           <div
             style={{
               width: 24,
@@ -164,7 +231,9 @@ function SpacingScale() {
               borderRadius: 2,
             }}
           />
-          <span style={{ fontSize: 9, color: "var(--text-tertiary)", fontFamily: "monospace" }}>{s}</span>
+          <span style={{ fontSize: 9, color: "var(--text-tertiary)", fontFamily: "monospace" }}>
+            {s}
+          </span>
         </div>
       ))}
     </div>
@@ -185,7 +254,10 @@ function RadiusScale() {
   return (
     <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
       {RADII.map((r) => (
-        <div key={r.var} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+        <div
+          key={r.var}
+          style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}
+        >
           <div
             style={{
               width: 60,
@@ -196,9 +268,22 @@ function RadiusScale() {
             }}
           />
           <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: "var(--text-primary)", fontFamily: "var(--font-sans)" }}>{r.name}</div>
-            <div style={{ fontSize: 9, color: "var(--text-tertiary)", fontFamily: "monospace" }}>{r.value}px</div>
-            <div style={{ fontSize: 9, color: "var(--accent)", fontFamily: "monospace" }}>var({r.var})</div>
+            <div
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                color: "var(--text-primary)",
+                fontFamily: "var(--font-sans)",
+              }}
+            >
+              {r.name}
+            </div>
+            <div style={{ fontSize: 9, color: "var(--text-tertiary)", fontFamily: "monospace" }}>
+              {r.value}px
+            </div>
+            <div style={{ fontSize: 9, color: "var(--accent)", fontFamily: "monospace" }}>
+              var({r.var})
+            </div>
           </div>
         </div>
       ))}
@@ -211,19 +296,84 @@ function RadiusScale() {
 function ButtonVariants() {
   return (
     <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
-      <button style={{ height: 36, padding: "0 16px", borderRadius: 8, border: "none", background: "var(--accent)", color: "#fff", fontFamily: "var(--font-sans)", fontSize: 13, fontWeight: 500, cursor: "pointer" }}>
+      <button
+        style={{
+          height: 36,
+          padding: "0 16px",
+          borderRadius: 8,
+          border: "none",
+          background: "var(--accent)",
+          color: "#fff",
+          fontFamily: "var(--font-sans)",
+          fontSize: 13,
+          fontWeight: 500,
+          cursor: "pointer",
+        }}
+      >
         Primary
       </button>
-      <button style={{ height: 36, padding: "0 16px", borderRadius: 8, border: "1px solid var(--accent-border)", background: "var(--accent-muted)", color: "var(--accent)", fontFamily: "var(--font-sans)", fontSize: 13, fontWeight: 500, cursor: "pointer" }}>
+      <button
+        style={{
+          height: 36,
+          padding: "0 16px",
+          borderRadius: 8,
+          border: "1px solid var(--accent-border)",
+          background: "var(--accent-muted)",
+          color: "var(--accent)",
+          fontFamily: "var(--font-sans)",
+          fontSize: 13,
+          fontWeight: 500,
+          cursor: "pointer",
+        }}
+      >
         Secondary
       </button>
-      <button style={{ height: 36, padding: "0 16px", borderRadius: 8, border: "1px solid #E5E5EA", background: "#fff", color: "var(--text-primary)", fontFamily: "var(--font-sans)", fontSize: 13, fontWeight: 400, cursor: "pointer" }}>
+      <button
+        style={{
+          height: 36,
+          padding: "0 16px",
+          borderRadius: 8,
+          border: "1px solid #E5E5EA",
+          background: "#fff",
+          color: "var(--text-primary)",
+          fontFamily: "var(--font-sans)",
+          fontSize: 13,
+          fontWeight: 400,
+          cursor: "pointer",
+        }}
+      >
         Default
       </button>
-      <button style={{ height: 36, padding: "0 16px", borderRadius: 8, border: "none", background: "var(--error)", color: "#fff", fontFamily: "var(--font-sans)", fontSize: 13, fontWeight: 500, cursor: "pointer" }}>
+      <button
+        style={{
+          height: 36,
+          padding: "0 16px",
+          borderRadius: 8,
+          border: "none",
+          background: "var(--error)",
+          color: "#fff",
+          fontFamily: "var(--font-sans)",
+          fontSize: 13,
+          fontWeight: 500,
+          cursor: "pointer",
+        }}
+      >
         Danger
       </button>
-      <button disabled style={{ height: 36, padding: "0 16px", borderRadius: 8, border: "1px solid #E5E5EA", background: "#F5F5F7", color: "var(--text-tertiary)", fontFamily: "var(--font-sans)", fontSize: 13, cursor: "not-allowed" }}>
+      <button
+        disabled
+        style={{
+          height: 36,
+          padding: "0 16px",
+          borderRadius: 8,
+          border: "1px solid #E5E5EA",
+          background: "#F5F5F7",
+          color: "var(--text-tertiary)",
+          fontFamily: "var(--font-sans)",
+          fontSize: 13,
+          cursor: "not-allowed",
+        }}
+      >
         Disabled
       </button>
     </div>
@@ -270,10 +420,26 @@ function StatusBadges() {
 // ── Shadow showcase ───────────────────────────────────────────────────
 
 const SHADOWS: { name: string; var: string; value: string }[] = [
-  { name: "sm", var: "--shadow-sm", value: "0 1px 3px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04)" },
-  { name: "card", var: "--shadow-card", value: "0 2px 8px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.05)" },
-  { name: "elevated", var: "--shadow-elevated", value: "0 8px 24px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.04)" },
-  { name: "menu", var: "--shadow-menu", value: "0 16px 40px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.06)" },
+  {
+    name: "sm",
+    var: "--shadow-sm",
+    value: "0 1px 3px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04)",
+  },
+  {
+    name: "card",
+    var: "--shadow-card",
+    value: "0 2px 8px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.05)",
+  },
+  {
+    name: "elevated",
+    var: "--shadow-elevated",
+    value: "0 8px 24px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.04)",
+  },
+  {
+    name: "menu",
+    var: "--shadow-menu",
+    value: "0 16px 40px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.06)",
+  },
 ];
 
 function ShadowShowcase() {
@@ -291,8 +457,19 @@ function ShadowShowcase() {
               marginBottom: 8,
             }}
           />
-          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-primary)", fontFamily: "var(--font-sans)" }}>{s.name}</div>
-          <div style={{ fontSize: 9, color: "var(--accent)", fontFamily: "monospace" }}>var({s.var})</div>
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: "var(--text-primary)",
+              fontFamily: "var(--font-sans)",
+            }}
+          >
+            {s.name}
+          </div>
+          <div style={{ fontSize: 9, color: "var(--accent)", fontFamily: "monospace" }}>
+            var({s.var})
+          </div>
         </div>
       ))}
     </div>
@@ -347,7 +524,17 @@ function CssVarReference() {
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       {CSS_VARS_GROUPS.map((g) => (
         <div key={g.title}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-secondary)", fontFamily: "var(--font-sans)", marginBottom: 6 }}>{g.title}</div>
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: "var(--text-secondary)",
+              fontFamily: "var(--font-sans)",
+              marginBottom: 6,
+            }}
+          >
+            {g.title}
+          </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {g.vars.map((v) => (
               <div
@@ -362,14 +549,176 @@ function CssVarReference() {
                   borderRadius: 7,
                 }}
               >
-                <code style={{ fontSize: 11, color: "var(--accent)", fontFamily: "monospace", minWidth: 200, flexShrink: 0 }}>{v.name}</code>
-                <span style={{ fontSize: 12, color: "var(--text-secondary)", fontFamily: "var(--font-sans)", flex: 1 }}>{v.desc}</span>
+                <code
+                  style={{
+                    fontSize: 11,
+                    color: "var(--accent)",
+                    fontFamily: "monospace",
+                    minWidth: 200,
+                    flexShrink: 0,
+                  }}
+                >
+                  {v.name}
+                </code>
+                <span
+                  style={{
+                    fontSize: 12,
+                    color: "var(--text-secondary)",
+                    fontFamily: "var(--font-sans)",
+                    flex: 1,
+                  }}
+                >
+                  {v.desc}
+                </span>
                 <CopyBtn value={`var(${v.name})`} />
               </div>
             ))}
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+// ── Placeholdery w skryptach ──────────────────────────────────────────
+
+interface PlaceholderEntry {
+  token: string;
+  description: string;
+  source: string;
+  example: string;
+}
+
+const PLACEHOLDERS: PlaceholderEntry[] = [
+  {
+    token: "{IMIĘ}",
+    description: "Wołacz imienia klienta (np. 'Michale', 'Anno')",
+    source: "Pole kontakt w Pipeline — obliczane przez toVocative() w /kwalifikacja i /sprzedaz",
+    example: "Dzień dobry, Pan {IMIĘ} → Dzień dobry, Pan Michał",
+  },
+  {
+    token: "Pan {IMIĘ}",
+    description: "Forma oficjalna z mianownikiem imienia (nie wołaczem)",
+    source: "Pole kontakt w Pipeline — fill() podstawia nominatyw (pierwsze słowo pola kontakt)",
+    example: "Dzień dobry, Pan {IMIĘ}? → Dzień dobry, Pan Jacek?",
+  },
+  {
+    token: "Pani {IMIĘ}",
+    description: "Forma żeńska z mianownikiem imienia",
+    source: "Pole kontakt w Pipeline — analogicznie jak Pan {IMIĘ}",
+    example: "Dzień dobry, Pani {IMIĘ}? → Dzień dobry, Pani Anna?",
+  },
+  {
+    token: "[LICZBA Z KALKULATORA]",
+    description: "Wynik godzin miesięcznie z kalkulatora ROI inline",
+    source: "ScriptKalkulator w /kwalifikacja krok 2.6 — osoby × godziny × 22",
+    example: "Policzyłem: [LICZBA Z KALKULATORA] godzin miesięcznie → 132 godziny miesięcznie",
+  },
+  {
+    token: "[WYNIK Z KALKULATORA]",
+    description: "Gotowe zdanie z wynikiem kalkulatora do wypowiedzenia na głos",
+    source: "ScriptKalkulator — gotowe zdanie: 'Przy X osobach i Y godzinach dziennie...'",
+    example: "Zdanie: Przy 2 osobach i 3 godzinach dziennie — to 132 godziny miesięcznie, czyli 6 600 zł kosztu pracy. Rocznie 79 200 zł.",
+  },
+  {
+    token: "[WARTOŚĆ PLN]",
+    description: "Wartość miesięczna kosztu pracy w złotych (osoby × godziny × 22 × 50 zł/h)",
+    source: "ScriptKalkulator — pole miesieczniePLN",
+    example: "To [WARTOŚĆ PLN] zł miesięcznie tylko na ręczną robotę → 6 600 zł miesięcznie",
+  },
+];
+
+function PlaceholderySkryptow() {
+  return (
+    <div
+      style={{
+        background: "#fff",
+        border: "1px solid #E5E5EA",
+        borderRadius: 12,
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          padding: "12px 18px",
+          borderBottom: "1px solid #E5E5EA",
+          background: "rgba(10,132,255,0.03)",
+          fontFamily: "var(--font-sans)",
+          fontSize: 11,
+          fontWeight: 700,
+          letterSpacing: "0.07em",
+          textTransform: "uppercase",
+          color: "var(--text-tertiary)",
+        }}
+      >
+        Wszystkie placeholdery aktywne w skryptach STEPS_K i STEPS_D
+      </div>
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        {PLACEHOLDERS.map((p, i) => (
+          <div
+            key={p.token}
+            style={{
+              padding: "14px 18px",
+              borderBottom: i < PLACEHOLDERS.length - 1 ? "1px solid #F0F0F5" : "none",
+              display: "flex",
+              gap: 16,
+              alignItems: "flex-start",
+            }}
+          >
+            <div
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 13,
+                fontWeight: 700,
+                color: "var(--accent)",
+                minWidth: 180,
+                flexShrink: 0,
+                background: "rgba(10,132,255,0.07)",
+                borderRadius: 6,
+                padding: "4px 10px",
+                letterSpacing: "0.01em",
+              }}
+            >
+              {p.token}
+            </div>
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
+              <div
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: "var(--text-primary)",
+                }}
+              >
+                {p.description}
+              </div>
+              <div
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 11,
+                  color: "var(--text-secondary)",
+                  lineHeight: 1.5,
+                }}
+              >
+                Źródło: {p.source}
+              </div>
+              <div
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 11,
+                  color: "var(--text-tertiary)",
+                  background: "#F5F5F7",
+                  borderRadius: 5,
+                  padding: "4px 8px",
+                  lineHeight: 1.5,
+                }}
+              >
+                {p.example}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -393,11 +742,21 @@ export default function BrandBookPage() {
         }}
       >
         <BookOpen size={16} color="var(--accent)" strokeWidth={1.8} />
-        <span style={{ fontFamily: "var(--font-sans)", fontSize: 16, fontWeight: 700, color: "var(--text-primary)", letterSpacing: "-0.01em" }}>
+        <span
+          style={{
+            fontFamily: "var(--font-sans)",
+            fontSize: 16,
+            fontWeight: 700,
+            color: "var(--text-primary)",
+            letterSpacing: "-0.01em",
+          }}
+        >
           Brand Book
         </span>
         <div style={{ height: 20, width: 1, background: "#E5E5EA" }} />
-        <span style={{ fontSize: 12, color: "var(--text-tertiary)", fontFamily: "var(--font-sans)" }}>
+        <span
+          style={{ fontSize: 12, color: "var(--text-tertiary)", fontFamily: "var(--font-sans)" }}
+        >
           Design system — live CSS variables preview
         </span>
       </div>
@@ -430,6 +789,9 @@ export default function BrandBookPage() {
           <CssVarReference />
 
           {/* Font showcase */}
+          <SectionTitle>Placeholdery w skryptach</SectionTitle>
+          <PlaceholderySkryptow />
+
           <SectionTitle>Roboto — próbka fontowa</SectionTitle>
           <div
             style={{
@@ -439,16 +801,53 @@ export default function BrandBookPage() {
               padding: "24px",
             }}
           >
-            <div style={{ fontFamily: "var(--font-sans)", fontSize: 32, fontWeight: 300, color: "var(--text-primary)", letterSpacing: "-0.02em", marginBottom: 8 }}>
+            <div
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 32,
+                fontWeight: 300,
+                color: "var(--text-primary)",
+                letterSpacing: "-0.02em",
+                marginBottom: 8,
+              }}
+            >
               Autorise — Automatyzacja TSL
             </div>
-            <div style={{ fontFamily: "var(--font-sans)", fontSize: 18, fontWeight: 400, color: "var(--text-secondary)", marginBottom: 8 }}>
+            <div
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 18,
+                fontWeight: 400,
+                color: "var(--text-secondary)",
+                marginBottom: 8,
+              }}
+            >
               Odzyskujemy dla Ciebie czas biura. Średnio 80 godzin miesięcznie.
             </div>
-            <div style={{ fontFamily: "var(--font-sans)", fontSize: 13, fontWeight: 400, color: "var(--text-secondary)", lineHeight: 1.65, marginBottom: 8 }}>
-              System agentów AI dostosowanych do branży TSL. Agent 01 kwalifikuje leady telefonicznie. Agent 02 przygotowuje brief przed Discovery. Agent 03 personalizuje prezentację. Agent 04 analizuje Discovery Call.
+            <div
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 13,
+                fontWeight: 400,
+                color: "var(--text-secondary)",
+                lineHeight: 1.65,
+                marginBottom: 8,
+              }}
+            >
+              System agentów AI dostosowanych do branży TSL. Agent 01 kwalifikuje leady
+              telefonicznie. Agent 02 przygotowuje brief przed Discovery. Agent 03 personalizuje
+              prezentację. Agent 04 analizuje Discovery Call.
             </div>
-            <div style={{ fontFamily: "var(--font-sans)", fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-tertiary)" }}>
+            <div
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                color: "var(--text-tertiary)",
+              }}
+            >
               Autorise · Kórnik · 2026
             </div>
           </div>

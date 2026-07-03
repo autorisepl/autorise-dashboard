@@ -70,10 +70,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         aria-hidden
       />
 
-      <Sidebar
-        open={drawerOpen}
-        onNavigate={() => setDrawerOpen(false)}
-      />
+      <Sidebar open={drawerOpen} onNavigate={() => setDrawerOpen(false)} />
 
       {/* Sidebar toggle — always visible, one fixed position */}
       <button

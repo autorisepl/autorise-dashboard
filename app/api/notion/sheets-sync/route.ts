@@ -25,6 +25,29 @@ function findCol(headers: string[], ...patterns: RegExp[]): string | undefined {
   return undefined;
 }
 
+// Derive Notion Pipeline status from sheet boolean columns (same logic as agencja/page.tsx deriveStage)
+function deriveNotionStatus(row: Record<string, string | number>, headers: string[]): string {
+  const isTruthy = (v: unknown) => {
+    const t = String(v ?? "")
+      .trim()
+      .toLowerCase();
+    return t === "true" || t === "tak" || t === "✓" || t === "x" || t === "1";
+  };
+  const get = (re: RegExp) => {
+    const h = headers.find((x) => re.test(x));
+    return h ? isTruthy(row[h]) : false;
+  };
+
+  if (get(/pozyskany\s+klient/i) || get(/podpisana\s+umowa/i) || get(/op[lł]acona\s+faktura/i))
+    return "Kickoff";
+  if (get(/odbyte\s+spotkanie\s+decyzyjne/i) || get(/um[oó]wione\s+spotkanie\s+decyzyjne/i))
+    return "Finalizacja";
+  if (get(/odbyta\s+rozmowa\s+sprzeda/i) || get(/um[oó]wiona\s+rozmowa\s+sprzeda/i))
+    return "Kwalifikacja";
+  if (get(/rozmowa\s+telefoniczna.*kwalifik/i) || get(/^rozmowa.*kwalifik/i)) return "Kwalifikacja";
+  return "Nowy lead";
+}
+
 export async function POST(req: NextRequest) {
   const token = getRefreshToken({
     get: (name: string) => {
@@ -172,10 +195,11 @@ export async function POST(req: NextRequest) {
         .join(" | ");
 
       try {
+        const notionStatus = deriveNotionStatus(row, headers);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const props: Record<string, any> = {
           Firma: { title: richText(titleVal) },
-          Status: { select: { name: "Nowy lead" } },
+          Status: { select: { name: notionStatus } },
           "Data pierwszego kontaktu": { date: { start: todayISO } },
         };
 

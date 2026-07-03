@@ -310,8 +310,7 @@ export default function NarzedziaPage() {
     );
     try {
       const baseName = srcFileName.replace(/\.[^.]+$/, "");
-      const today = new Date().toISOString().slice(0, 10);
-      const driveFileName = `${baseName}_${today}.txt`;
+      const driveFileName = `${baseName}.txt`;
       const res = await fetch("/api/google/drive/upload", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -637,42 +636,6 @@ export default function NarzedziaPage() {
         <AudioRecorder />
 
         <div style={{ flex: 1, overflowY: "auto", padding: "16px 16px 20px" }}>
-          {/* Info panel */}
-          <Panel style={{ padding: 16, marginBottom: 12 }}>
-            <SectionLabel paddingX={0} style={{ marginBottom: 10 }}>
-              Narzędzie
-            </SectionLabel>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {[
-                { label: "Model", value: "Groq Whisper large-v3" },
-                { label: "Język", value: "Polski" },
-                { label: "Auto-zapis", value: "Dysk Google · transkrypty_txt" },
-                { label: "Dzielenie plików", value: "Automatyczne > 24 MB" },
-                { label: "Formaty", value: "MP3 · M4A · WAV · FLAC · OGG" },
-                { label: "Maks. rozmiar", value: "100 MB" },
-              ].map(({ label, value }) => (
-                <div
-                  key={label}
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    gap: 8,
-                    alignItems: "baseline",
-                  }}
-                >
-                  <span style={{ fontSize: 11, color: "var(--text-tertiary)", flexShrink: 0 }}>
-                    {label}
-                  </span>
-                  <span
-                    style={{ fontSize: 12, color: "var(--text-secondary)", textAlign: "right" }}
-                  >
-                    {value}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </Panel>
-
           {/* Queue */}
           {queue.length > 0 && (
             <Panel style={{ padding: 0, overflow: "hidden" }}>

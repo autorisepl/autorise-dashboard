@@ -152,7 +152,7 @@ function KanbanColumn({
 }) {
   const color = STATUS_COLORS[status] ?? "var(--text-tertiary)";
   return (
-    <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+    <div style={{ display: "flex", flexDirection: "column", minWidth: 0, height: "100%" }}>
       {/* Column header */}
       <div
         style={{
@@ -399,6 +399,7 @@ function KanbanRow({
         gap: 12,
         flex: 1,
         minHeight: 0,
+        height: "100%",
       }}
     >
       {statuses.map((status) => (

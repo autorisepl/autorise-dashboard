@@ -376,6 +376,31 @@ PRZYKŁAD followup (poza ICP):
   "data_followup": "25.09.2026"
 }`;
 
+export const AGENT1_VERIFICATION_SUFFIX = `
+
+---
+TRYB WERYFIKACJI — DODATKOWE ZADANIE:
+
+Transkrypt który otrzymujesz pochodzi ze STARSZEJ rozmowy kwalifikacyjnej (może być z poprzednich tygodni lub miesięcy). Twoim zadaniem jest nie tylko wypełnienie karty klienta jak normalnie, ale też weryfikacja jej kompletności i jakości.
+
+Dodaj do odpowiedzi JSON trzy dodatkowe pola na KOŃCU obiektu (po "wersja_skryptu"):
+
+"luki_do_uzupelnienia": [lista braków danych które można jeszcze pozyskać przy następnym kontakcie]
+  — wymień tylko te które mają realną wartość sprzedażową
+  — pomiń pola które są mało istotne (np. "srednia_wartosc_faktury" gdy podany koszt_miesiecznie)
+  — format: krótkie zdanie opisujące co i dlaczego brakuje
+
+"bledy_obliczen": [lista rozbieżności w obliczeniach lub sprzeczności danych]
+  — jeśli np. "10 pojazdów" pada ale "flota_ok: NIE" — to błąd
+  — jeśli koszt_roczny nie = koszt_miesiecznie × 12 — to błąd
+  — jeśli żadnych błędów: pusta lista []
+
+"rekomendacja_reaktywacji": zdanie opisujące czy warto wznowić kontakt i jak
+  — uwzględnij ICP score, czy umówiono spotkanie, ból operacyjny
+  — przykład: "ICP 4/5, umówione Discovery które nie odbyło — zadzwoń nawiązując do kalkulatora z rozmowy."
+  — jeśli klient był zdyskwalifikowany: krótko dlaczego nie warto reaktywować
+`;
+
 export const AGENT2_SYSTEM_PROMPT = `WAŻNE: Transkrypt który analizujesz może pochodzić ze starszej wersji rozmowy kwalifikacyjnej.
 Mogą w nim być pytania inaczej sformułowane, inna kolejność kroków, albo brak niektórych pytań
 które są w obecnym skrypcie (np. pre-commit, pytanie o poprzednie próby).

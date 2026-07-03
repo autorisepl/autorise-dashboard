@@ -163,8 +163,10 @@ function EventChip({
           fontWeight: 500,
           color: "var(--text-primary)",
           overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
+          display: "-webkit-box",
+          WebkitBoxOrient: "vertical",
+          WebkitLineClamp: compact ? 1 : 2,
+          wordBreak: "break-word",
         }}
       >
         {event.summary}
@@ -552,7 +554,6 @@ function EventPanel({
 const HOURS = Array.from({ length: 15 }, (_, i) => i + 7); // 07–21
 const GUTTER_W = 52; // left time-label column width
 const ROW_H = 56; // each hour row height
-const SB_W = 5; // custom scrollbar width (globals.css)
 
 function WeekView({
   weekStart,
@@ -603,75 +604,21 @@ function WeekView({
 
   const gridCols = `${GUTTER_W}px repeat(7, minmax(0, 1fr))`;
 
-  // Sections above the scroll area must pre-reserve space for the scrollbar
-  // so that their grid columns stay perfectly aligned with the rows inside.
-  const staticRight = SB_W;
-
   return (
-    /* Outer wrapper: vertical flex, horizontally scrollable when window is narrow */
+    /* Outer wrapper: clips overflow, inner wrapper handles the single scroll container */
     <div style={{ display: "flex", flex: 1, overflow: "hidden", flexDirection: "column" }}>
-    <div style={{ display: "flex", flex: 1, flexDirection: "column", minWidth: 680, overflowX: "visible" }}>
-      {/* ── Day headers (OUTSIDE the scroll container — no sticky needed) ── */}
       <div
         style={{
-          display: "grid",
-          gridTemplateColumns: gridCols,
-          borderBottom: "1px solid var(--border)",
-          background: "var(--bg-elevated)",
-          flexShrink: 0,
-          paddingRight: staticRight,
+          display: "flex",
+          flex: 1,
+          flexDirection: "column",
+          minWidth: 680,
+          overflowY: "auto",
+          overflowX: "hidden",
+          position: "relative",
         }}
       >
-        <div style={{ borderRight: "1px solid var(--border)", flexShrink: 0 }} />
-        {days.map((day, i) => {
-          const isToday = isSameDay(day, today);
-          return (
-            <div
-              key={i}
-              style={{
-                padding: "7px 4px 6px",
-                textAlign: "center",
-                borderRight: i < 6 ? "1px solid var(--border)" : "none",
-              }}
-            >
-              <div
-                style={{
-                  fontFamily: "var(--font-sans)",
-                  fontSize: 10,
-                  fontWeight: 600,
-                  color: isToday ? "var(--accent)" : "var(--text-tertiary)",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                  marginBottom: 3,
-                }}
-              >
-                {PL_DAYS_SHORT[day.getDay()]}
-              </div>
-              <div
-                style={{
-                  width: 26,
-                  height: 26,
-                  borderRadius: "50%",
-                  background: isToday ? "var(--accent)" : "transparent",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  margin: "0 auto",
-                  fontFamily: "var(--font-sans)",
-                  fontSize: 13,
-                  fontWeight: isToday ? 700 : 500,
-                  color: isToday ? "#fff" : "var(--text-primary)",
-                }}
-              >
-                {day.getDate()}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* ── All-day events + due tasks (OUTSIDE scroll) ── */}
-      {hasAllDayContent && (
+        {/* ── Day headers — sticky at top of scroll container ── */}
         <div
           style={{
             display: "grid",
@@ -679,215 +626,272 @@ function WeekView({
             borderBottom: "1px solid var(--border)",
             background: "var(--bg-elevated)",
             flexShrink: 0,
-            paddingRight: staticRight,
-            minHeight: 32,
+            position: "sticky",
+            top: 0,
+            zIndex: 3,
           }}
         >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "flex-start",
-              justifyContent: "flex-end",
-              padding: "5px 7px 4px 0",
-              borderRight: "1px solid var(--border)",
-              fontFamily: "var(--font-sans)",
-              fontSize: 9,
-              fontWeight: 600,
-              color: "var(--text-tertiary)",
-              textTransform: "uppercase",
-              letterSpacing: "0.06em",
-              lineHeight: 1.2,
-              flexShrink: 0,
-            }}
-          >
-            całodzienn.
-          </div>
+          <div style={{ borderRight: "1px solid var(--border)", flexShrink: 0 }} />
           {days.map((day, i) => {
-            const dayAllDay = events.filter((e) => e.allDay && isSameDay(getEventStart(e), day));
-            const dayTasks = pendingTasks.filter((t) => t.due && isSameDay(new Date(t.due), day));
+            const isToday = isSameDay(day, today);
             return (
               <div
                 key={i}
                 style={{
-                  padding: "3px 4px",
+                  padding: "7px 4px 6px",
+                  textAlign: "center",
                   borderRight: i < 6 ? "1px solid var(--border)" : "none",
-                  overflow: "hidden",
                 }}
               >
-                {dayAllDay.map((e) => (
-                  <EventChip key={e.id} event={e} compact onClick={() => onEventClick(e)} />
-                ))}
-                {dayTasks.map((t) => (
-                  <TaskChip key={t.id} task={t} />
-                ))}
+                <div
+                  style={{
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 10,
+                    fontWeight: 600,
+                    color: isToday ? "var(--accent)" : "var(--text-tertiary)",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                    marginBottom: 3,
+                  }}
+                >
+                  {PL_DAYS_SHORT[day.getDay()]}
+                </div>
+                <div
+                  style={{
+                    width: 26,
+                    height: 26,
+                    borderRadius: "50%",
+                    background: isToday ? "var(--accent)" : "transparent",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    margin: "0 auto",
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 13,
+                    fontWeight: isToday ? 700 : 500,
+                    color: isToday ? "#fff" : "var(--text-primary)",
+                  }}
+                >
+                  {day.getDate()}
+                </div>
               </div>
             );
           })}
         </div>
-      )}
 
-      {/* ── Undated tasks strip (OUTSIDE scroll) ── */}
-      {undatedTasks.length > 0 && (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: `${GUTTER_W}px 1fr`,
-            borderBottom: "1px solid var(--border)",
-            background: "rgba(255,159,10,0.025)",
-            flexShrink: 0,
-            paddingRight: staticRight,
-          }}
-        >
+        {/* ── All-day events + due tasks — sticky below day headers ── */}
+        {hasAllDayContent && (
           <div
-            style={{
-              display: "flex",
-              alignItems: "flex-start",
-              justifyContent: "flex-end",
-              padding: "5px 7px 4px 0",
-              borderRight: "1px solid var(--border)",
-              fontFamily: "var(--font-sans)",
-              fontSize: 9,
-              fontWeight: 600,
-              color: "var(--warning)",
-              textTransform: "uppercase",
-              letterSpacing: "0.06em",
-              flexShrink: 0,
-            }}
-          >
-            zadania
-          </div>
-          <div
-            style={{
-              padding: "4px 6px",
-              display: "flex",
-              flexWrap: "wrap",
-              gap: 4,
-              alignItems: "flex-start",
-              maxHeight: 80,
-              overflowY: "auto",
-            }}
-          >
-            {undatedTasks.map((t) => (
-              <div
-                key={t.id}
-                style={{
-                  background: "rgba(255,159,10,0.10)",
-                  border: "1px solid rgba(255,159,10,0.28)",
-                  borderRadius: "var(--radius-xs)",
-                  padding: "2px 8px",
-                  fontFamily: "var(--font-sans)",
-                  fontSize: 11,
-                  fontWeight: 500,
-                  color: "var(--warning)",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {t.title}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ── Scrollable time grid ──
-          scrollbar-gutter:stable reserves exactly SB_W px on the right,
-          matching the paddingRight on the static sections above.          */}
-      <div
-        style={{
-          flex: 1,
-          overflowY: "auto",
-          overflowX: "hidden",
-          scrollbarGutter: "stable",
-          position: "relative",
-        }}
-      >
-        {/* Current-time indicator */}
-        {nowPx !== null && (
-          <div
-            style={{
-              position: "absolute",
-              left: GUTTER_W,
-              right: 0,
-              top: nowPx,
-              height: 1,
-              background: "var(--accent)",
-              opacity: 0.55,
-              pointerEvents: "none",
-              zIndex: 2,
-            }}
-          >
-            <div
-              style={{
-                position: "absolute",
-                left: -3,
-                top: -3,
-                width: 7,
-                height: 7,
-                borderRadius: "50%",
-                background: "var(--accent)",
-              }}
-            />
-          </div>
-        )}
-
-        {HOURS.map((hour) => (
-          <div
-            key={hour}
             style={{
               display: "grid",
               gridTemplateColumns: gridCols,
               borderBottom: "1px solid var(--border)",
-              minHeight: ROW_H,
+              background: "var(--bg-elevated)",
+              flexShrink: 0,
+              position: "sticky",
+              top: 48,
+              zIndex: 2,
+              minHeight: 32,
             }}
           >
             <div
               style={{
-                padding: "4px 8px 0 0",
-                fontFamily: "var(--font-sans)",
-                fontSize: 10,
-                color: "var(--text-tertiary)",
-                textAlign: "right",
+                display: "flex",
+                alignItems: "flex-start",
+                justifyContent: "flex-end",
+                padding: "5px 7px 4px 0",
                 borderRight: "1px solid var(--border)",
+                fontFamily: "var(--font-sans)",
+                fontSize: 9,
+                fontWeight: 600,
+                color: "var(--text-tertiary)",
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+                lineHeight: 1.2,
                 flexShrink: 0,
-                lineHeight: 1,
               }}
             >
-              {`${hour.toString().padStart(2, "0")}:00`}
+              całodzienn.
             </div>
             {days.map((day, i) => {
-              const isToday = isSameDay(day, today);
-              const dayEvents = events.filter(
-                (e) =>
-                  !e.allDay &&
-                  isSameDay(getEventStart(e), day) &&
-                  getEventStart(e).getHours() === hour,
-              );
+              const dayAllDay = events.filter((e) => e.allDay && isSameDay(getEventStart(e), day));
+              const dayTasks = pendingTasks.filter((t) => t.due && isSameDay(new Date(t.due), day));
               return (
                 <div
                   key={i}
-                  onClick={(ev) => {
-                    if (ev.target === ev.currentTarget) onCreate(day, hour);
-                  }}
-                  title="Kliknij, aby dodać wydarzenie"
                   style={{
                     padding: "3px 4px",
                     borderRight: i < 6 ? "1px solid var(--border)" : "none",
-                    minHeight: ROW_H,
-                    cursor: "pointer",
-                    background: isToday ? "rgba(81,112,255,0.018)" : "transparent",
                     overflow: "hidden",
                   }}
                 >
-                  {dayEvents.map((e) => (
-                    <EventChip key={e.id} event={e} onClick={() => onEventClick(e)} />
+                  {dayAllDay.map((e) => (
+                    <EventChip key={e.id} event={e} compact onClick={() => onEventClick(e)} />
+                  ))}
+                  {dayTasks.map((t) => (
+                    <TaskChip key={t.id} task={t} />
                   ))}
                 </div>
               );
             })}
           </div>
-        ))}
+        )}
+
+        {/* ── Undated tasks strip ── */}
+        {undatedTasks.length > 0 && (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: `${GUTTER_W}px 1fr`,
+              borderBottom: "1px solid var(--border)",
+              background: "rgba(255,159,10,0.025)",
+              flexShrink: 0,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                justifyContent: "flex-end",
+                padding: "5px 7px 4px 0",
+                borderRight: "1px solid var(--border)",
+                fontFamily: "var(--font-sans)",
+                fontSize: 9,
+                fontWeight: 600,
+                color: "var(--warning)",
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+                flexShrink: 0,
+              }}
+            >
+              zadania
+            </div>
+            <div
+              style={{
+                padding: "4px 6px",
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 4,
+                alignItems: "flex-start",
+                maxHeight: 80,
+                overflowY: "auto",
+              }}
+            >
+              {undatedTasks.map((t) => (
+                <div
+                  key={t.id}
+                  style={{
+                    background: "rgba(255,159,10,0.10)",
+                    border: "1px solid rgba(255,159,10,0.28)",
+                    borderRadius: "var(--radius-xs)",
+                    padding: "2px 8px",
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 11,
+                    fontWeight: 500,
+                    color: "var(--warning)",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {t.title}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Time grid ── */}
+        <div
+          style={{
+            position: "relative",
+          }}
+        >
+          {/* Current-time indicator */}
+          {nowPx !== null && (
+            <div
+              style={{
+                position: "absolute",
+                left: GUTTER_W,
+                right: 0,
+                top: nowPx,
+                height: 1,
+                background: "var(--accent)",
+                opacity: 0.55,
+                pointerEvents: "none",
+                zIndex: 2,
+              }}
+            >
+              <div
+                style={{
+                  position: "absolute",
+                  left: -3,
+                  top: -3,
+                  width: 7,
+                  height: 7,
+                  borderRadius: "50%",
+                  background: "var(--accent)",
+                }}
+              />
+            </div>
+          )}
+
+          {HOURS.map((hour) => (
+            <div
+              key={hour}
+              style={{
+                display: "grid",
+                gridTemplateColumns: gridCols,
+                borderBottom: "1px solid var(--border)",
+                minHeight: ROW_H,
+              }}
+            >
+              <div
+                style={{
+                  padding: "4px 8px 0 0",
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 10,
+                  color: "var(--text-tertiary)",
+                  textAlign: "right",
+                  borderRight: "1px solid var(--border)",
+                  flexShrink: 0,
+                  lineHeight: 1,
+                }}
+              >
+                {`${hour.toString().padStart(2, "0")}:00`}
+              </div>
+              {days.map((day, i) => {
+                const isToday = isSameDay(day, today);
+                const dayEvents = events.filter(
+                  (e) =>
+                    !e.allDay &&
+                    isSameDay(getEventStart(e), day) &&
+                    getEventStart(e).getHours() === hour,
+                );
+                return (
+                  <div
+                    key={i}
+                    onClick={(ev) => {
+                      if (ev.target === ev.currentTarget) onCreate(day, hour);
+                    }}
+                    title="Kliknij, aby dodać wydarzenie"
+                    style={{
+                      padding: "3px 4px",
+                      borderRight: i < 6 ? "1px solid var(--border)" : "none",
+                      minHeight: ROW_H,
+                      cursor: "pointer",
+                      background: isToday ? "rgba(81,112,255,0.018)" : "transparent",
+                      overflow: "hidden",
+                    }}
+                  >
+                    {dayEvents.map((e) => (
+                      <EventChip key={e.id} event={e} onClick={() => onEventClick(e)} />
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
     </div>
   );
 }
@@ -1817,7 +1821,15 @@ export default function HarmonogramPage() {
       </div>
 
       {/* Body — horizontal scroll when window is narrow */}
-      <div style={{ flex: 1, overflowY: "hidden", overflowX: "auto", display: "flex", flexDirection: "column" }}>
+      <div
+        style={{
+          flex: 1,
+          overflowY: "hidden",
+          overflowX: "auto",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
         {error && (
           <Panel style={{ margin: 16, padding: 16, textAlign: "center" }}>
             <div

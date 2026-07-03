@@ -129,7 +129,7 @@ function anyDateToISO(raw: string | null | undefined): string | null {
     if (month) return `${pl[3]}-${month}-${pl[1].padStart(2, "0")}`;
   }
   const dayOfMonthPattern = s.match(
-    /(?:poniedziałek|wtorek|środa|czwartek|piątek|sobota|niedziela)\s+(\d{1,2})(?:\s*\(najbliższy\))?\s*[·\-]?\s*(?:\d{2}:\d{2})?/i,
+    /(?:poniedziałek|wtorek|środa|czwartek|piątek|sobota|niedziela)\s+(\d{1,2})(?:\s*\(najbliższy\))?\s*[·-]?\s*(?:\d{2}:\d{2})?/i,
   );
   if (dayOfMonthPattern) {
     const targetDay = parseInt(dayOfMonthPattern[1]);

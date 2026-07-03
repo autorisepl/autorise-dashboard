@@ -1,7 +1,8 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { AGENT_MODELS, AGENT1_SYSTEM_PROMPT } from "@/lib/agents/prompts";
+import { extractAndParseJson } from "@/lib/agents/parseJson";
+import { AGENT_MODELS, AGENT1_SYSTEM_PROMPT, AGENT1_VERIFICATION_SUFFIX } from "@/lib/agents/prompts";
 import {
   getClientPage,
   getKwalifikacjaKnowledge,
@@ -14,6 +15,7 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const ReqSchema = z.object({
   transcript: z.string().min(10, "Transkrypt jest za krótki"),
   notion_page_id: z.string().optional(),
+  mode: z.enum(["standard", "weryfikacja"]).default("standard"),
 });
 
 export async function POST(req: Request) {
@@ -27,7 +29,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { transcript, notion_page_id } = parsed.data;
+    const { transcript, notion_page_id, mode } = parsed.data;
 
     // Fetch qualification knowledge base (5-min cache) — always injected
     let kbSection = "";
@@ -57,10 +59,15 @@ export async function POST(req: Request) {
 
     if (kbSection) userMessage = kbSection + userMessage;
 
+    const systemPrompt =
+      mode === "weryfikacja"
+        ? AGENT1_SYSTEM_PROMPT + AGENT1_VERIFICATION_SUFFIX
+        : AGENT1_SYSTEM_PROMPT;
+
     const message = await client.messages.create({
       model: AGENT_MODELS.agent1,
-      max_tokens: 4096,
-      system: AGENT1_SYSTEM_PROMPT,
+      max_tokens: mode === "weryfikacja" ? 6000 : 4096,
+      system: systemPrompt,
       messages: [{ role: "user", content: userMessage }],
       metadata: { user_id: "autorise-agent1" },
     });
@@ -74,15 +81,16 @@ export async function POST(req: Request) {
       .map((b) => (b as { type: "text"; text: string }).text)
       .join("");
 
-    const jsonMatch = rawText.match(/```(?:json)?\s*([\s\S]*?)```/);
-    const jsonText = jsonMatch ? jsonMatch[1].trim() : rawText.trim();
-
     let output: Record<string, unknown>;
     try {
-      output = JSON.parse(jsonText);
-    } catch {
+      output = extractAndParseJson(rawText);
+    } catch (parseErr) {
       return NextResponse.json(
-        { success: false, error: "Agent zwrócił nieprawidłowy JSON", raw: rawText },
+        {
+          success: false,
+          error: parseErr instanceof Error ? parseErr.message : "Agent zwrócił nieprawidłowy JSON",
+          raw: rawText.slice(0, 500),
+        },
         { status: 500 },
       );
     }
@@ -162,6 +170,7 @@ export async function POST(req: Request) {
     return NextResponse.json({
       success: true,
       agent: 1,
+      mode,
       output,
       notion_page_id: savedNotionPageId,
       notion_error: notionError,

@@ -43,32 +43,43 @@ function GoogleSvg({ size = 16 }: { size?: number }) {
 
 // ── Status banner ──────────────────────────────────────────────────────
 
+const AUTH_ERROR_LABELS: Record<string, string> = {
+  access_denied: "Odmówiono dostępu. Zatwierdź wszystkie uprawnienia przy kolejnej próbie.",
+  no_code: "Nie otrzymano kodu autoryzacji od Google.",
+  redirect_uri_mismatch: "Niezgodność adresu przekierowania. Sprawdź konfigurację OAuth.",
+};
+
 function StatusBanner() {
   const params = useSearchParams();
   const p = params.get("google");
+  const authError = params.get("auth_error");
   if (!p) return null;
+
+  const errorDetail = authError
+    ? (AUTH_ERROR_LABELS[authError] ?? `Kod błędu: ${authError}`)
+    : null;
 
   const msgs: Record<string, { text: string; color: string; bg: string; border: string }> = {
     success: {
-      text: "✓ Połączono z Google pomyślnie",
+      text: "Połączono z Google pomyślnie",
       color: "#34c759",
       bg: "rgba(52,199,89,0.08)",
       border: "rgba(52,199,89,0.2)",
     },
     error: {
-      text: "✗ Błąd podczas łączenia. Spróbuj ponownie.",
+      text: errorDetail ?? "Błąd podczas łączenia z Google. Spróbuj ponownie.",
       color: "#ff3b30",
       bg: "rgba(255,59,48,0.08)",
       border: "rgba(255,59,48,0.2)",
     },
     no_refresh_token: {
-      text: "⚠ Nie otrzymano refresh token. Spróbuj ponownie.",
+      text: "Nie otrzymano refresh token. Odwołaj dostęp w ustawieniach Google i spróbuj ponownie.",
       color: "#ff9500",
       bg: "rgba(255,149,0,0.08)",
       border: "rgba(255,149,0,0.2)",
     },
     not_configured: {
-      text: "⚠ Brak GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET",
+      text: "Brak GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET",
       color: "#ff9500",
       bg: "rgba(255,149,0,0.08)",
       border: "rgba(255,149,0,0.2)",
@@ -86,7 +97,7 @@ function StatusBanner() {
         marginBottom: 20,
         background: m.bg,
         border: `1px solid ${m.border}`,
-        fontFamily: "var(--font-mono)",
+        fontFamily: "var(--font-sans)",
         fontSize: 12,
         color: m.color,
         fontWeight: 500,

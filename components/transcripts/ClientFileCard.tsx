@@ -217,7 +217,7 @@ export function ClientFileCard({
         >
           {displayName}
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
           {tag && (
             <span
               style={{
@@ -230,41 +230,45 @@ export function ClientFileCard({
                 padding: "1px 5px",
                 background: "var(--accent-muted)",
                 borderRadius: 3,
+                alignSelf: "flex-start",
               }}
             >
               {tag}
             </span>
           )}
-          {dateLabel && (
-            <span
-              style={{
-                fontFamily: "var(--font-sans)",
-                fontSize: 10,
-                color: "var(--text-tertiary)",
-              }}
-            >
-              {dateLabel}
-            </span>
-          )}
-          {sizeLabel && (
-            <span
-              style={{
-                fontFamily: "var(--font-sans)",
-                fontSize: 10,
-                color: "var(--text-tertiary)",
-              }}
-            >
-              · {sizeLabel}
-            </span>
+          <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
+            {dateLabel && (
+              <span
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 10,
+                  color: "var(--text-tertiary)",
+                }}
+              >
+                {dateLabel}
+              </span>
+            )}
+            {sizeLabel && (
+              <span
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 10,
+                  color: "var(--text-tertiary)",
+                }}
+              >
+                · {sizeLabel}
+              </span>
+            )}
+          </div>
+          {status && (
+            <div style={{ marginTop: 2 }}>
+              <StatusPill status={status} labelOverride={statusLabelOverride} />
+            </div>
           )}
         </div>
       </div>
 
-      {status ? (
-        <StatusPill status={status} labelOverride={statusLabelOverride} />
-      ) : (
-        trailing && <div style={{ flexShrink: 0 }}>{trailing}</div>
-      )}
+      {!status && trailing && <div style={{ flexShrink: 0 }}>{trailing}</div>}
     </div>
   );
 }

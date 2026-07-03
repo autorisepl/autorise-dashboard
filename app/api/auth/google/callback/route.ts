@@ -7,7 +7,10 @@ export async function GET(req: NextRequest) {
   const error = req.nextUrl.searchParams.get("error");
 
   if (error || !code) {
-    return NextResponse.redirect(`${base}/profil?google=error`);
+    const errorCode = error ?? "no_code";
+    return NextResponse.redirect(
+      `${base}/profil?google=error&auth_error=${encodeURIComponent(errorCode)}`,
+    );
   }
 
   try {
