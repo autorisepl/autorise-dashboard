@@ -12,10 +12,19 @@ export const STEPS_K: Step[] = [
     label: "PRZYGOTOWANIE",
     tag: "AKCJA",
     lines: [
-      { t: "action", text: "Sprawdź w Pipeline: imię i nazwisko, numer telefonu, email, firma lub NIP." },
-      { t: "action", text: "Opcjonalnie: 15 sekund — wyszukaj NIP w CEIDG lub wyszukiwarce GUS. Sprawdź pełną nazwę firmy i aktywność." },
+      {
+        t: "action",
+        text: "Sprawdź w Pipeline: imię i nazwisko, numer telefonu, email, firma lub NIP.",
+      },
+      {
+        t: "action",
+        text: "Opcjonalnie: 15 sekund — wyszukaj NIP w CEIDG lub wyszukiwarce GUS. Sprawdź pełną nazwę firmy i aktywność.",
+      },
       { t: "action", text: "Włącz nagrywarkę na komputerze." },
-      { t: "action", text: "Miej pod ręką: imię klienta w nominatywie (Pan Jacek, nie Panie Jacku) i numer telefonu." },
+      {
+        t: "action",
+        text: "Miej pod ręką: imię klienta w nominatywie (Pan Jacek, nie Panie Jacku) i numer telefonu.",
+      },
     ],
   },
   {
@@ -26,11 +35,17 @@ export const STEPS_K: Step[] = [
     lines: [
       { t: "say", text: "Dzień dobry, Pan {IMIĘ}?" },
       { t: "client", text: "Tak, słucham." },
-      { t: "say", text: "Dzień dobry, mówi Michał z Autorise. Dzwonię bo kilka dni temu wypełnił Pan formularz na Facebooku — dotyczył oszczędności czasu w firmie transportowej." },
+      {
+        t: "say",
+        text: "Dzień dobry, mówi Michał z Autorise. Dzwonię bo kilka dni temu wypełnił Pan formularz na Facebooku — dotyczył oszczędności czasu w firmie transportowej.",
+      },
       { t: "say", text: "Mam dla Pana dosłownie 2 minuty — czy to dobry moment?" },
       { t: "branch", text: "Tak: przejdź do kroku 2.1" },
       { t: "branch-bad", text: "Nie mam teraz czasu: obiekcja OK1 z panelu po prawej" },
-      { t: "note", text: "Jeśli brak odbioru: zadzwoń trzy razy o różnych porach. Po trzecim braku wyślij SMS z szablonu 'Brak odbioru po 3 próbach'." },
+      {
+        t: "note",
+        text: "Jeśli brak odbioru: zadzwoń trzy razy o różnych porach. Po trzecim braku wyślij SMS z szablonu 'Brak odbioru po 3 próbach'.",
+      },
     ],
   },
   {
@@ -39,7 +54,10 @@ export const STEPS_K: Step[] = [
     label: "OTWARCIE DIAGNOZY",
     tag: "MÓWISZ",
     lines: [
-      { t: "say", text: "Żeby sprawdzić czy możemy w ogóle pomóc Pana firmie, muszę zadać kilka pytań o to jak teraz wygląda praca biura. Dobrze?" },
+      {
+        t: "say",
+        text: "Żeby sprawdzić czy możemy w ogóle pomóc Pana firmie, muszę zadać kilka pytań o to jak teraz wygląda praca biura. Dobrze?",
+      },
       { t: "client", text: "Tak, proszę." },
     ],
   },
@@ -49,12 +67,22 @@ export const STEPS_K: Step[] = [
     label: "TMS I PRACA MANUALNA",
     tag: "PYTASZ",
     lines: [
-      { t: "say", text: "Czy korzystacie z TMS, czyli programu do zarządzania flotą i zleceniami?" },
+      {
+        t: "say",
+        text: "Czy korzystacie z TMS, czyli programu do zarządzania flotą i zleceniami?",
+      },
       { t: "client", text: "[Tak / Nie / Nie wiem co to]" },
-      { t: "note", text: "Jeśli tak: zapytaj jaki system. TMS nie wyklucza współpracy — uzupełniamy go o automatyzację biurową, nie zastępujemy." },
+      {
+        t: "note",
+        text: "Jeśli tak: zapytaj jaki system. TMS nie wyklucza współpracy — uzupełniamy go o automatyzację biurową, nie zastępujemy.",
+      },
       { t: "say", text: "Co robi Pan teraz ręcznie mimo tego systemu?" },
-      { t: "note", text: "Jeśli milczy, podpowiedz: 'Na przykład: wpisywanie zleceń z maila, przepisywanie CMR i POD po kursie, sprawdzanie faktur, wysyłanie dokumentów do klientów?'" },
+      {
+        t: "note",
+        text: "Jeśli milczy, podpowiedz: 'Na przykład: wpisywanie zleceń z maila, przepisywanie CMR i POD po kursie, sprawdzanie faktur, wysyłanie dokumentów do klientów?'",
+      },
       { t: "client", text: "[wymienia operacje]" },
+      { t: "branch", text: "Klient odpowiedział: przejdź do kroku 2.3 Rozpoznanie dokumentów" },
     ],
   },
   {
@@ -63,9 +91,16 @@ export const STEPS_K: Step[] = [
     label: "ROZPOZNANIE DOKUMENTÓW",
     tag: "PYTASZ",
     lines: [
-      { t: "say", text: "Co z dokumentami po kursie — CMR, POD, faktury? Jak wygląda ten proces teraz?" },
+      {
+        t: "say",
+        text: "Co z dokumentami po kursie — CMR, POD, faktury? Jak wygląda ten proces teraz?",
+      },
       { t: "client", text: "[opisuje]" },
-      { t: "note", text: "Zanotuj konkretnie: papierowe czy elektroniczne CMR, czy są zdjęcia od kierowców, ile dokumentów dziennie, ile czasu zajmuje weryfikacja jednego kompletu. Te dane wejdą do kalkulatora." },
+      {
+        t: "note",
+        text: "Zanotuj konkretnie: papierowe czy elektroniczne CMR, czy są zdjęcia od kierowców, ile dokumentów dziennie, ile czasu zajmuje weryfikacja jednego kompletu. Te dane wejdą do kalkulatora.",
+      },
+      { t: "branch", text: "Zanotowane: przejdź do kroku 2.4 ICP: flota i biuro" },
     ],
   },
   {
@@ -76,9 +111,17 @@ export const STEPS_K: Step[] = [
     lines: [
       { t: "say", text: "Ile pojazdów ma Pan teraz aktywnie?" },
       { t: "client", text: "[liczba]" },
-      { t: "say", text: "Ile osób pracuje w biurze — mam na myśli osoby które zajmują się zleceniami, dokumentami, fakturami?" },
+      {
+        t: "say",
+        text: "Ile osób pracuje w biurze — mam na myśli osoby które zajmują się zleceniami, dokumentami, fakturami?",
+      },
       { t: "client", text: "[liczba]" },
-      { t: "note", text: "ICP minimum: 2 osoby w biurze. Jeśli 1 osoba: zapytaj czy jest sezonowość lub plan zatrudnienia. Poniżej progu po weryfikacji: uprzejmie zakończ rozmowę." },
+      {
+        t: "note",
+        text: "ICP minimum: 2 osoby w biurze. Jeśli 1 osoba: zapytaj czy jest sezonowość lub plan zatrudnienia. Poniżej progu po weryfikacji: uprzejmie zakończ rozmowę.",
+      },
+      { t: "branch", text: "ICP biura spełnione lub do dalszej weryfikacji: przejdź do kroku 2.5 ICP: decydent" },
+      { t: "branch-bad", text: "Poniżej progu (1 osoba, brak planu zatrudnienia): zakończ uprzejmie, status Niekwalifikowany" },
     ],
   },
   {
@@ -89,7 +132,11 @@ export const STEPS_K: Step[] = [
     lines: [
       { t: "say", text: "Jest Pan właścicielem firmy?" },
       { t: "client", text: "[Tak / Nie]" },
-      { t: "note", text: "Jeśli nie jest właścicielem: 'Kto u Pana podejmuje decyzję o zakupie oprogramowania? Czy byłoby możliwe żebyśmy porozmawiali razem na spotkaniu?'" },
+      {
+        t: "note",
+        text: "Jeśli nie jest właścicielem: 'Kto u Pana podejmuje decyzję o zakupie oprogramowania? Czy byłoby możliwe żebyśmy porozmawiali razem na spotkaniu?'",
+      },
+      { t: "branch", text: "Decydent obecny lub zgoda na wspólne spotkanie: przejdź do kroku 2.6 Kalkulator ROI" },
     ],
   },
   {
@@ -99,10 +146,19 @@ export const STEPS_K: Step[] = [
     tag: "KALKULATOR",
     hasCalculator: true,
     lines: [
-      { t: "say", text: "Ile czasu dziennie biuro poświęca łącznie na tę ręczną robotę — wpisywanie, przepisywanie dokumentów, pilnowanie CMR?" },
+      {
+        t: "say",
+        text: "Ile czasu dziennie biuro poświęca łącznie na tę ręczną robotę — wpisywanie, przepisywanie dokumentów, pilnowanie CMR?",
+      },
       { t: "client", text: "[podaje godziny]" },
-      { t: "note", text: "Jeśli mówi 'nie wiem': 'Może pół godziny, może godzinę na osobę? Jak to wygląda przy X osobach w biurze?'" },
-      { t: "action", text: "Wpisz w kalkulator poniżej: liczbę osób z kroku 2.4 i godziny dziennie. Zaznacz rodzaje pracy z kroków 2.2 i 2.3." },
+      {
+        t: "note",
+        text: "Jeśli mówi 'nie wiem': 'Może pół godziny, może godzinę na osobę? Jak to wygląda przy X osobach w biurze?'",
+      },
+      {
+        t: "action",
+        text: "Wpisz w kalkulator poniżej: liczbę osób z kroku 2.4 i godziny dziennie. Zaznacz rodzaje pracy z kroków 2.2 i 2.3.",
+      },
     ],
   },
   {
@@ -111,8 +167,15 @@ export const STEPS_K: Step[] = [
     label: "PODANIE LICZBY KLIENTOWI",
     tag: "MÓWISZ",
     lines: [
-      { t: "note", text: "Odczytaj wyniki z kalkulatora poniżej. Nie zaokrąglaj, nie uśredniaj — liczba jest personalizowana dla tej firmy." },
-      { t: "say", text: "Na podstawie tego co Pan powiedział — Pana biuro traci [WYNIK Z KALKULATORA] godzin miesięcznie na ręcznej pracy. To wartość [WARTOŚĆ PLN] złotych miesięcznie." },
+      {
+        t: "note",
+        text: "Odczytaj wyniki z kalkulatora poniżej. Nie zaokrąglaj, nie uśredniaj — liczba jest personalizowana dla tej firmy.",
+      },
+      {
+        t: "say",
+        text: "Na podstawie tego co Pan powiedział — Pana biuro traci [WYNIK Z KALKULATORA] godzin miesięcznie na ręcznej pracy. To wartość [WARTOŚĆ PLN] złotych miesięcznie.",
+      },
+      { t: "branch", text: "Liczba przekazana: przejdź do kroku 2.8 Co zrobiłby z tymi godzinami" },
     ],
   },
   {
@@ -121,9 +184,16 @@ export const STEPS_K: Step[] = [
     label: "CO ZROBIŁBY Z TYMI GODZINAMI",
     tag: "PYTASZ",
     lines: [
-      { t: "say", text: "Gdyby te [LICZBA Z KALKULATORA] godzin miesięcznie wróciły do biura — co by Pan z nimi zrobił?" },
+      {
+        t: "say",
+        text: "Gdyby te [LICZBA Z KALKULATORA] godzin miesięcznie wróciły do biura — co by Pan z nimi zrobił?",
+      },
       { t: "client", text: "[odpowiedź]" },
-      { t: "note", text: "Jeśli mówi 'nie wiem' lub 'i tak nie zwolnię pracowników': 'Rozumiem — chodzi o inne rzeczy. Więcej zleceń przy tej samej ekipie, mniej błędów w dokumentach, szybsza obsługa klientów. Który z tych kierunków jest dla Pana teraz ważny?'" },
+      {
+        t: "note",
+        text: "Jeśli mówi 'nie wiem' lub 'i tak nie zwolnię pracowników': 'Rozumiem — chodzi o inne rzeczy. Więcej zleceń przy tej samej ekipie, mniej błędów w dokumentach, szybsza obsługa klientów. Który z tych kierunków jest dla Pana teraz ważny?'",
+      },
+      { t: "branch", text: "Odpowiedź uzyskana: przejdź do kroku 3 Spotkanie jako rozwiązanie" },
     ],
   },
   {
@@ -133,10 +203,19 @@ export const STEPS_K: Step[] = [
     tag: "UWAGA",
     lines: [
       { t: "note", text: "Używaj po 2 nieudanych próbach ukazania bólu. Nie sprzedawaj na siłę." },
-      { t: "say", text: "Słyszę że u Pana to działa sprawnie. Nie chcę zajmować Pana czasu. Czy jest jakiś aspekt logistyki gdzie czujecie że traci się czas lub robi się za dużo ręcznie?" },
+      {
+        t: "say",
+        text: "Słyszę że u Pana to działa sprawnie. Nie chcę zajmować Pana czasu. Czy jest jakiś aspekt logistyki gdzie czujecie że traci się czas lub robi się za dużo ręcznie?",
+      },
       { t: "client", text: "Nie, wszystko gra." },
-      { t: "say", text: "Rozumiem. W takim razie prawdopodobnie nie jesteśmy teraz dla siebie. Mogę zadzwonić za kilka miesięcy gdy się coś zmieni — czy to ma sens?" },
-      { t: "note", text: "Jeśli zgadza się: status Nieaktywny (follow up), data re-engagement za 3 mc." },
+      {
+        t: "say",
+        text: "Rozumiem. W takim razie prawdopodobnie nie jesteśmy teraz dla siebie. Mogę zadzwonić za kilka miesięcy gdy się coś zmieni — czy to ma sens?",
+      },
+      {
+        t: "note",
+        text: "Jeśli zgadza się: status Nieaktywny (follow up), data re-engagement za 3 mc.",
+      },
     ],
   },
   {
@@ -145,12 +224,24 @@ export const STEPS_K: Step[] = [
     label: "SPOTKANIE JAKO ROZWIĄZANIE",
     tag: "ZAMKNIĘCIE",
     lines: [
-      { t: "say", text: "Na podstawie tego co Pan powiedział — myślę że możemy Pana firmie realnie pomóc. Mam propozycję: 45-minutowe spotkanie przez internet — pokażę jak dokładnie wygląda automatyzacja dla firmy o tej skali, z Pana liczbami." },
-      { t: "say", text: "Kiedy ma Pan wolne 45 minut w tym lub przyszłym tygodniu — rano czy po południu?" },
+      {
+        t: "say",
+        text: "Na podstawie tego co Pan powiedział — myślę że możemy Pana firmie realnie pomóc. Mam propozycję: 45-minutowe spotkanie przez internet — pokażę jak dokładnie wygląda automatyzacja dla firmy o tej skali, z Pana liczbami.",
+      },
+      {
+        t: "say",
+        text: "Kiedy ma Pan wolne 45 minut w tym lub przyszłym tygodniu — rano czy po południu?",
+      },
       { t: "client", text: "[proponuje termin]" },
-      { t: "say", text: "Świetnie. Wyślę Panu link do rezerwacji przez Calendly — proszę wybrać dokładny termin który Panu odpowiada. Dostanie Pan też automatyczne przypomnienie SMS dzień przed." },
+      {
+        t: "say",
+        text: "Świetnie. Wyślę Panu link do rezerwacji przez Calendly — proszę wybrać dokładny termin który Panu odpowiada. Dostanie Pan też automatyczne przypomnienie SMS dzień przed.",
+      },
       { t: "action", text: "Wyślij link Calendly natychmiast po rozmowie. Nie 'zaraz' — teraz." },
-      { t: "action", text: "Zmień status w Pipeline na 'Discovery umówione'. Data Discovery: data wybranego slotu." },
+      {
+        t: "action",
+        text: "Zmień status w Pipeline na 'Discovery umówione'. Data Discovery: data wybranego slotu.",
+      },
     ],
   },
 ];
@@ -189,8 +280,8 @@ export const OBJECTIONS_K: Objection[] = [
     id: "ok_em",
     label: "Wyślij na maila",
     script:
-      "Oczywiście. Żeby wysłać coś trafnego — jedno pytanie: ile osób zajmuje się zleceniami w Pana biurze?",
-    note: "Jeśli nadal blokuje: 'Rozumiem. Na jaki adres wysłać?' — zapisz mail i zaplanuj follow-up za 2 dni.",
+      "Mogę wysłać materiały, ale żeby to nie były ogólne informacje tylko coś dopasowanego do Pana firmy — wolałbym zadać dwa krótkie pytania, zajmie to góra minutę.",
+    note: "Po zgodzie: przejdź do 2.1 Otwarcie diagnozy. Jeśli klient nadal odmawia rozmowy: 'Rozumiem, wyślę ogólne informacje na [email z Pipeline], a jeśli po przeczytaniu będzie Pan chciał pogłębić temat, zapraszam do kontaktu.' Status: follow-up, nie zamknięta sprawa.",
   },
   // Standardowe obiekcje
   {
@@ -238,7 +329,7 @@ export const OBJECTIONS_K: Objection[] = [
     type: "fb",
     script: "Pod komentarzem: 'Napisałem Panu wiadomość prywatną.'",
     extra:
-      "Dzień dobry Panie {IMIĘ}, piszę ponieważ zostawił Pan komentarz pod naszą reklamą dotyczącą oszczędności czasu w firmie transportowej. Zanim opowiem więcej — mam 2 pytania. Ile pojazdów ma Pan teraz i ile osób w biurze zajmuje się zleceniami?",
+      "Dzień dobry Panie {IMIĘ}, piszę ponieważ zostawił Pan komentarz pod naszą reklamą dotyczącą oszczędności czasu w firmie transportowej. Czy mógłbym prosić o numer telefonu? Chciałbym zadać kilka pytań i sprawdzić czy to w ogóle ma sens dla Pana firmy, zanim opowiem więcej.",
   },
 ];
 
