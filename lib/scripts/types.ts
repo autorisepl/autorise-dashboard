@@ -12,6 +12,7 @@ export interface Step {
   tag: string;
   duration?: string;
   lines: ScriptLine[];
+  hasCalculator?: boolean;
 }
 
 export interface Objection {

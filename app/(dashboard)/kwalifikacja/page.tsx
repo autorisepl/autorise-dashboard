@@ -19,9 +19,9 @@ import type { PipelineClientDetailed } from "@/app/api/notion/pipeline/route";
 import { KalkulatorRoi } from "@/components/kalkulator/KalkulatorRoi";
 import { formatPhone } from "@/lib/format/phone";
 import { ICP_RULES, OBJECTIONS_K, STEPS_K } from "@/lib/scripts/kwalifikacyjna";
-import { MESSAGES_DATA, GROUP_COLORS } from "@/lib/scripts/messages";
-import { objectionColor } from "@/lib/scripts/types";
+import { GROUP_COLORS, MESSAGES_DATA } from "@/lib/scripts/messages";
 import type { ScriptLine } from "@/lib/scripts/types";
+import { objectionColor } from "@/lib/scripts/types";
 
 // ── Helpers ──────────────────────────────────────────────────────────
 
@@ -126,11 +126,13 @@ function ScriptStep({
   fill,
   onCopy,
   copiedId,
+  children,
 }: {
   step: (typeof STEPS_K)[0];
   fill: (t: string) => string;
   onCopy: (id: string, text: string) => void;
   copiedId: string | null;
+  children?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(true);
 
@@ -141,6 +143,7 @@ function ScriptStep({
     UWAGA: "var(--warning)",
     GAŁĘZIE: "var(--success-text)",
     ZAMKNIĘCIE: "#16a34a",
+    KALKULATOR: "#0d9488",
   };
 
   return (
@@ -221,9 +224,15 @@ function ScriptStep({
               }}
             >
               <div style={{ flexShrink: 0, marginTop: 1 }}>
-                {line.t === "say" && <MessageSquare size={13} color="var(--accent)" strokeWidth={1.6} />}
-                {line.t === "client" && <Users size={13} color="var(--text-secondary)" strokeWidth={1.8} />}
-                {line.t === "note" && <AlertTriangle size={12} color="var(--warning)" strokeWidth={1.6} />}
+                {line.t === "say" && (
+                  <MessageSquare size={13} color="var(--accent)" strokeWidth={1.6} />
+                )}
+                {line.t === "client" && (
+                  <Users size={13} color="var(--text-secondary)" strokeWidth={1.8} />
+                )}
+                {line.t === "note" && (
+                  <AlertTriangle size={12} color="var(--warning)" strokeWidth={1.6} />
+                )}
                 {line.t === "action" && <Check size={12} color="var(--accent)" strokeWidth={2} />}
                 {(line.t === "branch" || line.t === "branch-bad") && (
                   <Check size={12} color={LINE_COLOR[line.t]} strokeWidth={2} />
@@ -253,7 +262,10 @@ function ScriptStep({
                     border: "1px solid #E5E5EA",
                     background: "transparent",
                     cursor: "pointer",
-                    color: copiedId === `${step.id}-${li}` ? "var(--success-text)" : "var(--text-tertiary)",
+                    color:
+                      copiedId === `${step.id}-${li}`
+                        ? "var(--success-text)"
+                        : "var(--text-tertiary)",
                     display: "flex",
                     alignItems: "center",
                     gap: 3,
@@ -269,6 +281,11 @@ function ScriptStep({
               )}
             </div>
           ))}
+          {children && (
+            <div style={{ borderTop: "1px solid #E5E5EA", marginTop: 4, paddingTop: 10 }}>
+              {children}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -342,46 +359,146 @@ function ObjectionsPanel({
               <ChevronDown
                 size={12}
                 color="var(--text-tertiary)"
-                style={{ transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 150ms", flexShrink: 0 }}
+                style={{
+                  transform: isOpen ? "rotate(180deg)" : "none",
+                  transition: "transform 150ms",
+                  flexShrink: 0,
+                }}
               />
             </div>
             {isOpen && (
-              <div style={{ padding: "0 12px 12px", display: "flex", flexDirection: "column", gap: 8 }}>
+              <div
+                style={{ padding: "0 12px 12px", display: "flex", flexDirection: "column", gap: 8 }}
+              >
                 {obj.script && (
                   <div style={{ display: "flex", alignItems: "flex-start", gap: 6 }}>
-                    <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: "var(--text-primary)", fontFamily: "var(--font-sans)", flex: 1 }}>
+                    <p
+                      style={{
+                        margin: 0,
+                        fontSize: 13,
+                        lineHeight: 1.6,
+                        color: "var(--text-primary)",
+                        fontFamily: "var(--font-sans)",
+                        flex: 1,
+                      }}
+                    >
                       {fill(obj.script)}
                     </p>
                     <button
                       onClick={() => onCopy(`obj-${obj.id}-script`, obj.script!)}
-                      style={{ flexShrink: 0, padding: "3px 7px", borderRadius: 5, border: "1px solid #E5E5EA", background: "transparent", cursor: "pointer", color: copiedId === `obj-${obj.id}-script` ? "var(--success-text)" : "var(--text-tertiary)", display: "flex", alignItems: "center" }}
+                      style={{
+                        flexShrink: 0,
+                        padding: "3px 7px",
+                        borderRadius: 5,
+                        border: "1px solid #E5E5EA",
+                        background: "transparent",
+                        cursor: "pointer",
+                        color:
+                          copiedId === `obj-${obj.id}-script`
+                            ? "var(--success-text)"
+                            : "var(--text-tertiary)",
+                        display: "flex",
+                        alignItems: "center",
+                      }}
                     >
-                      {copiedId === `obj-${obj.id}-script` ? <CheckCircle2 size={10} /> : <Copy size={10} />}
+                      {copiedId === `obj-${obj.id}-script` ? (
+                        <CheckCircle2 size={10} />
+                      ) : (
+                        <Copy size={10} />
+                      )}
                     </button>
                   </div>
                 )}
                 {obj.followup && (
-                  <p style={{ margin: 0, fontSize: 12, lineHeight: 1.55, color: "var(--accent)", fontFamily: "var(--font-sans)", fontStyle: "italic", borderTop: "1px solid #E5E5EA", paddingTop: 8 }}>
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: 12,
+                      lineHeight: 1.55,
+                      color: "var(--accent)",
+                      fontFamily: "var(--font-sans)",
+                      fontStyle: "italic",
+                      borderTop: "1px solid #E5E5EA",
+                      paddingTop: 8,
+                    }}
+                  >
                     {fill(obj.followup)}
                   </p>
                 )}
                 {obj.note && (
-                  <p style={{ margin: 0, fontSize: 11, lineHeight: 1.5, color: "var(--text-secondary)", fontFamily: "var(--font-sans)", background: "var(--warning-bg)", padding: "6px 8px", borderRadius: 6 }}>
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: 11,
+                      lineHeight: 1.5,
+                      color: "var(--text-secondary)",
+                      fontFamily: "var(--font-sans)",
+                      background: "var(--warning-bg)",
+                      padding: "6px 8px",
+                      borderRadius: 6,
+                    }}
+                  >
                     {obj.note}
                   </p>
                 )}
                 {obj.sms && (
-                  <div style={{ background: "var(--accent-muted)", padding: "8px 10px", borderRadius: 6 }}>
-                    <div style={{ fontSize: 9, fontWeight: 700, color: "var(--accent)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 4 }}>SMS</div>
-                    <p style={{ margin: 0, fontSize: 12, color: "var(--text-primary)", lineHeight: 1.55, fontFamily: "var(--font-sans)" }}>
+                  <div
+                    style={{
+                      background: "var(--accent-muted)",
+                      padding: "8px 10px",
+                      borderRadius: 6,
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: 9,
+                        fontWeight: 700,
+                        color: "var(--accent)",
+                        letterSpacing: "0.08em",
+                        textTransform: "uppercase",
+                        marginBottom: 4,
+                      }}
+                    >
+                      SMS
+                    </div>
+                    <p
+                      style={{
+                        margin: 0,
+                        fontSize: 12,
+                        color: "var(--text-primary)",
+                        lineHeight: 1.55,
+                        fontFamily: "var(--font-sans)",
+                      }}
+                    >
                       {fill(obj.sms)}
                     </p>
                   </div>
                 )}
                 {obj.extra && (
-                  <div style={{ background: "var(--bg-hover)", padding: "8px 10px", borderRadius: 6 }}>
-                    <div style={{ fontSize: 9, fontWeight: 700, color: "var(--text-secondary)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 4 }}>Wiadomość prywatna</div>
-                    <p style={{ margin: 0, fontSize: 12, color: "var(--text-primary)", lineHeight: 1.55, fontFamily: "var(--font-sans)" }}>
+                  <div
+                    style={{ background: "var(--bg-hover)", padding: "8px 10px", borderRadius: 6 }}
+                  >
+                    <div
+                      style={{
+                        fontSize: 9,
+                        fontWeight: 700,
+                        color: "var(--text-secondary)",
+                        letterSpacing: "0.08em",
+                        textTransform: "uppercase",
+                        marginBottom: 4,
+                      }}
+                    >
+                      Wiadomość prywatna
+                    </div>
+                    <p
+                      style={{
+                        margin: 0,
+                        fontSize: 12,
+                        color: "var(--text-primary)",
+                        lineHeight: 1.55,
+                        fontFamily: "var(--font-sans)",
+                      }}
+                    >
                       {fill(obj.extra)}
                     </p>
                   </div>
@@ -411,28 +528,114 @@ function SmsPanel({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-tertiary)", marginBottom: 2 }}>SMS / WhatsApp</div>
+      <div
+        style={{
+          fontSize: 10,
+          fontWeight: 700,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          color: "var(--text-tertiary)",
+          marginBottom: 2,
+        }}
+      >
+        SMS / WhatsApp
+      </div>
       {kwalItems.map((item) => (
         <div key={item.id} style={{ background: "#F5F5F7", borderRadius: 8, padding: "10px 12px" }}>
-          <div style={{ fontSize: 11, fontWeight: 600, color: GROUP_COLORS[item.group] ?? "var(--accent)", marginBottom: 4 }}>{item.label}</div>
-          <p style={{ margin: "0 0 8px", fontSize: 12, lineHeight: 1.55, color: "var(--text-primary)", fontFamily: "var(--font-sans)" }}>{fill(item.text)}</p>
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              color: GROUP_COLORS[item.group] ?? "var(--accent)",
+              marginBottom: 4,
+            }}
+          >
+            {item.label}
+          </div>
+          <p
+            style={{
+              margin: "0 0 8px",
+              fontSize: 12,
+              lineHeight: 1.55,
+              color: "var(--text-primary)",
+              fontFamily: "var(--font-sans)",
+            }}
+          >
+            {fill(item.text)}
+          </p>
           <button
             onClick={() => onCopy(`sms-${item.id}`, item.text)}
-            style={{ display: "flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 6, border: "1px solid #E5E5EA", background: "#fff", cursor: "pointer", fontSize: 11, color: copiedId === `sms-${item.id}` ? "var(--success-text)" : "var(--text-secondary)", fontFamily: "var(--font-sans)" }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
+              padding: "4px 10px",
+              borderRadius: 6,
+              border: "1px solid #E5E5EA",
+              background: "#fff",
+              cursor: "pointer",
+              fontSize: 11,
+              color:
+                copiedId === `sms-${item.id}` ? "var(--success-text)" : "var(--text-secondary)",
+              fontFamily: "var(--font-sans)",
+            }}
           >
             {copiedId === `sms-${item.id}` ? <CheckCircle2 size={11} /> : <Copy size={11} />}
             {copiedId === `sms-${item.id}` ? "Skopiowano" : "Kopiuj"}
           </button>
         </div>
       ))}
-      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-tertiary)", marginTop: 8, marginBottom: 2 }}>Facebook</div>
+      <div
+        style={{
+          fontSize: 10,
+          fontWeight: 700,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          color: "var(--text-tertiary)",
+          marginTop: 8,
+          marginBottom: 2,
+        }}
+      >
+        Facebook
+      </div>
       {fbItems.map((item) => (
         <div key={item.id} style={{ background: "#F5F5F7", borderRadius: 8, padding: "10px 12px" }}>
-          <div style={{ fontSize: 11, fontWeight: 600, color: GROUP_COLORS[item.group] ?? "var(--accent)", marginBottom: 4 }}>{item.label}</div>
-          <p style={{ margin: "0 0 8px", fontSize: 12, lineHeight: 1.55, color: "var(--text-primary)", fontFamily: "var(--font-sans)" }}>{fill(item.text)}</p>
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              color: GROUP_COLORS[item.group] ?? "var(--accent)",
+              marginBottom: 4,
+            }}
+          >
+            {item.label}
+          </div>
+          <p
+            style={{
+              margin: "0 0 8px",
+              fontSize: 12,
+              lineHeight: 1.55,
+              color: "var(--text-primary)",
+              fontFamily: "var(--font-sans)",
+            }}
+          >
+            {fill(item.text)}
+          </p>
           <button
             onClick={() => onCopy(`fb-${item.id}`, item.text)}
-            style={{ display: "flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 6, border: "1px solid #E5E5EA", background: "#fff", cursor: "pointer", fontSize: 11, color: copiedId === `fb-${item.id}` ? "var(--success-text)" : "var(--text-secondary)", fontFamily: "var(--font-sans)" }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
+              padding: "4px 10px",
+              borderRadius: 6,
+              border: "1px solid #E5E5EA",
+              background: "#fff",
+              cursor: "pointer",
+              fontSize: 11,
+              color: copiedId === `fb-${item.id}` ? "var(--success-text)" : "var(--text-secondary)",
+              fontFamily: "var(--font-sans)",
+            }}
           >
             {copiedId === `fb-${item.id}` ? <CheckCircle2 size={11} /> : <Copy size={11} />}
             {copiedId === `fb-${item.id}` ? "Skopiowano" : "Kopiuj"}
@@ -462,11 +665,33 @@ function IcpPanel() {
           }}
         >
           <div style={{ flexShrink: 0, marginTop: 1 }}>
-            {rule.ok ? <Check size={12} color="var(--success-text)" strokeWidth={2.5} /> : <X size={12} color="var(--error)" strokeWidth={2.5} />}
+            {rule.ok ? (
+              <Check size={12} color="var(--success-text)" strokeWidth={2.5} />
+            ) : (
+              <X size={12} color="var(--error)" strokeWidth={2.5} />
+            )}
           </div>
           <div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: rule.ok ? "var(--success-text)" : "var(--error)", marginBottom: 1 }}>{rule.label}</div>
-            <div style={{ fontSize: 11, color: "var(--text-secondary)", lineHeight: 1.45, fontFamily: "var(--font-sans)" }}>{rule.val}</div>
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                color: rule.ok ? "var(--success-text)" : "var(--error)",
+                marginBottom: 1,
+              }}
+            >
+              {rule.label}
+            </div>
+            <div
+              style={{
+                fontSize: 11,
+                color: "var(--text-secondary)",
+                lineHeight: 1.45,
+                fontFamily: "var(--font-sans)",
+              }}
+            >
+              {rule.val}
+            </div>
           </div>
         </div>
       ))}
@@ -476,48 +701,93 @@ function IcpPanel() {
 
 // ── Dalsze kroki ──────────────────────────────────────────────────────
 
+const CALENDLY_URL = "https://calendly.com/autorise";
+
 function DalszeKroki({ client }: { client: PipelineClientDetailed | null }) {
-  const [checks, setChecks] = useState({ fathom: false, zaproszenie: false, sms: false });
+  const [checks, setChecks] = useState({ calendly: false, sms: false });
   const toggle = (k: keyof typeof checks) => setChecks((p) => ({ ...p, [k]: !p[k] }));
 
   const Chk = ({ k, label }: { k: keyof typeof checks; label: string }) => (
-    <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", userSelect: "none" }}>
+    <label
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        cursor: "pointer",
+        userSelect: "none",
+      }}
+    >
       <div
         onClick={() => toggle(k)}
         style={{
-          width: 16, height: 16, borderRadius: 4,
+          width: 16,
+          height: 16,
+          borderRadius: 4,
           border: `1.5px solid ${checks[k] ? "var(--accent)" : "#D1D1D6"}`,
           background: checks[k] ? "var(--accent)" : "#fff",
-          display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+          cursor: "pointer",
         }}
       >
         {checks[k] && <Check size={10} color="#fff" strokeWidth={2.5} />}
       </div>
-      <span style={{ fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--text-primary)" }}>{label}</span>
+      <span style={{ fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--text-primary)" }}>
+        {label}
+      </span>
     </label>
   );
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        <Chk k="fathom" label="Fathom włączony" />
-        <Chk k="zaproszenie" label="Zaproszenie Google Meet wysłane" />
+        <Chk k="calendly" label="Link Calendly wysłany" />
         <Chk k="sms" label="SMS potwierdzający wysłany" />
       </div>
       <div style={{ height: 1, background: "#E5E5EA" }} />
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <a
-          href="https://calendar.google.com"
+          href={CALENDLY_URL}
           target="_blank"
           rel="noopener noreferrer"
-          style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 14px", borderRadius: 8, border: "1px solid #E5E5EA", background: "#fff", cursor: "pointer", fontSize: 13, color: "var(--text-primary)", fontFamily: "var(--font-sans)", textDecoration: "none", fontWeight: 500 }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "9px 14px",
+            borderRadius: 8,
+            border: "1px solid #E5E5EA",
+            background: "#fff",
+            cursor: "pointer",
+            fontSize: 13,
+            color: "var(--text-primary)",
+            fontFamily: "var(--font-sans)",
+            textDecoration: "none",
+            fontWeight: 500,
+          }}
         >
           <Phone size={13} color="var(--accent)" />
-          Otwórz Google Calendar
+          Otwórz Calendly
         </a>
         <a
           href="/agenci"
-          style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 14px", borderRadius: 8, border: "1px solid var(--accent-border)", background: "var(--accent-muted)", cursor: "pointer", fontSize: 13, color: "var(--accent)", fontFamily: "var(--font-sans)", textDecoration: "none", fontWeight: 500 }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "9px 14px",
+            borderRadius: 8,
+            border: "1px solid var(--accent-border)",
+            background: "var(--accent-muted)",
+            cursor: "pointer",
+            fontSize: 13,
+            color: "var(--accent)",
+            fontFamily: "var(--font-sans)",
+            textDecoration: "none",
+            fontWeight: 500,
+          }}
         >
           <MessageSquare size={13} color="var(--accent)" />
           Uruchom Agent 01 ({client ? client.kontakt || client.firma : "wybierz klienta"})
@@ -565,19 +835,57 @@ function PrzypadkiSpecjalne() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
       {SPECIAL_CASES.map((c) => (
-        <div key={c.id} style={{ border: "1px solid #E5E5EA", borderRadius: 8, overflow: "hidden" }}>
+        <div
+          key={c.id}
+          style={{ border: "1px solid #E5E5EA", borderRadius: 8, overflow: "hidden" }}
+        >
           <div
             onClick={() => setOpenId(openId === c.id ? null : c.id)}
-            style={{ padding: "9px 12px", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", userSelect: "none", background: openId === c.id ? "#F5F5F7" : "#fff" }}
+            style={{
+              padding: "9px 12px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              cursor: "pointer",
+              userSelect: "none",
+              background: openId === c.id ? "#F5F5F7" : "#fff",
+            }}
           >
-            <span style={{ fontFamily: "var(--font-sans)", fontSize: 13, fontWeight: 500, color: "var(--text-primary)" }}>{c.label}</span>
-            <ChevronDown size={12} color="var(--text-tertiary)" style={{ transform: openId === c.id ? "rotate(180deg)" : "none", transition: "transform 150ms" }} />
+            <span
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 13,
+                fontWeight: 500,
+                color: "var(--text-primary)",
+              }}
+            >
+              {c.label}
+            </span>
+            <ChevronDown
+              size={12}
+              color="var(--text-tertiary)"
+              style={{
+                transform: openId === c.id ? "rotate(180deg)" : "none",
+                transition: "transform 150ms",
+              }}
+            />
           </div>
           {openId === c.id && (
             <div style={{ padding: "8px 12px 12px" }}>
               <ol style={{ margin: 0, paddingLeft: 18 }}>
                 {c.content.map((line, i) => (
-                  <li key={i} style={{ fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: 4 }}>{line}</li>
+                  <li
+                    key={i}
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 13,
+                      color: "var(--text-secondary)",
+                      lineHeight: 1.6,
+                      marginBottom: 4,
+                    }}
+                  >
+                    {line}
+                  </li>
                 ))}
               </ol>
             </div>
@@ -608,9 +916,7 @@ function ClientSidebar({
   const filtered = clients
     .filter((c) => c.status === "Nowy lead")
     .filter((c) =>
-      search.trim()
-        ? `${c.kontakt} ${c.firma}`.toLowerCase().includes(search.toLowerCase())
-        : true
+      search.trim() ? `${c.kontakt} ${c.firma}`.toLowerCase().includes(search.toLowerCase()) : true,
     );
 
   return (
@@ -626,32 +932,85 @@ function ClientSidebar({
       }}
     >
       <div style={{ padding: "12px 12px 8px", borderBottom: "1px solid #E5E5EA", flexShrink: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-          <span style={{ fontFamily: "var(--font-sans)", fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-tertiary)" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: 8,
+          }}
+        >
+          <span
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              color: "var(--text-tertiary)",
+            }}
+          >
             Nowy lead ({filtered.length})
           </span>
           <button
             onClick={onRefresh}
             disabled={loading}
-            style={{ background: "transparent", border: "none", cursor: loading ? "not-allowed" : "pointer", color: "var(--text-tertiary)", padding: 4, display: "flex", alignItems: "center" }}
+            style={{
+              background: "transparent",
+              border: "none",
+              cursor: loading ? "not-allowed" : "pointer",
+              color: "var(--text-tertiary)",
+              padding: 4,
+              display: "flex",
+              alignItems: "center",
+            }}
           >
-            <RefreshCw size={12} style={{ animation: loading ? "spin 1s linear infinite" : "none" }} />
+            <RefreshCw
+              size={12}
+              style={{ animation: loading ? "spin 1s linear infinite" : "none" }}
+            />
           </button>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, height: 32, background: "#F5F5F7", borderRadius: 8, padding: "0 10px" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            height: 32,
+            background: "#F5F5F7",
+            borderRadius: 8,
+            padding: "0 10px",
+          }}
+        >
           <Search size={12} color="var(--text-tertiary)" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Szukaj klienta..."
-            style={{ flex: 1, background: "transparent", border: "none", outline: "none", fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--text-primary)" }}
+            style={{
+              flex: 1,
+              background: "transparent",
+              border: "none",
+              outline: "none",
+              fontFamily: "var(--font-sans)",
+              fontSize: 12,
+              color: "var(--text-primary)",
+            }}
           />
         </div>
       </div>
 
       <div style={{ flex: 1, overflowY: "auto", padding: "6px 8px" }}>
         {filtered.length === 0 && (
-          <div style={{ padding: "20px 8px", textAlign: "center", color: "var(--text-tertiary)", fontSize: 12, fontFamily: "var(--font-sans)" }}>
+          <div
+            style={{
+              padding: "20px 8px",
+              textAlign: "center",
+              color: "var(--text-tertiary)",
+              fontSize: 12,
+              fontFamily: "var(--font-sans)",
+            }}
+          >
             Brak klientów "Nowy lead"
           </div>
         )}
@@ -670,14 +1029,29 @@ function ClientSidebar({
                 border: isSelected ? "1px solid var(--accent-border)" : "1px solid transparent",
               }}
             >
-              <div style={{ fontFamily: "var(--font-sans)", fontSize: 13, fontWeight: 600, color: isSelected ? "var(--accent)" : "var(--text-primary)", marginBottom: 2 }}>
+              <div
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: isSelected ? "var(--accent)" : "var(--text-primary)",
+                  marginBottom: 2,
+                }}
+              >
                 {c.kontakt || c.firma || "—"}
               </div>
               {c.firma && c.kontakt && c.firma !== c.kontakt && (
                 <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>{c.firma}</div>
               )}
               {c.telefon && (
-                <div style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 2, fontFamily: "var(--font-sans)" }}>
+                <div
+                  style={{
+                    fontSize: 11,
+                    color: "var(--text-secondary)",
+                    marginTop: 2,
+                    fontFamily: "var(--font-sans)",
+                  }}
+                >
                   {formatPhone(c.telefon)}
                 </div>
               )}
@@ -687,10 +1061,27 @@ function ClientSidebar({
       </div>
 
       {selected && (
-        <div style={{ padding: "10px 12px", borderTop: "1px solid #E5E5EA", flexShrink: 0, background: "#F5F5F7" }}>
+        <div
+          style={{
+            padding: "10px 12px",
+            borderTop: "1px solid #E5E5EA",
+            flexShrink: 0,
+            background: "#F5F5F7",
+          }}
+        >
           <button
             onClick={() => onSelect(null)}
-            style={{ display: "flex", alignItems: "center", gap: 5, background: "transparent", border: "none", cursor: "pointer", color: "var(--text-tertiary)", fontSize: 11, fontFamily: "var(--font-sans)" }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              color: "var(--text-tertiary)",
+              fontSize: 11,
+              fontFamily: "var(--font-sans)",
+            }}
           >
             <X size={11} />
             Odznacz klienta
@@ -808,16 +1199,32 @@ export default function KwalifikacjaPage() {
         }}
       >
         <Phone size={16} color="var(--accent)" strokeWidth={1.8} />
-        <span style={{ fontFamily: "var(--font-sans)", fontSize: 16, fontWeight: 700, color: "var(--text-primary)", letterSpacing: "-0.01em" }}>
+        <span
+          style={{
+            fontFamily: "var(--font-sans)",
+            fontSize: 16,
+            fontWeight: 700,
+            color: "var(--text-primary)",
+            letterSpacing: "-0.01em",
+          }}
+        >
           Kwalifikacja
         </span>
         <div style={{ height: 20, width: 1, background: "#E5E5EA", marginLeft: 4 }} />
-        <span style={{ fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--text-tertiary)" }}>
-          {selected ? (selected.kontakt || selected.firma) : "Wybierz klienta z listy"}
+        <span
+          style={{ fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--text-tertiary)" }}
+        >
+          {selected ? selected.kontakt || selected.firma : "Wybierz klienta z listy"}
         </span>
         {selected && (
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: "auto" }}>
-            <span style={{ fontSize: 12, color: "var(--text-secondary)", fontFamily: "var(--font-sans)" }}>
+            <span
+              style={{
+                fontSize: 12,
+                color: "var(--text-secondary)",
+                fontFamily: "var(--font-sans)",
+              }}
+            >
               Forma grzecznościowa:
             </span>
             <input
@@ -825,8 +1232,16 @@ export default function KwalifikacjaPage() {
               onChange={(e) => setVocative(e.target.value)}
               placeholder="wołacz imienia"
               style={{
-                height: 32, padding: "0 10px", borderRadius: 8, border: "1px solid #E5E5EA",
-                fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--text-primary)", background: "#F5F5F7", outline: "none", width: 140,
+                height: 32,
+                padding: "0 10px",
+                borderRadius: 8,
+                border: "1px solid #E5E5EA",
+                fontFamily: "var(--font-sans)",
+                fontSize: 13,
+                color: "var(--text-primary)",
+                background: "#F5F5F7",
+                outline: "none",
+                width: 140,
               }}
             />
           </div>
@@ -854,12 +1269,29 @@ export default function KwalifikacjaPage() {
                 fill={fill}
                 onCopy={onCopy}
                 copiedId={copiedId}
-              />
+              >
+                {step.hasCalculator && (
+                  <div>
+                    <div
+                      style={{
+                        fontSize: 10,
+                        fontWeight: 700,
+                        letterSpacing: "0.08em",
+                        textTransform: "uppercase",
+                        color: "#0d9488",
+                        marginBottom: 10,
+                      }}
+                    >
+                      Kalkulator ROI — wypełniaj w trakcie rozmowy
+                    </div>
+                    <KalkulatorRoi
+                      embedded
+                      initialClientName={selected?.kontakt || selected?.firma || ""}
+                    />
+                  </div>
+                )}
+              </ScriptStep>
             ))}
-          </Card>
-
-          <Card title="Kalkulator ROI" collapsible defaultOpen={false}>
-            <KalkulatorRoi embedded initialClientName={selected?.kontakt || selected?.firma || ""} />
           </Card>
 
           <Card title="Dalsze kroki">
@@ -879,16 +1311,30 @@ export default function KwalifikacjaPage() {
               }}
               placeholder="Notatki z rozmowy kwalifikacyjnej..."
               style={{
-                width: "100%", minHeight: 120, resize: "vertical",
-                fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--text-primary)",
-                border: "1px solid #E5E5EA", borderRadius: 8, padding: "10px 12px",
-                background: "#fff", outline: "none", lineHeight: 1.55,
+                width: "100%",
+                minHeight: 120,
+                resize: "vertical",
+                fontFamily: "var(--font-sans)",
+                fontSize: 13,
+                color: "var(--text-primary)",
+                border: "1px solid #E5E5EA",
+                borderRadius: 8,
+                padding: "10px 12px",
+                background: "#fff",
+                outline: "none",
+                lineHeight: 1.55,
                 boxSizing: "border-box",
               }}
             />
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6 }}>
               <FileText size={11} color="var(--text-tertiary)" />
-              <span style={{ fontSize: 11, color: "var(--text-tertiary)", fontFamily: "var(--font-sans)" }}>
+              <span
+                style={{
+                  fontSize: 11,
+                  color: "var(--text-tertiary)",
+                  fontFamily: "var(--font-sans)",
+                }}
+              >
                 Zapis automatyczny per klient
               </span>
             </div>

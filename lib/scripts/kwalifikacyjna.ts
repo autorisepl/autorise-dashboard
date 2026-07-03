@@ -1,3 +1,8 @@
+// Zasada: jeśli Agency Leaders nie dał gotowej instrukcji na konkretną sytuację,
+// rozwiązanie buduje się z ich zasad ogólnych (personalizacja, konkret zamiast
+// ogólnika, klient sam dochodzi do wniosku przez pytania), nie jako coś oderwanego
+// od frameworku. Każda nowa linia dialogowa w tym pliku podlega tej zasadzie.
+
 import type { IcpRule, Objection, Step } from "./types";
 
 export const STEPS_K: Step[] = [
@@ -7,83 +12,118 @@ export const STEPS_K: Step[] = [
     label: "PRZYGOTOWANIE",
     tag: "AKCJA",
     lines: [
-      { t: "action", text: "Włącz Fathom zanim zaczniesz dzwonić." },
-      { t: "action", text: "Wejdź na stronę firmy — 30 sekund. Flota? TMS widoczny? Decydent?" },
-      { t: "action", text: "Sprawdź formularz: co napisał, skąd pochodzi, jaką firmę prowadzi." },
-      { t: "action", text: "Masz pod ręką: imię (nominatyw), nazwę firmy, numer telefonu." },
+      { t: "action", text: "Sprawdź w Pipeline: imię i nazwisko, numer telefonu, email, firma lub NIP." },
+      { t: "action", text: "Opcjonalnie: 15 sekund — wyszukaj NIP w CEIDG lub wyszukiwarce GUS. Sprawdź pełną nazwę firmy i aktywność." },
+      { t: "action", text: "Włącz nagrywarkę na komputerze." },
+      { t: "action", text: "Miej pod ręką: imię klienta w nominatywie (Pan Jacek, nie Panie Jacku) i numer telefonu." },
     ],
   },
   {
     id: "opener",
     nr: "1",
-    label: "OTWARCIE",
+    label: "OPENING",
     tag: "MÓWISZ",
     lines: [
       { t: "say", text: "Dzień dobry, Pan {IMIĘ}?" },
       { t: "client", text: "Tak, słucham." },
-      {
-        t: "say",
-        text: "Dzień dobry, mówi [imię] z Autorise. Dzwonię bo przed chwilą wypełnił Pan formularz na naszej stronie dotyczący oszczędzania czasu w firmie transportowej. Mam dla Pana dosłownie 2 minuty — czy to dobry moment?",
-      },
+      { t: "say", text: "Dzień dobry, mówi Michał z Autorise. Dzwonię bo kilka dni temu wypełnił Pan formularz na Facebooku — dotyczył oszczędności czasu w firmie transportowej." },
+      { t: "say", text: "Mam dla Pana dosłownie 2 minuty — czy to dobry moment?" },
+      { t: "branch", text: "Tak: przejdź do kroku 2.1" },
+      { t: "branch-bad", text: "Nie mam teraz czasu: obiekcja OK1 z panelu po prawej" },
+      { t: "note", text: "Jeśli brak odbioru: zadzwoń trzy razy o różnych porach. Po trzecim braku wyślij SMS z szablonu 'Brak odbioru po 3 próbach'." },
     ],
   },
   {
-    id: "opener_branch",
-    nr: "1b",
-    label: "REAKCJA NA OTWARCIE",
-    tag: "GAŁĘZIE",
+    id: "diagnoza_otwarcie",
+    nr: "2.1",
+    label: "OTWARCIE DIAGNOZY",
+    tag: "MÓWISZ",
     lines: [
-      { t: "branch", text: "Nie pamiętam żadnego formularza" },
-      {
-        t: "say",
-        text: "Rozumiem. Pewnie wypełnił Pan wiele rzeczy. Formularz pojawił się na Facebooku — dotyczył oszczędzania czasu w logistyce. To może 30 sekund?",
-      },
-      { t: "branch", text: "O co chodzi? Co Pan sprzedaje?" },
-      {
-        t: "say",
-        text: "Automatyzujemy pracę biura spedycji — zlecenia, CMR, faktury. Jedna firma u nas odzyskała 80 godzin miesięcznie. Chciałem się dowiedzieć czy to temat dla Pana firmy.",
-      },
-      { t: "branch", text: "Od razu chce spotkanie" },
-      {
-        t: "say",
-        text: "Chętnie. Zanim zaproponuję termin — 2 pytania żeby spotkanie miało sens dla obu stron. Jak wygląda teraz zleceniowanie w Pana firmie?",
-      },
-      { t: "branch", text: "Od razu pyta o cenę" },
-      {
-        t: "say",
-        text: "Zależy od skali i modułów. Powiem Panu wprost — najpierw chcę sprawdzić czy mamy rozwiązanie dla Pana firmy. Jeśli tak — cena jest na stronie i na spotkaniu. Ile pojazdów ma Pan teraz?",
-      },
-      { t: "branch", text: "Wyślij na maila" },
-      {
-        t: "say",
-        text: "Oczywiście. Żeby wysłać coś trafnego, jedna kwestia: ile osób zajmuje się zleceniami w biurze?",
-      },
-      {
-        t: "note",
-        text: "Jeśli nadal blokuje: 'Rozumiem. Wyślę. Na jaki adres?' — zapisz mail i zaplanuj follow-up.",
-      },
+      { t: "say", text: "Żeby sprawdzić czy możemy w ogóle pomóc Pana firmie, muszę zadać kilka pytań o to jak teraz wygląda praca biura. Dobrze?" },
+      { t: "client", text: "Tak, proszę." },
     ],
   },
   {
-    id: "diagnoza",
-    nr: "2",
-    label: "DIAGNOZA",
+    id: "diagnoza_tms",
+    nr: "2.2",
+    label: "TMS I PRACA MANUALNA",
     tag: "PYTASZ",
     lines: [
-      { t: "say", text: "Co spowodowało że właśnie teraz wypełnił Pan ten formularz?" },
+      { t: "say", text: "Czy korzystacie z TMS, czyli programu do zarządzania flotą i zleceniami?" },
+      { t: "client", text: "[Tak / Nie / Nie wiem co to]" },
+      { t: "note", text: "Jeśli tak: zapytaj jaki system. TMS nie wyklucza współpracy — uzupełniamy go o automatyzację biurową, nie zastępujemy." },
+      { t: "say", text: "Co robi Pan teraz ręcznie mimo tego systemu?" },
+      { t: "note", text: "Jeśli milczy, podpowiedz: 'Na przykład: wpisywanie zleceń z maila, przepisywanie CMR i POD po kursie, sprawdzanie faktur, wysyłanie dokumentów do klientów?'" },
+      { t: "client", text: "[wymienia operacje]" },
+    ],
+  },
+  {
+    id: "diagnoza_dokumenty",
+    nr: "2.3",
+    label: "ROZPOZNANIE DOKUMENTÓW",
+    tag: "PYTASZ",
+    lines: [
+      { t: "say", text: "Co z dokumentami po kursie — CMR, POD, faktury? Jak wygląda ten proces teraz?" },
+      { t: "client", text: "[opisuje]" },
+      { t: "note", text: "Zanotuj konkretnie: papierowe czy elektroniczne CMR, czy są zdjęcia od kierowców, ile dokumentów dziennie, ile czasu zajmuje weryfikacja jednego kompletu. Te dane wejdą do kalkulatora." },
+    ],
+  },
+  {
+    id: "diagnoza_icp_flota",
+    nr: "2.4",
+    label: "ICP: FLOTA I BIURO",
+    tag: "PYTASZ",
+    lines: [
+      { t: "say", text: "Ile pojazdów ma Pan teraz aktywnie?" },
+      { t: "client", text: "[liczba]" },
+      { t: "say", text: "Ile osób pracuje w biurze — mam na myśli osoby które zajmują się zleceniami, dokumentami, fakturami?" },
+      { t: "client", text: "[liczba]" },
+      { t: "note", text: "ICP minimum: 2 osoby w biurze. Jeśli 1 osoba: zapytaj czy jest sezonowość lub plan zatrudnienia. Poniżej progu po weryfikacji: uprzejmie zakończ rozmowę." },
+    ],
+  },
+  {
+    id: "diagnoza_icp_decydent",
+    nr: "2.5",
+    label: "ICP: DECYDENT",
+    tag: "PYTASZ",
+    lines: [
+      { t: "say", text: "Jest Pan właścicielem firmy?" },
+      { t: "client", text: "[Tak / Nie]" },
+      { t: "note", text: "Jeśli nie jest właścicielem: 'Kto u Pana podejmuje decyzję o zakupie oprogramowania? Czy byłoby możliwe żebyśmy porozmawiali razem na spotkaniu?'" },
+    ],
+  },
+  {
+    id: "diagnoza_kalkulator",
+    nr: "2.6",
+    label: "KALKULATOR ROI",
+    tag: "KALKULATOR",
+    hasCalculator: true,
+    lines: [
+      { t: "say", text: "Ile czasu dziennie biuro poświęca łącznie na tę ręczną robotę — wpisywanie, przepisywanie dokumentów, pilnowanie CMR?" },
+      { t: "client", text: "[podaje godziny]" },
+      { t: "note", text: "Jeśli mówi 'nie wiem': 'Może pół godziny, może godzinę na osobę? Jak to wygląda przy X osobach w biurze?'" },
+      { t: "action", text: "Wpisz w kalkulator poniżej: liczbę osób z kroku 2.4 i godziny dziennie. Zaznacz rodzaje pracy z kroków 2.2 i 2.3." },
+    ],
+  },
+  {
+    id: "diagnoza_liczba",
+    nr: "2.7",
+    label: "PODANIE LICZBY KLIENTOWI",
+    tag: "MÓWISZ",
+    lines: [
+      { t: "note", text: "Odczytaj wyniki z kalkulatora poniżej. Nie zaokrąglaj, nie uśredniaj — liczba jest personalizowana dla tej firmy." },
+      { t: "say", text: "Na podstawie tego co Pan powiedział — Pana biuro traci [WYNIK Z KALKULATORA] godzin miesięcznie na ręcznej pracy. To wartość [WARTOŚĆ PLN] złotych miesięcznie." },
+    ],
+  },
+  {
+    id: "diagnoza_czas",
+    nr: "2.8",
+    label: "CO ZROBIŁBY Z TYMI GODZINAMI",
+    tag: "PYTASZ",
+    lines: [
+      { t: "say", text: "Gdyby te [LICZBA Z KALKULATORA] godzin miesięcznie wróciły do biura — co by Pan z nimi zrobił?" },
       { t: "client", text: "[odpowiedź]" },
-      {
-        t: "say",
-        text: "Jak wygląda teraz proces: od momentu gdy dostajecie zlecenie do wystawienia faktury — ile kroków, ile osób, ile czasu?",
-      },
-      { t: "client", text: "[odpowiedź]" },
-      { t: "say", text: "Ile godzin dziennie spędza biuro na ręcznym przepisywaniu?" },
-      { t: "client", text: "[odpowiedź]" },
-      {
-        t: "note",
-        text: "Jeśli mówi 'nie wiem' — doprecyzuj: 'CMR, POD, faktury, wpisywanie do Excela — łącznie?'",
-      },
-      { t: "say", text: "Co byś zrobił z tymi godzinami gdybyś je odzyskał?" },
+      { t: "note", text: "Jeśli mówi 'nie wiem' lub 'i tak nie zwolnię pracowników': 'Rozumiem — chodzi o inne rzeczy. Więcej zleceń przy tej samej ekipie, mniej błędów w dokumentach, szybsza obsługa klientów. Który z tych kierunków jest dla Pana teraz ważny?'" },
     ],
   },
   {
@@ -93,120 +133,84 @@ export const STEPS_K: Step[] = [
     tag: "UWAGA",
     lines: [
       { t: "note", text: "Używaj po 2 nieudanych próbach ukazania bólu. Nie sprzedawaj na siłę." },
-      {
-        t: "say",
-        text: "Słyszę że u Pana to działa sprawnie. Nie chcę zajmować Pana czasu. Czy jest jakiś aspekt logistyki gdzie czujecie że traci się czas lub robi się za dużo ręcznie?",
-      },
+      { t: "say", text: "Słyszę że u Pana to działa sprawnie. Nie chcę zajmować Pana czasu. Czy jest jakiś aspekt logistyki gdzie czujecie że traci się czas lub robi się za dużo ręcznie?" },
       { t: "client", text: "Nie, wszystko gra." },
-      {
-        t: "say",
-        text: "Rozumiem. W takim razie prawdopodobnie nie jesteśmy teraz dla siebie. Mogę zadzwonić za kilka miesięcy gdy się coś zmieni — czy to ma sens?",
-      },
-      {
-        t: "note",
-        text: "Jeśli zgadza się: status Nieaktywny (follow up), data re-engagement za 3 mc.",
-      },
-    ],
-  },
-  {
-    id: "icp",
-    nr: "3",
-    label: "WERYFIKACJA ICP",
-    tag: "PYTASZ",
-    lines: [
-      { t: "say", text: "Ile pojazdów ma teraz Pan flota?" },
-      { t: "client", text: "[odpowiedź]" },
-      { t: "say", text: "Czy korzystacie z TMS — programu do zarządzania flotą?" },
-      { t: "client", text: "[odpowiedź]" },
-      { t: "note", text: "TMS: nie wyklucza. Dopytaj jaki i co robi manualnie mimo TMS." },
-      { t: "say", text: "Jest Pan właścicielem firmy czy decyduje Pan o zakupach oprogramowania?" },
-      { t: "client", text: "[odpowiedź]" },
-      {
-        t: "note",
-        text: "Jeśli nie jest decydentem: 'Czy byłoby możliwe żebyśmy porozmawiali razem? Mam 45 minut spotkanie online — mogę dołączyć też właściciela.'",
-      },
-    ],
-  },
-  {
-    id: "roi",
-    nr: "4",
-    label: "ROI — ZAPROSZENIE",
-    tag: "MÓWISZ",
-    lines: [
-      {
-        t: "say",
-        text: "Firmy transportowe podobne do Pana odzyskują średnio 80 godzin miesięcznie. Przy 2 osobach w biurze to około 2 etatów w skali roku.",
-      },
-      {
-        t: "say",
-        text: "Na 45-minutowym spotkaniu online pokażę Panu dokładnie jak to wygląda dla Pana firmy z prawdziwymi liczbami.",
-      },
-    ],
-  },
-  {
-    id: "precommit",
-    nr: "5",
-    label: "PRE-COMMITMENT",
-    tag: "PYTASZ",
-    lines: [
-      {
-        t: "say",
-        text: "Zanim umówimy termin — jedno pytanie. Jeśli to co Pan zobaczy na spotkaniu ma sens dla Pana firmy, czy jest Pan gotowy podjąć decyzję w ciągu tygodnia od spotkania?",
-      },
-      { t: "client", text: "[odpowiedź]" },
-      {
-        t: "note",
-        text: "Jeśli 'nie' lub 'muszę z kimś' — dowiedz się z kim i zaproś tę osobę. Nie umawiaj bez decydenta.",
-      },
+      { t: "say", text: "Rozumiem. W takim razie prawdopodobnie nie jesteśmy teraz dla siebie. Mogę zadzwonić za kilka miesięcy gdy się coś zmieni — czy to ma sens?" },
+      { t: "note", text: "Jeśli zgadza się: status Nieaktywny (follow up), data re-engagement za 3 mc." },
     ],
   },
   {
     id: "spotkanie",
-    nr: "6",
-    label: "UMAWIANIE SPOTKANIA",
+    nr: "3",
+    label: "SPOTKANIE JAKO ROZWIĄZANIE",
     tag: "ZAMKNIĘCIE",
     lines: [
-      {
-        t: "say",
-        text: "Kiedy ma Pan wolne 45 minut w tym lub przyszłym tygodniu — rano czy po południu?",
-      },
+      { t: "say", text: "Na podstawie tego co Pan powiedział — myślę że możemy Pana firmie realnie pomóc. Mam propozycję: 45-minutowe spotkanie przez internet — pokażę jak dokładnie wygląda automatyzacja dla firmy o tej skali, z Pana liczbami." },
+      { t: "say", text: "Kiedy ma Pan wolne 45 minut w tym lub przyszłym tygodniu — rano czy po południu?" },
       { t: "client", text: "[proponuje termin]" },
-      {
-        t: "say",
-        text: "Świetnie. Zarezerwuję [dzień] o [godzina]. Wyślę zaproszenie Google Meet na tego maila co podał Pan w formularzu — zgadza się?",
-      },
-      {
-        t: "action",
-        text: "Wyślij zaproszenie Google Meet natychmiast po rozmowie. Nie 'zaraz' — teraz.",
-      },
-      { t: "say", text: "Dzień przed wyślę SMS z przypomnieniem." },
-      {
-        t: "action",
-        text: "Zmień status w Pipeline na 'Discovery umówione'. Data Discovery: [data spotkania].",
-      },
+      { t: "say", text: "Świetnie. Wyślę Panu link do rezerwacji przez Calendly — proszę wybrać dokładny termin który Panu odpowiada. Dostanie Pan też automatyczne przypomnienie SMS dzień przed." },
+      { t: "action", text: "Wyślij link Calendly natychmiast po rozmowie. Nie 'zaraz' — teraz." },
+      { t: "action", text: "Zmień status w Pipeline na 'Discovery umówione'. Data Discovery: data wybranego slotu." },
     ],
   },
 ];
 
 export const OBJECTIONS_K: Objection[] = [
+  // Obiekcje otwierające — każda kończy się przejściem do kroku 2.1
+  {
+    id: "ok_nb",
+    label: "Nie pamiętam żadnego formularza",
+    script:
+      "Rozumiem, pewnie wiele rzeczy się przewija. Formularz pojawił się na Facebooku kilka dni temu — dotyczył oszczędności czasu w firmie transportowej. Mam dla Pana 2 pytania zanim opowiem więcej — czy ma Pan chwilę?",
+    note: "Po 'tak': przejdź do 2.1 Otwarcie diagnozy.",
+  },
+  {
+    id: "ok_cc",
+    label: "Co Pan sprzedaje? O co chodzi?",
+    script:
+      "Automatyzujemy pracę biura spedycji — zlecenia, CMR, faktury. Zanim cokolwiek zaproponuję, chciałem się dowiedzieć jak wygląda ta praca u Pana. Zajmie mi to dosłownie 2 minuty. Dobrze?",
+    note: "Po 'tak': przejdź do 2.1 Otwarcie diagnozy.",
+  },
+  {
+    id: "ok_ms",
+    label: "Od razu chce umówić spotkanie",
+    script:
+      "Chętnie. Żeby spotkanie miało sens dla obu stron — muszę zadać 3 krótkie pytania o firmę. Zajmie mi to 2 minuty. Dobrze?",
+    note: "Po 'tak': przejdź do 2.1 Otwarcie diagnozy.",
+  },
+  {
+    id: "ok_cp",
+    label: "Od razu pyta o cenę",
+    script:
+      "Cena zależy od skali i konfiguracji — dlatego najpierw chcę sprawdzić czy to w ogóle ma sens dla Pana firmy. Jeśli tak — podam cenę wprost na spotkaniu, bez owijania w bawełnę. Mam 2 pytania — dobrze?",
+    note: "Po 'tak': przejdź do 2.1 Otwarcie diagnozy.",
+  },
+  {
+    id: "ok_em",
+    label: "Wyślij na maila",
+    script:
+      "Oczywiście. Żeby wysłać coś trafnego — jedno pytanie: ile osób zajmuje się zleceniami w Pana biurze?",
+    note: "Jeśli nadal blokuje: 'Rozumiem. Na jaki adres wysłać?' — zapisz mail i zaplanuj follow-up za 2 dni.",
+  },
+  // Standardowe obiekcje
   {
     id: "ok1",
     label: "Nie mam teraz czasu (pierwsze NIE)",
     script:
-      "Rozumiem. Firmy transportowe z którymi pracuję odzyskują od 80 godzin miesięcznie na samym zleceniowaniu. Jeśli to brzmi jak coś dla Pana — 2 minuty teraz mogą zaoszczędzić Panu kilka tysięcy złotych miesięcznie. Ma Pan te 2 minuty?",
+      "Rozumiem. Biura spedycji z którymi pracuję tracą kilkadziesiąt godzin miesięcznie na ręczne przepisywanie i pilnowanie dokumentów — liczone konkretnie dla każdej firmy, nie uśredniane. Jeśli to brzmi jak coś dla Pana — 2 minuty teraz mogą zmienić kilka tysięcy złotych miesięcznie. Ma Pan te 2 minuty?",
   },
   {
     id: "ok2",
     label: "Nadal nie mam czasu (drugie NIE)",
-    script: "Jasne. Jutro rano czy po południu jest Pan bardziej dostępny?",
-    note: "Zapisz dzień i godzinę. Follow-up w Pipeline.",
+    script: "Jasne. Kiedy jest Pan bardziej dostępny — jutro rano czy po południu?",
+    note: "Zapisz dzień i godzinę. Ustaw follow-up w Pipeline.",
   },
   {
     id: "ok3",
     label: "Mam już program do zarządzania",
     script:
-      "Większość firm z którymi pracuję ma program. My nie zastępujemy TMS — uzupełniamy go o automatyzację biurową: CMR, POD, faktury, komunikacja z klientem. Czy Pana TMS robi to automatycznie?",
-    note: "Jeśli tak: wróć do diagnozy i pytaj co robi ręcznie mimo TMS. Jeśli nie: 'To dobrze, w takim razie może nie będę marnował Pana czasu' — i zakończ uprzejmie.",
+      "Większość firm z którymi pracuję ma TMS. My nie zastępujemy systemu — uzupełniamy go o automatyzację biurową: CMR, POD, faktury, komunikacja z klientem. Mam 2 pytania o to jak wygląda ta praca u Pana teraz. Dobrze?",
+    note: "Po 'tak': przejdź do 2.1 Otwarcie diagnozy.",
   },
   {
     id: "ok4",
@@ -226,7 +230,7 @@ export const OBJECTIONS_K: Objection[] = [
     id: "ok6",
     label: "Brak odbioru po 3 próbach",
     type: "sms",
-    sms: "Dzień dobry Panie {IMIĘ}, dzwoniłem 3× bo wypełnił Pan formularz w sprawie oszczędności czasu w firmie transportowej. Jeśli temat jest aktualny — proszę o SMS lub oddzwonienie. Jeśli nie — nie będę przeszkadzał.",
+    sms: "Dzień dobry Panie {IMIĘ}, dzwoniłem 3 razy bo wypełnił Pan formularz w sprawie oszczędności czasu w firmie transportowej. Jeśli temat jest aktualny — proszę o SMS lub oddzwonienie. Jeśli nie — nie będę przeszkadzał.",
   },
   {
     id: "ok7",
