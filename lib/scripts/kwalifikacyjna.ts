@@ -457,7 +457,7 @@ export const OBJECTIONS_K: Objection[] = [
     id: "ok3",
     label: "Mam już program do zarządzania",
     script:
-      "Większość firm z którymi pracuję ma TMS. My nie zastępujemy systemu — uzupełniamy go o automatyzację biurową: CMR, POD, faktury, komunikacja z klientem. Mam 2 pytania o to jak wygląda ta praca u Pana teraz. Dobrze?",
+      "Większość firm z którymi pracuję ma TMS. My nie zastępujemy systemu, tylko zdejmujemy z Pana biura ręczną robotę wokół niego: wpisywanie zleceń, przepisywanie CMR i potwierdzeń dostawy, pilnowanie faktur i płatności, informowanie Pana o statusie zleceń bez dzwonienia do spedytora. Mam kilka pytań o to jak dziś wygląda ta praca u Pana, mimo TMS-u. Dobrze?",
     note: "Po 'tak': przejdź do 2.1 Otwarcie diagnozy.",
   },
   {
