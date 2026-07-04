@@ -22,12 +22,19 @@ export const STEPS_D: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Dzień dobry, Pan {IMIĘ}. Cieszę się że możemy porozmawiać. Przed chwilą przejrzałem stronę firmy — widzę że prowadzi Pan firmę [nazwa] z flotą [X] pojazdów. Dobrze widzę?",
+        text: [
+          "Dzień dobry, Pan {IMIĘ}. Cieszę się że możemy porozmawiać.",
+          "Przed chwilą przejrzałem stronę firmy — widzę że prowadzi Pan firmę [nazwa] z flotą [X] pojazdów.",
+          "Dobrze widzę?",
+        ],
       },
       { t: "client", text: "[potwierdza lub koryguje]" },
       {
         t: "say",
-        text: "Autorise to system automatyzacji dla biur spedycji. Pracujemy głównie z firmami 10-150 pojazdów i odzyskujemy dla nich czas biura — średnio 80 godzin miesięcznie.",
+        text: [
+          "Autorise to system automatyzacji dla biur spedycji.",
+          "Pracujemy głównie z firmami 10-150 pojazdów i odzyskujemy dla nich czas biura — średnio 80 godzin miesięcznie.",
+        ],
       },
     ],
   },
@@ -39,7 +46,13 @@ export const STEPS_D: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Na to spotkanie mam dla nas 45 minut. Plan: pierwsze 20 minut pytam Pana o firmę i jak działa biuro. Drugie 20 minut pokazuję co robimy dla Pana firmy. Ostatnie 5 minut pytania i decyzja co dalej. Pasuje Panu?",
+        text: [
+          "Na to spotkanie mam dla nas 45 minut.",
+          "Plan: pierwsze 20 minut pytam Pana o firmę i jak działa biuro.",
+          "Drugie 20 minut pokazuję co robimy dla Pana firmy.",
+          "Ostatnie 5 minut pytania i decyzja co dalej.",
+          "Pasuje Panu?",
+        ],
       },
       { t: "client", text: "Tak, jasne." },
     ],
@@ -52,7 +65,10 @@ export const STEPS_D: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Na rozmowie telefonicznej powiedział Pan że [podsumowanie z kwalifikacji]. Czy to nadal aktualne?",
+        text: [
+          "Na rozmowie telefonicznej powiedział Pan że [podsumowanie z kwalifikacji].",
+          "Czy to nadal aktualne?",
+        ],
       },
       { t: "client", text: "[potwierdza lub aktualizuje]" },
       {
@@ -71,16 +87,25 @@ export const STEPS_D: Step[] = [
     label: "DIAGNOZA — SYTUACJA DZIŚ",
     tag: "PYTASZ",
     lines: [
-      { t: "say", text: "Co spowodowało że właśnie teraz zdecydował się Pan na to spotkanie?" },
+      {
+        t: "say",
+        text: "Co spowodowało że właśnie teraz zdecydował się Pan na to spotkanie?",
+        cel: "Znaleźć konkretny wyzwalacz decyzji, przydatny później w podsumowaniu i pitchu",
+      },
       { t: "client", text: "[odpowiedź]" },
       {
         t: "say",
-        text: "Proszę opowiedzieć jak wygląda dzień pracy w biurze — od momentu gdy wpada zlecenie do wystawienia faktury. Krok po kroku.",
+        text: [
+          "Proszę opowiedzieć jak wygląda dzień pracy w biurze — od momentu gdy wpada zlecenie do wystawienia faktury.",
+          "Krok po kroku.",
+        ],
+        cel: "Zmapować proces operacyjny krok po kroku, żeby trafnie dobrać moduły do pitchu",
       },
       { t: "client", text: "[odpowiedź]" },
       {
         t: "say",
         text: "Ile osób jest zaangażowanych w ten proces i ile czasu to zajmuje łącznie?",
+        cel: "Oszacować skalę problemu w godzinach i ludziach — wejście do kalkulatora ROI",
       },
     ],
   },
@@ -90,9 +115,17 @@ export const STEPS_D: Step[] = [
     label: "POPRZEDNIE PRÓBY ROZWIĄZANIA",
     tag: "PYTASZ",
     lines: [
-      { t: "say", text: "Co Pan do tej pory próbował żeby to usprawnić?" },
+      {
+        t: "say",
+        text: "Co Pan do tej pory próbował żeby to usprawnić?",
+        cel: "Sprawdzić czy klient już próbował rozwiązać problem, i jak, zanim zaproponujesz nowe rozwiązanie",
+      },
       { t: "client", text: "[odpowiedź]" },
-      { t: "say", text: "Dlaczego to nie zadziałało tak jak Pan chciał?" },
+      {
+        t: "say",
+        text: "Dlaczego to nie zadziałało tak jak Pan chciał?",
+        cel: "Znaleźć lukę którą wypełni Autorise, nie powtarzać cudzych błędów",
+      },
       { t: "client", text: "[odpowiedź]" },
     ],
   },
@@ -102,7 +135,11 @@ export const STEPS_D: Step[] = [
     label: "DLACZEGO NIE SAMODZIELNIE",
     tag: "PYTASZ",
     lines: [
-      { t: "say", text: "Dlaczego nie możecie tego rozwiązać samodzielnie — wewnętrznie?" },
+      {
+        t: "say",
+        text: "Dlaczego nie możecie tego rozwiązać samodzielnie — wewnętrznie?",
+        cel: "Wyeliminować 'zrobimy to sami' jako obiekcję zanim padnie na etapie ceny",
+      },
       { t: "client", text: "[odpowiedź]" },
       {
         t: "note",
@@ -119,6 +156,7 @@ export const STEPS_D: Step[] = [
       {
         t: "say",
         text: "Ile szacuje Pan że kosztuje firma ta ręczna praca miesięcznie — w godzinach, błędach, stresie?",
+        cel: "Sprawić żeby klient sam wyliczył koszt bezczynności — mocniejsze niż podanie liczby przez Ciebie",
       },
       { t: "client", text: "[odpowiedź]" },
       {
@@ -135,7 +173,11 @@ export const STEPS_D: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Gdybyśmy to rozwiązali w ciągu 30 dni — jak wyglądałby dla Pana idealny wynik? Co by się zmieniło w firmie?",
+        text: [
+          "Gdybyśmy to rozwiązali w ciągu 30 dni — jak wyglądałby dla Pana idealny wynik?",
+          "Co by się zmieniło w firmie?",
+        ],
+        cel: "Zbudować wizję pożądanego stanu, do której odwołasz się w pitchu i closing",
       },
       { t: "client", text: "[odpowiedź]" },
     ],
@@ -146,13 +188,35 @@ export const STEPS_D: Step[] = [
     label: "PILNOŚĆ",
     tag: "PYTASZ",
     lines: [
-      { t: "say", text: "Na skali 1-10 jak pilne jest dla Pana rozwiązanie tego teraz?" },
-      { t: "client", text: "[odpowiedź]" },
       {
-        t: "note",
-        text: "Poniżej 7: 'Co musiałoby się wydarzyć żeby to było 9?' Poniżej 5: zastanów się czy warto kontynuować pitch dziś.",
+        t: "say",
+        text: "Na skali 1-10 jak pilne jest dla Pana rozwiązanie tego teraz?",
+        cel: "Zmierzyć realną gotowość do działania, nie tylko zainteresowanie tematem",
       },
     ],
+    decision: {
+      question: "Jaka odpowiedź?",
+      options: [
+        {
+          trigger: "7 lub więcej",
+          action: "Pilność potwierdzona, kontynuuj",
+          goToStepId: "parafraza",
+          tone: "positive",
+        },
+        {
+          trigger: "5-6",
+          action: "Powiedz: 'Co musiałoby się wydarzyć żeby to było 9?'",
+          goToStepId: "parafraza",
+          tone: "neutral",
+        },
+        {
+          trigger: "Poniżej 5",
+          action: "Zastanów się czy warto kontynuować pitch dziś",
+          goToStepId: "parafraza",
+          tone: "warning",
+        },
+      ],
+    },
   },
   {
     id: "parafraza",
@@ -162,11 +226,23 @@ export const STEPS_D: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Chcę się upewnić że dobrze rozumiem Pana sytuację. Proszę mnie poprawić jeśli coś pomylę.",
+        text: [
+          "Chcę się upewnić że dobrze rozumiem Pana sytuację.",
+          "Proszę mnie poprawić jeśli coś pomylę.",
+        ],
       },
       {
         t: "say",
-        text: "Prowadzi Pan [nazwa firmy] z flotą [X] pojazdów. Biuro zajmuje się [opis pracy]. Problem to [ból główny]. Próbował Pan [poprzednie próby] ale to nie zadziałało bo [powód]. Samodzielnie trudno to rozwiązać bo [powód]. Idealnie chciałby Pan [cel]. To kosztuje firmę szacunkowo [kwota] miesięcznie. Zgadza się?",
+        text: [
+          "Prowadzi Pan [nazwa firmy] z flotą [X] pojazdów.",
+          "Biuro zajmuje się [opis pracy].",
+          "Problem to [ból główny].",
+          "Próbował Pan [poprzednie próby] ale to nie zadziałało bo [powód].",
+          "Samodzielnie trudno to rozwiązać bo [powód].",
+          "Idealnie chciałby Pan [cel].",
+          "To kosztuje firmę szacunkowo [kwota] miesięcznie.",
+          "Zgadza się?",
+        ],
       },
       { t: "client", text: "[potwierdza lub koryguje]" },
       {
@@ -183,7 +259,11 @@ export const STEPS_D: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Dziękuję za szczerość. Mam przygotowaną prezentację specjalnie dla [nazwa firmy] — z Pana liczbami. Mogę ją teraz pokazać?",
+        text: [
+          "Dziękuję za szczerość.",
+          "Mam przygotowaną prezentację specjalnie dla [nazwa firmy] — z Pana liczbami.",
+          "Mogę ją teraz pokazać?",
+        ],
       },
     ],
   },
@@ -211,7 +291,10 @@ export const STEPS_D: Step[] = [
       },
       { t: "action", text: "SLAJD 6: Inwestycja. Cena na ekranie. CISZA 20 sekund." },
       { t: "action", text: "SLAJD 7: Gwarancja 80h. Ten slajd zamyka pitch. Nie przewijaj dalej." },
-      { t: "say", text: "To jest to co przygotowałem dla Pana firmy. Jak Pan to widzi?" },
+      {
+        t: "say",
+        text: ["To jest to co przygotowałem dla Pana firmy.", "Jak Pan to widzi?"],
+      },
     ],
   },
   {
@@ -219,14 +302,30 @@ export const STEPS_D: Step[] = [
     nr: "5",
     label: "TEMPERATURA",
     tag: "PYTASZ",
-    lines: [
-      { t: "say", text: "Na skali 1-10 — gdzie jesteśmy?" },
-      { t: "client", text: "[odpowiedź]" },
-      {
-        t: "note",
-        text: "7+: idź do commitment. 5-6: 'Co musiałoby się zmienić żeby to było 9?' Poniżej 5: wróć do parafrazy bólu.",
-      },
-    ],
+    lines: [{ t: "say", text: "Na skali 1-10 — gdzie jesteśmy?" }],
+    decision: {
+      question: "Jaka odpowiedź?",
+      options: [
+        {
+          trigger: "7 lub więcej",
+          action: "Gotowy na commitment",
+          goToStepId: "commitment",
+          tone: "positive",
+        },
+        {
+          trigger: "5-6",
+          action: "Powiedz: 'Co musiałoby się zmienić żeby to było 9?'",
+          goToStepId: "commitment",
+          tone: "neutral",
+        },
+        {
+          trigger: "Poniżej 5",
+          action: "Wróć do parafrazy bólu",
+          goToStepId: "parafraza",
+          tone: "warning",
+        },
+      ],
+    },
   },
   {
     id: "commitment",
@@ -237,6 +336,7 @@ export const STEPS_D: Step[] = [
       {
         t: "say",
         text: "Czy jest Pan osobą która podejmuje tę decyzję, czy potrzebujemy kogoś jeszcze?",
+        cel: "Ustalić decyzyjność przed przejściem do ceny, uniknąć pustego pitchu bez decydenta",
       },
       { t: "client", text: "[odpowiedź]" },
       {
@@ -257,7 +357,11 @@ export const STEPS_D: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Inwestycja to 15 000 zł jednorazowo lub dwie raty po 7 500 zł. Plus 4 000 zł miesięcznie opieki. Gwarancja: jeśli w 30 dni nie odzyska Pan 80 godzin — zwrot 100% bez pytań.",
+        text: [
+          "Inwestycja to 15 000 zł jednorazowo lub dwie raty po 7 500 zł.",
+          "Plus 4 000 zł miesięcznie opieki.",
+          "Gwarancja: jeśli w 30 dni nie odzyska Pan 80 godzin — zwrot 100% bez pytań.",
+        ],
       },
       { t: "action", text: "CISZA. Poczekaj. Nie wypełniaj ciszy." },
     ],
@@ -270,7 +374,10 @@ export const STEPS_D: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Przy [kwota oszczędności] miesięcznie, inwestycja zwraca się w [X] miesięcy. Czy to ma sens dla Pana firmy?",
+        text: [
+          "Przy [kwota oszczędności] miesięcznie, inwestycja zwraca się w [X] miesięcy.",
+          "Czy to ma sens dla Pana firmy?",
+        ],
       },
     ],
   },
@@ -288,7 +395,12 @@ export const STEPS_D: Step[] = [
       },
       {
         t: "say",
-        text: "Zaczynamy. Prześlę umowę i fakturę na [email]. Kickoff umawiamy na [termin]. Pasuje?",
+        text: [
+          "Zaczynamy.",
+          "Prześlę umowę i fakturę na [email].",
+          "Kickoff umawiamy na [termin].",
+          "Pasuje?",
+        ],
       },
     ],
   },
