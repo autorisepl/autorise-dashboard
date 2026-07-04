@@ -31,7 +31,16 @@ export async function GET(req: NextRequest) {
       maxAge: 60 * 60 * 24 * 90,
     });
     return res;
-  } catch {
-    return NextResponse.redirect(`${base}/profil?google=error`);
+  } catch (err) {
+    const e = err as { response?: { data?: { error?: string; error_description?: string } } };
+    const code = e.response?.data?.error;
+    console.error(
+      "[google/callback] token exchange failed:",
+      code ?? "unknown",
+      e.response?.data?.error_description ?? err,
+    );
+    return NextResponse.redirect(
+      `${base}/profil?google=error${code ? `&auth_error=${encodeURIComponent(code)}` : ""}`,
+    );
   }
 }

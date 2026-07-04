@@ -47,6 +47,8 @@ const AUTH_ERROR_LABELS: Record<string, string> = {
   access_denied: "Odmówiono dostępu. Zatwierdź wszystkie uprawnienia przy kolejnej próbie.",
   no_code: "Nie otrzymano kodu autoryzacji od Google.",
   redirect_uri_mismatch: "Niezgodność adresu przekierowania. Sprawdź konfigurację OAuth.",
+  invalid_grant:
+    "Kod autoryzacji wygasł lub został już użyty. Kliknij Połącz z Google jeszcze raz, bez cofania się w przeglądarce.",
 };
 
 function StatusBanner() {
