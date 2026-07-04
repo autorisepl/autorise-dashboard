@@ -2,6 +2,7 @@
 
 import {
   AlertTriangle,
+  ArrowDown,
   Check,
   CheckCircle2,
   ChevronDown,
@@ -19,12 +20,15 @@ import {
   X,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import type { GoogleTaskList } from "@/app/api/google/tasks/route";
 import type { PipelineClientDetailed } from "@/app/api/notion/pipeline/route";
 import { KalkulatorRoi } from "@/components/kalkulator/KalkulatorRoi";
+import { DecisionDiagram } from "@/components/scripts/DecisionDiagram";
+import { NextStepArrow } from "@/components/scripts/NextStepArrow";
 import { formatPhone } from "@/lib/format/phone";
 import { DISCOVERY_STATUSES, OBJECTIONS_D, STEPS_D } from "@/lib/scripts/discovery";
 import { GROUP_COLORS, MESSAGES_DATA } from "@/lib/scripts/messages";
-import type { ScriptLine } from "@/lib/scripts/types";
+import type { DecisionOption, ScriptLine } from "@/lib/scripts/types";
 import { objectionColor } from "@/lib/scripts/types";
 
 // ── Helpers ───────────────────────────────────────────────────────────
@@ -37,6 +41,11 @@ function toVocative(name: string): string {
   if (first.endsWith("ek") && first.length > 3) return first.slice(0, -2) + "ku";
   if (first.endsWith("a") && first.length > 2) return first.slice(0, -1) + "o";
   return first;
+}
+
+function findStepLabelD(stepId: string): string {
+  const step = STEPS_D.find((s) => s.id === stepId);
+  return step ? `${step.nr} ${step.label}` : stepId;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -140,11 +149,15 @@ function ScriptStep({
   fill,
   onCopy,
   copiedId,
+  onJump,
+  onDecisionSelect,
 }: {
   step: (typeof STEPS_D)[0];
   fill: (t: string) => string;
   onCopy: (id: string, text: string) => void;
   copiedId: string | null;
+  onJump: (stepId: string) => void;
+  onDecisionSelect: (option: DecisionOption) => void;
 }) {
   const [open, setOpen] = useState(true);
 
@@ -160,6 +173,7 @@ function ScriptStep({
 
   return (
     <div
+      id={`step-${step.id}`}
       style={{
         marginBottom: 8,
         border: "1px solid #E5E5EA",
@@ -167,6 +181,26 @@ function ScriptStep({
         overflow: "hidden",
       }}
     >
+      {(step.decision || step.nextStepId) && (
+        <div
+          style={{
+            fontFamily: "var(--font-sans)",
+            fontSize: 10,
+            color: "var(--text-tertiary)",
+            padding: "5px 14px",
+            background: "#FAFAFA",
+            borderBottom: "1px solid #E5E5EA",
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+          }}
+        >
+          <ArrowDown size={10} />
+          {step.decision
+            ? `Dalej: ${step.decision.options.map((o) => o.trigger).join(" / ")}`
+            : `Dalej: ${findStepLabelD(step.nextStepId!)}`}
+        </div>
+      )}
       <div
         onClick={() => setOpen((p) => !p)}
         style={{
@@ -257,22 +291,45 @@ function ScriptStep({
                   <Check size={12} color={LINE_COLOR[line.t]} strokeWidth={2} />
                 )}
               </div>
-              <span
-                style={{
-                  fontFamily: "var(--font-sans)",
-                  fontSize: 13,
-                  lineHeight: 1.55,
-                  color: LINE_COLOR[line.t],
-                  flex: 1,
-                }}
-              >
-                {fill(line.text)}
-              </span>
+              <div style={{ flex: 1 }}>
+                {(Array.isArray(line.text) ? line.text : [line.text]).map((paragraph, pi) => (
+                  <p
+                    key={pi}
+                    style={{
+                      margin: pi === 0 ? 0 : "6px 0 0 0",
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 13,
+                      lineHeight: 1.55,
+                      color: LINE_COLOR[line.t],
+                    }}
+                  >
+                    {fill(paragraph)}
+                  </p>
+                ))}
+                {line.t === "say" && line.cel && (
+                  <div
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 11,
+                      color: "var(--text-tertiary)",
+                      fontStyle: "italic",
+                      marginTop: 2,
+                      paddingLeft: 8,
+                      borderLeft: "2px solid var(--border)",
+                    }}
+                  >
+                    Cel: {line.cel}
+                  </div>
+                )}
+              </div>
               {line.t === "say" && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    onCopy(`${step.id}-${li}`, line.text);
+                    onCopy(
+                      `${step.id}-${li}`,
+                      Array.isArray(line.text) ? line.text.join(" ") : line.text,
+                    );
                   }}
                   style={{
                     flexShrink: 0,
@@ -298,6 +355,12 @@ function ScriptStep({
               )}
             </div>
           ))}
+          {step.decision && (
+            <DecisionDiagram decision={step.decision} onSelect={onDecisionSelect} />
+          )}
+          {!step.decision && step.nextStepId && (
+            <NextStepArrow label="Dalej" onJump={() => onJump(step.nextStepId!)} />
+          )}
         </div>
       )}
     </div>
@@ -967,14 +1030,62 @@ function PrezentacjaSection({ client }: { client: PipelineClientDetailed | null 
 
 // ── Dalsze kroki Discovery ────────────────────────────────────────────
 
+const DALSZE_KROKI_DISCOVERY_LABELS: Record<"fathom" | "brief" | "agent3" | "closing", string> = {
+  fathom: "Fathom włączony przed spotkaniem",
+  brief: "Brief Agenta 02 przeczytany",
+  agent3: "Prezentacja zaktualizowana przez Agenta 03",
+  closing: "Closing i cena zamknięte na tym spotkaniu",
+};
+
 function DalszeKrokiDiscovery({ client }: { client: PipelineClientDetailed | null }) {
   const [checks, setChecks] = useState({
     fathom: false,
     brief: false,
     agent3: false,
     closing: false,
+    taskReminder: false,
   });
   const toggle = (k: keyof typeof checks) => setChecks((p) => ({ ...p, [k]: !p[k] }));
+  const [taskLists, setTaskLists] = useState<GoogleTaskList[] | null>(null);
+  const [savingTask, setSavingTask] = useState(false);
+  const [taskSaved, setTaskSaved] = useState(false);
+  const [taskError, setTaskError] = useState<string | null>(null);
+
+  const saveDalszeKroki = async () => {
+    if (!checks.taskReminder) return;
+    setSavingTask(true);
+    setTaskError(null);
+    try {
+      let lists = taskLists;
+      if (!lists) {
+        const res = await fetch("/api/google/tasks");
+        const data = (await res.json()) as { lists?: GoogleTaskList[]; error?: string };
+        if (data.error || !data.lists) throw new Error(data.error ?? "Brak list zadań Google");
+        lists = data.lists;
+        setTaskLists(lists);
+      }
+      const targetList = lists.find((l) => l.title.toLowerCase().includes("autorise")) ?? lists[0];
+      if (!targetList) throw new Error("Brak dostępnej listy zadań");
+      const checkedLabels = (["fathom", "brief", "agent3", "closing"] as const)
+        .filter((k) => checks[k])
+        .map((k) => DALSZE_KROKI_DISCOVERY_LABELS[k]);
+      const title = `Discovery ${client?.kontakt || client?.firma || "klient"} — ${
+        checkedLabels.length ? checkedLabels.join(", ") : "follow-up"
+      }`;
+      const res = await fetch("/api/google/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ listId: targetList.id, title }),
+      });
+      if (!res.ok) throw new Error("Nie udało się zapisać zadania");
+      setTaskSaved(true);
+      setTimeout(() => setTaskSaved(false), 2500);
+    } catch (err) {
+      setTaskError(err instanceof Error ? err.message : "Błąd zapisu zadania");
+    } finally {
+      setSavingTask(false);
+    }
+  };
 
   const Chk = ({ k, label }: { k: keyof typeof checks; label: string }) => (
     <label
@@ -1012,11 +1123,41 @@ function DalszeKrokiDiscovery({ client }: { client: PipelineClientDetailed | nul
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        <Chk k="fathom" label="Fathom włączony przed spotkaniem" />
-        <Chk k="brief" label="Brief Agenta 02 przeczytany" />
-        <Chk k="agent3" label="Prezentacja zaktualizowana przez Agenta 03" />
-        <Chk k="closing" label="Closing i cena zamknięte na tym spotkaniu" />
+        <Chk k="fathom" label={DALSZE_KROKI_DISCOVERY_LABELS.fathom} />
+        <Chk k="brief" label={DALSZE_KROKI_DISCOVERY_LABELS.brief} />
+        <Chk k="agent3" label={DALSZE_KROKI_DISCOVERY_LABELS.agent3} />
+        <Chk k="closing" label={DALSZE_KROKI_DISCOVERY_LABELS.closing} />
+        <Chk k="taskReminder" label="Dodaj przypomnienie do Zadań" />
       </div>
+      {checks.taskReminder && (
+        <button
+          onClick={saveDalszeKroki}
+          disabled={savingTask}
+          style={{
+            padding: "9px 14px",
+            borderRadius: 8,
+            border: "1px solid var(--accent-border)",
+            background: "var(--accent-muted)",
+            cursor: savingTask ? "not-allowed" : "pointer",
+            fontSize: 13,
+            color: "var(--accent)",
+            fontFamily: "var(--font-sans)",
+            fontWeight: 500,
+          }}
+        >
+          {savingTask ? "Zapisywanie..." : "Zapisz dalsze kroki"}
+        </button>
+      )}
+      {taskSaved && (
+        <div style={{ fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--success-text)" }}>
+          Dodano do Zadań (Autorise)
+        </div>
+      )}
+      {taskError && (
+        <div style={{ fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--error)" }}>
+          {taskError}
+        </div>
+      )}
       <div style={{ height: 1, background: "#E5E5EA" }} />
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <a
@@ -1399,6 +1540,24 @@ export default function SprzedazPage() {
     });
   };
 
+  const jumpToStep = useCallback((stepId: string) => {
+    const el = document.getElementById(`step-${stepId}`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    el.style.transition = "box-shadow 250ms, background-color 250ms";
+    el.style.boxShadow = "0 0 0 2px var(--accent)";
+    el.style.backgroundColor = "rgba(10,132,255,0.08)";
+    setTimeout(() => {
+      el.style.boxShadow = "";
+      el.style.backgroundColor = "";
+    }, 2000);
+  }, []);
+
+  const handleDecisionSelect = useCallback(
+    (option: DecisionOption) => jumpToStep(option.goToStepId),
+    [jumpToStep],
+  );
+
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
       {/* Header */}
@@ -1489,6 +1648,8 @@ export default function SprzedazPage() {
                 fill={fill}
                 onCopy={onCopy}
                 copiedId={copiedId}
+                onJump={jumpToStep}
+                onDecisionSelect={handleDecisionSelect}
               />
             ))}
           </Card>
