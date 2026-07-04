@@ -37,9 +37,16 @@ export const STEPS_K: Step[] = [
       { t: "client", text: "Tak, słucham." },
       {
         t: "say",
-        text: "Dzień dobry, mówi Michał z Autorise. Dzwonię bo kilka dni temu wypełnił Pan formularz na Facebooku — dotyczył oszczędności czasu w firmie transportowej.",
+        text: [
+          "Dzień dobry, mówi Michał z Autorise.",
+          "Dzwonię bo kilka dni temu wypełnił Pan formularz na Facebooku — dotyczył oszczędności czasu w firmie transportowej.",
+        ],
       },
-      { t: "say", text: "Mam dla Pana dosłownie 2 minuty — czy to dobry moment?" },
+      {
+        t: "say",
+        text: "Mam dla Pana dosłownie 2 minuty — czy to dobry moment?",
+        cel: "Zdobyć zgodę na kontynuację rozmowy zanim przejdziesz do diagnozy",
+      },
       { t: "branch", text: "Tak: przejdź do kroku 2.1" },
       { t: "branch-bad", text: "Nie mam teraz czasu: obiekcja OK1 z panelu po prawej" },
       {
@@ -57,6 +64,7 @@ export const STEPS_K: Step[] = [
       {
         t: "say",
         text: "Żeby sprawdzić czy możemy w ogóle pomóc Pana firmie, muszę zadać kilka pytań o to jak teraz wygląda praca biura. Dobrze?",
+        cel: "Uzyskać zgodę na serię pytań kwalifikacyjnych, nie zaskoczyć klienta ich liczbą",
       },
       { t: "client", text: "Tak, proszę." },
     ],
@@ -70,6 +78,7 @@ export const STEPS_K: Step[] = [
       {
         t: "say",
         text: "Czy korzystacie z TMS-u, czyli programu do zarządzania flotą i zleceniami, na przykład coś w rodzaju Trans.eu, TIMOCOM, Sky-Pol, WEB-TRANS albo podobnego systemu?",
+        cel: "Ustalić punkt odniesienia — co już mają, żeby wiedzieć czego NIE trzeba zastępować",
       },
     ],
     decision: {
@@ -98,7 +107,11 @@ export const STEPS_K: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Pierwsza rzecz: zlecenie transportowe, dokument w którym zleceniodawca zamawia przewóz. Jak takie zlecenie do Was trafia?",
+        text: [
+          "Pierwsza rzecz: zlecenie transportowe, dokument w którym zleceniodawca zamawia przewóz.",
+          "Jak takie zlecenie do Was trafia?",
+        ],
+        cel: "Sprawdzić czy pierwszy etap (przyjęcie zlecenia) generuje pracę ręczną kwalifikującą się do email-parser",
       },
     ],
     decision: {
@@ -109,6 +122,7 @@ export const STEPS_K: Step[] = [
           action: "email-parser + document-ocr",
           goToStepId: "diagnoza_dokumenty_cmr",
           tone: "positive",
+          calculatorFlag: "zlecenia",
         },
         {
           trigger: "Bezpośrednio do TMS z giełdy",
@@ -133,7 +147,11 @@ export const STEPS_K: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Druga rzecz: list przewozowy CMR, dokument potwierdzający że towar został przyjęty i dostarczony. Po kursie, jak CMR wraca do Was?",
+        text: [
+          "Druga rzecz: list przewozowy CMR, dokument potwierdzający że towar został przyjęty i dostarczony.",
+          "Po kursie, jak CMR wraca do Was?",
+        ],
+        cel: "Sprawdzić czy dokumenty po kursie wymagają ręcznego przepisywania — document-ocr",
       },
     ],
     decision: {
@@ -144,12 +162,14 @@ export const STEPS_K: Step[] = [
           action: "document-ocr, klasyczny przypadek",
           goToStepId: "diagnoza_dokumenty_pod",
           tone: "positive",
+          calculatorFlag: "cmr",
         },
         {
           trigger: "Zdjęcie na WhatsApp lub mailem",
           action: "document-ocr z telefonu kierowcy",
           goToStepId: "diagnoza_dokumenty_pod",
           tone: "neutral",
+          calculatorFlag: "cmr",
         },
         {
           trigger: "Elektroniczne, np. eCMR",
@@ -168,7 +188,10 @@ export const STEPS_K: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Trzecia rzecz: potwierdzenie dostawy, czyli podpis lub pieczątka odbiorcy na dokumencie, że towar dotarł w całości. Jak to u Was wygląda, kierowca przywozi podpisany papier, czy zostaje to tylko w formie zdjęcia?",
+        text: [
+          "Trzecia rzecz: potwierdzenie dostawy, czyli podpis lub pieczątka odbiorcy na dokumencie, że towar dotarł w całości.",
+          "Jak to u Was wygląda, kierowca przywozi podpisany papier, czy zostaje to tylko w formie zdjęcia?",
+        ],
       },
       {
         t: "note",
@@ -185,7 +208,11 @@ export const STEPS_K: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Czwarta rzecz: faktury, zarówno te które Wy wystawiacie zleceniodawcom za przewóz, jak i te które dostajecie od podwykonawców lub przewoźników zewnętrznych. Kto to sprawdza i wpisuje do systemu księgowego?",
+        text: [
+          "Czwarta rzecz: faktury, zarówno te które Wy wystawiacie zleceniodawcom za przewóz, jak i te które dostajecie od podwykonawców lub przewoźników zewnętrznych.",
+          "Kto to sprawdza i wpisuje do systemu księgowego?",
+        ],
+        cel: "Sprawdzić skalę pracy manualnej przy fakturach — kandydat na document-ocr",
       },
       {
         t: "note",
@@ -194,6 +221,7 @@ export const STEPS_K: Step[] = [
       {
         t: "say",
         text: "A czy pilnujecie ręcznie, które faktury od klientów są już opłacone a które nie, czy to ktoś sprawdza w systemie bankowym co jakiś czas?",
+        cel: "Sprawdzić czy istnieje systematyczna kontrola płatności — kandydat na payment-monitor",
       },
     ],
     decision: {
@@ -204,12 +232,14 @@ export const STEPS_K: Step[] = [
           action: "payment-monitor jako usprawnienie procesu",
           goToStepId: "diagnoza_dokumenty_status",
           tone: "neutral",
+          calculatorFlag: "faktury",
         },
         {
           trigger: "Nikt systematycznie nie pilnuje, 'jakoś to ogarniamy'",
           action: "Mocny sygnał bólu, zanotuj wprost",
           goToStepId: "diagnoza_dokumenty_status",
           tone: "warning",
+          calculatorFlag: "faktury",
         },
       ],
     },
@@ -223,6 +253,7 @@ export const STEPS_K: Step[] = [
       {
         t: "say",
         text: "Piąta rzecz, ostatnia: jak Pan sam, jako właściciel, sprawdza dziś status konkretnego zlecenia, czy trzeba zadzwonić do spedytora, czy widać to w systemie?",
+        cel: "Sprawdzić czy właściciel ma widoczność operacyjną bez dzwonienia — kandydat na whatsapp-alerts",
       },
       {
         t: "note",
@@ -239,7 +270,7 @@ export const STEPS_K: Step[] = [
     lines: [
       {
         t: "action",
-        text: "W kalkulatorze zaznacz checkboxy dokładnie na podstawie odpowiedzi z 2.3a-2.3e: zlecenie transportowe ręcznie (jeśli wariant A), CMR/dokumenty po kursie ręcznie (jeśli wariant A lub B), faktury i płatności ręcznie (jeśli wariant A lub B), brak widoczności statusu (jeśli właściciel musi dzwonić). Nie zaznaczaj niczego czego klient wprost nie potwierdził.",
+        text: "Kalkulator zaznaczył już checkboxy na żywo na podstawie kliknięć w krokach 2.3a-2.3e. Sprawdź w pasku nad skryptem czy wszystko co klient potwierdził faktycznie tam jest, zanim przejdziesz dalej.",
       },
     ],
     nextStepId: "diagnoza_icp_flota",
@@ -250,10 +281,15 @@ export const STEPS_K: Step[] = [
     label: "ICP: FLOTA I BIURO",
     tag: "PYTASZ",
     lines: [
-      { t: "say", text: "Ile pojazdów ma Pan teraz aktywnie?" },
+      {
+        t: "say",
+        text: "Ile pojazdów ma Pan teraz aktywnie?",
+        cel: "Zweryfikować orientacyjną skalę floty pod kątem ICP (10-150 pojazdów)",
+      },
       {
         t: "say",
         text: "Ile osób pracuje w biurze — mam na myśli osoby które zajmują się zleceniami, dokumentami, fakturami?",
+        cel: "Sprawdzić twardy próg ICP — poniżej 2 osób matematycznie nie osiągniemy 80h gwarancji",
       },
     ],
     decision: {
@@ -288,11 +324,18 @@ export const STEPS_K: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Panie [Imię], dziękuję za szczerą rozmowę. Powiem wprost: nasze rozwiązanie sprawdza się najlepiej przy biurach które mają co najmniej dwie osoby zajmujące się administracją, bo dopiero wtedy realnie da się odzyskać wystarczająco dużo czasu żeby to się opłacało. U Pana na ten moment tej skali jeszcze nie ma.",
+        text: [
+          "Panie [Imię], dziękuję za szczerą rozmowę.",
+          "Powiem wprost: nasze rozwiązanie sprawdza się najlepiej przy biurach które mają co najmniej dwie osoby zajmujące się administracją, bo dopiero wtedy realnie da się odzyskać wystarczająco dużo czasu żeby to się opłacało.",
+          "U Pana na ten moment tej skali jeszcze nie ma.",
+        ],
       },
       {
         t: "say",
-        text: "Nie chcę Panu sprzedawać czegoś co się nie zwróci. Jeśli firma urośnie i dojdzie druga osoba do biura, chętnie wrócę do rozmowy.",
+        text: [
+          "Nie chcę Panu sprzedawać czegoś co się nie zwróci.",
+          "Jeśli firma urośnie i dojdzie druga osoba do biura, chętnie wrócę do rozmowy.",
+        ],
       },
       {
         t: "say",
@@ -311,7 +354,11 @@ export const STEPS_K: Step[] = [
     label: "ICP: DECYDENT",
     tag: "PYTASZ",
     lines: [
-      { t: "say", text: "Jest Pan właścicielem firmy?" },
+      {
+        t: "say",
+        text: "Jest Pan właścicielem firmy?",
+        cel: "Ustalić czy rozmawiasz z osobą decyzyjną, żeby nie umówić spotkania bez sensu",
+      },
       {
         t: "note",
         text: "Jeśli nie jest właścicielem: 'Kto u Pana podejmuje decyzję o zakupie oprogramowania? Czy byłoby możliwe żebyśmy porozmawiali razem na spotkaniu?'",
@@ -345,6 +392,7 @@ export const STEPS_K: Step[] = [
       {
         t: "say",
         text: "Ile czasu dziennie biuro poświęca łącznie na tę ręczną robotę — wpisywanie, przepisywanie dokumentów, pilnowanie CMR?",
+        cel: "Zebrać dane do konkretnego, spersonalizowanego wyliczenia straty czasu i pieniędzy",
       },
       {
         t: "note",
@@ -352,7 +400,7 @@ export const STEPS_K: Step[] = [
       },
       {
         t: "action",
-        text: "Wpisz w kalkulator poniżej: liczbę osób z kroku 2.4 i godziny dziennie. Zaznacz rodzaje pracy z kroków 2.2 i 2.3.",
+        text: "Wpisz w kalkulator poniżej: liczbę osób z kroku 2.4 i godziny dziennie. Rodzaje pracy z kroków 2.3a-2.3e są już zaznaczone automatycznie.",
       },
     ],
     nextStepId: "diagnoza_liczba",
@@ -369,7 +417,15 @@ export const STEPS_K: Step[] = [
       },
       {
         t: "say",
-        text: "Na podstawie tego co Pan powiedział — Pana biuro traci [WYNIK Z KALKULATORA] godzin miesięcznie na ręcznej pracy. To wartość [WARTOŚĆ PLN] złotych miesięcznie.",
+        text: [
+          "Na podstawie tego co Pan powiedział — Pana biuro traci [WYNIK Z KALKULATORA] godzin miesięcznie na ręcznej pracy.",
+          "To wartość [WARTOŚĆ PLN] złotych miesięcznie.",
+        ],
+      },
+      {
+        t: "say",
+        text: "Nie każdą z tych godzin da się zautomatyzować w stu procentach, bo część to rozmowy z klientami i decyzje. Realistycznie mówimy o 75 do 85 procentach tego czasu, czyli [WYNIK × 0.8] godzin miesięcznie wracających do biura.",
+        cel: "Budować wiarygodność przez uczciwość — nie obiecywać więcej niż realnie możliwe",
       },
     ],
     nextStepId: "diagnoza_czas",
@@ -382,35 +438,40 @@ export const STEPS_K: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Gdyby te [LICZBA Z KALKULATORA] godzin miesięcznie wróciły do biura — co by Pan z nimi zrobił?",
+        text: "Gdyby te [LICZBA Z KALKULATORA] godzin miesięcznie wróciły do biura, co by Pan z nimi zrobił?",
+        cel: "Sprawić żeby klient sam nazwał korzyść — silniej przekonuje niż gdybyś to Ty powiedział",
       },
+      { t: "client", text: "[odpowiedź]" },
     ],
     decision: {
       question: "Jak zareagował klient?",
       options: [
         {
-          trigger: "Odpowiada konkretnie (więcej zleceń, mniej błędów)",
-          action: "Potwierdź, gotowy materiał do Kroku 3",
+          trigger: "Odpowiada konkretnie",
+          action: "Więcej zleceń, mniej błędów, szybsza obsługa, mniej nadgodzin",
           goToStepId: "spotkanie",
           tone: "positive",
         },
         {
-          trigger: "Milczy / 'nie wiem, nie myślałem o tym'",
-          action: "Podpowiedz: więcej zleceń, mniej błędów, szybsza obsługa, mniej nadgodzin",
+          trigger: "Milczy, 'nie wiem, nie myślałem'",
+          action:
+            "Powiedz: 'Rozumiem, chodzi o inne rzeczy niż redukcja etatów. Na przykład więcej zleceń przy tej samej ekipie, mniej błędów w dokumentach, szybsza obsługa klientów, mniej nadgodzin dla zespołu. Który z tych kierunków jest dla Pana teraz ważny?'",
           goToStepId: "spotkanie",
           tone: "neutral",
         },
         {
-          trigger: "Reaguje obronnie ('i tak nie zwolnię pracowników')",
-          action: "Uspokój: nie chodzi o zwalnianie, tylko odciążenie zespołu",
+          trigger: "Reaguje obronnie, 'i tak nie zwolnię pracowników'",
+          action:
+            "Powiedz: 'Jasne, nie chodzi o zwalnianie nikogo. Chodzi o to, żeby ten sam zespół miał więcej przestrzeni na obsługę klientów zamiast tonąć w papierach. Czy to jest coś co miałoby dla Pana znaczenie?'",
           goToStepId: "spotkanie",
           tone: "warning",
         },
         {
           trigger: "Przeskakuje od razu do pytania o cenę",
-          action: "Nie walcz, przejdź do Kroku 3, zanotuj brak odpowiedzi na Discovery",
+          action:
+            "Nie walcz z tym, przejdź dalej normalnie, zanotuj że pytanie o korzyść nie padło",
           goToStepId: "spotkanie",
-          tone: "warning",
+          tone: "neutral",
         },
       ],
     },
@@ -424,12 +485,18 @@ export const STEPS_K: Step[] = [
       { t: "note", text: "Używaj po 2 nieudanych próbach ukazania bólu. Nie sprzedawaj na siłę." },
       {
         t: "say",
-        text: "Słyszę że u Pana to działa sprawnie. Nie chcę zajmować Pana czasu. Czy jest jakiś aspekt logistyki gdzie czujecie że traci się czas lub robi się za dużo ręcznie?",
+        text: [
+          "Słyszę że u Pana to działa sprawnie. Nie chcę zajmować Pana czasu.",
+          "Czy jest jakiś aspekt logistyki gdzie czujecie że traci się czas lub robi się za dużo ręcznie?",
+        ],
       },
       { t: "client", text: "Nie, wszystko gra." },
       {
         t: "say",
-        text: "Rozumiem. W takim razie prawdopodobnie nie jesteśmy teraz dla siebie. Mogę zadzwonić za kilka miesięcy gdy się coś zmieni — czy to ma sens?",
+        text: [
+          "Rozumiem. W takim razie prawdopodobnie nie jesteśmy teraz dla siebie.",
+          "Mogę zadzwonić za kilka miesięcy gdy się coś zmieni — czy to ma sens?",
+        ],
       },
       {
         t: "note",
@@ -445,7 +512,10 @@ export const STEPS_K: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Na podstawie tego co Pan powiedział — myślę że możemy Pana firmie realnie pomóc. Mam propozycję: 45-minutowe spotkanie przez internet — pokażę jak dokładnie wygląda automatyzacja dla firmy o tej skali, z Pana liczbami.",
+        text: [
+          "Na podstawie tego co Pan powiedział — myślę że możemy Pana firmie realnie pomóc.",
+          "Mam propozycję: 45-minutowe spotkanie przez internet — pokażę jak dokładnie wygląda automatyzacja dla firmy o tej skali, z Pana liczbami.",
+        ],
       },
       {
         t: "say",
@@ -454,7 +524,10 @@ export const STEPS_K: Step[] = [
       { t: "client", text: "[proponuje termin]" },
       {
         t: "say",
-        text: "Świetnie. Wyślę Panu link do rezerwacji przez Calendly — proszę wybrać dokładny termin który Panu odpowiada. Dostanie Pan też automatyczne przypomnienie SMS dzień przed.",
+        text: [
+          "Świetnie. Wyślę Panu link do rezerwacji przez Calendly — proszę wybrać dokładny termin który Panu odpowiada.",
+          "Dostanie Pan też automatyczne przypomnienie SMS dzień przed.",
+        ],
       },
       { t: "action", text: "Wyślij link Calendly natychmiast po rozmowie. Nie 'zaraz' — teraz." },
       {
