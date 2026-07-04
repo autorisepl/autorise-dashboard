@@ -2,11 +2,13 @@
 
 import {
   AlertTriangle,
+  ArrowDown,
   Check,
   CheckCircle2,
   ChevronDown,
   Copy,
   FileText,
+  Lock,
   MessageSquare,
   Phone,
   RefreshCw,
@@ -15,13 +17,14 @@ import {
   X,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import type { GoogleTaskList } from "@/app/api/google/tasks/route";
 import type { PipelineClientDetailed } from "@/app/api/notion/pipeline/route";
 import { DecisionDiagram } from "@/components/scripts/DecisionDiagram";
 import { NextStepArrow } from "@/components/scripts/NextStepArrow";
 import { formatPhone } from "@/lib/format/phone";
 import { ICP_RULES, OBJECTIONS_K, STEPS_K } from "@/lib/scripts/kwalifikacyjna";
 import { GROUP_COLORS, MESSAGES_DATA } from "@/lib/scripts/messages";
-import type { ScriptLine } from "@/lib/scripts/types";
+import type { DecisionOption, ScriptLine } from "@/lib/scripts/types";
 import { objectionColor } from "@/lib/scripts/types";
 
 // ── Helpers ──────────────────────────────────────────────────────────
@@ -34,6 +37,11 @@ function toVocative(name: string): string {
   if (first.endsWith("ek") && first.length > 3) return first.slice(0, -2) + "ku";
   if (first.endsWith("a") && first.length > 2) return first.slice(0, -1) + "o";
   return first;
+}
+
+function findStepLabel(stepId: string): string {
+  const step = STEPS_K.find((s) => s.id === stepId);
+  return step ? `${step.nr} ${step.label}` : stepId;
 }
 
 // ── Line colors ───────────────────────────────────────────────────────
@@ -120,6 +128,70 @@ function Card({
   );
 }
 
+// ── Kalkulator (na żywo) — pasek narastających flag z decyzji 2.3a-2.3e ──
+
+const FLAG_SOURCE: Record<string, { label: string; nr: string }> = {
+  zlecenia: { label: "Wpisywanie zleceń", nr: "2.3a" },
+  cmr: { label: "CMR / POD", nr: "2.3b" },
+  faktury: { label: "Faktury", nr: "2.3d" },
+};
+
+function CalculatorFlagsBar({ flags }: { flags: Record<string, boolean> }) {
+  const active = Object.keys(flags).filter((k) => flags[k]);
+  if (active.length === 0) return null;
+  return (
+    <div
+      style={{
+        position: "sticky",
+        top: 0,
+        zIndex: 5,
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        flexWrap: "wrap",
+        padding: "8px 12px",
+        marginBottom: 8,
+        borderRadius: 8,
+        border: "1px solid rgba(10,132,255,0.18)",
+        background: "rgba(10,132,255,0.05)",
+      }}
+    >
+      <span
+        style={{
+          fontFamily: "var(--font-sans)",
+          fontSize: 10,
+          fontWeight: 700,
+          color: "var(--accent)",
+          textTransform: "uppercase",
+          letterSpacing: "0.06em",
+        }}
+      >
+        Kalkulator (na żywo):
+      </span>
+      {active.map((k) => {
+        const src = FLAG_SOURCE[k];
+        return (
+          <span
+            key={k}
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 11,
+              color: "var(--text-primary)",
+              padding: "3px 8px",
+              borderRadius: 20,
+              background: "#fff",
+              border: "1px solid #E5E5EA",
+            }}
+          >
+            {src?.label ?? k}
+            {src ? ` (${src.nr})` : ""}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
 // ── Inline kalkulator wbudowany w skrypt ─────────────────────────────
 
 const PRACA_TYPES = [
@@ -130,18 +202,32 @@ const PRACA_TYPES = [
   { id: "inne", label: "Inne dokumenty" },
 ] as const;
 
-function ScriptKalkulator({ clientName }: { clientName: string }) {
+function ScriptKalkulator({
+  clientName,
+  autoFlags,
+}: {
+  clientName: string;
+  autoFlags: Record<string, boolean>;
+}) {
   const [osoby, setOsoby] = useState(2);
   const [godziny, setGodziny] = useState(3);
-  const [selected, setSelected] = useState<Set<string>>(new Set(["zlecenia", "cmr", "faktury"]));
+  const [manualSelected, setManualSelected] = useState<Set<string>>(
+    new Set(["zlecenia", "cmr", "faktury"]),
+  );
 
-  const toggle = (id: string) =>
-    setSelected((prev) => {
+  const isLocked = (id: string) => Boolean(autoFlags[id]);
+  const isOn = (id: string) => isLocked(id) || manualSelected.has(id);
+  const selected = new Set(PRACA_TYPES.map((pt) => pt.id).filter((id) => isOn(id)));
+
+  const toggle = (id: string) => {
+    if (isLocked(id)) return;
+    setManualSelected((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
       return next;
     });
+  };
 
   const miesiecznieH = osoby * godziny * 22;
   const miesieczniePLN = miesiecznieH * 50;
@@ -287,11 +373,16 @@ function ScriptKalkulator({ clientName }: { clientName: string }) {
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
             {PRACA_TYPES.map((pt) => {
               const on = selected.has(pt.id);
+              const locked = isLocked(pt.id);
               return (
                 <button
                   key={pt.id}
                   onClick={() => toggle(pt.id)}
+                  disabled={locked}
                   style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 4,
                     padding: "5px 10px",
                     borderRadius: 20,
                     border: on ? "1px solid var(--accent)" : "1px solid #E5E5EA",
@@ -300,15 +391,31 @@ function ScriptKalkulator({ clientName }: { clientName: string }) {
                     fontFamily: "var(--font-sans)",
                     fontSize: 11,
                     fontWeight: on ? 600 : 400,
-                    cursor: "pointer",
+                    cursor: locked ? "default" : "pointer",
                     transition: "all 120ms",
                   }}
                 >
+                  {locked && <Lock size={9} />}
                   {pt.label}
                 </button>
               );
             })}
           </div>
+          {PRACA_TYPES.some((pt) => isLocked(pt.id)) && (
+            <div
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 10,
+                color: "var(--text-tertiary)",
+                fontStyle: "italic",
+              }}
+            >
+              Zaznaczone automatycznie:{" "}
+              {PRACA_TYPES.filter((pt) => isLocked(pt.id))
+                .map((pt) => `${pt.label} (${FLAG_SOURCE[pt.id]?.nr ?? pt.id})`)
+                .join(", ")}
+            </div>
+          )}
         </div>
 
         {/* Wynik */}
@@ -416,6 +523,7 @@ function ScriptStep({
   onCopy,
   copiedId,
   onJump,
+  onDecisionSelect,
   children,
 }: {
   step: (typeof STEPS_K)[0];
@@ -424,6 +532,7 @@ function ScriptStep({
   onCopy: (id: string, text: string) => void;
   copiedId: string | null;
   onJump: (stepId: string) => void;
+  onDecisionSelect: (option: DecisionOption) => void;
   children?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(true);
@@ -448,6 +557,26 @@ function ScriptStep({
         overflow: "hidden",
       }}
     >
+      {(step.decision || step.nextStepId) && (
+        <div
+          style={{
+            fontFamily: "var(--font-sans)",
+            fontSize: 10,
+            color: "var(--text-tertiary)",
+            padding: "5px 14px",
+            background: "#FAFAFA",
+            borderBottom: "1px solid #E5E5EA",
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+          }}
+        >
+          <ArrowDown size={10} />
+          {step.decision
+            ? `Dalej: ${step.decision.options.map((o) => o.trigger).join(" / ")}`
+            : `Dalej: ${findStepLabel(step.nextStepId!)}`}
+        </div>
+      )}
       <div
         onClick={() => setOpen((p) => !p)}
         style={{
@@ -549,22 +678,45 @@ function ScriptStep({
                   <Check size={12} color={LINE_COLOR[line.t]} strokeWidth={2} />
                 )}
               </div>
-              <span
-                style={{
-                  fontFamily: "var(--font-sans)",
-                  fontSize: 13,
-                  lineHeight: 1.55,
-                  color: LINE_COLOR[line.t],
-                  flex: 1,
-                }}
-              >
-                {fill(line.text)}
-              </span>
+              <div style={{ flex: 1 }}>
+                {(Array.isArray(line.text) ? line.text : [line.text]).map((paragraph, pi) => (
+                  <p
+                    key={pi}
+                    style={{
+                      margin: pi === 0 ? 0 : "6px 0 0 0",
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 13,
+                      lineHeight: 1.55,
+                      color: LINE_COLOR[line.t],
+                    }}
+                  >
+                    {fill(paragraph)}
+                  </p>
+                ))}
+                {line.t === "say" && line.cel && (
+                  <div
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 11,
+                      color: "var(--text-tertiary)",
+                      fontStyle: "italic",
+                      marginTop: 2,
+                      paddingLeft: 8,
+                      borderLeft: "2px solid var(--border)",
+                    }}
+                  >
+                    Cel: {line.cel}
+                  </div>
+                )}
+              </div>
               {line.t === "say" && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    onCopy(`${step.id}-${li}`, line.text);
+                    onCopy(
+                      `${step.id}-${li}`,
+                      Array.isArray(line.text) ? line.text.join(" ") : line.text,
+                    );
                   }}
                   style={{
                     flexShrink: 0,
@@ -592,7 +744,9 @@ function ScriptStep({
               )}
             </div>
           ))}
-          {step.decision && <DecisionDiagram decision={step.decision} onJump={onJump} />}
+          {step.decision && (
+            <DecisionDiagram decision={step.decision} onSelect={onDecisionSelect} />
+          )}
           {!step.decision && step.nextStepId && (
             <NextStepArrow label="Dalej" onJump={() => onJump(step.nextStepId!)} />
           )}
@@ -1018,9 +1172,54 @@ function IcpPanel() {
 
 const CALENDLY_URL = "https://calendly.com/autorise";
 
+const DALSZE_KROKI_LABELS: Record<"calendly" | "sms", string> = {
+  calendly: "Link Calendly wysłany",
+  sms: "SMS potwierdzający wysłany",
+};
+
 function DalszeKroki({ client }: { client: PipelineClientDetailed | null }) {
-  const [checks, setChecks] = useState({ calendly: false, sms: false });
+  const [checks, setChecks] = useState({ calendly: false, sms: false, taskReminder: false });
   const toggle = (k: keyof typeof checks) => setChecks((p) => ({ ...p, [k]: !p[k] }));
+  const [taskLists, setTaskLists] = useState<GoogleTaskList[] | null>(null);
+  const [savingTask, setSavingTask] = useState(false);
+  const [taskSaved, setTaskSaved] = useState(false);
+  const [taskError, setTaskError] = useState<string | null>(null);
+
+  const saveDalszeKroki = async () => {
+    if (!checks.taskReminder) return;
+    setSavingTask(true);
+    setTaskError(null);
+    try {
+      let lists = taskLists;
+      if (!lists) {
+        const res = await fetch("/api/google/tasks");
+        const data = (await res.json()) as { lists?: GoogleTaskList[]; error?: string };
+        if (data.error || !data.lists) throw new Error(data.error ?? "Brak list zadań Google");
+        lists = data.lists;
+        setTaskLists(lists);
+      }
+      const targetList = lists.find((l) => l.title.toLowerCase().includes("autorise")) ?? lists[0];
+      if (!targetList) throw new Error("Brak dostępnej listy zadań");
+      const checkedLabels = (["calendly", "sms"] as const)
+        .filter((k) => checks[k])
+        .map((k) => DALSZE_KROKI_LABELS[k]);
+      const title = `Kwalifikacja ${client?.kontakt || client?.firma || "klient"} — ${
+        checkedLabels.length ? checkedLabels.join(", ") : "follow-up"
+      }`;
+      const res = await fetch("/api/google/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ listId: targetList.id, title }),
+      });
+      if (!res.ok) throw new Error("Nie udało się zapisać zadania");
+      setTaskSaved(true);
+      setTimeout(() => setTaskSaved(false), 2500);
+    } catch (err) {
+      setTaskError(err instanceof Error ? err.message : "Błąd zapisu zadania");
+    } finally {
+      setSavingTask(false);
+    }
+  };
 
   const Chk = ({ k, label }: { k: keyof typeof checks; label: string }) => (
     <label
@@ -1058,9 +1257,39 @@ function DalszeKroki({ client }: { client: PipelineClientDetailed | null }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        <Chk k="calendly" label="Link Calendly wysłany" />
-        <Chk k="sms" label="SMS potwierdzający wysłany" />
+        <Chk k="calendly" label={DALSZE_KROKI_LABELS.calendly} />
+        <Chk k="sms" label={DALSZE_KROKI_LABELS.sms} />
+        <Chk k="taskReminder" label="Dodaj przypomnienie do Zadań" />
       </div>
+      {checks.taskReminder && (
+        <button
+          onClick={saveDalszeKroki}
+          disabled={savingTask}
+          style={{
+            padding: "9px 14px",
+            borderRadius: 8,
+            border: "1px solid var(--accent-border)",
+            background: "var(--accent-muted)",
+            cursor: savingTask ? "not-allowed" : "pointer",
+            fontSize: 13,
+            color: "var(--accent)",
+            fontFamily: "var(--font-sans)",
+            fontWeight: 500,
+          }}
+        >
+          {savingTask ? "Zapisywanie..." : "Zapisz dalsze kroki"}
+        </button>
+      )}
+      {taskSaved && (
+        <div style={{ fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--success-text)" }}>
+          Dodano do Zadań (Autorise)
+        </div>
+      )}
+      {taskError && (
+        <div style={{ fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--error)" }}>
+          {taskError}
+        </div>
+      )}
       <div style={{ height: 1, background: "#E5E5EA" }} />
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <a
@@ -1468,6 +1697,7 @@ export default function KwalifikacjaPage() {
   const [vocative, setVocative] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [note, setNote] = useState("");
+  const [calculatorFlags, setCalculatorFlags] = useState<Record<string, boolean>>({});
 
   const fetchClients = useCallback(async () => {
     setLoading(true);
@@ -1518,12 +1748,24 @@ export default function KwalifikacjaPage() {
     const el = document.getElementById(`step-${stepId}`);
     if (!el) return;
     el.scrollIntoView({ behavior: "smooth", block: "start" });
-    el.style.transition = "background-color 200ms";
-    el.style.backgroundColor = "rgba(10,132,255,0.10)";
+    el.style.transition = "box-shadow 250ms, background-color 250ms";
+    el.style.boxShadow = "0 0 0 2px var(--accent)";
+    el.style.backgroundColor = "rgba(10,132,255,0.08)";
     setTimeout(() => {
+      el.style.boxShadow = "";
       el.style.backgroundColor = "";
-    }, 1200);
+    }, 2000);
   }, []);
+
+  const handleDecisionSelect = useCallback(
+    (option: DecisionOption) => {
+      if (option.calculatorFlag) {
+        setCalculatorFlags((prev) => ({ ...prev, [option.calculatorFlag!]: true }));
+      }
+      jumpToStep(option.goToStepId);
+    },
+    [jumpToStep],
+  );
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
@@ -1604,6 +1846,7 @@ export default function KwalifikacjaPage() {
         {/* Main: script + roi + dalsze kroki */}
         <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px", background: "#F5F5F7" }}>
           <Card title="Skrypt kwalifikacyjny">
+            <CalculatorFlagsBar flags={calculatorFlags} />
             {STEPS_K.map((step, index) => (
               <ScriptStep
                 key={step.id}
@@ -1613,9 +1856,13 @@ export default function KwalifikacjaPage() {
                 onCopy={onCopy}
                 copiedId={copiedId}
                 onJump={jumpToStep}
+                onDecisionSelect={handleDecisionSelect}
               >
                 {step.hasCalculator && (
-                  <ScriptKalkulator clientName={selected?.kontakt || selected?.firma || ""} />
+                  <ScriptKalkulator
+                    clientName={selected?.kontakt || selected?.firma || ""}
+                    autoFlags={calculatorFlags}
+                  />
                 )}
               </ScriptStep>
             ))}
