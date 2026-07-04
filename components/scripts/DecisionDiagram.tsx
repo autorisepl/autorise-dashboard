@@ -1,20 +1,23 @@
 "use client";
 
 import { ChevronRight } from "lucide-react";
-import type { Decision } from "@/lib/scripts/types";
+import type { Decision, DecisionOption } from "@/lib/scripts/types";
 
 interface DecisionDiagramProps {
   decision: Decision;
-  onJump: (stepId: string) => void;
+  onSelect: (option: DecisionOption) => void;
 }
 
-const TONE_STYLES: Record<"neutral" | "positive" | "warning", { border: string; bg: string; accent: string }> = {
+const TONE_STYLES: Record<
+  "neutral" | "positive" | "warning",
+  { border: string; bg: string; accent: string }
+> = {
   neutral: { border: "var(--border)", bg: "var(--bg-card)", accent: "var(--text-secondary)" },
   positive: { border: "var(--success)", bg: "rgba(52,199,89,0.06)", accent: "var(--success)" },
   warning: { border: "var(--warning)", bg: "rgba(255,149,0,0.06)", accent: "var(--warning)" },
 };
 
-export function DecisionDiagram({ decision, onJump }: DecisionDiagramProps) {
+export function DecisionDiagram({ decision, onSelect }: DecisionDiagramProps) {
   return (
     <div
       style={{
@@ -43,7 +46,7 @@ export function DecisionDiagram({ decision, onJump }: DecisionDiagramProps) {
           return (
             <button
               key={i}
-              onClick={() => onJump(opt.goToStepId)}
+              onClick={() => onSelect(opt)}
               style={{
                 display: "flex",
                 alignItems: "center",

@@ -2,7 +2,8 @@ export type ScriptLineType = "say" | "client" | "note" | "action" | "branch" | "
 
 export interface ScriptLine {
   t: ScriptLineType;
-  text: string;
+  text: string | string[];
+  cel?: string;
 }
 
 export interface DecisionOption {
@@ -10,6 +11,7 @@ export interface DecisionOption {
   action?: string;
   goToStepId: string;
   tone?: "neutral" | "positive" | "warning";
+  calculatorFlag?: string;
 }
 
 export interface Decision {
