@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import type { PipelineClientDetailed } from "@/app/api/notion/pipeline/route";
+import { DecisionDiagram } from "@/components/scripts/DecisionDiagram";
+import { NextStepArrow } from "@/components/scripts/NextStepArrow";
 import { formatPhone } from "@/lib/format/phone";
 import { ICP_RULES, OBJECTIONS_K, STEPS_K } from "@/lib/scripts/kwalifikacyjna";
 import { GROUP_COLORS, MESSAGES_DATA } from "@/lib/scripts/messages";
@@ -131,9 +133,7 @@ const PRACA_TYPES = [
 function ScriptKalkulator({ clientName }: { clientName: string }) {
   const [osoby, setOsoby] = useState(2);
   const [godziny, setGodziny] = useState(3);
-  const [selected, setSelected] = useState<Set<string>>(
-    new Set(["zlecenia", "cmr", "faktury"]),
-  );
+  const [selected, setSelected] = useState<Set<string>>(new Set(["zlecenia", "cmr", "faktury"]));
 
   const toggle = (id: string) =>
     setSelected((prev) => {
@@ -411,15 +411,19 @@ function ScriptKalkulator({ clientName }: { clientName: string }) {
 
 function ScriptStep({
   step,
+  index,
   fill,
   onCopy,
   copiedId,
+  onJump,
   children,
 }: {
   step: (typeof STEPS_K)[0];
+  index: number;
   fill: (t: string) => string;
   onCopy: (id: string, text: string) => void;
   copiedId: string | null;
+  onJump: (stepId: string) => void;
   children?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(true);
@@ -436,6 +440,7 @@ function ScriptStep({
 
   return (
     <div
+      id={`step-${step.id}`}
       style={{
         marginBottom: 8,
         border: "1px solid #E5E5EA",
@@ -455,6 +460,24 @@ function ScriptStep({
           userSelect: "none",
         }}
       >
+        <span
+          style={{
+            width: 22,
+            height: 22,
+            borderRadius: "50%",
+            background: "var(--accent)",
+            color: "#fff",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontFamily: "var(--font-sans)",
+            fontSize: 11,
+            fontWeight: 700,
+            flexShrink: 0,
+          }}
+        >
+          {index + 1}
+        </span>
         <span
           style={{
             fontFamily: "var(--font-sans)",
@@ -569,6 +592,10 @@ function ScriptStep({
               )}
             </div>
           ))}
+          {step.decision && <DecisionDiagram decision={step.decision} onJump={onJump} />}
+          {!step.decision && step.nextStepId && (
+            <NextStepArrow label="Dalej" onJump={() => onJump(step.nextStepId!)} />
+          )}
           {children && (
             <div style={{ borderTop: "1px solid #E5E5EA", marginTop: 4, paddingTop: 10 }}>
               {children}
@@ -1487,6 +1514,17 @@ export default function KwalifikacjaPage() {
     });
   };
 
+  const jumpToStep = useCallback((stepId: string) => {
+    const el = document.getElementById(`step-${stepId}`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    el.style.transition = "background-color 200ms";
+    el.style.backgroundColor = "rgba(10,132,255,0.10)";
+    setTimeout(() => {
+      el.style.backgroundColor = "";
+    }, 1200);
+  }, []);
+
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
       {/* Header */}
@@ -1566,12 +1604,18 @@ export default function KwalifikacjaPage() {
         {/* Main: script + roi + dalsze kroki */}
         <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px", background: "#F5F5F7" }}>
           <Card title="Skrypt kwalifikacyjny">
-            {STEPS_K.map((step) => (
-              <ScriptStep key={step.id} step={step} fill={fill} onCopy={onCopy} copiedId={copiedId}>
+            {STEPS_K.map((step, index) => (
+              <ScriptStep
+                key={step.id}
+                step={step}
+                index={index}
+                fill={fill}
+                onCopy={onCopy}
+                copiedId={copiedId}
+                onJump={jumpToStep}
+              >
                 {step.hasCalculator && (
-                  <ScriptKalkulator
-                    clientName={selected?.kontakt || selected?.firma || ""}
-                  />
+                  <ScriptKalkulator clientName={selected?.kontakt || selected?.firma || ""} />
                 )}
               </ScriptStep>
             ))}

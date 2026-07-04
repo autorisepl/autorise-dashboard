@@ -5,6 +5,18 @@ export interface ScriptLine {
   text: string;
 }
 
+export interface DecisionOption {
+  trigger: string;
+  action?: string;
+  goToStepId: string;
+  tone?: "neutral" | "positive" | "warning";
+}
+
+export interface Decision {
+  question: string;
+  options: DecisionOption[];
+}
+
 export interface Step {
   id: string;
   nr: string;
@@ -13,6 +25,8 @@ export interface Step {
   duration?: string;
   lines: ScriptLine[];
   hasCalculator?: boolean;
+  decision?: Decision;
+  nextStepId?: string;
 }
 
 export interface Objection {

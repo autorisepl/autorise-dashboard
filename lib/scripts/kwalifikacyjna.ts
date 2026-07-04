@@ -71,16 +71,24 @@ export const STEPS_K: Step[] = [
         t: "say",
         text: "Czy korzystacie z TMS-u, czyli programu do zarządzania flotą i zleceniami, na przykład coś w rodzaju Trans.eu, TIMOCOM, Sky-Pol, WEB-TRANS albo podobnego systemu?",
       },
-      {
-        t: "note",
-        text: "Jeśli klient poda inną nazwę programu, zaakceptuj ją, nie poprawiaj, zanotuj nazwę dosłownie. Jeśli mówi że nie ma żadnego programu i wszystko idzie przez Excela, WhatsApp albo telefon, to też jest ważna informacja, zapisz to jako 'brak TMS'.",
-      },
-      {
-        t: "say",
-        text: "Rozumiem że macie [nazwa TMS]. Teraz zapytam o konkretne rzeczy, jedna po drugiej, żeby dokładnie zobaczyć gdzie mimo tego programu ktoś nadal robi coś ręcznie.",
-      },
-      { t: "branch", text: "Klient odpowiedział: przejdź do kroku 2.3a Zlecenie transportowe" },
     ],
+    decision: {
+      question: "Co odpowiedział klient?",
+      options: [
+        {
+          trigger: "Ma TMS, podał nazwę",
+          action: "Zanotuj nazwę dosłownie",
+          goToStepId: "diagnoza_dokumenty_zlecenie",
+          tone: "positive",
+        },
+        {
+          trigger: "Brak programu, Excel/telefon",
+          action: "Zapisz jako 'brak TMS'",
+          goToStepId: "diagnoza_dokumenty_zlecenie",
+          tone: "neutral",
+        },
+      ],
+    },
   },
   {
     id: "diagnoza_dokumenty_zlecenie",
@@ -90,23 +98,32 @@ export const STEPS_K: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Pierwsza rzecz: zlecenie transportowe, czyli dokument w którym zleceniodawca zamawia u Was przewóz i podaje trasę, towar, terminy. Jak takie zlecenie do Was trafia, mailem, przez program, telefonicznie?",
+        text: "Pierwsza rzecz: zlecenie transportowe, dokument w którym zleceniodawca zamawia przewóz. Jak takie zlecenie do Was trafia?",
       },
-      {
-        t: "note",
-        text: "Wariant A, klient mówi że zlecenie przychodzi mailem w PDF lub jako zdjęcie: to jest typowy przypadek dla email-parser i document-ocr, klient ręcznie przepisuje dane z tego pliku do swojego systemu lub Excela.",
-      },
-      {
-        t: "note",
-        text: "Wariant B, klient mówi że zlecenie wchodzi bezpośrednio do TMS przez integrację z giełdą transportową: to znaczy że ten konkretny etap jest już zautomatyzowany, nie licz go do kalkulatora, ale dopytaj czy dane z tego zlecenia i tak trzeba gdzieś ręcznie przepisać, np. do systemu księgowego.",
-      },
-      {
-        t: "note",
-        text: "Wariant C, klient nie rozumie pytania lub miesza to ze zleceniem na kierowcę: doprecyzuj, 'mam na myśli dokument od klienta zamawiającego transport, nie polecenie wyjazdu dla kierowcy'.",
-      },
-      { t: "client", text: "[opisuje]" },
-      { t: "branch", text: "Zanotowane: przejdź do kroku 2.3b List przewozowy CMR" },
     ],
+    decision: {
+      question: "Jak zlecenie trafia do biura?",
+      options: [
+        {
+          trigger: "Mailem, PDF lub zdjęcie",
+          action: "email-parser + document-ocr",
+          goToStepId: "diagnoza_dokumenty_cmr",
+          tone: "positive",
+        },
+        {
+          trigger: "Bezpośrednio do TMS z giełdy",
+          action: "Etap już zautomatyzowany, dopytaj o dalsze przepisywanie",
+          goToStepId: "diagnoza_dokumenty_cmr",
+          tone: "neutral",
+        },
+        {
+          trigger: "Klient nie rozumie / miesza z poleceniem dla kierowcy",
+          action: "Doprecyzuj: 'dokument od klienta, nie polecenie wyjazdu'",
+          goToStepId: "diagnoza_dokumenty_zlecenie",
+          tone: "warning",
+        },
+      ],
+    },
   },
   {
     id: "diagnoza_dokumenty_cmr",
@@ -116,23 +133,32 @@ export const STEPS_K: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Druga rzecz: list przewozowy, czyli CMR, to dokument który kierowca ma przy sobie podczas kursu i który potwierdza że towar został przyjęty do przewozu i dostarczony. Po zakończonym kursie, jak taki CMR trafia do Was z powrotem, kierowca przywozi papier, robi zdjęcie, skanuje?",
+        text: "Druga rzecz: list przewozowy CMR, dokument potwierdzający że towar został przyjęty i dostarczony. Po kursie, jak CMR wraca do Was?",
       },
-      {
-        t: "note",
-        text: "Wariant A, papier fizyczny który ktoś w biurze musi przepisać do systemu lub podpiąć do faktury ręcznie: to jest document-ocr, klasyczny przypadek.",
-      },
-      {
-        t: "note",
-        text: "Wariant B, zdjęcie na WhatsApp lub mailem, ktoś je odbiera i zapisuje ręcznie w odpowiednim miejscu: też document-ocr, tylko inny kanał wejścia, zapytaj czy chcą to zautomatyzować z poziomu zdjęcia z telefonu kierowcy.",
-      },
-      {
-        t: "note",
-        text: "Wariant C, klient mówi że nie używa fizycznych CMR bo wszystko jest elektroniczne, np. eCMR: zanotuj to, to inny profil klienta, mniej papieru, ale sprawdź czy dane z eCMR i tak trzeba ręcznie przenieść do rozliczeń.",
-      },
-      { t: "client", text: "[opisuje]" },
-      { t: "branch", text: "Zanotowane: przejdź do kroku 2.3c Potwierdzenie dostawy" },
     ],
+    decision: {
+      question: "Jak CMR wraca do biura?",
+      options: [
+        {
+          trigger: "Papier fizyczny",
+          action: "document-ocr, klasyczny przypadek",
+          goToStepId: "diagnoza_dokumenty_pod",
+          tone: "positive",
+        },
+        {
+          trigger: "Zdjęcie na WhatsApp lub mailem",
+          action: "document-ocr z telefonu kierowcy",
+          goToStepId: "diagnoza_dokumenty_pod",
+          tone: "neutral",
+        },
+        {
+          trigger: "Elektroniczne, np. eCMR",
+          action: "Inny profil klienta, sprawdź czy dane i tak trzeba przenieść ręcznie",
+          goToStepId: "diagnoza_dokumenty_pod",
+          tone: "warning",
+        },
+      ],
+    },
   },
   {
     id: "diagnoza_dokumenty_pod",
@@ -148,9 +174,8 @@ export const STEPS_K: Step[] = [
         t: "note",
         text: "To jest zwykle ten sam dokument co CMR, podpisany przez odbiorcę na miejscu rozładunku, w Polsce rzadko traktowany jako osobny formularz. Jeśli klient rozróżnia CMR i osobne potwierdzenie dostawy (zdarza się przy niektórych zleceniodawcach, np. sieciach handlowych z własnym drukiem), zapytaj o to jako osobną rzecz i zanotuj osobno.",
       },
-      { t: "client", text: "[opisuje]" },
-      { t: "branch", text: "Zanotowane: przejdź do kroku 2.3d Faktury i rozliczenia" },
     ],
+    nextStepId: "diagnoza_dokumenty_faktura",
   },
   {
     id: "diagnoza_dokumenty_faktura",
@@ -164,24 +189,30 @@ export const STEPS_K: Step[] = [
       },
       {
         t: "note",
-        text: "Wariant A, jedna osoba ręcznie sprawdza faktury i wpisuje dane do księgowości lub arkusza: payment-monitor plus document-ocr, sprawdź ile miesięcznie takich faktur jest po obu stronach (wystawione i otrzymane).",
+        text: "Wariant A, jedna osoba ręcznie sprawdza faktury i wpisuje dane do księgowości lub arkusza: sprawdź ile miesięcznie takich faktur jest po obu stronach (wystawione i otrzymane). Wariant B, księgowa zewnętrzna lub biuro rachunkowe: dopytaj kto w firmie przygotowuje dane dla księgowej, to zwykle ta sama osoba co reszta administracji.",
       },
-      {
-        t: "note",
-        text: "Wariant B, mają księgową zewnętrzną lub biuro rachunkowe które się tym zajmuje: to nie znaczy że nie ma pracy manualnej po stronie klienta, dopytaj kto w firmie przygotowuje dane i dokumenty dla księgowej, to zwykle ta sama osoba co reszta administracji.",
-      },
-      { t: "client", text: "[opisuje]" },
       {
         t: "say",
         text: "A czy pilnujecie ręcznie, które faktury od klientów są już opłacone a które nie, czy to ktoś sprawdza w systemie bankowym co jakiś czas?",
       },
-      {
-        t: "note",
-        text: "To jest bezpośrednie pytanie o payment-monitor. Jeśli klient mówi że nikt tego nie pilnuje systematycznie tylko 'jakoś to ogarniamy', to jest mocny sygnał bólu, zanotuj to wprost.",
-      },
-      { t: "client", text: "[opisuje]" },
-      { t: "branch", text: "Zanotowane: przejdź do kroku 2.3e Widoczność statusu zlecenia" },
     ],
+    decision: {
+      question: "Jak wygląda monitorowanie płatności?",
+      options: [
+        {
+          trigger: "Ktoś regularnie sprawdza w banku",
+          action: "payment-monitor jako usprawnienie procesu",
+          goToStepId: "diagnoza_dokumenty_status",
+          tone: "neutral",
+        },
+        {
+          trigger: "Nikt systematycznie nie pilnuje, 'jakoś to ogarniamy'",
+          action: "Mocny sygnał bólu, zanotuj wprost",
+          goToStepId: "diagnoza_dokumenty_status",
+          tone: "warning",
+        },
+      ],
+    },
   },
   {
     id: "diagnoza_dokumenty_status",
@@ -197,9 +228,8 @@ export const STEPS_K: Step[] = [
         t: "note",
         text: "To jest pytanie o whatsapp-alerts i widoczność operacyjną. Jeśli właściciel musi dzwonić lub pytać osobiście żeby wiedzieć co się dzieje, to jest osobny, ważny ból, niezależny od dokumentów, zanotuj osobno.",
       },
-      { t: "client", text: "[opisuje]" },
-      { t: "branch", text: "Zanotowane: przejdź do kroku 2.3f Podsumowanie do kalkulatora" },
     ],
+    nextStepId: "diagnoza_podsumowanie_dokumentow",
   },
   {
     id: "diagnoza_podsumowanie_dokumentow",
@@ -211,8 +241,8 @@ export const STEPS_K: Step[] = [
         t: "action",
         text: "W kalkulatorze zaznacz checkboxy dokładnie na podstawie odpowiedzi z 2.3a-2.3e: zlecenie transportowe ręcznie (jeśli wariant A), CMR/dokumenty po kursie ręcznie (jeśli wariant A lub B), faktury i płatności ręcznie (jeśli wariant A lub B), brak widoczności statusu (jeśli właściciel musi dzwonić). Nie zaznaczaj niczego czego klient wprost nie potwierdził.",
       },
-      { t: "branch", text: "Zaznaczone: przejdź do kroku 2.4 ICP: flota i biuro" },
     ],
+    nextStepId: "diagnoza_icp_flota",
   },
   {
     id: "diagnoza_icp_flota",
@@ -221,25 +251,34 @@ export const STEPS_K: Step[] = [
     tag: "PYTASZ",
     lines: [
       { t: "say", text: "Ile pojazdów ma Pan teraz aktywnie?" },
-      { t: "client", text: "[liczba]" },
       {
         t: "say",
         text: "Ile osób pracuje w biurze — mam na myśli osoby które zajmują się zleceniami, dokumentami, fakturami?",
       },
-      { t: "client", text: "[liczba]" },
-      {
-        t: "note",
-        text: "ICP minimum: 2 osoby w biurze. Jeśli 1 osoba: zapytaj czy jest sezonowość lub plan zatrudnienia. Poniżej progu po weryfikacji: uprzejmie zakończ rozmowę.",
-      },
-      {
-        t: "branch",
-        text: "ICP biura spełnione lub do dalszej weryfikacji: przejdź do kroku 2.5 ICP: decydent",
-      },
-      {
-        t: "branch-bad",
-        text: "Poniżej progu (1 osoba w biurze, brak planu zatrudnienia w najbliższych miesiącach): przejdź do zakończenia poniżej.",
-      },
     ],
+    decision: {
+      question: "Ile osób w biurze?",
+      options: [
+        {
+          trigger: "2 lub więcej osób",
+          action: "ICP spełnione",
+          goToStepId: "diagnoza_icp_decydent",
+          tone: "positive",
+        },
+        {
+          trigger: "1 osoba, plan zatrudnienia",
+          action: "Kontynuuj ostrożnie",
+          goToStepId: "diagnoza_icp_decydent",
+          tone: "warning",
+        },
+        {
+          trigger: "1 osoba, brak planu",
+          action: "Zakończ rozmowę",
+          goToStepId: "zakonczenie_ponizej_progu",
+          tone: "warning",
+        },
+      ],
+    },
   },
   {
     id: "zakonczenie_ponizej_progu",
@@ -273,16 +312,28 @@ export const STEPS_K: Step[] = [
     tag: "PYTASZ",
     lines: [
       { t: "say", text: "Jest Pan właścicielem firmy?" },
-      { t: "client", text: "[Tak / Nie]" },
       {
         t: "note",
         text: "Jeśli nie jest właścicielem: 'Kto u Pana podejmuje decyzję o zakupie oprogramowania? Czy byłoby możliwe żebyśmy porozmawiali razem na spotkaniu?'",
       },
-      {
-        t: "branch",
-        text: "Decydent obecny lub zgoda na wspólne spotkanie: przejdź do kroku 2.6 Kalkulator ROI",
-      },
     ],
+    decision: {
+      question: "Czy jest właścicielem?",
+      options: [
+        {
+          trigger: "Tak, właściciel",
+          action: "Decydent obecny",
+          goToStepId: "diagnoza_kalkulator",
+          tone: "positive",
+        },
+        {
+          trigger: "Nie, ktoś inny decyduje",
+          action: "Zgoda na wspólne spotkanie",
+          goToStepId: "diagnoza_kalkulator",
+          tone: "warning",
+        },
+      ],
+    },
   },
   {
     id: "diagnoza_kalkulator",
@@ -295,7 +346,6 @@ export const STEPS_K: Step[] = [
         t: "say",
         text: "Ile czasu dziennie biuro poświęca łącznie na tę ręczną robotę — wpisywanie, przepisywanie dokumentów, pilnowanie CMR?",
       },
-      { t: "client", text: "[podaje godziny]" },
       {
         t: "note",
         text: "Jeśli mówi 'nie wiem': 'Może pół godziny, może godzinę na osobę? Jak to wygląda przy X osobach w biurze?'",
@@ -305,6 +355,7 @@ export const STEPS_K: Step[] = [
         text: "Wpisz w kalkulator poniżej: liczbę osób z kroku 2.4 i godziny dziennie. Zaznacz rodzaje pracy z kroków 2.2 i 2.3.",
       },
     ],
+    nextStepId: "diagnoza_liczba",
   },
   {
     id: "diagnoza_liczba",
@@ -320,8 +371,8 @@ export const STEPS_K: Step[] = [
         t: "say",
         text: "Na podstawie tego co Pan powiedział — Pana biuro traci [WYNIK Z KALKULATORA] godzin miesięcznie na ręcznej pracy. To wartość [WARTOŚĆ PLN] złotych miesięcznie.",
       },
-      { t: "branch", text: "Liczba przekazana: przejdź do kroku 2.8 Co zrobiłby z tymi godzinami" },
     ],
+    nextStepId: "diagnoza_czas",
   },
   {
     id: "diagnoza_czas",
@@ -333,25 +384,36 @@ export const STEPS_K: Step[] = [
         t: "say",
         text: "Gdyby te [LICZBA Z KALKULATORA] godzin miesięcznie wróciły do biura — co by Pan z nimi zrobił?",
       },
-      { t: "client", text: "[odpowiedź]" },
-      {
-        t: "note",
-        text: "Wariant A, klient odpowiada konkretnie (więcej zleceń, mniej błędów, szybsza obsługa): potwierdź i przejdź dalej, to jest gotowy materiał do Kroku 3.",
-      },
-      {
-        t: "note",
-        text: "Wariant B, klient milczy lub mówi 'nie wiem, nie myślałem o tym': 'Rozumiem, chodzi o inne rzeczy niż redukcja etatów. Na przykład: więcej zleceń przy tej samej ekipie, mniej błędów w dokumentach, szybsza obsługa klientów, mniej nadgodzin dla zespołu. Który z tych kierunków jest dla Pana teraz ważny?'",
-      },
-      {
-        t: "note",
-        text: "Wariant C, klient reaguje obronnie ('i tak nie zwolnię pracowników', boi się że pytanie zmierza do redukcji etatów): 'Jasne, nie chodzi o zwalnianie nikogo. Chodzi o to, żeby ten sam zespół miał więcej przestrzeni na obsługę klientów zamiast tonąć w papierach. Czy to jest coś co miałoby dla Pana znaczenie?'",
-      },
-      {
-        t: "note",
-        text: "Wariant D, klient przeskakuje od razu do pytania o cenę żeby uciec od tematu: nie walcz z tym, przejdź do Kroku 3 normalnie, ale zanotuj w Pipeline że pytanie o korzyść czasu nie padło, może się przydać na Discovery.",
-      },
-      { t: "branch", text: "Odpowiedź uzyskana: przejdź do kroku 3 Spotkanie jako rozwiązanie" },
     ],
+    decision: {
+      question: "Jak zareagował klient?",
+      options: [
+        {
+          trigger: "Odpowiada konkretnie (więcej zleceń, mniej błędów)",
+          action: "Potwierdź, gotowy materiał do Kroku 3",
+          goToStepId: "spotkanie",
+          tone: "positive",
+        },
+        {
+          trigger: "Milczy / 'nie wiem, nie myślałem o tym'",
+          action: "Podpowiedz: więcej zleceń, mniej błędów, szybsza obsługa, mniej nadgodzin",
+          goToStepId: "spotkanie",
+          tone: "neutral",
+        },
+        {
+          trigger: "Reaguje obronnie ('i tak nie zwolnię pracowników')",
+          action: "Uspokój: nie chodzi o zwalnianie, tylko odciążenie zespołu",
+          goToStepId: "spotkanie",
+          tone: "warning",
+        },
+        {
+          trigger: "Przeskakuje od razu do pytania o cenę",
+          action: "Nie walcz, przejdź do Kroku 3, zanotuj brak odpowiedzi na Discovery",
+          goToStepId: "spotkanie",
+          tone: "warning",
+        },
+      ],
+    },
   },
   {
     id: "brak_bolu",
