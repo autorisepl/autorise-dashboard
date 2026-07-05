@@ -19,6 +19,7 @@ import {
 import { useCallback, useEffect, useState } from "react";
 import type { GoogleTaskList } from "@/app/api/google/tasks/route";
 import type { PipelineClientDetailed } from "@/app/api/notion/pipeline/route";
+import { ProgressBar, SectionLabelSmall, StepCard } from "@/components/dalsze-kroki/DalszeKrokiUI";
 import { DecisionDiagram } from "@/components/scripts/DecisionDiagram";
 import { NextStepArrow } from "@/components/scripts/NextStepArrow";
 import { formatPhone } from "@/lib/format/phone";
@@ -1172,21 +1173,26 @@ function IcpPanel() {
 
 const CALENDLY_URL = "https://calendly.com/autorise";
 
-const DALSZE_KROKI_LABELS: Record<"calendly" | "sms", string> = {
+const DALSZE_KROKI_LABELS: Record<"calendly" | "sms" | "pipeline", string> = {
   calendly: "Link Calendly wysłany",
   sms: "SMS potwierdzający wysłany",
+  pipeline: "Status zapisany w Pipeline",
 };
 
 function DalszeKroki({ client }: { client: PipelineClientDetailed | null }) {
-  const [checks, setChecks] = useState({ calendly: false, sms: false, taskReminder: false });
+  const [checks, setChecks] = useState({ calendly: false, sms: false, pipeline: false });
   const toggle = (k: keyof typeof checks) => setChecks((p) => ({ ...p, [k]: !p[k] }));
+  const [reminderOn, setReminderOn] = useState(false);
+  const [extraContext, setExtraContext] = useState("");
   const [taskLists, setTaskLists] = useState<GoogleTaskList[] | null>(null);
   const [savingTask, setSavingTask] = useState(false);
   const [taskSaved, setTaskSaved] = useState(false);
   const [taskError, setTaskError] = useState<string | null>(null);
 
+  const doneCount = Object.values(checks).filter(Boolean).length;
+  const totalCount = Object.keys(checks).length;
+
   const saveDalszeKroki = async () => {
-    if (!checks.taskReminder) return;
     setSavingTask(true);
     setTaskError(null);
     try {
@@ -1200,7 +1206,7 @@ function DalszeKroki({ client }: { client: PipelineClientDetailed | null }) {
       }
       const targetList = lists.find((l) => l.title.toLowerCase().includes("autorise")) ?? lists[0];
       if (!targetList) throw new Error("Brak dostępnej listy zadań");
-      const checkedLabels = (["calendly", "sms"] as const)
+      const checkedLabels = (["calendly", "sms", "pipeline"] as const)
         .filter((k) => checks[k])
         .map((k) => DALSZE_KROKI_LABELS[k]);
       const title = `Kwalifikacja ${client?.kontakt || client?.firma || "klient"} — ${
@@ -1209,7 +1215,11 @@ function DalszeKroki({ client }: { client: PipelineClientDetailed | null }) {
       const res = await fetch("/api/google/tasks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ listId: targetList.id, title }),
+        body: JSON.stringify({
+          listId: targetList.id,
+          title,
+          notes: extraContext.trim() || undefined,
+        }),
       });
       if (!res.ok) throw new Error("Nie udało się zapisać zadania");
       setTaskSaved(true);
@@ -1221,122 +1231,86 @@ function DalszeKroki({ client }: { client: PipelineClientDetailed | null }) {
     }
   };
 
-  const Chk = ({ k, label }: { k: keyof typeof checks; label: string }) => (
-    <label
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-        cursor: "pointer",
-        userSelect: "none",
-      }}
-    >
-      <div
-        onClick={() => toggle(k)}
-        style={{
-          width: 16,
-          height: 16,
-          borderRadius: 4,
-          border: `1.5px solid ${checks[k] ? "var(--accent)" : "#D1D1D6"}`,
-          background: checks[k] ? "var(--accent)" : "#fff",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexShrink: 0,
-          cursor: "pointer",
-        }}
-      >
-        {checks[k] && <Check size={10} color="#fff" strokeWidth={2.5} />}
-      </div>
-      <span style={{ fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--text-primary)" }}>
-        {label}
-      </span>
-    </label>
-  );
-
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        <Chk k="calendly" label={DALSZE_KROKI_LABELS.calendly} />
-        <Chk k="sms" label={DALSZE_KROKI_LABELS.sms} />
-        <Chk k="taskReminder" label="Dodaj przypomnienie do Zadań" />
-      </div>
-      {checks.taskReminder && (
-        <button
-          onClick={saveDalszeKroki}
-          disabled={savingTask}
-          style={{
-            padding: "9px 14px",
-            borderRadius: 8,
-            border: "1px solid var(--accent-border)",
-            background: "var(--accent-muted)",
-            cursor: savingTask ? "not-allowed" : "pointer",
-            fontSize: 13,
-            color: "var(--accent)",
-            fontFamily: "var(--font-sans)",
-            fontWeight: 500,
-          }}
-        >
-          {savingTask ? "Zapisywanie..." : "Zapisz dalsze kroki"}
-        </button>
-      )}
-      {taskSaved && (
-        <div style={{ fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--success-text)" }}>
-          Dodano do Zadań (Autorise)
+    <div style={{ display: "flex", flexDirection: "column" }}>
+      <ProgressBar doneCount={doneCount} totalCount={totalCount} />
+
+      <SectionLabelSmall>Teraz</SectionLabelSmall>
+      <StepCard
+        done={checks.calendly}
+        label={DALSZE_KROKI_LABELS.calendly}
+        onToggle={() => toggle("calendly")}
+        actionLabel="Otwórz"
+        onAction={() => window.open(CALENDLY_URL, "_blank", "noopener noreferrer")}
+      />
+      <StepCard done={checks.sms} label={DALSZE_KROKI_LABELS.sms} onToggle={() => toggle("sms")} />
+      <StepCard
+        done={checks.pipeline}
+        label={DALSZE_KROKI_LABELS.pipeline}
+        detail={client ? client.kontakt || client.firma : "wybierz klienta"}
+        onToggle={() => toggle("pipeline")}
+        actionLabel="Agent 01"
+        onAction={() => window.open("/agenci", "_blank")}
+      />
+
+      <div style={{ height: 1, background: "var(--border)", margin: "8px 0 12px" }} />
+
+      <SectionLabelSmall>Przypomnienie</SectionLabelSmall>
+      <StepCard
+        done={reminderOn}
+        label="Dodaj do Zadań"
+        onToggle={() => setReminderOn((p) => !p)}
+      />
+      {reminderOn && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: -2 }}>
+          <textarea
+            value={extraContext}
+            onChange={(e) => setExtraContext(e.target.value)}
+            placeholder="Dodatkowy kontekst do zadania (opcjonalnie)..."
+            style={{
+              minHeight: 60,
+              resize: "vertical",
+              fontFamily: "var(--font-sans)",
+              fontSize: 12,
+              color: "var(--text-primary)",
+              border: "1px solid var(--border)",
+              borderRadius: 8,
+              padding: "8px 10px",
+              outline: "none",
+              background: "var(--bg-card)",
+            }}
+          />
+          <button
+            onClick={saveDalszeKroki}
+            disabled={savingTask}
+            style={{
+              padding: "10px 14px",
+              borderRadius: 8,
+              border: "none",
+              background: "var(--accent)",
+              cursor: savingTask ? "not-allowed" : "pointer",
+              fontSize: 13,
+              color: "#fff",
+              fontFamily: "var(--font-sans)",
+              fontWeight: 600,
+            }}
+          >
+            {savingTask ? "Zapisywanie..." : "Zapisz przypomnienie"}
+          </button>
+          {taskSaved && (
+            <div
+              style={{ fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--success-text)" }}
+            >
+              Dodano do Zadań (Autorise)
+            </div>
+          )}
+          {taskError && (
+            <div style={{ fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--error)" }}>
+              {taskError}
+            </div>
+          )}
         </div>
       )}
-      {taskError && (
-        <div style={{ fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--error)" }}>
-          {taskError}
-        </div>
-      )}
-      <div style={{ height: 1, background: "#E5E5EA" }} />
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        <a
-          href={CALENDLY_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "9px 14px",
-            borderRadius: 8,
-            border: "1px solid #E5E5EA",
-            background: "#fff",
-            cursor: "pointer",
-            fontSize: 13,
-            color: "var(--text-primary)",
-            fontFamily: "var(--font-sans)",
-            textDecoration: "none",
-            fontWeight: 500,
-          }}
-        >
-          <Phone size={13} color="var(--accent)" />
-          Otwórz Calendly
-        </a>
-        <a
-          href="/agenci"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "9px 14px",
-            borderRadius: 8,
-            border: "1px solid var(--accent-border)",
-            background: "var(--accent-muted)",
-            cursor: "pointer",
-            fontSize: 13,
-            color: "var(--accent)",
-            fontFamily: "var(--font-sans)",
-            textDecoration: "none",
-            fontWeight: 500,
-          }}
-        >
-          <MessageSquare size={13} color="var(--accent)" />
-          Uruchom Agent 01 ({client ? client.kontakt || client.firma : "wybierz klienta"})
-        </a>
-      </div>
     </div>
   );
 }

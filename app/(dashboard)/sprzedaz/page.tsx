@@ -12,7 +12,6 @@ import {
   Loader2,
   MessageSquare,
   Monitor,
-  Phone,
   RefreshCw,
   Search,
   Target,
@@ -22,6 +21,7 @@ import {
 import { useCallback, useEffect, useState } from "react";
 import type { GoogleTaskList } from "@/app/api/google/tasks/route";
 import type { PipelineClientDetailed } from "@/app/api/notion/pipeline/route";
+import { ProgressBar, SectionLabelSmall, StepCard } from "@/components/dalsze-kroki/DalszeKrokiUI";
 import { KalkulatorRoi } from "@/components/kalkulator/KalkulatorRoi";
 import { DecisionDiagram } from "@/components/scripts/DecisionDiagram";
 import { NextStepArrow } from "@/components/scripts/NextStepArrow";
@@ -1043,16 +1043,19 @@ function DalszeKrokiDiscovery({ client }: { client: PipelineClientDetailed | nul
     brief: false,
     agent3: false,
     closing: false,
-    taskReminder: false,
   });
   const toggle = (k: keyof typeof checks) => setChecks((p) => ({ ...p, [k]: !p[k] }));
+  const [reminderOn, setReminderOn] = useState(false);
+  const [extraContext, setExtraContext] = useState("");
   const [taskLists, setTaskLists] = useState<GoogleTaskList[] | null>(null);
   const [savingTask, setSavingTask] = useState(false);
   const [taskSaved, setTaskSaved] = useState(false);
   const [taskError, setTaskError] = useState<string | null>(null);
 
+  const doneCount = Object.values(checks).filter(Boolean).length;
+  const totalCount = Object.keys(checks).length;
+
   const saveDalszeKroki = async () => {
-    if (!checks.taskReminder) return;
     setSavingTask(true);
     setTaskError(null);
     try {
@@ -1075,7 +1078,11 @@ function DalszeKrokiDiscovery({ client }: { client: PipelineClientDetailed | nul
       const res = await fetch("/api/google/tasks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ listId: targetList.id, title }),
+        body: JSON.stringify({
+          listId: targetList.id,
+          title,
+          notes: extraContext.trim() || undefined,
+        }),
       });
       if (!res.ok) throw new Error("Nie udało się zapisać zadania");
       setTaskSaved(true);
@@ -1087,123 +1094,120 @@ function DalszeKrokiDiscovery({ client }: { client: PipelineClientDetailed | nul
     }
   };
 
-  const Chk = ({ k, label }: { k: keyof typeof checks; label: string }) => (
-    <label
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-        cursor: "pointer",
-        userSelect: "none",
-      }}
-    >
-      <div
-        onClick={() => toggle(k)}
+  return (
+    <div style={{ display: "flex", flexDirection: "column" }}>
+      <ProgressBar doneCount={doneCount} totalCount={totalCount} />
+
+      <SectionLabelSmall>Teraz</SectionLabelSmall>
+      <StepCard
+        done={checks.fathom}
+        label={DALSZE_KROKI_DISCOVERY_LABELS.fathom}
+        onToggle={() => toggle("fathom")}
+      />
+      <StepCard
+        done={checks.brief}
+        label={DALSZE_KROKI_DISCOVERY_LABELS.brief}
+        onToggle={() => toggle("brief")}
+      />
+      <StepCard
+        done={checks.agent3}
+        label={DALSZE_KROKI_DISCOVERY_LABELS.agent3}
+        onToggle={() => toggle("agent3")}
+      />
+      <StepCard
+        done={checks.closing}
+        label={DALSZE_KROKI_DISCOVERY_LABELS.closing}
+        detail={client ? client.kontakt || client.firma : "wybierz klienta"}
+        onToggle={() => toggle("closing")}
+        actionLabel="Agent 04"
+        onAction={() => window.open("/agenci", "_blank")}
+      />
+
+      <div style={{ height: 1, background: "var(--border)", margin: "8px 0 12px" }} />
+
+      <SectionLabelSmall>Przypomnienie</SectionLabelSmall>
+      <StepCard
+        done={reminderOn}
+        label="Dodaj do Zadań"
+        onToggle={() => setReminderOn((p) => !p)}
+      />
+      {reminderOn && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: -2 }}>
+          <textarea
+            value={extraContext}
+            onChange={(e) => setExtraContext(e.target.value)}
+            placeholder="Dodatkowy kontekst do zadania (opcjonalnie)..."
+            style={{
+              minHeight: 60,
+              resize: "vertical",
+              fontFamily: "var(--font-sans)",
+              fontSize: 12,
+              color: "var(--text-primary)",
+              border: "1px solid var(--border)",
+              borderRadius: 8,
+              padding: "8px 10px",
+              outline: "none",
+              background: "var(--bg-card)",
+            }}
+          />
+          <button
+            onClick={saveDalszeKroki}
+            disabled={savingTask}
+            style={{
+              padding: "10px 14px",
+              borderRadius: 8,
+              border: "none",
+              background: "var(--accent)",
+              cursor: savingTask ? "not-allowed" : "pointer",
+              fontSize: 13,
+              color: "#fff",
+              fontFamily: "var(--font-sans)",
+              fontWeight: 600,
+            }}
+          >
+            {savingTask ? "Zapisywanie..." : "Zapisz przypomnienie"}
+          </button>
+          {taskSaved && (
+            <div
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 12,
+                color: "var(--success-text)",
+              }}
+            >
+              Dodano do Zadań (Autorise)
+            </div>
+          )}
+          {taskError && (
+            <div style={{ fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--error)" }}>
+              {taskError}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div style={{ height: 1, background: "var(--border)", margin: "12px 0 8px" }} />
+      <a
+        href="/pipeline"
         style={{
-          width: 16,
-          height: 16,
-          borderRadius: 4,
-          border: `1.5px solid ${checks[k] ? "var(--accent)" : "#D1D1D6"}`,
-          background: checks[k] ? "var(--accent)" : "#fff",
           display: "flex",
           alignItems: "center",
-          justifyContent: "center",
-          flexShrink: 0,
+          gap: 8,
+          padding: "9px 14px",
+          borderRadius: 8,
+          border: "1px solid var(--border)",
+          background: "transparent",
           cursor: "pointer",
+          fontSize: 13,
+          color: "var(--text-primary)",
+          fontFamily: "var(--font-sans)",
+          textDecoration: "none",
+          fontWeight: 500,
         }}
       >
-        {checks[k] && <Check size={10} color="#fff" strokeWidth={2.5} />}
-      </div>
-      <span style={{ fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--text-primary)" }}>
-        {label}
-      </span>
-    </label>
-  );
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        <Chk k="fathom" label={DALSZE_KROKI_DISCOVERY_LABELS.fathom} />
-        <Chk k="brief" label={DALSZE_KROKI_DISCOVERY_LABELS.brief} />
-        <Chk k="agent3" label={DALSZE_KROKI_DISCOVERY_LABELS.agent3} />
-        <Chk k="closing" label={DALSZE_KROKI_DISCOVERY_LABELS.closing} />
-        <Chk k="taskReminder" label="Dodaj przypomnienie do Zadań" />
-      </div>
-      {checks.taskReminder && (
-        <button
-          onClick={saveDalszeKroki}
-          disabled={savingTask}
-          style={{
-            padding: "9px 14px",
-            borderRadius: 8,
-            border: "1px solid var(--accent-border)",
-            background: "var(--accent-muted)",
-            cursor: savingTask ? "not-allowed" : "pointer",
-            fontSize: 13,
-            color: "var(--accent)",
-            fontFamily: "var(--font-sans)",
-            fontWeight: 500,
-          }}
-        >
-          {savingTask ? "Zapisywanie..." : "Zapisz dalsze kroki"}
-        </button>
-      )}
-      {taskSaved && (
-        <div style={{ fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--success-text)" }}>
-          Dodano do Zadań (Autorise)
-        </div>
-      )}
-      {taskError && (
-        <div style={{ fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--error)" }}>
-          {taskError}
-        </div>
-      )}
-      <div style={{ height: 1, background: "#E5E5EA" }} />
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        <a
-          href="/agenci"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "9px 14px",
-            borderRadius: 8,
-            border: "1px solid var(--accent-border)",
-            background: "var(--accent-muted)",
-            cursor: "pointer",
-            fontSize: 13,
-            color: "var(--accent)",
-            fontFamily: "var(--font-sans)",
-            textDecoration: "none",
-            fontWeight: 500,
-          }}
-        >
-          <Phone size={13} color="var(--accent)" />
-          Uruchom Agent 04 po Discovery (
-          {client ? client.kontakt || client.firma : "wybierz klienta"})
-        </a>
-        <a
-          href="/pipeline"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "9px 14px",
-            borderRadius: 8,
-            border: "1px solid #E5E5EA",
-            background: "transparent",
-            cursor: "pointer",
-            fontSize: 13,
-            color: "var(--text-primary)",
-            fontFamily: "var(--font-sans)",
-            textDecoration: "none",
-            fontWeight: 500,
-          }}
-        >
-          <Target size={13} color="var(--text-secondary)" />
-          Przejdź do Pipelinen
-        </a>
-      </div>
+        <Target size={13} color="var(--text-secondary)" />
+        Przejdź do Pipeline
+      </a>
     </div>
   );
 }
