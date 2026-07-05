@@ -32,8 +32,8 @@ export const STEPS_D: Step[] = [
       {
         t: "say",
         text: [
-          "Autorise to system automatyzacji dla biur spedycji.",
-          "Pracujemy głównie z firmami 10-150 pojazdów i odzyskujemy dla nich czas biura — średnio 80 godzin miesięcznie.",
+          "Pracujemy wyłącznie z firmami transportowymi, flota 10 do 150 pojazdów.",
+          "Za chwilę porozmawiamy o Pana konkretnej sytuacji i policzymy realną liczbę dla Pana firmy, nie średnią.",
         ],
       },
     ],
@@ -102,12 +102,48 @@ export const STEPS_D: Step[] = [
         cel: "Zmapować proces operacyjny krok po kroku, żeby trafnie dobrać moduły do pitchu",
       },
       { t: "client", text: "[odpowiedź]" },
+    ],
+    decision: {
+      question: "Jaki profil zleceń opisał klient?",
+      options: [
+        {
+          trigger: "Głównie nowe zlecenia mailem",
+          action:
+            "Dopytaj: 'Ile takich maili dziennie, i co się z nimi dzieje krok po kroku?' — kandydat na email-parser",
+          goToStepId: "info_czas",
+          tone: "positive",
+        },
+        {
+          trigger: "Głównie stałe zlecenia, powtarzalne trasy",
+          action:
+            "Dopytaj: 'Skoro trasy są stałe, gdzie mimo to traci się czas — dokumenty, faktury, rozliczenia?' — kandydat na document-ocr i payment-monitor, nie email-parser",
+          goToStepId: "info_czas",
+          tone: "positive",
+        },
+        {
+          trigger: "Kilka rozłącznych systemów, dane nie łączą się",
+          action:
+            "Dopytaj: 'Jak dane z jednego systemu trafiają do drugiego, ktoś to ręcznie przepisuje?' — profil integracyjny, priorytet inny niż standardowe cztery moduły",
+          goToStepId: "info_czas",
+          tone: "warning",
+        },
+      ],
+    },
+  },
+  {
+    id: "info_czas",
+    nr: "2a",
+    label: "SKALA PROBLEMU",
+    tag: "PYTASZ",
+    lines: [
       {
         t: "say",
         text: "Ile osób jest zaangażowanych w ten proces i ile czasu to zajmuje łącznie?",
         cel: "Oszacować skalę problemu w godzinach i ludziach — wejście do kalkulatora ROI",
       },
+      { t: "client", text: "[odpowiedź]" },
     ],
+    nextStepId: "proby",
   },
   {
     id: "proby",
@@ -225,11 +261,16 @@ export const STEPS_D: Step[] = [
     tag: "MÓWISZ",
     lines: [
       {
+        t: "note",
+        text: "Jeśli wracasz tutaj po niskiej temperaturze po pitchu (nie pierwsze wejście), nie czytaj tej parafrazy identycznie jak za pierwszym razem. Skup się na tym co klient przed chwilą powiedział że nie przekonuje.",
+      },
+      {
         t: "say",
         text: [
           "Chcę się upewnić że dobrze rozumiem Pana sytuację.",
           "Proszę mnie poprawić jeśli coś pomylę.",
         ],
+        cel: "Uzyskać jawne potwierdzenie bólu przed pitchem — klient który potwierdza własny problem kupuje ideę, nie produkt",
       },
       {
         t: "say",
@@ -320,7 +361,8 @@ export const STEPS_D: Step[] = [
         },
         {
           trigger: "Poniżej 5",
-          action: "Wróć do parafrazy bólu",
+          action:
+            "Nie wracaj do tej samej parafrazy słowo w słowo. Powiedz: 'Widzę że coś z tego co pokazałem nie do końca trafia. Co konkretnie nie przekonuje?' Wysłuchaj, dopiero potem zdecyduj czy wracać do pitchu czy do ceny.",
           goToStepId: "parafraza",
           tone: "warning",
         },
@@ -336,18 +378,46 @@ export const STEPS_D: Step[] = [
       {
         t: "say",
         text: "Czy jest Pan osobą która podejmuje tę decyzję, czy potrzebujemy kogoś jeszcze?",
-        cel: "Ustalić decyzyjność przed przejściem do ceny, uniknąć pustego pitchu bez decydenta",
+        cel: "Ustalić decyzyjność przed przejściem do Commitment Question — uniknąć pustego pitchu bez decydenta",
       },
       { t: "client", text: "[odpowiedź]" },
       {
         t: "note",
-        text: "Jeśli 'muszę z żoną / wspólnikiem' — użyj obiekcji od2 lub od2b. Nie przechodź do ceny bez decydenta.",
+        text: "Jeśli 'muszę z żoną / wspólnikiem' — użyj obiekcji od2 lub od2b. Nie przechodź dalej bez decydenta.",
       },
       {
         t: "say",
-        text: "Jeśli zdecyduje się Pan dziś — możemy zacząć wdrożenie w tym tygodniu. Co Pan myśli?",
+        text: "Zanim przejdę do ceny, chcę zadać jedno pytanie. Jeżeli finanse okażą się akceptowalne, czy ten model współpracy rezonuje i widzi Pan siebie w tym rozwiązaniu?",
+        cel: "To jest właściwe Commitment Question, obowiązkowe przed każdą ceną — klient sam sobie sprzedaje odpowiedzią na kolejne pytanie",
       },
+      { t: "client", text: "[TAK / niepewny / NIE]" },
     ],
+    decision: {
+      question: "Jak odpowiedział klient?",
+      options: [
+        {
+          trigger: "TAK",
+          action:
+            "Zapytaj: 'A co spowodowało że Pan to powiedział?' Potem CISZA, czekasz, klient mówi sam. To najważniejszy moment całej rozmowy.",
+          goToStepId: "cena",
+          tone: "positive",
+        },
+        {
+          trigger: "Niepewny, waha się",
+          action:
+            "Zapytaj: 'Co konkretnie budzi wątpliwość?' Wróć do wartości z pitchu zanim pójdziesz dalej, nie przechodź do ceny z niepewnym klientem.",
+          goToStepId: "pitch",
+          tone: "warning",
+        },
+        {
+          trigger: "NIE",
+          action:
+            "Zapytaj wprost co musiałoby być inne. Jeśli odpowiedź wskazuje na brak dopasowania produktu, nie naciskaj na cenę, umów follow-up.",
+          goToStepId: "pitch",
+          tone: "warning",
+        },
+      ],
+    },
   },
   {
     id: "cena",
@@ -362,6 +432,7 @@ export const STEPS_D: Step[] = [
           "Plus 4 000 zł miesięcznie opieki.",
           "Gwarancja: jeśli w 30 dni nie odzyska Pan 80 godzin — zwrot 100% bez pytań.",
         ],
+        cel: "Podać konkretną liczbę i przetrzymać ciszę — pierwsza osoba która przerwie milczenie zwykle przegrywa negocjację",
       },
       { t: "action", text: "CISZA. Poczekaj. Nie wypełniaj ciszy." },
     ],
