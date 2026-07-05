@@ -9,7 +9,8 @@ export interface ScriptLine {
 export interface DecisionOption {
   trigger: string;
   action?: string;
-  goToStepId: string;
+  goToStepId?: string;
+  openObjectionId?: string;
   tone?: "neutral" | "positive" | "warning";
   calculatorFlag?: string;
 }

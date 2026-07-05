@@ -53,13 +53,31 @@ export const STEPS_K: Step[] = [
         text: "Ma Pan chwilę, dosłownie 2 minuty?",
         cel: "Zdobyć zgodę na kontynuację rozmowy zanim przejdziesz do diagnozy",
       },
-      { t: "branch", text: "Tak: przejdź do kroku 2" },
-      { t: "branch-bad", text: "Nie mam teraz czasu: obiekcja OK1 z panelu po prawej" },
-      {
-        t: "note",
-        text: "Jeśli brak odbioru: zadzwoń trzy razy o różnych porach. Po trzecim braku wyślij SMS z szablonu 'Brak odbioru po 3 próbach'.",
-      },
+      { t: "client", text: "[odpowiedź]" },
     ],
+    decision: {
+      question: "Co odpowiedział klient?",
+      options: [
+        {
+          trigger: "Tak, ma 2 minuty",
+          action: "Przejdź do diagnozy",
+          goToStepId: "diagnoza_otwarcie",
+          tone: "positive",
+        },
+        {
+          trigger: "Nie mam teraz czasu",
+          action: "Pokaż obiekcję OK1 z prawego panelu",
+          openObjectionId: "ok1",
+          tone: "warning",
+        },
+        {
+          trigger: "Brak odbioru (po 3 próbach)",
+          action: "Pokaż SMS do wysłania z prawego panelu",
+          openObjectionId: "ok6",
+          tone: "warning",
+        },
+      ],
+    },
   },
   {
     id: "diagnoza_otwarcie",
@@ -125,7 +143,8 @@ export const STEPS_K: Step[] = [
           tone: "warning",
         },
         {
-          trigger: "1 osoba w biurze, brak konkretnego planu zatrudnienia w najbliższych 3 miesiącach",
+          trigger:
+            "1 osoba w biurze, brak konkretnego planu zatrudnienia w najbliższych 3 miesiącach",
           action:
             "Przeczytaj: 'Dziękuję za szczerą rozmowę. Nasze rozwiązanie sprawdza się przy biurach z co najmniej dwiema osobami. U Pana tej skali jeszcze nie ma, nie chcę sprzedawać czegoś co się nie zwróci. Czy mogę zapisać kontakt i wrócić za około 3 miesiące?' Status: Niekwalifikowany. Jeśli zgoda na kontakt: dodaj datę re-engagement +90 dni.",
           goToStepId: "opener",

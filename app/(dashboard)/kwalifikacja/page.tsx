@@ -794,13 +794,15 @@ function ObjectionsPanel({
   fill,
   onCopy,
   copiedId,
+  openId,
+  setOpenId,
 }: {
   fill: (t: string) => string;
   onCopy: (id: string, text: string) => void;
   copiedId: string | null;
+  openId: string | null;
+  setOpenId: (id: string | null) => void;
 }) {
-  const [openId, setOpenId] = useState<string | null>(null);
-
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
       {OBJECTIONS_K.map((obj) => {
@@ -809,6 +811,7 @@ function ObjectionsPanel({
         return (
           <div
             key={obj.id}
+            id={`objection-${obj.id}`}
             style={{
               border: "1px solid #E5E5EA",
               borderLeft: `3px solid ${oc.accent}`,
@@ -1205,9 +1208,14 @@ const DALSZE_KROKI_LABELS: Record<"calendly" | "sms" | "pipeline", string> = {
   pipeline: "Uruchom Agenta 1 (ustawi status automatycznie)",
 };
 
+const smsPotwierdzajacyTekst = (clientName: string, dzien: string, godzina: string) =>
+  `Dzień dobry Panie ${clientName || "[Imię]"}, potwierdzam nasze spotkanie na ${dzien || "[dzień]"} o ${godzina || "[godzina]"}. Link do spotkania wyśle Panu Calendly na maila. Do usłyszenia.`;
+
 function DalszeKroki({ client }: { client: PipelineClientDetailed | null }) {
   const [checks, setChecks] = useState({ calendly: false, sms: false, pipeline: false });
   const toggle = (k: keyof typeof checks) => setChecks((p) => ({ ...p, [k]: !p[k] }));
+  const [smsExpanded, setSmsExpanded] = useState(false);
+  const [smsCopied, setSmsCopied] = useState(false);
   const [reminderOn, setReminderOn] = useState(false);
   const [extraContext, setExtraContext] = useState("");
   const [taskLists, setTaskLists] = useState<GoogleTaskList[] | null>(null);
@@ -1269,7 +1277,62 @@ function DalszeKroki({ client }: { client: PipelineClientDetailed | null }) {
         actionLabel="Otwórz"
         onAction={() => window.open(CALENDLY_URL, "_blank", "noopener noreferrer")}
       />
-      <StepCard done={checks.sms} label={DALSZE_KROKI_LABELS.sms} onToggle={() => toggle("sms")} />
+      <StepCard
+        done={checks.sms}
+        label={DALSZE_KROKI_LABELS.sms}
+        onToggle={() => toggle("sms")}
+        actionLabel={smsExpanded ? "Ukryj" : "Pokaż SMS"}
+        onAction={() => setSmsExpanded((p) => !p)}
+      />
+      {smsExpanded && (
+        <div
+          style={{
+            marginTop: -2,
+            marginBottom: 8,
+            padding: "10px 12px",
+            borderRadius: 8,
+            background: "#F5F5F7",
+            border: "1px solid #E5E5EA",
+          }}
+        >
+          <p
+            style={{
+              margin: "0 0 8px",
+              fontFamily: "var(--font-sans)",
+              fontSize: 12,
+              lineHeight: 1.55,
+              color: "var(--text-primary)",
+            }}
+          >
+            {smsPotwierdzajacyTekst(client?.kontakt?.split(" ")[0] ?? "", "", "")}
+          </p>
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText(
+                smsPotwierdzajacyTekst(client?.kontakt?.split(" ")[0] ?? "", "", ""),
+              );
+              setSmsCopied(true);
+              setTimeout(() => setSmsCopied(false), 1500);
+            }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
+              padding: "4px 10px",
+              borderRadius: 6,
+              border: "1px solid #E5E5EA",
+              background: "#fff",
+              cursor: "pointer",
+              fontFamily: "var(--font-sans)",
+              fontSize: 11,
+              color: smsCopied ? "var(--success-text)" : "var(--text-secondary)",
+            }}
+          >
+            {smsCopied ? <CheckCircle2 size={11} /> : <Copy size={11} />}
+            Kopiuj
+          </button>
+        </div>
+      )}
       <StepCard
         done={checks.pipeline}
         label={DALSZE_KROKI_LABELS.pipeline}
@@ -1348,28 +1411,33 @@ const SPECIAL_CASES = [
     id: "prev",
     label: "Klient był wcześniej na starym skrypcie",
     content: [
-      "Sprawdź Pipeline — czy ma notatkę z poprzedniej rozmowy.",
-      "Zapytaj na początku: 'Rozmawialiśmy już — czy sytuacja się zmieniła od tamtej rozmowy?'",
-      "Nie powtarzaj diagnozy jeśli ból jest potwierdzony — idź do ICP i zaproszenia.",
+      "Sprawdź w Pipeline notatkę z poprzedniej rozmowy — jakiej wersji skryptu wtedy używaliśmy, jaki był ból, czy była mowa o ICP.",
+      "Powiedz: 'Rozmawialiśmy już jakiś czas temu — chciałbym się upewnić że dobrze rozumiem obecną sytuację. Czy coś się zmieniło od naszej ostatniej rozmowy, czy temat wygląda podobnie?'",
+      "Jeśli sytuacja bez zmian i ból był już potwierdzony: nie powtarzaj pełnej diagnozy dokumentowej (2c-2g). Przejdź od razu do ICP (2a-2b) jeśli nie było wcześniej sprawdzone, potem prosto do kalkulatora (2i) używając starych informacji jako punktu wyjścia, z prośbą o potwierdzenie liczb.",
+      "Jeśli coś się zmieniło (np. przybyła flota, zmienił się TMS): przeprowadź diagnozę od nowa w tych konkretnych obszarach które się zmieniły, pomiń resztę.",
+      "Uruchom Agenta 1 w trybie weryfikacyjnym po rozmowie, żeby porównał starą kartę Pipeline z nową i wskazał rozbieżności w danych lub obliczeniach.",
     ],
   },
   {
     id: "nobrak",
     label: "Klient nie odbiera (3 próby)",
     content: [
-      "Wyślij SMS z szablonu 'Brak odbioru po 3 próbach'.",
-      "Zmień status na 'Nieaktywny (follow up)'.",
-      "Ustaw data re-engagement za 14 dni.",
+      "Próba 1 i 2: zadzwoń o różnych porach dnia, rano i po południu. Nie zostawiaj wiadomości głosowej.",
+      "Po trzeciej próbie: wyślij SMS z gotowym tekstem z prawego panelu, obiekcja OK6.",
+      "Zmień status klienta w Pipeline na 'Nieaktywny (follow up)'.",
+      "Ustaw datę re-engagement na 14 dni od ostatniej próby, nie później — leady z reklamy tracą temperaturę szybko, dłuższe odkładanie zwykle kończy się brakiem odpowiedzi w ogóle.",
+      "Jeśli klient odpisze na SMS w dowolnym momencie: zadzwoń w ciągu godziny, nie czekaj do zaplanowanej daty re-engagement.",
     ],
   },
   {
     id: "reeng",
-    label: "Klient wraca po re-engagement",
+    label: "Klient wraca po re-engagement (90 dni)",
     content: [
-      "Sprawdź notatkę z poprzedniej rozmowy w Pipeline.",
-      "Zacznij od: 'Rozmawialiśmy [kiedy] — czy sytuacja się zmieniła?'",
-      "Jeśli ból aktualny — skróć diagnozę i przejdź do ICP i zaproszenia.",
-      "Jeśli sytuacja niezmieniona — zakwalifikuj lub odrzuć.",
+      "Sprawdź w Pipeline pełną notatkę z poprzedniej rozmowy — ból, ICP, powód dla którego był wtedy 'Nieaktywny (follow up)' albo 'Niekwalifikowany'.",
+      "Otwórz rozmowę inaczej niż standardowy opener: 'Dzień dobry, rozmawialiśmy [orientacyjnie kiedy] o [konkretny ból z notatki]. Dzwonię sprawdzić czy temat jest nadal aktualny, czy coś się u Pana zmieniło.'",
+      "Jeśli klient był wcześniej poniżej progu ICP (np. 1 osoba w biurze): zapytaj wprost czy to się zmieniło, zanim przejdziesz do reszty. Jeśli nadal nie ma drugiej osoby, zakończ rozmowę tak jak w kroku 2a, nie inwestuj czasu w pełną diagnozę ponownie.",
+      "Jeśli klient był wcześniej 'Nieaktywny (follow up)' z konkretnym powodem (np. wdrażał inny system, miał zmianę biznesową w toku): zapytaj czy ten proces się zakończył, to naturalny punkt wejścia do rozmowy.",
+      "Jeśli ból jest wciąż aktualny i ICP spełnione: skróć diagnozę do potwierdzenia starych danych plus jednego pytania pogłębiającego, przejdź prosto do kalkulatora i zaproszenia na Discovery.",
     ],
   },
 ];
@@ -1714,10 +1782,14 @@ function RightPanel({
   fill,
   onCopy,
   copiedId,
+  openObjectionId,
+  setOpenObjectionId,
 }: {
   fill: (t: string) => string;
   onCopy: (id: string, text: string) => void;
   copiedId: string | null;
+  openObjectionId: string | null;
+  setOpenObjectionId: (id: string | null) => void;
 }) {
   return (
     <div
@@ -1732,7 +1804,13 @@ function RightPanel({
       }}
     >
       <Card title="Obiekcje kwalifikacja">
-        <ObjectionsPanel fill={fill} onCopy={onCopy} copiedId={copiedId} />
+        <ObjectionsPanel
+          fill={fill}
+          onCopy={onCopy}
+          copiedId={copiedId}
+          openId={openObjectionId}
+          setOpenId={setOpenObjectionId}
+        />
       </Card>
       <Card title="Frazy potwierdzające" collapsible defaultOpen={false}>
         <PhrasesPanel onCopy={onCopy} copiedId={copiedId} />
@@ -1757,6 +1835,7 @@ export default function KwalifikacjaPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [note, setNote] = useState("");
   const [calculatorFlags, setCalculatorFlags] = useState<Record<string, boolean>>({});
+  const [openObjectionId, setOpenObjectionId] = useState<string | null>(null);
   const [calcOsoby, setCalcOsoby] = useState(2);
   const [calcGodziny, setCalcGodziny] = useState(3);
   const [sprzedawcaImie, setSprzedawcaImie] = useState("Michał");
@@ -1840,14 +1919,34 @@ export default function KwalifikacjaPage() {
     }, 2000);
   }, []);
 
+  const jumpToObjection = useCallback((objectionId: string) => {
+    setOpenObjectionId(objectionId);
+    requestAnimationFrame(() => {
+      const el = document.getElementById(`objection-${objectionId}`);
+      if (!el) return;
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.style.transition = "box-shadow 250ms, background-color 250ms";
+      el.style.boxShadow = "0 0 0 2px var(--warning)";
+      setTimeout(() => {
+        el.style.boxShadow = "";
+      }, 2000);
+    });
+  }, []);
+
   const handleDecisionSelect = useCallback(
     (option: DecisionOption) => {
       if (option.calculatorFlag) {
         setCalculatorFlags((prev) => ({ ...prev, [option.calculatorFlag!]: true }));
       }
-      jumpToStep(option.goToStepId);
+      if (option.openObjectionId) {
+        jumpToObjection(option.openObjectionId);
+        return;
+      }
+      if (option.goToStepId) {
+        jumpToStep(option.goToStepId);
+      }
     },
-    [jumpToStep],
+    [jumpToStep, jumpToObjection],
   );
 
   return (
@@ -2031,7 +2130,13 @@ export default function KwalifikacjaPage() {
         </div>
 
         {/* Right: objections + SMS + ICP */}
-        <RightPanel fill={fill} onCopy={onCopy} copiedId={copiedId} />
+        <RightPanel
+          fill={fill}
+          onCopy={onCopy}
+          copiedId={copiedId}
+          openObjectionId={openObjectionId}
+          setOpenObjectionId={setOpenObjectionId}
+        />
       </div>
     </div>
   );

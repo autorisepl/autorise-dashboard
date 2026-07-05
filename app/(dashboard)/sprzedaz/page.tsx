@@ -1558,7 +1558,9 @@ export default function SprzedazPage() {
   }, []);
 
   const handleDecisionSelect = useCallback(
-    (option: DecisionOption) => jumpToStep(option.goToStepId),
+    (option: DecisionOption) => {
+      if (option.goToStepId) jumpToStep(option.goToStepId);
+    },
     [jumpToStep],
   );
 
