@@ -23,7 +23,12 @@ import { ProgressBar, SectionLabelSmall, StepCard } from "@/components/dalsze-kr
 import { DecisionDiagram } from "@/components/scripts/DecisionDiagram";
 import { NextStepArrow } from "@/components/scripts/NextStepArrow";
 import { formatPhone } from "@/lib/format/phone";
-import { ICP_RULES, OBJECTIONS_K, STEPS_K } from "@/lib/scripts/kwalifikacyjna";
+import {
+  ACKNOWLEDGMENT_PHRASES,
+  ICP_RULES,
+  OBJECTIONS_K,
+  STEPS_K,
+} from "@/lib/scripts/kwalifikacyjna";
 import { GROUP_COLORS, MESSAGES_DATA } from "@/lib/scripts/messages";
 import type { DecisionOption, ScriptLine } from "@/lib/scripts/types";
 import { objectionColor } from "@/lib/scripts/types";
@@ -129,12 +134,10 @@ function Card({
   );
 }
 
-// ── Kalkulator (na żywo) — pasek narastających flag z decyzji 2.3a-2.3e ──
+// ── Kalkulator (na żywo) — pasek narastających flag z decyzji 2f ─────────
 
 const FLAG_SOURCE: Record<string, { label: string; nr: string }> = {
-  zlecenia: { label: "Wpisywanie zleceń", nr: "2.3a" },
-  cmr: { label: "CMR / POD", nr: "2.3b" },
-  faktury: { label: "Faktury", nr: "2.3d" },
+  faktury_recznie: { label: "Faktury", nr: "2f" },
 };
 
 function CalculatorFlagsBar({ flags }: { flags: Record<string, boolean> }) {
@@ -198,22 +201,28 @@ function CalculatorFlagsBar({ flags }: { flags: Record<string, boolean> }) {
 const PRACA_TYPES = [
   { id: "zlecenia", label: "Wpisywanie zleceń" },
   { id: "cmr", label: "CMR / POD" },
-  { id: "faktury", label: "Faktury" },
-  { id: "komunikacja", label: "Komunikacja z klientami" },
-  { id: "inne", label: "Inne dokumenty" },
+  { id: "faktury_recznie", label: "Faktury" },
+  { id: "komunikacja", label: "Komunikacja z klientem — status, aktualizacje" },
+  { id: "inne", label: "Inne dokumenty — do doprecyzowania ręcznie" },
 ] as const;
 
 function ScriptKalkulator({
   clientName,
   autoFlags,
+  osoby,
+  godziny,
+  onOsobyChange,
+  onGodzinyChange,
 }: {
   clientName: string;
   autoFlags: Record<string, boolean>;
+  osoby: number;
+  godziny: number;
+  onOsobyChange: (n: number) => void;
+  onGodzinyChange: (n: number) => void;
 }) {
-  const [osoby, setOsoby] = useState(2);
-  const [godziny, setGodziny] = useState(3);
   const [manualSelected, setManualSelected] = useState<Set<string>>(
-    new Set(["zlecenia", "cmr", "faktury"]),
+    new Set(["zlecenia", "cmr", "faktury_recznie"]),
   );
 
   const isLocked = (id: string) => Boolean(autoFlags[id]);
@@ -233,6 +242,7 @@ function ScriptKalkulator({
   const miesiecznieH = osoby * godziny * 22;
   const miesieczniePLN = miesiecznieH * 50;
   const rocznie = miesieczniePLN * 12;
+  const gwarancjaH = Math.round(miesiecznieH * 0.8);
 
   const fmt = (n: number) =>
     n.toLocaleString("pl-PL", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
@@ -304,7 +314,7 @@ function ScriptKalkulator({
               min={1}
               max={50}
               value={osoby}
-              onChange={(e) => setOsoby(Math.max(1, Number(e.target.value) || 1))}
+              onChange={(e) => onOsobyChange(Math.max(1, Number(e.target.value) || 1))}
               style={{
                 height: 36,
                 borderRadius: 8,
@@ -339,7 +349,7 @@ function ScriptKalkulator({
               max={12}
               step={0.5}
               value={godziny}
-              onChange={(e) => setGodziny(Math.max(0.5, Number(e.target.value) || 0.5))}
+              onChange={(e) => onGodzinyChange(Math.max(0.5, Number(e.target.value) || 0.5))}
               style={{
                 height: 36,
                 borderRadius: 8,
@@ -508,6 +518,22 @@ function ScriptKalkulator({
             }}
           >
             {wynikZdanie}
+          </div>
+
+          {/* Gwarancja na żywo */}
+          <div
+            style={{
+              padding: "8px 10px",
+              borderRadius: 6,
+              background: "rgba(52,199,89,0.08)",
+              border: "1px solid rgba(52,199,89,0.25)",
+              fontFamily: "var(--font-sans)",
+              fontSize: 12,
+              fontWeight: 600,
+              color: "var(--success-text)",
+            }}
+          >
+            Gwarancja dla tego klienta: minimum {fmt(gwarancjaH)} godzin miesięcznie
           </div>
         </div>
       </div>
@@ -1176,7 +1202,7 @@ const CALENDLY_URL = "https://calendly.com/autorise";
 const DALSZE_KROKI_LABELS: Record<"calendly" | "sms" | "pipeline", string> = {
   calendly: "Link Calendly wysłany",
   sms: "SMS potwierdzający wysłany",
-  pipeline: "Status zapisany w Pipeline",
+  pipeline: "Uruchom Agenta 1 (ustawi status automatycznie)",
 };
 
 function DalszeKroki({ client }: { client: PipelineClientDetailed | null }) {
@@ -1249,7 +1275,7 @@ function DalszeKroki({ client }: { client: PipelineClientDetailed | null }) {
         label={DALSZE_KROKI_LABELS.pipeline}
         detail={client ? client.kontakt || client.firma : "wybierz klienta"}
         onToggle={() => toggle("pipeline")}
-        actionLabel="Agent 01"
+        actionLabel="Uruchom Agenta 1"
         onAction={() => window.open("/agenci", "_blank")}
       />
 
@@ -1626,6 +1652,62 @@ function ClientSidebar({
   );
 }
 
+// ── Frazy potwierdzające ─────────────────────────────────────────────
+
+function PhrasesPanel({
+  onCopy,
+  copiedId,
+}: {
+  onCopy: (id: string, text: string) => void;
+  copiedId: string | null;
+}) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      {ACKNOWLEDGMENT_PHRASES.map((phrase, i) => (
+        <div
+          key={i}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "7px 10px",
+            borderRadius: 8,
+            border: "1px solid #E5E5EA",
+            background: "#F5F5F7",
+          }}
+        >
+          <span
+            style={{
+              flex: 1,
+              fontFamily: "var(--font-sans)",
+              fontSize: 12,
+              color: "var(--text-primary)",
+            }}
+          >
+            {phrase}
+          </span>
+          <button
+            onClick={() => onCopy(`phrase-${i}`, phrase)}
+            style={{
+              flexShrink: 0,
+              padding: "3px 7px",
+              borderRadius: 5,
+              border: "1px solid #E5E5EA",
+              background: "transparent",
+              cursor: "pointer",
+              color: copiedId === `phrase-${i}` ? "var(--success-text)" : "var(--text-tertiary)",
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            {copiedId === `phrase-${i}` ? <CheckCircle2 size={10} /> : <Copy size={10} />}
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ── Right panel ───────────────────────────────────────────────────────
 
 function RightPanel({
@@ -1652,6 +1734,9 @@ function RightPanel({
       <Card title="Obiekcje kwalifikacja">
         <ObjectionsPanel fill={fill} onCopy={onCopy} copiedId={copiedId} />
       </Card>
+      <Card title="Frazy potwierdzające" collapsible defaultOpen={false}>
+        <PhrasesPanel onCopy={onCopy} copiedId={copiedId} />
+      </Card>
       <Card title="SMS / Wiadomości" collapsible defaultOpen={false}>
         <SmsPanel fill={fill} onCopy={onCopy} copiedId={copiedId} />
       </Card>
@@ -1672,6 +1757,9 @@ export default function KwalifikacjaPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [note, setNote] = useState("");
   const [calculatorFlags, setCalculatorFlags] = useState<Record<string, boolean>>({});
+  const [calcOsoby, setCalcOsoby] = useState(2);
+  const [calcGodziny, setCalcGodziny] = useState(3);
+  const [sprzedawcaImie, setSprzedawcaImie] = useState("Michał");
 
   const fetchClients = useCallback(async () => {
     setLoading(true);
@@ -1700,6 +1788,19 @@ export default function KwalifikacjaPage() {
     setNote(saved ?? "");
   }, [selected?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    const saved = localStorage.getItem("kwal_sprzedawca_imie");
+    if (saved) setSprzedawcaImie(saved);
+  }, []);
+
+  const updateSprzedawcaImie = (value: string) => {
+    setSprzedawcaImie(value);
+    localStorage.setItem("kwal_sprzedawca_imie", value);
+  };
+
+  const fmtPln = (n: number) =>
+    n.toLocaleString("pl-PL", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
   const fill = (text: string): string => {
     let out = text;
     const nominative = (selected?.kontakt ?? "").trim().split(/\s+/)[0];
@@ -1708,6 +1809,14 @@ export default function KwalifikacjaPage() {
       out = out.replace(/Pani \{IMIĘ\}/g, `Pani ${nominative}`);
     }
     if (vocative.trim()) out = out.replace(/\{IMIĘ\}/g, vocative.trim());
+    if (sprzedawcaImie.trim()) out = out.replace(/\{IMIĘ_SPRZEDAWCY\}/g, sprzedawcaImie.trim());
+
+    const wynikGodziny = calcOsoby * calcGodziny * 22;
+    const wynikPln = wynikGodziny * 50;
+    out = out.replace(/\[WYNIK Z KALKULATORA\]/g, String(wynikGodziny));
+    out = out.replace(/\[WARTOŚĆ PLN\]/g, `${fmtPln(wynikPln)} zł`);
+    out = out.replace(/\[WYNIK × 0\.8\]/g, String(Math.round(wynikGodziny * 0.8)));
+    out = out.replace(/\[LICZBA Z KALKULATORA\]/g, String(Math.round(wynikGodziny * 0.8)));
     return out;
   };
 
@@ -1774,6 +1883,34 @@ export default function KwalifikacjaPage() {
         >
           {selected ? selected.kontakt || selected.firma : "Wybierz klienta z listy"}
         </span>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span
+            style={{
+              fontSize: 12,
+              color: "var(--text-secondary)",
+              fontFamily: "var(--font-sans)",
+            }}
+          >
+            Imię sprzedawcy:
+          </span>
+          <input
+            value={sprzedawcaImie}
+            onChange={(e) => updateSprzedawcaImie(e.target.value)}
+            placeholder="np. Michał"
+            style={{
+              height: 32,
+              padding: "0 10px",
+              borderRadius: 8,
+              border: "1px solid #E5E5EA",
+              fontFamily: "var(--font-sans)",
+              fontSize: 13,
+              color: "var(--text-primary)",
+              background: "#F5F5F7",
+              outline: "none",
+              width: 110,
+            }}
+          />
+        </div>
         {selected && (
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: "auto" }}>
             <span
@@ -1836,6 +1973,10 @@ export default function KwalifikacjaPage() {
                   <ScriptKalkulator
                     clientName={selected?.kontakt || selected?.firma || ""}
                     autoFlags={calculatorFlags}
+                    osoby={calcOsoby}
+                    godziny={calcGodziny}
+                    onOsobyChange={setCalcOsoby}
+                    onGodzinyChange={setCalcGodziny}
                   />
                 )}
               </ScriptStep>
