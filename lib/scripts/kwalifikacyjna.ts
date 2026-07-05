@@ -2,6 +2,12 @@
 // rozwiązanie buduje się z ich zasad ogólnych (personalizacja, konkret zamiast
 // ogólnika, klient sam dochodzi do wniosku przez pytania), nie jako coś oderwanego
 // od frameworku. Każda nowa linia dialogowa w tym pliku podlega tej zasadzie.
+//
+// Kolejność kroków 2-2k: ICP (flota, biuro, decydent) sprawdzane ZARAZ PO pierwszym
+// pytaniu diagnostycznym, PRZED szczegółową diagnozą dokumentów (2c-2h). Powód:
+// jeśli klient nie spełnia twardych progów ICP (min. 2 osoby w biurze, obecność
+// decydenta), rozmowa kończy się od razu — bez inwestowania czasu w pięć pytań
+// dokumentowych które i tak nie zostaną wykorzystane.
 
 import type { IcpRule, Objection, Step } from "./types";
 
@@ -38,16 +44,16 @@ export const STEPS_K: Step[] = [
       {
         t: "say",
         text: [
-          "Dzień dobry, mówi Michał z Autorise.",
-          "Dzwonię bo kilka dni temu wypełnił Pan formularz na Facebooku — dotyczył oszczędności czasu w firmie transportowej.",
+          "Dzień dobry, mówi {IMIĘ_SPRZEDAWCY} z Autorise.",
+          "Dzwonię, bo zostawił Pan kontakt w sprawie odzyskania czasu jaki Pana biuro traci na ręczne wpisywanie zleceń i pilnowanie dokumentów — u firm z którymi pracujemy to zwykle kilkadziesiąt godzin miesięcznie.",
         ],
       },
       {
         t: "say",
-        text: "Mam dla Pana dosłownie 2 minuty — czy to dobry moment?",
+        text: "Ma Pan chwilę, dosłownie 2 minuty?",
         cel: "Zdobyć zgodę na kontynuację rozmowy zanim przejdziesz do diagnozy",
       },
-      { t: "branch", text: "Tak: przejdź do kroku 2.1" },
+      { t: "branch", text: "Tak: przejdź do kroku 2" },
       { t: "branch-bad", text: "Nie mam teraz czasu: obiekcja OK1 z panelu po prawej" },
       {
         t: "note",
@@ -57,227 +63,38 @@ export const STEPS_K: Step[] = [
   },
   {
     id: "diagnoza_otwarcie",
-    nr: "2.1",
+    nr: "2",
     label: "OTWARCIE DIAGNOZY",
     tag: "MÓWISZ",
     lines: [
       {
         t: "say",
-        text: "Żeby sprawdzić czy możemy w ogóle pomóc Pana firmie, muszę zadać kilka pytań o to jak teraz wygląda praca biura. Dobrze?",
-        cel: "Uzyskać zgodę na serię pytań kwalifikacyjnych, nie zaskoczyć klienta ich liczbą",
+        text: "Co spowodowało że akurat teraz zdecydował się Pan wypełnić ten formularz?",
+        cel: "Znaleźć konkretny wyzwalacz i realny ból, zanim przejdziesz do reszty pytań",
       },
-      { t: "client", text: "Tak, proszę." },
-    ],
-  },
-  {
-    id: "diagnoza_tms",
-    nr: "2.2",
-    label: "TMS I PRACA MANUALNA",
-    tag: "MÓWISZ",
-    lines: [
-      {
-        t: "say",
-        text: "Czy korzystacie z TMS-u, czyli programu do zarządzania flotą i zleceniami, na przykład coś w rodzaju Trans.eu, TIMOCOM, Sky-Pol, WEB-TRANS albo podobnego systemu?",
-        cel: "Ustalić punkt odniesienia — co już mają, żeby wiedzieć czego NIE trzeba zastępować",
-      },
+      { t: "client", text: "[odpowiedź]" },
     ],
     decision: {
-      question: "Co odpowiedział klient?",
+      question: "Czy klient podał konkretny powód?",
       options: [
         {
-          trigger: "Ma TMS, podał nazwę",
-          action: "Zanotuj nazwę dosłownie",
-          goToStepId: "diagnoza_dokumenty_zlecenie",
+          trigger: "Tak, konkretny ból lub wyzwalacz",
+          action: "Kontynuuj do ICP",
+          goToStepId: "diagnoza_icp_flota",
           tone: "positive",
         },
         {
-          trigger: "Brak programu, Excel/telefon",
-          action: "Zapisz jako 'brak TMS'",
-          goToStepId: "diagnoza_dokumenty_zlecenie",
-          tone: "neutral",
-        },
-      ],
-    },
-  },
-  {
-    id: "diagnoza_dokumenty_zlecenie",
-    nr: "2.3a",
-    label: "ZLECENIE TRANSPORTOWE",
-    tag: "MÓWISZ",
-    lines: [
-      {
-        t: "say",
-        text: [
-          "Pierwsza rzecz: zlecenie transportowe, dokument w którym zleceniodawca zamawia przewóz.",
-          "Jak takie zlecenie do Was trafia?",
-        ],
-        cel: "Sprawdzić czy pierwszy etap (przyjęcie zlecenia) generuje pracę ręczną kwalifikującą się do email-parser",
-      },
-    ],
-    decision: {
-      question: "Jak zlecenie trafia do biura?",
-      options: [
-        {
-          trigger: "Mailem, PDF lub zdjęcie",
-          action: "email-parser + document-ocr",
-          goToStepId: "diagnoza_dokumenty_cmr",
-          tone: "positive",
-          calculatorFlag: "zlecenia",
-        },
-        {
-          trigger: "Bezpośrednio do TMS z giełdy",
-          action: "Etap już zautomatyzowany, dopytaj o dalsze przepisywanie",
-          goToStepId: "diagnoza_dokumenty_cmr",
-          tone: "neutral",
-        },
-        {
-          trigger: "Klient nie rozumie / miesza z poleceniem dla kierowcy",
-          action: "Doprecyzuj: 'dokument od klienta, nie polecenie wyjazdu'",
-          goToStepId: "diagnoza_dokumenty_zlecenie",
+          trigger: "Klient nie podaje konkretnego powodu",
+          action: "Brak jasnego bólu — użyj scenariusza braku bólu",
+          goToStepId: "brak_bolu",
           tone: "warning",
         },
       ],
     },
-  },
-  {
-    id: "diagnoza_dokumenty_cmr",
-    nr: "2.3b",
-    label: "LIST PRZEWOZOWY CMR",
-    tag: "MÓWISZ",
-    lines: [
-      {
-        t: "say",
-        text: [
-          "Druga rzecz: list przewozowy CMR, dokument potwierdzający że towar został przyjęty i dostarczony.",
-          "Po kursie, jak CMR wraca do Was?",
-        ],
-        cel: "Sprawdzić czy dokumenty po kursie wymagają ręcznego przepisywania — document-ocr",
-      },
-    ],
-    decision: {
-      question: "Jak CMR wraca do biura?",
-      options: [
-        {
-          trigger: "Papier fizyczny",
-          action: "document-ocr, klasyczny przypadek",
-          goToStepId: "diagnoza_dokumenty_pod",
-          tone: "positive",
-          calculatorFlag: "cmr",
-        },
-        {
-          trigger: "Zdjęcie na WhatsApp lub mailem",
-          action: "document-ocr z telefonu kierowcy",
-          goToStepId: "diagnoza_dokumenty_pod",
-          tone: "neutral",
-          calculatorFlag: "cmr",
-        },
-        {
-          trigger: "Elektroniczne, np. eCMR",
-          action: "Inny profil klienta, sprawdź czy dane i tak trzeba przenieść ręcznie",
-          goToStepId: "diagnoza_dokumenty_pod",
-          tone: "warning",
-        },
-      ],
-    },
-  },
-  {
-    id: "diagnoza_dokumenty_pod",
-    nr: "2.3c",
-    label: "POTWIERDZENIE DOSTAWY",
-    tag: "MÓWISZ",
-    lines: [
-      {
-        t: "say",
-        text: [
-          "Trzecia rzecz: potwierdzenie dostawy, czyli podpis lub pieczątka odbiorcy na dokumencie, że towar dotarł w całości.",
-          "Jak to u Was wygląda, kierowca przywozi podpisany papier, czy zostaje to tylko w formie zdjęcia?",
-        ],
-      },
-      {
-        t: "note",
-        text: "To jest zwykle ten sam dokument co CMR, podpisany przez odbiorcę na miejscu rozładunku, w Polsce rzadko traktowany jako osobny formularz. Jeśli klient rozróżnia CMR i osobne potwierdzenie dostawy (zdarza się przy niektórych zleceniodawcach, np. sieciach handlowych z własnym drukiem), zapytaj o to jako osobną rzecz i zanotuj osobno.",
-      },
-    ],
-    nextStepId: "diagnoza_dokumenty_faktura",
-  },
-  {
-    id: "diagnoza_dokumenty_faktura",
-    nr: "2.3d",
-    label: "FAKTURY I ROZLICZENIA",
-    tag: "MÓWISZ",
-    lines: [
-      {
-        t: "say",
-        text: [
-          "Czwarta rzecz: faktury, zarówno te które Wy wystawiacie zleceniodawcom za przewóz, jak i te które dostajecie od podwykonawców lub przewoźników zewnętrznych.",
-          "Kto to sprawdza i wpisuje do systemu księgowego?",
-        ],
-        cel: "Sprawdzić skalę pracy manualnej przy fakturach — kandydat na document-ocr",
-      },
-      {
-        t: "note",
-        text: "Wariant A, jedna osoba ręcznie sprawdza faktury i wpisuje dane do księgowości lub arkusza: sprawdź ile miesięcznie takich faktur jest po obu stronach (wystawione i otrzymane). Wariant B, księgowa zewnętrzna lub biuro rachunkowe: dopytaj kto w firmie przygotowuje dane dla księgowej, to zwykle ta sama osoba co reszta administracji.",
-      },
-      {
-        t: "say",
-        text: "A czy pilnujecie ręcznie, które faktury od klientów są już opłacone a które nie, czy to ktoś sprawdza w systemie bankowym co jakiś czas?",
-        cel: "Sprawdzić czy istnieje systematyczna kontrola płatności — kandydat na payment-monitor",
-      },
-    ],
-    decision: {
-      question: "Jak wygląda monitorowanie płatności?",
-      options: [
-        {
-          trigger: "Ktoś regularnie sprawdza w banku",
-          action: "payment-monitor jako usprawnienie procesu",
-          goToStepId: "diagnoza_dokumenty_status",
-          tone: "neutral",
-          calculatorFlag: "faktury",
-        },
-        {
-          trigger: "Nikt systematycznie nie pilnuje, 'jakoś to ogarniamy'",
-          action: "Mocny sygnał bólu, zanotuj wprost",
-          goToStepId: "diagnoza_dokumenty_status",
-          tone: "warning",
-          calculatorFlag: "faktury",
-        },
-      ],
-    },
-  },
-  {
-    id: "diagnoza_dokumenty_status",
-    nr: "2.3e",
-    label: "WIDOCZNOŚĆ STATUSU ZLECENIA",
-    tag: "MÓWISZ",
-    lines: [
-      {
-        t: "say",
-        text: "Piąta rzecz, ostatnia: jak Pan sam, jako właściciel, sprawdza dziś status konkretnego zlecenia, czy trzeba zadzwonić do spedytora, czy widać to w systemie?",
-        cel: "Sprawdzić czy właściciel ma widoczność operacyjną bez dzwonienia — kandydat na whatsapp-alerts",
-      },
-      {
-        t: "note",
-        text: "To jest pytanie o whatsapp-alerts i widoczność operacyjną. Jeśli właściciel musi dzwonić lub pytać osobiście żeby wiedzieć co się dzieje, to jest osobny, ważny ból, niezależny od dokumentów, zanotuj osobno.",
-      },
-    ],
-    nextStepId: "diagnoza_podsumowanie_dokumentow",
-  },
-  {
-    id: "diagnoza_podsumowanie_dokumentow",
-    nr: "2.3f",
-    label: "PODSUMOWANIE DO KALKULATORA",
-    tag: "AKCJA",
-    lines: [
-      {
-        t: "action",
-        text: "Kalkulator zaznaczył już checkboxy na żywo na podstawie kliknięć w krokach 2.3a-2.3e. Sprawdź w pasku nad skryptem czy wszystko co klient potwierdził faktycznie tam jest, zanim przejdziesz dalej.",
-      },
-    ],
-    nextStepId: "diagnoza_icp_flota",
   },
   {
     id: "diagnoza_icp_flota",
-    nr: "2.4",
+    nr: "2a",
     label: "ICP: FLOTA I BIURO",
     tag: "PYTASZ",
     lines: [
@@ -302,55 +119,24 @@ export const STEPS_K: Step[] = [
           tone: "positive",
         },
         {
-          trigger: "1 osoba, plan zatrudnienia",
+          trigger: "1 osoba, plan zatrudnienia w najbliższych 3 miesiącach",
           action: "Kontynuuj ostrożnie",
           goToStepId: "diagnoza_icp_decydent",
           tone: "warning",
         },
         {
-          trigger: "1 osoba, brak planu",
-          action: "Zakończ rozmowę",
-          goToStepId: "zakonczenie_ponizej_progu",
+          trigger: "1 osoba w biurze, brak konkretnego planu zatrudnienia w najbliższych 3 miesiącach",
+          action:
+            "Przeczytaj: 'Dziękuję za szczerą rozmowę. Nasze rozwiązanie sprawdza się przy biurach z co najmniej dwiema osobami. U Pana tej skali jeszcze nie ma, nie chcę sprzedawać czegoś co się nie zwróci. Czy mogę zapisać kontakt i wrócić za około 3 miesiące?' Status: Niekwalifikowany. Jeśli zgoda na kontakt: dodaj datę re-engagement +90 dni.",
+          goToStepId: "opener",
           tone: "warning",
         },
       ],
     },
   },
   {
-    id: "zakonczenie_ponizej_progu",
-    nr: "2.4x",
-    label: "ZAKOŃCZENIE: KLIENT PONIŻEJ PROGU",
-    tag: "MÓWISZ",
-    lines: [
-      {
-        t: "say",
-        text: [
-          "Panie [Imię], dziękuję za szczerą rozmowę.",
-          "Powiem wprost: nasze rozwiązanie sprawdza się najlepiej przy biurach które mają co najmniej dwie osoby zajmujące się administracją, bo dopiero wtedy realnie da się odzyskać wystarczająco dużo czasu żeby to się opłacało.",
-          "U Pana na ten moment tej skali jeszcze nie ma.",
-        ],
-      },
-      {
-        t: "say",
-        text: [
-          "Nie chcę Panu sprzedawać czegoś co się nie zwróci.",
-          "Jeśli firma urośnie i dojdzie druga osoba do biura, chętnie wrócę do rozmowy.",
-        ],
-      },
-      {
-        t: "say",
-        text: "Czy mogę zapisać Pana kontakt i odezwać się za około 3 miesiące, sprawdzić czy coś się zmieniło?",
-      },
-      { t: "client", text: "[zgoda lub odmowa]" },
-      {
-        t: "action",
-        text: "Status: Niekwalifikowany. Jeśli klient zgodził się na kontakt za 3 miesiące: dodatkowo ustaw pole re-engagement +90 dni i zanotuj w Pipeline 'zgoda na ponowny kontakt'. Jeśli klient nie chce dalszego kontaktu: zapisz tylko Niekwalifikowany, bez daty re-engagement.",
-      },
-    ],
-  },
-  {
     id: "diagnoza_icp_decydent",
-    nr: "2.5",
+    nr: "2b",
     label: "ICP: DECYDENT",
     tag: "PYTASZ",
     lines: [
@@ -370,44 +156,195 @@ export const STEPS_K: Step[] = [
         {
           trigger: "Tak, właściciel",
           action: "Decydent obecny",
-          goToStepId: "diagnoza_kalkulator",
+          goToStepId: "diagnoza_tms",
           tone: "positive",
         },
         {
           trigger: "Nie, ktoś inny decyduje",
           action: "Zgoda na wspólne spotkanie",
-          goToStepId: "diagnoza_kalkulator",
+          goToStepId: "diagnoza_tms",
           tone: "warning",
         },
       ],
     },
   },
   {
+    id: "diagnoza_tms",
+    nr: "2c",
+    label: "TMS I PRACA MANUALNA",
+    tag: "MÓWISZ",
+    lines: [
+      {
+        t: "say",
+        text: "Czy korzystacie z TMS-u, czyli programu do zarządzania flotą i zleceniami, na przykład coś w rodzaju Trans.eu, TIMOCOM, Sky-Pol, WEB-TRANS albo podobnego systemu?",
+        cel: "Ustalić punkt odniesienia — co już mają, żeby wiedzieć czego NIE trzeba zastępować",
+      },
+      {
+        t: "note",
+        text: "Jeśli klient ma TMS: zanotuj nazwę dosłownie. Jeśli mówi że nie ma żadnego programu i wszystko idzie przez Excela, WhatsApp albo telefon: zapisz jako 'brak TMS' — to też ważna informacja.",
+      },
+    ],
+    nextStepId: "diagnoza_dokumenty_zlecenie",
+  },
+  {
+    id: "diagnoza_dokumenty_zlecenie",
+    nr: "2d",
+    label: "ZLECENIE TRANSPORTOWE",
+    tag: "MÓWISZ",
+    lines: [
+      {
+        t: "say",
+        text: "Pierwsza rzecz: zlecenie transportowe, dokument w którym zleceniodawca zamawia przewóz. Jak dokładnie takie zlecenie do Was trafia, i co się z nim dzieje zanim trafi do systemu lub kalendarza kierowców?",
+        cel: "Sprawdzić czy pierwszy etap (przyjęcie zlecenia) generuje pracę ręczną",
+      },
+      { t: "client", text: "[opis]" },
+      {
+        t: "note",
+        text: "Jeśli klient nie rozumie pytania lub miesza je ze zleceniem dla kierowcy: 'Mam na myśli dokument od klienta który zamawia u Was transport, nie polecenie wyjazdu dla kierowcy.'",
+      },
+    ],
+    nextStepId: "diagnoza_dokumenty_cmr",
+  },
+  {
+    id: "diagnoza_dokumenty_cmr",
+    nr: "2e",
+    label: "LIST PRZEWOZOWY I POTWIERDZENIE DOSTAWY",
+    tag: "MÓWISZ",
+    lines: [
+      {
+        t: "say",
+        text: [
+          "Druga rzecz: list przewozowy CMR, dokument potwierdzający że towar został przyjęty i dostarczony.",
+          "Po kursie, jak CMR wraca do Was?",
+        ],
+        cel: "Sprawdzić czy dokumenty po kursie wymagają ręcznego przepisywania — automatyczne odczytywanie dokumentów (CMR, faktury)",
+      },
+      {
+        t: "say",
+        text: "Ten sam dokument, po dostarczeniu towaru, podpisuje odbiorca jako potwierdzenie że wszystko dotarło w porządku. U większości firm to jest ten sam papier, ale jeśli u Pana to jest osobny formularz, na przykład od dużej sieci handlowej, powiedz mi o tym.",
+        cel: "Sprawdzić czy klient rozróżnia CMR i osobne potwierdzenie dostawy — u większości nie, ale trafiają się wyjątki",
+      },
+      {
+        t: "note",
+        text: "Papier fizyczny lub zdjęcie na WhatsApp/mailem: to automatyczne odczytywanie dokumentów (CMR, faktury), zaznacz w kalkulatorze. Elektroniczne, np. eCMR: inny profil klienta, sprawdź czy dane i tak trzeba ręcznie przenieść do rozliczeń.",
+      },
+    ],
+    nextStepId: "diagnoza_dokumenty_faktura",
+  },
+  {
+    id: "diagnoza_dokumenty_faktura",
+    nr: "2f",
+    label: "FAKTURY I ROZLICZENIA",
+    tag: "MÓWISZ",
+    lines: [
+      {
+        t: "say",
+        text: "Czwarta rzecz: faktury, te które wystawiacie i te które dostajecie. Kto to sprawdza i wpisuje do księgowości?",
+        cel: "Sprawdzić skalę pracy manualnej przy fakturach",
+      },
+      { t: "client", text: "[odpowiedź]" },
+    ],
+    decision: {
+      question: "Kto obsługuje faktury?",
+      options: [
+        {
+          trigger: "Jedna osoba ręcznie wpisuje",
+          action: "Zapytaj ile faktur miesięcznie po obu stronach",
+          goToStepId: "diagnoza_dokumenty_faktura_platnosci",
+          tone: "positive",
+          calculatorFlag: "faktury_recznie",
+        },
+        {
+          trigger: "Zewnętrzne biuro rachunkowe",
+          action:
+            "Zapytaj kto w firmie przygotowuje dane dla księgowej — to zwykle ta sama osoba co reszta administracji",
+          goToStepId: "diagnoza_dokumenty_faktura_platnosci",
+          tone: "neutral",
+        },
+      ],
+    },
+  },
+  {
+    id: "diagnoza_dokumenty_faktura_platnosci",
+    nr: "2f2",
+    label: "PILNOWANIE PŁATNOŚCI",
+    tag: "MÓWISZ",
+    lines: [
+      {
+        t: "say",
+        text: "A czy ktoś systematycznie pilnuje które faktury od klientów są opłacone, czy to sprawdzanie od czasu do czasu w systemie bankowym?",
+        cel: "Sprawdzić czy istnieje systematyczna kontrola płatności",
+      },
+    ],
+    nextStepId: "diagnoza_dokumenty_status",
+  },
+  {
+    id: "diagnoza_dokumenty_status",
+    nr: "2g",
+    label: "WIDOCZNOŚĆ STATUSU ZLECENIA",
+    tag: "MÓWISZ",
+    lines: [
+      {
+        t: "say",
+        text: "Piąta rzecz, ostatnia: jak Pan sam, jako właściciel, sprawdza dziś status konkretnego zlecenia, czy trzeba zadzwonić do spedytora, czy widać to w systemie?",
+        cel: "Sprawdzić czy właściciel ma widoczność operacyjną bez dzwonienia — kandydat na alerty i widoczność statusu na WhatsApp",
+      },
+      {
+        t: "note",
+        text: "To jest pytanie o alerty i widoczność statusu na WhatsApp oraz o widoczność operacyjną. Jeśli właściciel musi dzwonić lub pytać osobiście żeby wiedzieć co się dzieje, to jest osobny, ważny ból, niezależny od dokumentów, zanotuj osobno.",
+      },
+    ],
+    nextStepId: "diagnoza_podsumowanie_dokumentow",
+  },
+  {
+    id: "diagnoza_podsumowanie_dokumentow",
+    nr: "2h",
+    label: "PODSUMOWANIE DO KALKULATORA",
+    tag: "AKCJA",
+    lines: [
+      {
+        t: "action",
+        text: "Kalkulator zaznaczył już checkboxy na żywo na podstawie kliknięć w krokach 2d-2g. Sprawdź w pasku nad skryptem czy wszystko co klient potwierdził faktycznie tam jest, zanim przejdziesz dalej.",
+      },
+    ],
+    nextStepId: "diagnoza_kalkulator",
+  },
+  {
     id: "diagnoza_kalkulator",
-    nr: "2.6",
+    nr: "2i",
     label: "KALKULATOR ROI",
     tag: "KALKULATOR",
     hasCalculator: true,
     lines: [
       {
         t: "say",
-        text: "Ile czasu dziennie biuro poświęca łącznie na tę ręczną robotę — wpisywanie, przepisywanie dokumentów, pilnowanie CMR?",
-        cel: "Zebrać dane do konkretnego, spersonalizowanego wyliczenia straty czasu i pieniędzy",
+        text: "Podsumowując to o czym rozmawialiśmy, ile czasu dziennie to wszystko zajmuje, licząc wszystkie osoby razem?",
+        cel: "Zebrać dane do konkretnego wyliczenia straty czasu",
       },
-      {
-        t: "note",
-        text: "Jeśli mówi 'nie wiem': 'Może pół godziny, może godzinę na osobę? Jak to wygląda przy X osobach w biurze?'",
-      },
-      {
-        t: "action",
-        text: "Wpisz w kalkulator poniżej: liczbę osób z kroku 2.4 i godziny dziennie. Rodzaje pracy z kroków 2.3a-2.3e są już zaznaczone automatycznie.",
-      },
+      { t: "client", text: "[odpowiedź lub 'nie wiem']" },
     ],
-    nextStepId: "diagnoza_liczba",
+    decision: {
+      question: "Klient podał liczbę czy się waha?",
+      options: [
+        {
+          trigger: "Podał konkretną liczbę godzin",
+          action: "Wpisz do kalkulatora, przejdź dalej",
+          goToStepId: "diagnoza_liczba",
+          tone: "positive",
+        },
+        {
+          trigger: "Mówi 'nie wiem' / 'trudno powiedzieć'",
+          action:
+            "Powiedz: 'Rozumiem, trudno to na pierwszy rzut oka ocenić. Wróćmy do tego co Pan powiedział — [wymień konkretnie potwierdzone rzeczy z kroków dokumentowych]. Gdyby Pan miał zgadywać, to bliżej pół godziny dziennie na osobę, godziny, czy więcej?' Poczekaj na odpowiedź, dopiero wtedy wpisz do kalkulatora.",
+          goToStepId: "diagnoza_liczba",
+          tone: "warning",
+        },
+      ],
+    },
   },
   {
     id: "diagnoza_liczba",
-    nr: "2.7",
+    nr: "2j",
     label: "PODANIE LICZBY KLIENTOWI",
     tag: "MÓWISZ",
     lines: [
@@ -432,7 +369,7 @@ export const STEPS_K: Step[] = [
   },
   {
     id: "diagnoza_czas",
-    nr: "2.8",
+    nr: "2k",
     label: "CO ZROBIŁBY Z TYMI GODZINAMI",
     tag: "PYTASZ",
     lines: [
@@ -442,39 +379,24 @@ export const STEPS_K: Step[] = [
         cel: "Sprawić żeby klient sam nazwał korzyść — silniej przekonuje niż gdybyś to Ty powiedział",
       },
       { t: "client", text: "[odpowiedź]" },
+      {
+        t: "note",
+        text: "Odpowiada konkretnie (więcej zleceń, mniej błędów, szybsza obsługa, mniej nadgodzin): potwierdź i przejdź dalej, to gotowy materiał do Kroku 3.",
+      },
+      {
+        t: "note",
+        text: "Milczy, 'nie wiem, nie myślałem': Powiedz 'Rozumiem, chodzi o inne rzeczy niż redukcja etatów. Na przykład więcej zleceń przy tej samej ekipie, mniej błędów w dokumentach, szybsza obsługa klientów, mniej nadgodzin dla zespołu. Który z tych kierunków jest dla Pana teraz ważny?'",
+      },
+      {
+        t: "note",
+        text: "Reaguje obronnie, 'i tak nie zwolnię pracowników': Powiedz 'Jasne, nie chodzi o zwalnianie nikogo. Chodzi o to, żeby ten sam zespół miał więcej przestrzeni na obsługę klientów zamiast tonąć w papierach. Czy to jest coś co miałoby dla Pana znaczenie?'",
+      },
+      {
+        t: "note",
+        text: "Przeskakuje od razu do pytania o cenę: nie walcz z tym, przejdź dalej normalnie, zanotuj że pytanie o korzyść nie padło.",
+      },
     ],
-    decision: {
-      question: "Jak zareagował klient?",
-      options: [
-        {
-          trigger: "Odpowiada konkretnie",
-          action: "Więcej zleceń, mniej błędów, szybsza obsługa, mniej nadgodzin",
-          goToStepId: "spotkanie",
-          tone: "positive",
-        },
-        {
-          trigger: "Milczy, 'nie wiem, nie myślałem'",
-          action:
-            "Powiedz: 'Rozumiem, chodzi o inne rzeczy niż redukcja etatów. Na przykład więcej zleceń przy tej samej ekipie, mniej błędów w dokumentach, szybsza obsługa klientów, mniej nadgodzin dla zespołu. Który z tych kierunków jest dla Pana teraz ważny?'",
-          goToStepId: "spotkanie",
-          tone: "neutral",
-        },
-        {
-          trigger: "Reaguje obronnie, 'i tak nie zwolnię pracowników'",
-          action:
-            "Powiedz: 'Jasne, nie chodzi o zwalnianie nikogo. Chodzi o to, żeby ten sam zespół miał więcej przestrzeni na obsługę klientów zamiast tonąć w papierach. Czy to jest coś co miałoby dla Pana znaczenie?'",
-          goToStepId: "spotkanie",
-          tone: "warning",
-        },
-        {
-          trigger: "Przeskakuje od razu do pytania o cenę",
-          action:
-            "Nie walcz z tym, przejdź dalej normalnie, zanotuj że pytanie o korzyść nie padło",
-          goToStepId: "spotkanie",
-          tone: "neutral",
-        },
-      ],
-    },
+    nextStepId: "spotkanie",
   },
   {
     id: "brak_bolu",
@@ -539,41 +461,41 @@ export const STEPS_K: Step[] = [
 ];
 
 export const OBJECTIONS_K: Objection[] = [
-  // Obiekcje otwierające — każda kończy się przejściem do kroku 2.1
+  // Obiekcje otwierające — każda kończy się przejściem do kroku 2
   {
     id: "ok_nb",
     label: "Nie pamiętam żadnego formularza",
     script:
       "Rozumiem, pewnie wiele rzeczy się przewija. Formularz pojawił się na Facebooku kilka dni temu — dotyczył oszczędności czasu w firmie transportowej. Mam dla Pana 2 pytania zanim opowiem więcej — czy ma Pan chwilę?",
-    note: "Po 'tak': przejdź do 2.1 Otwarcie diagnozy.",
+    note: "Po 'tak': przejdź do 2 Otwarcie diagnozy.",
   },
   {
     id: "ok_cc",
     label: "Co Pan sprzedaje? O co chodzi?",
     script:
       "Automatyzujemy pracę biura spedycji — zlecenia, CMR, faktury. Zanim cokolwiek zaproponuję, chciałem się dowiedzieć jak wygląda ta praca u Pana. Zajmie mi to dosłownie 2 minuty. Dobrze?",
-    note: "Po 'tak': przejdź do 2.1 Otwarcie diagnozy.",
+    note: "Po 'tak': przejdź do 2 Otwarcie diagnozy.",
   },
   {
     id: "ok_ms",
     label: "Od razu chce umówić spotkanie",
     script:
       "Chętnie. Żeby spotkanie miało sens dla obu stron — muszę zadać 3 krótkie pytania o firmę. Zajmie mi to 2 minuty. Dobrze?",
-    note: "Po 'tak': przejdź do 2.1 Otwarcie diagnozy.",
+    note: "Po 'tak': przejdź do 2 Otwarcie diagnozy.",
   },
   {
     id: "ok_cp",
     label: "Od razu pyta o cenę",
     script:
       "Cena zależy od skali i konfiguracji — dlatego najpierw chcę sprawdzić czy to w ogóle ma sens dla Pana firmy. Jeśli tak — podam cenę wprost na spotkaniu, bez owijania w bawełnę. Mam 2 pytania — dobrze?",
-    note: "Po 'tak': przejdź do 2.1 Otwarcie diagnozy.",
+    note: "Po 'tak': przejdź do 2 Otwarcie diagnozy.",
   },
   {
     id: "ok_em",
     label: "Wyślij na maila",
     script:
       "Mogę wysłać materiały, ale żeby to nie były ogólne informacje tylko coś dopasowanego do Pana firmy — wolałbym zadać dwa krótkie pytania, zajmie to góra minutę.",
-    note: "Po zgodzie: przejdź do 2.1 Otwarcie diagnozy. Jeśli klient nadal odmawia rozmowy: 'Rozumiem, wyślę ogólne informacje na [email z Pipeline], a jeśli po przeczytaniu będzie Pan chciał pogłębić temat, zapraszam do kontaktu.' Status: follow-up, nie zamknięta sprawa.",
+    note: "Po zgodzie: przejdź do 2 Otwarcie diagnozy. Jeśli klient nadal odmawia rozmowy: 'Rozumiem, wyślę ogólne informacje na [email z Pipeline], a jeśli po przeczytaniu będzie Pan chciał pogłębić temat, zapraszam do kontaktu.' Status: follow-up, nie zamknięta sprawa.",
   },
   // Standardowe obiekcje
   {
@@ -593,7 +515,7 @@ export const OBJECTIONS_K: Objection[] = [
     label: "Mam już program do zarządzania",
     script:
       "Większość firm z którymi pracuję ma TMS. My nie zastępujemy systemu, tylko zdejmujemy z Pana biura ręczną robotę wokół niego: wpisywanie zleceń, przepisywanie CMR i potwierdzeń dostawy, pilnowanie faktur i płatności, informowanie Pana o statusie zleceń bez dzwonienia do spedytora. Mam kilka pytań o to jak dziś wygląda ta praca u Pana, mimo TMS-u. Dobrze?",
-    note: "Po 'tak': przejdź do 2.1 Otwarcie diagnozy.",
+    note: "Po 'tak': przejdź do 2 Otwarcie diagnozy.",
   },
   {
     id: "ok4",
@@ -631,4 +553,13 @@ export const ICP_RULES: IcpRule[] = [
   { ok: true, label: "Ból", val: "Ręczna praca potwierdzona kalkulatorem ROI ≥ 80h/mc" },
   { ok: true, label: "Flota", val: "Orientacyjnie 10–150 pojazdów — sprawdź kalkulator" },
   { ok: false, label: "Odrzuć", val: "< 2 osoby w biurze LUB potencjał ROI < 80h/mc łącznie" },
+];
+
+export const ACKNOWLEDGMENT_PHRASES = [
+  "Rozumiem, to sporo.",
+  "Jasne, widzę o co chodzi.",
+  "To ma sens, dziękuję że Pan to wyjaśnił.",
+  "Dobrze, zanotowałem.",
+  "Rozumiem, czyli tak to u Pana wygląda.",
+  "To pomaga mi zrozumieć sytuację.",
 ];
