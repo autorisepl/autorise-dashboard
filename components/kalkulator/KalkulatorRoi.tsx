@@ -630,9 +630,9 @@ export function KalkulatorRoi({ embedded = false, initialClientName }: Kalkulato
       const dzis = Math.round(n(godzinyTygodniowo) * 4.33 * n(liczbaOsob));
       p.set("roi", Math.min(dzis, 70).toString());
       p.set("po", "10");
+      p.set("gwar", Math.round(dzis * 0.8).toString());
     }
     if (calc.kosztRok > 0) p.set("bol", calc.kosztRok.toString());
-    p.set("gwar", "95");
     p.set("start", calc.kosztRok > 0 ? "2" : "1");
     return `/prezentacja.html?${p.toString()}`;
   }, [godzinyTygodniowo, liczbaOsob, calc.kosztRok]);
