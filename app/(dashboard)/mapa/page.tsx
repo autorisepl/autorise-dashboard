@@ -1,6 +1,16 @@
 "use client";
 
-import { ArrowRight, Check, CheckCircle2, Database, GitBranch, Loader2, RefreshCw, X, Zap } from "lucide-react";
+import {
+  ArrowRight,
+  Check,
+  CheckCircle2,
+  Database,
+  GitBranch,
+  Loader2,
+  RefreshCw,
+  X,
+  Zap,
+} from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import type { PipelineClientDetailed } from "@/app/api/notion/pipeline/route";
 
@@ -619,375 +629,380 @@ export default function MapaPage() {
       {view === "blueprint" && <BlueprintView />}
 
       {/* Stages */}
-      {view === "etapy" && (loading ? (
-        <div
-          style={{
-            flex: 1,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 10,
-          }}
-        >
-          <Loader2
-            size={20}
-            color="var(--text-tertiary)"
-            style={{ animation: "spin 1s linear infinite" }}
-          />
-          <span
-            style={{ fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--text-tertiary)" }}
-          >
-            Ładowanie...
-          </span>
-        </div>
-      ) : (
-        <div style={{ flex: 1, overflow: "auto", padding: "24px" }}>
+      {view === "etapy" &&
+        (loading ? (
           <div
             style={{
+              flex: 1,
               display: "flex",
-              gap: 0,
-              alignItems: "stretch",
-              minHeight: "100%",
-              height: "calc(100vh - 180px)",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 10,
             }}
           >
-            {STAGES.map((stage, idx) => {
-              const isCurrent = idx === currentIdx;
-              const isDone = currentIdx >= 0 && idx < currentIdx;
-              const count = counts[idx];
+            <Loader2
+              size={20}
+              color="var(--text-tertiary)"
+              style={{ animation: "spin 1s linear infinite" }}
+            />
+            <span
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 13,
+                color: "var(--text-tertiary)",
+              }}
+            >
+              Ładowanie...
+            </span>
+          </div>
+        ) : (
+          <div style={{ flex: 1, overflow: "auto", padding: "24px" }}>
+            <div
+              style={{
+                display: "flex",
+                gap: 0,
+                alignItems: "stretch",
+                minHeight: "100%",
+                height: "calc(100vh - 180px)",
+              }}
+            >
+              {STAGES.map((stage, idx) => {
+                const isCurrent = idx === currentIdx;
+                const isDone = currentIdx >= 0 && idx < currentIdx;
+                const count = counts[idx];
 
-              return (
-                <div
-                  key={stage.etap}
-                  style={{ display: "flex", alignItems: "stretch", flex: 1, minWidth: 0 }}
-                >
-                  {/* Stage card */}
+                return (
                   <div
-                    style={{
-                      flex: 1,
-                      display: "flex",
-                      flexDirection: "column",
-                      background: isCurrent
-                        ? `linear-gradient(160deg, ${stage.color}08 0%, rgba(255,255,255,0.9) 60%)`
-                        : "rgba(255,255,255,0.8)",
-                      backdropFilter: "blur(20px) saturate(180%)",
-                      WebkitBackdropFilter: "blur(20px) saturate(180%)",
-                      border: `1.5px solid ${isCurrent ? stage.color : "var(--border)"}`,
-                      boxShadow: isCurrent
-                        ? `0 0 0 3px ${stage.color}20, 0 8px 32px rgba(0,0,0,0.10)`
-                        : "0 2px 8px rgba(0,0,0,0.04)",
-                      opacity: isDone ? 0.6 : 1,
-                      borderRadius: "var(--radius-md)",
-                      overflow: "hidden",
-                      transition: "all 200ms",
-                    }}
+                    key={stage.etap}
+                    style={{ display: "flex", alignItems: "stretch", flex: 1, minWidth: 0 }}
                   >
-                    {/* Top accent bar */}
-                    <div style={{ height: 5, background: stage.color, flexShrink: 0 }} />
-
+                    {/* Stage card */}
                     <div
                       style={{
-                        padding: "20px 20px 16px",
                         flex: 1,
                         display: "flex",
                         flexDirection: "column",
+                        background: isCurrent
+                          ? `linear-gradient(160deg, ${stage.color}08 0%, rgba(255,255,255,0.9) 60%)`
+                          : "rgba(255,255,255,0.8)",
+                        backdropFilter: "blur(20px) saturate(180%)",
+                        WebkitBackdropFilter: "blur(20px) saturate(180%)",
+                        border: `1.5px solid ${isCurrent ? stage.color : "var(--border)"}`,
+                        boxShadow: isCurrent
+                          ? `0 0 0 3px ${stage.color}20, 0 8px 32px rgba(0,0,0,0.10)`
+                          : "0 2px 8px rgba(0,0,0,0.04)",
+                        opacity: isDone ? 0.6 : 1,
+                        borderRadius: "var(--radius-md)",
+                        overflow: "hidden",
+                        transition: "all 200ms",
                       }}
                     >
-                      {/* Stage header */}
+                      {/* Top accent bar */}
+                      <div style={{ height: 5, background: stage.color, flexShrink: 0 }} />
+
                       <div
                         style={{
+                          padding: "20px 20px 16px",
+                          flex: 1,
                           display: "flex",
-                          alignItems: "flex-start",
-                          gap: 12,
-                          marginBottom: 16,
+                          flexDirection: "column",
                         }}
                       >
-                        <div
-                          style={{
-                            width: 40,
-                            height: 40,
-                            borderRadius: "50%",
-                            flexShrink: 0,
-                            border: `2.5px solid ${stage.color}`,
-                            background: isDone || isCurrent ? stage.color : "transparent",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          {isDone ? (
-                            <Check size={16} color="#fff" strokeWidth={3} />
-                          ) : (
-                            <span
-                              style={{
-                                fontFamily: "var(--font-sans)",
-                                fontSize: 14,
-                                fontWeight: 800,
-                                color: isCurrent ? "#fff" : stage.color,
-                              }}
-                            >
-                              {idx + 1}
-                            </span>
-                          )}
-                        </div>
-                        <div style={{ flex: 1 }}>
-                          <div
-                            style={{
-                              fontSize: 9,
-                              fontWeight: 800,
-                              letterSpacing: "0.14em",
-                              textTransform: "uppercase",
-                              color: stage.color,
-                              marginBottom: 3,
-                            }}
-                          >
-                            {stage.etap}
-                          </div>
-                          <div
-                            style={{
-                              fontFamily: "var(--font-sans)",
-                              fontSize: 15,
-                              fontWeight: 700,
-                              color: "var(--text-primary)",
-                              lineHeight: 1.2,
-                              letterSpacing: "-0.01em",
-                            }}
-                          >
-                            {stage.label}
-                          </div>
-                          <div
-                            style={{
-                              fontFamily: "var(--font-sans)",
-                              fontSize: 11,
-                              color: "var(--text-secondary)",
-                              marginTop: 2,
-                              lineHeight: 1.3,
-                            }}
-                          >
-                            {stage.sublabel}
-                          </div>
-                        </div>
+                        {/* Stage header */}
                         <div
                           style={{
                             display: "flex",
-                            alignItems: "center",
-                            gap: 4,
-                            padding: "3px 9px",
-                            borderRadius: 99,
-                            background: count > 0 ? `${stage.color}15` : "var(--bg-hover)",
-                            border: `1px solid ${count > 0 ? `${stage.color}40` : "var(--border)"}`,
-                            flexShrink: 0,
+                            alignItems: "flex-start",
+                            gap: 12,
+                            marginBottom: 16,
                           }}
                         >
                           <div
                             style={{
-                              width: 6,
-                              height: 6,
+                              width: 40,
+                              height: 40,
                               borderRadius: "50%",
-                              background: count > 0 ? stage.color : "var(--text-placeholder)",
-                            }}
-                          />
-                          <span
-                            style={{
-                              fontFamily: "var(--font-sans)",
-                              fontSize: 12,
-                              fontWeight: 700,
-                              color: count > 0 ? stage.color : "var(--text-tertiary)",
-                            }}
-                          >
-                            {count}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* "Tu jesteś" badge */}
-                      {isCurrent && (
-                        <div
-                          style={{
-                            padding: "5px 12px",
-                            borderRadius: 8,
-                            background: stage.color,
-                            color: "#fff",
-                            fontSize: 10,
-                            fontWeight: 800,
-                            textAlign: "center",
-                            marginBottom: 14,
-                            letterSpacing: "0.06em",
-                            textTransform: "uppercase",
-                            fontFamily: "var(--font-sans)",
-                          }}
-                        >
-                          {selectedClient
-                            ? `${selectedClient.kontakt || selectedClient.firma} — tu jesteś`
-                            : "Tu jesteś"}
-                        </div>
-                      )}
-
-                      {/* Steps */}
-                      <div style={{ flex: 1, marginBottom: 14 }}>
-                        <div
-                          style={{
-                            fontSize: 9,
-                            fontWeight: 700,
-                            letterSpacing: "0.10em",
-                            textTransform: "uppercase",
-                            color: "var(--text-tertiary)",
-                            marginBottom: 8,
-                            fontFamily: "var(--font-sans)",
-                          }}
-                        >
-                          Kroki
-                        </div>
-                        {stage.steps.map((step, si) => (
-                          <div
-                            key={si}
-                            style={{
+                              flexShrink: 0,
+                              border: `2.5px solid ${stage.color}`,
+                              background: isDone || isCurrent ? stage.color : "transparent",
                               display: "flex",
-                              alignItems: "flex-start",
-                              gap: 8,
-                              marginBottom: 7,
+                              alignItems: "center",
+                              justifyContent: "center",
                             }}
                           >
-                            <div
-                              style={{
-                                width: 18,
-                                height: 18,
-                                borderRadius: "50%",
-                                background: `${stage.color}18`,
-                                border: `1px solid ${stage.color}40`,
-                                flexShrink: 0,
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                              }}
-                            >
+                            {isDone ? (
+                              <Check size={16} color="#fff" strokeWidth={3} />
+                            ) : (
                               <span
                                 style={{
                                   fontFamily: "var(--font-sans)",
-                                  fontSize: 9,
-                                  fontWeight: 700,
-                                  color: stage.color,
+                                  fontSize: 14,
+                                  fontWeight: 800,
+                                  color: isCurrent ? "#fff" : stage.color,
                                 }}
                               >
-                                {si + 1}
+                                {idx + 1}
                               </span>
-                            </div>
-                            <span
+                            )}
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <div
                               style={{
-                                fontFamily: "var(--font-sans)",
-                                fontSize: 12.5,
-                                color: "var(--text-primary)",
-                                lineHeight: 1.5,
-                                paddingTop: 1,
+                                fontSize: 9,
+                                fontWeight: 800,
+                                letterSpacing: "0.14em",
+                                textTransform: "uppercase",
+                                color: stage.color,
+                                marginBottom: 3,
                               }}
                             >
-                              {step}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Exits */}
-                      <div style={{ marginBottom: 14 }}>
-                        <div
-                          style={{
-                            fontSize: 9,
-                            fontWeight: 700,
-                            letterSpacing: "0.10em",
-                            textTransform: "uppercase",
-                            color: "var(--text-tertiary)",
-                            marginBottom: 8,
-                            fontFamily: "var(--font-sans)",
-                          }}
-                        >
-                          Możliwe wyjścia
-                        </div>
-                        {stage.exits.map((exit, ei) => (
-                          <div
-                            key={ei}
-                            style={{
-                              padding: "7px 10px",
-                              marginBottom: 5,
-                              background: "rgba(239,68,68,0.05)",
-                              border: "1px solid rgba(239,68,68,0.18)",
-                              borderRadius: "var(--radius-xs)",
-                              borderLeft: "3px solid rgba(239,68,68,0.5)",
-                            }}
-                          >
+                              {stage.etap}
+                            </div>
                             <div
                               style={{
                                 fontFamily: "var(--font-sans)",
-                                fontSize: 11,
+                                fontSize: 15,
                                 fontWeight: 700,
-                                color: "#ef4444",
-                                marginBottom: 2,
+                                color: "var(--text-primary)",
+                                lineHeight: 1.2,
+                                letterSpacing: "-0.01em",
                               }}
                             >
-                              {exit.label}
+                              {stage.label}
                             </div>
                             <div
                               style={{
                                 fontFamily: "var(--font-sans)",
                                 fontSize: 11,
                                 color: "var(--text-secondary)",
-                                lineHeight: 1.4,
+                                marginTop: 2,
+                                lineHeight: 1.3,
                               }}
                             >
-                              {exit.reason}
+                              {stage.sublabel}
                             </div>
                           </div>
-                        ))}
-                      </div>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 4,
+                              padding: "3px 9px",
+                              borderRadius: 99,
+                              background: count > 0 ? `${stage.color}15` : "var(--bg-hover)",
+                              border: `1px solid ${count > 0 ? `${stage.color}40` : "var(--border)"}`,
+                              flexShrink: 0,
+                            }}
+                          >
+                            <div
+                              style={{
+                                width: 6,
+                                height: 6,
+                                borderRadius: "50%",
+                                background: count > 0 ? stage.color : "var(--text-placeholder)",
+                              }}
+                            />
+                            <span
+                              style={{
+                                fontFamily: "var(--font-sans)",
+                                fontSize: 12,
+                                fontWeight: 700,
+                                color: count > 0 ? stage.color : "var(--text-tertiary)",
+                              }}
+                            >
+                              {count}
+                            </span>
+                          </div>
+                        </div>
 
-                      {/* Next step */}
+                        {/* "Tu jesteś" badge */}
+                        {isCurrent && (
+                          <div
+                            style={{
+                              padding: "5px 12px",
+                              borderRadius: 8,
+                              background: stage.color,
+                              color: "#fff",
+                              fontSize: 10,
+                              fontWeight: 800,
+                              textAlign: "center",
+                              marginBottom: 14,
+                              letterSpacing: "0.06em",
+                              textTransform: "uppercase",
+                              fontFamily: "var(--font-sans)",
+                            }}
+                          >
+                            {selectedClient
+                              ? `${selectedClient.kontakt || selectedClient.firma} — tu jesteś`
+                              : "Tu jesteś"}
+                          </div>
+                        )}
+
+                        {/* Steps */}
+                        <div style={{ flex: 1, marginBottom: 14 }}>
+                          <div
+                            style={{
+                              fontSize: 9,
+                              fontWeight: 700,
+                              letterSpacing: "0.10em",
+                              textTransform: "uppercase",
+                              color: "var(--text-tertiary)",
+                              marginBottom: 8,
+                              fontFamily: "var(--font-sans)",
+                            }}
+                          >
+                            Kroki
+                          </div>
+                          {stage.steps.map((step, si) => (
+                            <div
+                              key={si}
+                              style={{
+                                display: "flex",
+                                alignItems: "flex-start",
+                                gap: 8,
+                                marginBottom: 7,
+                              }}
+                            >
+                              <div
+                                style={{
+                                  width: 18,
+                                  height: 18,
+                                  borderRadius: "50%",
+                                  background: `${stage.color}18`,
+                                  border: `1px solid ${stage.color}40`,
+                                  flexShrink: 0,
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    fontFamily: "var(--font-sans)",
+                                    fontSize: 9,
+                                    fontWeight: 700,
+                                    color: stage.color,
+                                  }}
+                                >
+                                  {si + 1}
+                                </span>
+                              </div>
+                              <span
+                                style={{
+                                  fontFamily: "var(--font-sans)",
+                                  fontSize: 12.5,
+                                  color: "var(--text-primary)",
+                                  lineHeight: 1.5,
+                                  paddingTop: 1,
+                                }}
+                              >
+                                {step}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Exits */}
+                        <div style={{ marginBottom: 14 }}>
+                          <div
+                            style={{
+                              fontSize: 9,
+                              fontWeight: 700,
+                              letterSpacing: "0.10em",
+                              textTransform: "uppercase",
+                              color: "var(--text-tertiary)",
+                              marginBottom: 8,
+                              fontFamily: "var(--font-sans)",
+                            }}
+                          >
+                            Możliwe wyjścia
+                          </div>
+                          {stage.exits.map((exit, ei) => (
+                            <div
+                              key={ei}
+                              style={{
+                                padding: "7px 10px",
+                                marginBottom: 5,
+                                background: "rgba(239,68,68,0.05)",
+                                border: "1px solid rgba(239,68,68,0.18)",
+                                borderRadius: "var(--radius-xs)",
+                                borderLeft: "3px solid rgba(239,68,68,0.5)",
+                              }}
+                            >
+                              <div
+                                style={{
+                                  fontFamily: "var(--font-sans)",
+                                  fontSize: 11,
+                                  fontWeight: 700,
+                                  color: "#ef4444",
+                                  marginBottom: 2,
+                                }}
+                              >
+                                {exit.label}
+                              </div>
+                              <div
+                                style={{
+                                  fontFamily: "var(--font-sans)",
+                                  fontSize: 11,
+                                  color: "var(--text-secondary)",
+                                  lineHeight: 1.4,
+                                }}
+                              >
+                                {exit.reason}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Next step */}
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 7,
+                            paddingTop: 12,
+                            borderTop: "1px solid var(--border)",
+                            marginTop: "auto",
+                          }}
+                        >
+                          {idx === STAGES.length - 1 ? (
+                            <CheckCircle2 size={13} color="#16a34a" />
+                          ) : (
+                            <ArrowRight size={13} color={stage.color} />
+                          )}
+                          <span
+                            style={{
+                              fontFamily: "var(--font-sans)",
+                              fontSize: 11.5,
+                              fontWeight: 600,
+                              color: idx === STAGES.length - 1 ? "#16a34a" : stage.color,
+                            }}
+                          >
+                            {stage.next}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Arrow between cards */}
+                    {idx < STAGES.length - 1 && (
                       <div
                         style={{
                           display: "flex",
                           alignItems: "center",
-                          gap: 7,
-                          paddingTop: 12,
-                          borderTop: "1px solid var(--border)",
-                          marginTop: "auto",
+                          padding: "0 10px",
+                          flexShrink: 0,
                         }}
                       >
-                        {idx === STAGES.length - 1 ? (
-                          <CheckCircle2 size={13} color="#16a34a" />
-                        ) : (
-                          <ArrowRight size={13} color={stage.color} />
-                        )}
-                        <span
-                          style={{
-                            fontFamily: "var(--font-sans)",
-                            fontSize: 11.5,
-                            fontWeight: 600,
-                            color: idx === STAGES.length - 1 ? "#16a34a" : stage.color,
-                          }}
-                        >
-                          {stage.next}
-                        </span>
+                        <ArrowRight size={20} color="var(--text-tertiary)" strokeWidth={1.5} />
                       </div>
-                    </div>
+                    )}
                   </div>
-
-                  {/* Arrow between cards */}
-                  {idx < STAGES.length - 1 && (
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        padding: "0 10px",
-                        flexShrink: 0,
-                      }}
-                    >
-                      <ArrowRight size={20} color="var(--text-tertiary)" strokeWidth={1.5} />
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
     </div>
   );
 }

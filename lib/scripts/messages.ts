@@ -6,7 +6,7 @@ export const MESSAGES_DATA: Record<"sms" | "telefon" | "fb", MsgItem[]> = {
       id: "m1",
       group: "Kwalifikacja",
       label: "Brak odbioru — po 3 próbach",
-      text: "Dzień dobry Panie {IMIĘ}, dzwoniłem ponieważ wypełnił Pan formularz w sprawie oszczędności czasu w firmie transportowej. Będę wdzięczny za oddzwonienie lub wskazanie terminu. Michał Roth, Autorise, +48 575 902 350",
+      text: "Dzień dobry Panie {IMIĘ}, dzwoniłem 3 razy bo wypełnił Pan formularz w sprawie oszczędności czasu w firmie transportowej. Jeśli temat jest aktualny — proszę o SMS lub oddzwonienie. Jeśli nie — nie będę przeszkadzał.",
     },
     {
       id: "m2",

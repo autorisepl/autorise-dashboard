@@ -2,7 +2,11 @@ import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { extractAndParseJson } from "@/lib/agents/parseJson";
-import { AGENT_MODELS, AGENT1_SYSTEM_PROMPT, AGENT1_VERIFICATION_SUFFIX } from "@/lib/agents/prompts";
+import {
+  AGENT_MODELS,
+  AGENT1_SYSTEM_PROMPT,
+  AGENT1_VERIFICATION_SUFFIX,
+} from "@/lib/agents/prompts";
 import {
   getClientPage,
   getKwalifikacjaKnowledge,

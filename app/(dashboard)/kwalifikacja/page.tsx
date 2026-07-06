@@ -30,7 +30,7 @@ import {
   STEPS_K,
 } from "@/lib/scripts/kwalifikacyjna";
 import { GROUP_COLORS, MESSAGES_DATA } from "@/lib/scripts/messages";
-import type { DecisionOption, ScriptLine } from "@/lib/scripts/types";
+import type { DecisionOption, ScriptLine, Objection } from "@/lib/scripts/types";
 import { objectionColor } from "@/lib/scripts/types";
 
 // ── Helpers ──────────────────────────────────────────────────────────
@@ -137,7 +137,10 @@ function Card({
 // ── Kalkulator (na żywo) — pasek narastających flag z decyzji 2f ─────────
 
 const FLAG_SOURCE: Record<string, { label: string; nr: string }> = {
+  zlecenia: { label: "Zlecenia", nr: "2d" },
+  cmr: { label: "CMR/POD", nr: "2e" },
   faktury_recznie: { label: "Faktury", nr: "2f" },
+  komunikacja: { label: "Komunikacja", nr: "2g" },
 };
 
 function CalculatorFlagsBar({ flags }: { flags: Record<string, boolean> }) {
@@ -211,15 +214,19 @@ function ScriptKalkulator({
   autoFlags,
   osoby,
   godziny,
+  stawka,
   onOsobyChange,
   onGodzinyChange,
+  onStawkaChange,
 }: {
   clientName: string;
   autoFlags: Record<string, boolean>;
   osoby: number;
   godziny: number;
+  stawka: number;
   onOsobyChange: (n: number) => void;
   onGodzinyChange: (n: number) => void;
+  onStawkaChange: (n: number) => void;
 }) {
   const [manualSelected, setManualSelected] = useState<Set<string>>(
     new Set(["zlecenia", "cmr", "faktury_recznie"]),
@@ -240,7 +247,7 @@ function ScriptKalkulator({
   };
 
   const miesiecznieH = osoby * godziny * 22;
-  const miesieczniePLN = miesiecznieH * 50;
+  const miesieczniePLN = miesiecznieH * stawka;
   const rocznie = miesieczniePLN * 12;
   const gwarancjaH = Math.round(miesiecznieH * 0.8);
 
@@ -365,6 +372,22 @@ function ScriptKalkulator({
               }}
             />
           </label>
+          <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
+            <span style={{ fontFamily: "var(--font-sans)", fontSize: 10, fontWeight: 600, color: "var(--text-tertiary)", textTransform: "uppercase", letterSpacing: "0.07em" }}>
+              Stawka godzinowa
+            </span>
+            <input
+              type="number"
+              min={20}
+              max={200}
+              value={stawka}
+              onChange={(e) => onStawkaChange(Math.max(20, Number(e.target.value) || 55))}
+              style={{ height: 36, borderRadius: 8, border: "1px solid #E5E5EA", padding: "0 10px", fontFamily: "var(--font-sans)", fontSize: 14, fontWeight: 600, color: "var(--text-primary)", background: "#F5F5F7", outline: "none", width: "100%" }}
+            />
+          </label>
+        </div>
+        <div style={{ fontFamily: "var(--font-sans)", fontSize: 10, color: "var(--text-tertiary)", fontStyle: "italic", marginTop: 4 }}>
+          Stawka szacunkowa na podstawie typowego kosztu pracy spedytora w Polsce z narzutami. Dostosuj jeśli klient poda inną wartość.
         </div>
 
         {/* Typy pracy */}
@@ -473,7 +496,7 @@ function ScriptKalkulator({
                   color: "var(--text-tertiary)",
                 }}
               >
-                {fmt(miesiecznieH)} h × 50 zł/h
+                {fmt(miesiecznieH)} h × {stawka} zł/h
               </div>
             </div>
             <div>
@@ -790,223 +813,349 @@ function ScriptStep({
 
 // ── Objections accordion ──────────────────────────────────────────────
 
+function getStageForStepNr(nr: string): Objection["stage"] {
+  if (nr === "1") return "opening";
+  if (nr.startsWith("2a") || nr.startsWith("2b")) return "icp";
+  if (
+    nr.startsWith("2c") ||
+    nr.startsWith("2d") ||
+    nr.startsWith("2e") ||
+    nr.startsWith("2f") ||
+    nr.startsWith("2g") ||
+    nr.startsWith("2h") ||
+    nr === "2z"
+  )
+    return "diagnoza";
+  if (nr.startsWith("2i") || nr.startsWith("2j") || nr.startsWith("2k")) return "kalkulator";
+  return "wszedzie";
+}
+
 function ObjectionsPanel({
   fill,
   onCopy,
   copiedId,
   openId,
   setOpenId,
+  activeStepNr = "1",
 }: {
   fill: (t: string) => string;
   onCopy: (id: string, text: string) => void;
   copiedId: string | null;
   openId: string | null;
   setOpenId: (id: string | null) => void;
+  activeStepNr?: string;
 }) {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-      {OBJECTIONS_K.map((obj) => {
-        const oc = objectionColor(obj.label);
-        const isOpen = openId === obj.id;
-        return (
-          <div
-            key={obj.id}
-            id={`objection-${obj.id}`}
-            style={{
-              border: "1px solid #E5E5EA",
-              borderLeft: `3px solid ${oc.accent}`,
-              borderRadius: 8,
-              overflow: "hidden",
-              background: isOpen ? oc.bg : "#fff",
-            }}
-          >
+  const [showOthers, setShowOthers] = useState(false);
+  const currentStage = getStageForStepNr(activeStepNr);
+
+  useEffect(() => {
+    if (openId) {
+      const obj = OBJECTIONS_K.find((o) => o.id === openId);
+      if (obj && obj.stage !== currentStage && obj.stage !== "wszedzie") {
+        setShowOthers(true);
+      }
+    }
+  }, [openId, currentStage]);
+
+  const activeObjections = OBJECTIONS_K.filter(
+    (o) => o.stage === currentStage || o.stage === "wszedzie",
+  );
+  const otherObjections = OBJECTIONS_K.filter(
+    (o) => o.stage !== currentStage && o.stage !== "wszedzie",
+  );
+
+  const renderObjection = (obj: Objection) => {
+    const oc = objectionColor(obj.label);
+    const isOpen = openId === obj.id;
+    return (
+      <div
+        key={obj.id}
+        id={`objection-${obj.id}`}
+        style={{
+          border: "1px solid #E5E5EA",
+          borderLeft: `3px solid ${oc.accent}`,
+          borderRadius: 8,
+          overflow: "hidden",
+          background: isOpen ? oc.bg : "#fff",
+          transition: "background-color 200ms, box-shadow 250ms",
+        }}
+      >
+        <div
+          onClick={() => setOpenId(isOpen ? null : obj.id)}
+          style={{
+            padding: "8px 12px",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            cursor: "pointer",
+            userSelect: "none",
+          }}
+        >
+          <div style={{ flex: 1 }}>
             <div
-              onClick={() => setOpenId(isOpen ? null : obj.id)}
               style={{
-                padding: "8px 12px",
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                cursor: "pointer",
-                userSelect: "none",
+                fontSize: 9,
+                fontWeight: 700,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                color: oc.accent,
+                marginBottom: 1,
               }}
             >
-              <div style={{ flex: 1 }}>
+              {oc.category}
+            </div>
+            <div
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 12,
+                fontWeight: 500,
+                color: "var(--text-primary)",
+              }}
+            >
+              {obj.label}
+            </div>
+          </div>
+          <ChevronDown
+            size={12}
+            color="var(--text-tertiary)"
+            style={{
+              transform: isOpen ? "rotate(180deg)" : "none",
+              transition: "transform 150ms",
+              flexShrink: 0,
+            }}
+          />
+        </div>
+        {isOpen && (
+          <div
+            style={{ padding: "0 12px 12px", display: "flex", flexDirection: "column", gap: 8 }}
+          >
+            {obj.script && (
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 6 }}>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: 13,
+                    lineHeight: 1.6,
+                    color: "var(--text-primary)",
+                    fontFamily: "var(--font-sans)",
+                    flex: 1,
+                  }}
+                >
+                  {fill(obj.script)}
+                </p>
+                <button
+                  onClick={() => onCopy(`obj-${obj.id}-script`, obj.script!)}
+                  style={{
+                    flexShrink: 0,
+                    padding: "3px 7px",
+                    borderRadius: 5,
+                    border: "1px solid #E5E5EA",
+                    background: "transparent",
+                    cursor: "pointer",
+                    color:
+                      copiedId === `obj-${obj.id}-script`
+                        ? "var(--success-text)"
+                        : "var(--text-tertiary)",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  {copiedId === `obj-${obj.id}-script` ? (
+                    <CheckCircle2 size={10} />
+                  ) : (
+                    <Copy size={10} />
+                  )}
+                </button>
+              </div>
+            )}
+            {obj.followup && (
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: 12,
+                  lineHeight: 1.55,
+                  color: "var(--accent)",
+                  fontFamily: "var(--font-sans)",
+                  fontStyle: "italic",
+                  borderTop: "1px solid #E5E5EA",
+                  paddingTop: 8,
+                }}
+              >
+                {fill(obj.followup)}
+              </p>
+            )}
+            {obj.note && (
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: 11,
+                  lineHeight: 1.5,
+                  color: "var(--text-secondary)",
+                  fontFamily: "var(--font-sans)",
+                  background: "var(--warning-bg)",
+                  padding: "6px 8px",
+                  borderRadius: 6,
+                }}
+              >
+                {obj.note}
+              </p>
+            )}
+            {obj.sms && (
+              <div
+                style={{
+                  background: "var(--accent-muted)",
+                  padding: "8px 10px",
+                  borderRadius: 6,
+                }}
+              >
                 <div
                   style={{
                     fontSize: 9,
                     fontWeight: 700,
-                    letterSpacing: "0.1em",
+                    color: "var(--accent)",
+                    letterSpacing: "0.08em",
                     textTransform: "uppercase",
-                    color: oc.accent,
-                    marginBottom: 1,
+                    marginBottom: 4,
                   }}
                 >
-                  {oc.category}
+                  SMS
                 </div>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: 12,
+                    color: "var(--text-primary)",
+                    lineHeight: 1.55,
+                    fontFamily: "var(--font-sans)",
+                  }}
+                >
+                  {fill(obj.sms)}
+                </p>
+              </div>
+            )}
+            {obj.extra && (
+              <div
+                style={{ background: "var(--bg-hover)", padding: "8px 10px", borderRadius: 6 }}
+              >
                 <div
                   style={{
-                    fontFamily: "var(--font-sans)",
-                    fontSize: 12,
-                    fontWeight: 500,
-                    color: "var(--text-primary)",
+                    fontSize: 9,
+                    fontWeight: 700,
+                    color: "var(--text-secondary)",
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                    marginBottom: 4,
                   }}
                 >
-                  {obj.label}
+                  Wiadomość prywatna
                 </div>
-              </div>
-              <ChevronDown
-                size={12}
-                color="var(--text-tertiary)"
-                style={{
-                  transform: isOpen ? "rotate(180deg)" : "none",
-                  transition: "transform 150ms",
-                  flexShrink: 0,
-                }}
-              />
-            </div>
-            {isOpen && (
-              <div
-                style={{ padding: "0 12px 12px", display: "flex", flexDirection: "column", gap: 8 }}
-              >
-                {obj.script && (
-                  <div style={{ display: "flex", alignItems: "flex-start", gap: 6 }}>
-                    <p
-                      style={{
-                        margin: 0,
-                        fontSize: 13,
-                        lineHeight: 1.6,
-                        color: "var(--text-primary)",
-                        fontFamily: "var(--font-sans)",
-                        flex: 1,
-                      }}
-                    >
-                      {fill(obj.script)}
-                    </p>
-                    <button
-                      onClick={() => onCopy(`obj-${obj.id}-script`, obj.script!)}
-                      style={{
-                        flexShrink: 0,
-                        padding: "3px 7px",
-                        borderRadius: 5,
-                        border: "1px solid #E5E5EA",
-                        background: "transparent",
-                        cursor: "pointer",
-                        color:
-                          copiedId === `obj-${obj.id}-script`
-                            ? "var(--success-text)"
-                            : "var(--text-tertiary)",
-                        display: "flex",
-                        alignItems: "center",
-                      }}
-                    >
-                      {copiedId === `obj-${obj.id}-script` ? (
-                        <CheckCircle2 size={10} />
-                      ) : (
-                        <Copy size={10} />
-                      )}
-                    </button>
-                  </div>
-                )}
-                {obj.followup && (
-                  <p
-                    style={{
-                      margin: 0,
-                      fontSize: 12,
-                      lineHeight: 1.55,
-                      color: "var(--accent)",
-                      fontFamily: "var(--font-sans)",
-                      fontStyle: "italic",
-                      borderTop: "1px solid #E5E5EA",
-                      paddingTop: 8,
-                    }}
-                  >
-                    {fill(obj.followup)}
-                  </p>
-                )}
-                {obj.note && (
-                  <p
-                    style={{
-                      margin: 0,
-                      fontSize: 11,
-                      lineHeight: 1.5,
-                      color: "var(--text-secondary)",
-                      fontFamily: "var(--font-sans)",
-                      background: "var(--warning-bg)",
-                      padding: "6px 8px",
-                      borderRadius: 6,
-                    }}
-                  >
-                    {obj.note}
-                  </p>
-                )}
-                {obj.sms && (
-                  <div
-                    style={{
-                      background: "var(--accent-muted)",
-                      padding: "8px 10px",
-                      borderRadius: 6,
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: 9,
-                        fontWeight: 700,
-                        color: "var(--accent)",
-                        letterSpacing: "0.08em",
-                        textTransform: "uppercase",
-                        marginBottom: 4,
-                      }}
-                    >
-                      SMS
-                    </div>
-                    <p
-                      style={{
-                        margin: 0,
-                        fontSize: 12,
-                        color: "var(--text-primary)",
-                        lineHeight: 1.55,
-                        fontFamily: "var(--font-sans)",
-                      }}
-                    >
-                      {fill(obj.sms)}
-                    </p>
-                  </div>
-                )}
-                {obj.extra && (
-                  <div
-                    style={{ background: "var(--bg-hover)", padding: "8px 10px", borderRadius: 6 }}
-                  >
-                    <div
-                      style={{
-                        fontSize: 9,
-                        fontWeight: 700,
-                        color: "var(--text-secondary)",
-                        letterSpacing: "0.08em",
-                        textTransform: "uppercase",
-                        marginBottom: 4,
-                      }}
-                    >
-                      Wiadomość prywatna
-                    </div>
-                    <p
-                      style={{
-                        margin: 0,
-                        fontSize: 12,
-                        color: "var(--text-primary)",
-                        lineHeight: 1.55,
-                        fontFamily: "var(--font-sans)",
-                      }}
-                    >
-                      {fill(obj.extra)}
-                    </p>
-                  </div>
-                )}
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: 12,
+                    color: "var(--text-primary)",
+                    lineHeight: 1.55,
+                    fontFamily: "var(--font-sans)",
+                  }}
+                >
+                  {fill(obj.extra)}
+                </p>
               </div>
             )}
           </div>
-        );
-      })}
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      {/* Teraz może wystąpić */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <div
+          style={{
+            fontFamily: "var(--font-sans)",
+            fontSize: 10,
+            fontWeight: 700,
+            color: "var(--accent)",
+            letterSpacing: "0.05em",
+            textTransform: "uppercase",
+          }}
+        >
+          Teraz może wystąpić
+        </div>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 4,
+            padding: 6,
+            borderRadius: 10,
+            background: "rgba(10,132,255,0.02)",
+            border: "1px solid rgba(10,132,255,0.08)",
+          }}
+        >
+          {activeObjections.length === 0 ? (
+            <div
+              style={{
+                padding: "8px 10px",
+                fontSize: 11,
+                color: "var(--text-tertiary)",
+                fontStyle: "italic",
+              }}
+            >
+              Brak dopasowanych obiekcji dla tego etapu
+            </div>
+          ) : (
+            activeObjections.map(renderObjection)
+          )}
+        </div>
+      </div>
+
+      {/* Pozostałe */}
+      {otherObjections.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <div
+            onClick={() => setShowOthers((p) => !p)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              cursor: "pointer",
+              padding: "6px 8px",
+              borderRadius: 6,
+              background: "#F5F5F7",
+              userSelect: "none",
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 10,
+                fontWeight: 700,
+                color: "var(--text-secondary)",
+                letterSpacing: "0.05em",
+                textTransform: "uppercase",
+              }}
+            >
+              Pozostałe obiekcje ({otherObjections.length})
+            </span>
+            <ChevronDown
+              size={12}
+              color="var(--text-secondary)"
+              style={{
+                transform: showOthers ? "rotate(180deg)" : "none",
+                transition: "transform 150ms",
+              }}
+            />
+          </div>
+          {showOthers && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 2 }}>
+              {otherObjections.map(renderObjection)}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -1784,12 +1933,14 @@ function RightPanel({
   copiedId,
   openObjectionId,
   setOpenObjectionId,
+  activeStepNr,
 }: {
   fill: (t: string) => string;
   onCopy: (id: string, text: string) => void;
   copiedId: string | null;
   openObjectionId: string | null;
   setOpenObjectionId: (id: string | null) => void;
+  activeStepNr: string;
 }) {
   return (
     <div
@@ -1810,6 +1961,7 @@ function RightPanel({
           copiedId={copiedId}
           openId={openObjectionId}
           setOpenId={setOpenObjectionId}
+          activeStepNr={activeStepNr}
         />
       </Card>
       <Card title="Frazy potwierdzające" collapsible defaultOpen={false}>
@@ -1838,6 +1990,8 @@ export default function KwalifikacjaPage() {
   const [openObjectionId, setOpenObjectionId] = useState<string | null>(null);
   const [calcOsoby, setCalcOsoby] = useState(2);
   const [calcGodziny, setCalcGodziny] = useState(3);
+  const [calcStawka, setCalcStawka] = useState(55); // NOWE
+  const [activeStepNr, setActiveStepNr] = useState("1"); // NOWE
   const [sprzedawcaImie, setSprzedawcaImie] = useState("Michał");
 
   const fetchClients = useCallback(async () => {
@@ -1891,7 +2045,7 @@ export default function KwalifikacjaPage() {
     if (sprzedawcaImie.trim()) out = out.replace(/\{IMIĘ_SPRZEDAWCY\}/g, sprzedawcaImie.trim());
 
     const wynikGodziny = calcOsoby * calcGodziny * 22;
-    const wynikPln = wynikGodziny * 50;
+    const wynikPln = wynikGodziny * calcStawka; // Zmienione z 50
     out = out.replace(/\[WYNIK Z KALKULATORA\]/g, String(wynikGodziny));
     out = out.replace(/\[WARTOŚĆ PLN\]/g, `${fmtPln(wynikPln)} zł`);
     out = out.replace(/\[WYNIK × 0\.8\]/g, String(Math.round(wynikGodziny * 0.8)));
@@ -1907,6 +2061,10 @@ export default function KwalifikacjaPage() {
   };
 
   const jumpToStep = useCallback((stepId: string) => {
+    const step = STEPS_K.find((s) => s.id === stepId);
+    if (step) {
+      setActiveStepNr(step.nr);
+    }
     const el = document.getElementById(`step-${stepId}`);
     if (!el) return;
     el.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -2074,8 +2232,10 @@ export default function KwalifikacjaPage() {
                     autoFlags={calculatorFlags}
                     osoby={calcOsoby}
                     godziny={calcGodziny}
+                    stawka={calcStawka}
                     onOsobyChange={setCalcOsoby}
                     onGodzinyChange={setCalcGodziny}
+                    onStawkaChange={setCalcStawka}
                   />
                 )}
               </ScriptStep>
@@ -2136,6 +2296,7 @@ export default function KwalifikacjaPage() {
           copiedId={copiedId}
           openObjectionId={openObjectionId}
           setOpenObjectionId={setOpenObjectionId}
+          activeStepNr={activeStepNr}
         />
       </div>
     </div>

@@ -618,7 +618,8 @@ const PLACEHOLDERS: PlaceholderEntry[] = [
     token: "[WYNIK Z KALKULATORA]",
     description: "Gotowe zdanie z wynikiem kalkulatora do wypowiedzenia na głos",
     source: "ScriptKalkulator — gotowe zdanie: 'Przy X osobach i Y godzinach dziennie...'",
-    example: "Zdanie: Przy 2 osobach i 3 godzinach dziennie — to 132 godziny miesięcznie, czyli 6 600 zł kosztu pracy. Rocznie 79 200 zł.",
+    example:
+      "Zdanie: Przy 2 osobach i 3 godzinach dziennie — to 132 godziny miesięcznie, czyli 6 600 zł kosztu pracy. Rocznie 79 200 zł.",
   },
   {
     token: "[WARTOŚĆ PLN]",

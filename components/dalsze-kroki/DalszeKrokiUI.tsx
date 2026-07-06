@@ -2,13 +2,7 @@
 
 import { Check } from "lucide-react";
 
-export function ProgressBar({
-  doneCount,
-  totalCount,
-}: {
-  doneCount: number;
-  totalCount: number;
-}) {
+export function ProgressBar({ doneCount, totalCount }: { doneCount: number; totalCount: number }) {
   return (
     <div style={{ marginBottom: 12 }}>
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>

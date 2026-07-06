@@ -45,7 +45,7 @@ export const STEPS_K: Step[] = [
         t: "say",
         text: [
           "Dzień dobry, mówi {IMIĘ_SPRZEDAWCY} z Autorise.",
-          "Dzwonię, bo zostawił Pan kontakt w sprawie odzyskania czasu jaki Pana biuro traci na ręczne wpisywanie zleceń i pilnowanie dokumentów — u firm z którymi pracujemy to zwykle kilkadziesiąt godzin miesięcznie.",
+          "Zostawił Pan kontakt w sprawie odzyskania czasu jaki biuro traci na ręczne wpisywanie zleceń i pilnowanie dokumentów.",
         ],
       },
       {
@@ -54,6 +54,10 @@ export const STEPS_K: Step[] = [
         cel: "Zdobyć zgodę na kontynuację rozmowy zanim przejdziesz do diagnozy",
       },
       { t: "client", text: "[odpowiedź]" },
+      {
+        t: "note",
+        text: "Jeśli klient nie odbiera w ogóle (dzwonisz, nikt nie podnosi): to nie jest ten ekran. Po 3 próbach przejdź do zakładki Wiadomości i wyślij SMS z szablonu 'Brak odbioru po 3 próbach'.",
+      },
     ],
     decision: {
       question: "Co odpowiedział klient?",
@@ -65,15 +69,15 @@ export const STEPS_K: Step[] = [
           tone: "positive",
         },
         {
-          trigger: "Nie mam teraz czasu",
-          action: "Pokaż obiekcję OK1 z prawego panelu",
-          openObjectionId: "ok1",
+          trigger: "Nie ma czasu — brzmi na szczere",
+          action: "Pokaż reakcję na szczery brak czasu",
+          openObjectionId: "ok1_szczere",
           tone: "warning",
         },
         {
-          trigger: "Brak odbioru (po 3 próbach)",
-          action: "Pokaż SMS do wysłania z prawego panelu",
-          openObjectionId: "ok6",
+          trigger: "Nie ma czasu — brzmi na wymówkę",
+          action: "Pokaż reakcję na wymówkę",
+          openObjectionId: "ok1_wymowka",
           tone: "warning",
         },
       ],
@@ -103,7 +107,38 @@ export const STEPS_K: Step[] = [
         },
         {
           trigger: "Klient nie podaje konkretnego powodu",
-          action: "Brak jasnego bólu — użyj scenariusza braku bólu",
+          action: "Nie rezygnuj od razu — dopytaj raz jeszcze zanim uznasz brak bólu",
+          goToStepId: "diagnoza_doprecyzowanie_bolu",
+          tone: "warning",
+        },
+      ],
+    },
+  },
+  {
+    id: "diagnoza_doprecyzowanie_bolu",
+    nr: "2z",
+    label: "DOPRECYZOWANIE BÓLU",
+    tag: "MÓWISZ",
+    lines: [
+      {
+        t: "say",
+        text: "Rozumiem, czasem trudno to od razu nazwać. Powiem inaczej — co najbardziej Panu przeszkadza w codziennej pracy biura: dokumenty, czas, czy raczej brak kontroli nad tym co się dzieje?",
+        cel: "Dać klientowi trzy konkretne kierunki zamiast otwartego pytania — łatwiej wybrać niż wymyślić od zera",
+      },
+      { t: "client", text: "[odpowiedź]" },
+    ],
+    decision: {
+      question: "Czy teraz podał konkretny kierunek?",
+      options: [
+        {
+          trigger: "Tak, wskazał kierunek",
+          action: "Kontynuuj do ICP",
+          goToStepId: "diagnoza_icp_flota",
+          tone: "positive",
+        },
+        {
+          trigger: "Nadal nic konkretnego, 'wszystko w porządku'",
+          action: "Użyj scenariusza braku bólu — teraz naprawdę kończ",
           goToStepId: "brak_bolu",
           tone: "warning",
         },
@@ -145,9 +180,8 @@ export const STEPS_K: Step[] = [
         {
           trigger:
             "1 osoba w biurze, brak konkretnego planu zatrudnienia w najbliższych 3 miesiącach",
-          action:
-            "Przeczytaj: 'Dziękuję za szczerą rozmowę. Nasze rozwiązanie sprawdza się przy biurach z co najmniej dwiema osobami. U Pana tej skali jeszcze nie ma, nie chcę sprzedawać czegoś co się nie zwróci. Czy mogę zapisać kontakt i wrócić za około 3 miesiące?' Status: Niekwalifikowany. Jeśli zgoda na kontakt: dodaj datę re-engagement +90 dni.",
-          goToStepId: "opener",
+          action: "Pokaż zakończenie rozmowy poniżej progu",
+          openObjectionId: "icp_ponizej_progu",
           tone: "warning",
         },
       ],
@@ -180,8 +214,8 @@ export const STEPS_K: Step[] = [
         },
         {
           trigger: "Nie, ktoś inny decyduje",
-          action: "Zgoda na wspólne spotkanie",
-          goToStepId: "diagnoza_tms",
+          action: "Pokaż propozycję wspólnego spotkania",
+          openObjectionId: "icp_nie_decydent",
           tone: "warning",
         },
       ],
@@ -222,7 +256,18 @@ export const STEPS_K: Step[] = [
         text: "Jeśli klient nie rozumie pytania lub miesza je ze zleceniem dla kierowcy: 'Mam na myśli dokument od klienta który zamawia u Was transport, nie polecenie wyjazdu dla kierowcy.'",
       },
     ],
-    nextStepId: "diagnoza_dokumenty_cmr",
+    decision: {
+      question: "Potwierdzone przez klienta?",
+      options: [
+        {
+          trigger: "Tak, robi to ręcznie (mail/PDF/zdjęcie)",
+          action: "Zaznacz w kalkulatorze",
+          goToStepId: "diagnoza_dokumenty_cmr",
+          tone: "positive",
+          calculatorFlag: "zlecenia",
+        },
+      ],
+    },
   },
   {
     id: "diagnoza_dokumenty_cmr",
@@ -240,7 +285,7 @@ export const STEPS_K: Step[] = [
       },
       {
         t: "say",
-        text: "Ten sam dokument, po dostarczeniu towaru, podpisuje odbiorca jako potwierdzenie że wszystko dotarło w porządku. U większości firm to jest ten sam papier, ale jeśli u Pana to jest osobny formularz, na przykład od dużej sieci handlowej, powiedz mi o tym.",
+        text: "Ten sam dokument, po dostarczeniu towaru, podpisuje odbiorca jako potwierdzenie że wszystko dotarło w porządku. U większości firm to jest ten sam papier, ale jeśli u Pana to jest osobny formularz, na przykład od dużej sieci handlowej, proszę mi o tym powiedzieć.",
         cel: "Sprawdzić czy klient rozróżnia CMR i osobne potwierdzenie dostawy — u większości nie, ale trafiają się wyjątki",
       },
       {
@@ -248,7 +293,18 @@ export const STEPS_K: Step[] = [
         text: "Papier fizyczny lub zdjęcie na WhatsApp/mailem: to automatyczne odczytywanie dokumentów (CMR, faktury), zaznacz w kalkulatorze. Elektroniczne, np. eCMR: inny profil klienta, sprawdź czy dane i tak trzeba ręcznie przenieść do rozliczeń.",
       },
     ],
-    nextStepId: "diagnoza_dokumenty_faktura",
+    decision: {
+      question: "Potwierdzone przez klienta?",
+      options: [
+        {
+          trigger: "Tak, ręczne przepisywanie CMR/potwierdzeń",
+          action: "Zaznacz w kalkulatorze",
+          goToStepId: "diagnoza_dokumenty_faktura",
+          tone: "positive",
+          calculatorFlag: "cmr",
+        },
+      ],
+    },
   },
   {
     id: "diagnoza_dokumenty_faktura",
@@ -295,7 +351,24 @@ export const STEPS_K: Step[] = [
         cel: "Sprawdzić czy istnieje systematyczna kontrola płatności",
       },
     ],
-    nextStepId: "diagnoza_dokumenty_status",
+    decision: {
+      question: "Czy ktoś systematycznie pilnuje płatności?",
+      options: [
+        {
+          trigger: "Nie, sprawdzają od czasu do czasu",
+          action: "Zaznacz w kalkulatorze (faktury)",
+          goToStepId: "diagnoza_dokumenty_status",
+          tone: "positive",
+          calculatorFlag: "faktury_recznie",
+        },
+        {
+          trigger: "Tak, ktoś to systematycznie robi",
+          action: "Nie zaznaczaj",
+          goToStepId: "diagnoza_dokumenty_status",
+          tone: "neutral",
+        },
+      ],
+    },
   },
   {
     id: "diagnoza_dokumenty_status",
@@ -313,7 +386,24 @@ export const STEPS_K: Step[] = [
         text: "To jest pytanie o alerty i widoczność statusu na WhatsApp oraz o widoczność operacyjną. Jeśli właściciel musi dzwonić lub pytać osobiście żeby wiedzieć co się dzieje, to jest osobny, ważny ból, niezależny od dokumentów, zanotuj osobno.",
       },
     ],
-    nextStepId: "diagnoza_podsumowanie_dokumentow",
+    decision: {
+      question: "Czy właściciel ma widoczność bez dzwonienia?",
+      options: [
+        {
+          trigger: "Nie, musi dzwonić do spedytora",
+          action: "Zaznacz w kalkulatorze (komunikacja)",
+          goToStepId: "diagnoza_podsumowanie_dokumentow",
+          tone: "positive",
+          calculatorFlag: "komunikacja",
+        },
+        {
+          trigger: "Tak, ma to na bieżąco",
+          action: "Nie zaznaczaj",
+          goToStepId: "diagnoza_podsumowanie_dokumentow",
+          tone: "neutral",
+        },
+      ],
+    },
   },
   {
     id: "diagnoza_podsumowanie_dokumentow",
@@ -323,7 +413,7 @@ export const STEPS_K: Step[] = [
     lines: [
       {
         t: "action",
-        text: "Kalkulator zaznaczył już checkboxy na żywo na podstawie kliknięć w krokach 2d-2g. Sprawdź w pasku nad skryptem czy wszystko co klient potwierdził faktycznie tam jest, zanim przejdziesz dalej.",
+        text: "To jest checkpoint, nie pytanie do klienta. Spójrz na pasek kalkulatora nad skryptem — powinny tam świecić się checkboxy za każdą rzecz którą klient przed chwilą potwierdził jako ręczną (zlecenia, dokumenty, płatności, widoczność). Jeśli czegoś brakuje mimo że klient to powiedział, zaznacz ręcznie teraz, zanim przejdziesz do podania mu liczby — to od tych zaznaczeń zależy dokładność kwoty którą za chwilę usłyszy.",
       },
     ],
     nextStepId: "diagnoza_kalkulator",
@@ -398,24 +488,36 @@ export const STEPS_K: Step[] = [
         cel: "Sprawić żeby klient sam nazwał korzyść — silniej przekonuje niż gdybyś to Ty powiedział",
       },
       { t: "client", text: "[odpowiedź]" },
-      {
-        t: "note",
-        text: "Odpowiada konkretnie (więcej zleceń, mniej błędów, szybsza obsługa, mniej nadgodzin): potwierdź i przejdź dalej, to gotowy materiał do Kroku 3.",
-      },
-      {
-        t: "note",
-        text: "Milczy, 'nie wiem, nie myślałem': Powiedz 'Rozumiem, chodzi o inne rzeczy niż redukcja etatów. Na przykład więcej zleceń przy tej samej ekipie, mniej błędów w dokumentach, szybsza obsługa klientów, mniej nadgodzin dla zespołu. Który z tych kierunków jest dla Pana teraz ważny?'",
-      },
-      {
-        t: "note",
-        text: "Reaguje obronnie, 'i tak nie zwolnię pracowników': Powiedz 'Jasne, nie chodzi o zwalnianie nikogo. Chodzi o to, żeby ten sam zespół miał więcej przestrzeni na obsługę klientów zamiast tonąć w papierach. Czy to jest coś co miałoby dla Pana znaczenie?'",
-      },
-      {
-        t: "note",
-        text: "Przeskakuje od razu do pytania o cenę: nie walcz z tym, przejdź dalej normalnie, zanotuj że pytanie o korzyść nie padło.",
-      },
     ],
-    nextStepId: "spotkanie",
+    decision: {
+      question: "Jak zareagował klient?",
+      options: [
+        {
+          trigger: "Odpowiada konkretnie",
+          action: "Potwierdź i przejdź dalej — to gotowy materiał do Kroku 3",
+          goToStepId: "spotkanie",
+          tone: "positive",
+        },
+        {
+          trigger: "Milczy, 'nie wiem, nie myślałem'",
+          action: "Pokaż podpowiedź",
+          openObjectionId: "czas_milczy",
+          tone: "warning",
+        },
+        {
+          trigger: "Reaguje obronnie",
+          action: "Pokaż uspokojenie",
+          openObjectionId: "czas_obronny",
+          tone: "warning",
+        },
+        {
+          trigger: "Przeskakuje do ceny",
+          action: "Pokaż jak zareagować",
+          openObjectionId: "czas_przeskakuje",
+          tone: "neutral",
+        },
+      ],
+    },
   },
   {
     id: "brak_bolu",
@@ -484,13 +586,15 @@ export const OBJECTIONS_K: Objection[] = [
   {
     id: "ok_nb",
     label: "Nie pamiętam żadnego formularza",
+    stage: "opening",
     script:
       "Rozumiem, pewnie wiele rzeczy się przewija. Formularz pojawił się na Facebooku kilka dni temu — dotyczył oszczędności czasu w firmie transportowej. Mam dla Pana 2 pytania zanim opowiem więcej — czy ma Pan chwilę?",
     note: "Po 'tak': przejdź do 2 Otwarcie diagnozy.",
   },
   {
     id: "ok_cc",
-    label: "Co Pan sprzedaje? O co chodzi?",
+    label: "Co Pan sprzedaje? O o co chodzi?",
+    stage: "opening",
     script:
       "Automatyzujemy pracę biura spedycji — zlecenia, CMR, faktury. Zanim cokolwiek zaproponuję, chciałem się dowiedzieć jak wygląda ta praca u Pana. Zajmie mi to dosłownie 2 minuty. Dobrze?",
     note: "Po 'tak': przejdź do 2 Otwarcie diagnozy.",
@@ -498,6 +602,7 @@ export const OBJECTIONS_K: Objection[] = [
   {
     id: "ok_ms",
     label: "Od razu chce umówić spotkanie",
+    stage: "opening",
     script:
       "Chętnie. Żeby spotkanie miało sens dla obu stron — muszę zadać 3 krótkie pytania o firmę. Zajmie mi to 2 minuty. Dobrze?",
     note: "Po 'tak': przejdź do 2 Otwarcie diagnozy.",
@@ -505,6 +610,7 @@ export const OBJECTIONS_K: Objection[] = [
   {
     id: "ok_cp",
     label: "Od razu pyta o cenę",
+    stage: "opening",
     script:
       "Cena zależy od skali i konfiguracji — dlatego najpierw chcę sprawdzić czy to w ogóle ma sens dla Pana firmy. Jeśli tak — podam cenę wprost na spotkaniu, bez owijania w bawełnę. Mam 2 pytania — dobrze?",
     note: "Po 'tak': przejdź do 2 Otwarcie diagnozy.",
@@ -512,6 +618,7 @@ export const OBJECTIONS_K: Objection[] = [
   {
     id: "ok_em",
     label: "Wyślij na maila",
+    stage: "opening",
     script:
       "Mogę wysłać materiały, ale żeby to nie były ogólne informacje tylko coś dopasowanego do Pana firmy — wolałbym zadać dwa krótkie pytania, zajmie to góra minutę.",
     note: "Po zgodzie: przejdź do 2 Otwarcie diagnozy. Jeśli klient nadal odmawia rozmowy: 'Rozumiem, wyślę ogólne informacje na [email z Pipeline], a jeśli po przeczytaniu będzie Pan chciał pogłębić temat, zapraszam do kontaktu.' Status: follow-up, nie zamknięta sprawa.",
@@ -520,18 +627,21 @@ export const OBJECTIONS_K: Objection[] = [
   {
     id: "ok1",
     label: "Nie mam teraz czasu (pierwsze NIE)",
+    stage: "opening",
     script:
-      "Rozumiem. Biura spedycji z którymi pracuję tracą kilkadziesiąt godzin miesięcznie na ręczne przepisywanie i pilnowanie dokumentów — liczone konkretnie dla każdej firmy, nie uśredniane. Jeśli to brzmi jak coś dla Pana — 2 minuty teraz mogą zmienić kilka tysięcy złotych miesięcznie. Ma Pan te 2 minuty?",
+      "Rozumiem. Biura spedycji z którymi pracuję tracą kilkatriąt godzin miesięcznie na ręczne przepisywanie i pilnowanie dokumentów — liczone konkretnie dla każdej firmy, nie uśredniane. Jeśli to brzmi jak coś dla Pana — 2 minuty teraz mogą zmienić kilka tysięcy złotych miesięcznie. Ma Pan te 2 minuty?",
   },
   {
     id: "ok2",
     label: "Nadal nie mam czasu (drugie NIE)",
+    stage: "opening",
     script: "Jasne. Kiedy jest Pan bardziej dostępny — jutro rano czy po południu?",
     note: "Zapisz dzień i godzinę. Ustaw follow-up w Pipeline.",
   },
   {
     id: "ok3",
     label: "Mam już program do zarządzania",
+    stage: "opening",
     script:
       "Większość firm z którymi pracuję ma TMS. My nie zastępujemy systemu, tylko zdejmujemy z Pana biura ręczną robotę wokół niego: wpisywanie zleceń, przepisywanie CMR i potwierdzeń dostawy, pilnowanie faktur i płatności, informowanie Pana o statusie zleceń bez dzwonienia do spedytora. Mam kilka pytań o to jak dziś wygląda ta praca u Pana, mimo TMS-u. Dobrze?",
     note: "Po 'tak': przejdź do 2 Otwarcie diagnozy.",
@@ -539,6 +649,7 @@ export const OBJECTIONS_K: Objection[] = [
   {
     id: "ok4",
     label: "Jadę na urlop / wracam za X tygodni",
+    stage: "wszedzie",
     script: "Rozumiem. Kiedy Pan wraca?",
     followup: "Zapisuję. Zadzwonię do Pana [data po powrocie]. Życzę udanego urlopu.",
     note: "Status: Nieaktywny (follow up). Data re-engagement: dzień po powrocie.",
@@ -546,23 +657,71 @@ export const OBJECTIONS_K: Objection[] = [
   {
     id: "ok5",
     label: "Muszę porozmawiać ze wspólnikiem / synem / żoną",
+    stage: "wszedzie",
     script:
       "Czy mogliby Państwo dołączyć we dwoje na spotkanie przez internet? Trwa 45 minut i mam przygotowane liczby konkretnie dla Pana firmy. Wtedy oboje macie pełen obraz i możecie zdecydować razem.",
     note: "Jeśli nie może dołączyć: 'Rozumiem. Co musiałoby się wydarzyć na spotkaniu żeby [osoba] powiedziała tak?'",
   },
   {
-    id: "ok6",
-    label: "Brak odbioru po 3 próbach",
-    type: "sms",
-    sms: "Dzień dobry Panie {IMIĘ}, dzwoniłem 3 razy bo wypełnił Pan formularz w sprawie oszczędności czasu w firmie transportowej. Jeśli temat jest aktualny — proszę o SMS lub oddzwonienie. Jeśli nie — nie będę przeszkadzał.",
+    id: "ok1_szczere",
+    label: "Nie mam czasu (naprawdę zajęty)",
+    stage: "opening",
+    script:
+      "Rozumiem, słyszę że jest Pan w gąszczu spraw. Kiedy będzie Panu wygodniej — jutro rano czy popołudniu?",
+    note: "Nie przekonuj, nie próbuj wcisnąć rozmowy na siłę. Szczery brak czasu szanujesz i umawiasz konkretny termin, nie 'kiedyś'.",
   },
   {
-    id: "ok7",
-    label: "Komentarz pod reklamą FB",
-    type: "fb",
-    script: "Pod komentarzem: 'Napisałem Panu wiadomość prywatną.'",
-    extra:
-      "Dzień dobry Panie {IMIĘ}, piszę ponieważ zostawił Pan komentarz pod naszą reklamą dotyczącą oszczędności czasu w firmie transportowej. Czy mógłbym prosić o numer telefonu? Chciałbym zadać kilka pytań i sprawdzić czy to w ogóle ma sens dla Pana firmy, zanim opowiem więcej.",
+    id: "ok1_wymowka",
+    label: "Nie mam czasu (brzmi jak wymówka)",
+    stage: "opening",
+    script:
+      "Rozumiem. Powiem jednym zdaniem po co dzwonię, a Pan zdecyduje czy warto poświęcić dwie minuty: sprawdzam czy Pana biuro traci więcej niż kilkadziesiąt godzin miesięcznie na ręczne wpisywanie zleceń i dokumentów. Jeśli tak — to są realne pieniądze. Ma Pan te dwie minuty?",
+    note: "Rozpoznajesz wymówkę po tonie — szybkie 'nie mam czasu' zaraz po przedstawieniu się, bez pytania o co chodzi, zanim jeszcze wiedział czego dotyczy telefon. Jeśli po tej odpowiedzi nadal odmawia: przejdź do ok2 (drugie NIE).",
+  },
+  {
+    id: "ok_czas_minal",
+    label: "Klient mówi że minęły już 2 minuty",
+    stage: "opening",
+    script:
+      "Ma Pan rację, przepraszam — zapytam Pana wprost: chce Pan żebym dokończył w skrócie teraz, czy wolałby Pan żebym oddzwonił i zrobił to porządnie?",
+    note: "To się zdarza gdy diagnoza faktycznie trwa dłużej niż deklarowane 2 minuty. Nie ignoruj tego, przyznaj wprost i daj klientowi wybór. Większość zostaje jeśli dasz im kontrolę nad decyzją.",
+  },
+  {
+    id: "icp_ponizej_progu",
+    label: "Poniżej progu ICP — 1 osoba w biurze, brak planu zatrudnienia",
+    stage: "icp",
+    script:
+      "Dziękuję za szczerą rozmowę. Nasze rozwiązanie sprawdza się przy biurach z co najmniej dwiema osobami — u Pana tej skali jeszcze nie ma, i nie chcę sprzedawać czegoś co się nie zwróci. Czy mogę zapisać kontakt i wrócić za około 3 miesiące?",
+    note: "Status: Niekwalifikowany. Jeśli zgoda na kontakt: dodaj datę re-engagement +90 dni w Pipeline. To jest koniec rozmowy — nie wracaj do diagnozy.",
+  },
+  {
+    id: "icp_nie_decydent",
+    label: "Rozmówca nie jest decydentem",
+    stage: "icp",
+    script:
+      "Rozumiem. Żeby nie tracić czasu ani Pana, ani osoby decyzyjnej — czy mógłby Pan zapytać czy ta osoba dołączyłaby do 45-minutowego spotkania razem z Panem? Wtedy oboje macie pełen obraz od razu, zamiast Pan tłumaczył to później z drugiej ręki.",
+    note: "Jeśli osoba decyzyjna nie może dołączyć na Discovery: umów spotkanie z rozmówcą i zaznacz w Pipeline 'decydent nieobecny — do potwierdzenia przed ceną', Agent 2 musi to uwzględnić w brief.",
+  },
+  {
+    id: "czas_milczy",
+    label: "Milczy po pytaniu co zrobiłby z czasem",
+    stage: "kalkulator",
+    script:
+      "Rozumiem, chodzi o inne rzeczy niż redukcja etatów. Na przykład więcej zleceń przy tej samej ekipie, mniej błędów w dokumentach, szybsza obsługa klientów, mniej nadgodzin dla zespołu. Który z tych kierunków jest dla Pana teraz ważny?",
+  },
+  {
+    id: "czas_obronny",
+    label: "Reaguje obronnie — 'i tak nie zwolnię pracowników'",
+    stage: "kalkulator",
+    script:
+      "Jasne, nie chodzi o zwalnianie nikogo. Chodzi o to, żeby ten sam zespół miał więcej przestrzeni na obsługę klientów zamiast tonąć w papierach. Czy to jest coś co miałoby dla Pana znaczenie?",
+  },
+  {
+    id: "czas_przeskakuje",
+    label: "Przeskakuje od razu do pytania o cenę",
+    stage: "kalkulator",
+    script: "Do ceny dojdziemy za moment, chcę tylko dokończyć ten wątek.",
+    note: "Jeśli mimo to nalega: nie walcz, przejdź dalej normalnie, zanotuj w Pipeline że pytanie o korzyść czasu nie zostało w pełni odpowiedziane.",
   },
 ];
 
