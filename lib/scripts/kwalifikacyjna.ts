@@ -8,6 +8,11 @@
 // jeśli klient nie spełnia twardych progów ICP (min. 2 osoby w biurze, obecność
 // decydenta), rozmowa kończy się od razu — bez inwestowania czasu w pięć pytań
 // dokumentowych które i tak nie zostaną wykorzystane.
+//
+// Zasada gwarancji: obietnica dotyczy zawsze konkretnych, wspólnie policzonych i przez
+// klienta potwierdzonych procesów manualnych, nigdy ogólnej wydajności zespołu czy
+// przychodu firmy. Każda wzmianka o gwarancji w skrypcie musi to jasno zaznaczać,
+// żeby uniknąć rozczarowania klienta przy odbiorze po 30 dniach.
 
 import type { IcpRule, Objection, Step } from "./types";
 
@@ -50,8 +55,8 @@ export const STEPS_K: Step[] = [
       },
       {
         t: "say",
-        text: "Ma Pan chwilę, dosłownie 2 minuty?",
-        cel: "Zdobyć zgodę na kontynuację rozmowy zanim przejdziesz do diagnozy",
+        text: "Chciałbym zadać dwa, trzy pytania żeby sprawdzić czy to w ogóle ma sens dla Pana firmy — zajmie dosłownie dwie minuty, dobrze?",
+        cel: "Uzasadnienie prośby o czas wbudowane w samo zdanie, nie osobna adnotacja — klient wie po co te 2 minuty, zanim zdąży pomyśleć że to sprzedaż",
       },
       { t: "client", text: "[odpowiedź]" },
       {
@@ -106,9 +111,52 @@ export const STEPS_K: Step[] = [
           tone: "positive",
         },
         {
-          trigger: "Klient nie podaje konkretnego powodu",
-          action: "Nie rezygnuj od razu — dopytaj raz jeszcze zanim uznasz brak bólu",
+          trigger: "Nie potrafi nazwać, 'trudno powiedzieć'",
+          action: "Dopytaj raz jeszcze zanim uznasz brak bólu",
           goToStepId: "diagnoza_doprecyzowanie_bolu",
+          tone: "warning",
+        },
+        {
+          trigger: "Zaciekawiła reklama, twierdzi że wszystko sprawnie",
+          action: "To co innego niż brak umiejętności nazwania bólu — użyj konkretnych scenariuszy",
+          goToStepId: "diagnoza_scenariusze_konkretne",
+          tone: "warning",
+        },
+      ],
+    },
+  },
+  {
+    id: "diagnoza_scenariusze_konkretne",
+    nr: "2y",
+    label: "SCENARIUSZE KONKRETNE",
+    tag: "MÓWISZ",
+    lines: [
+      {
+        t: "say",
+        text: "Rozumiem, dobrze że sprawnie działa na co dzień. Zapytam o dwie konkretne sytuacje: jak to wygląda gdy nagle przychodzi dużo zleceń naraz, na przykład w szczycie sezonu?",
+        cel: "Sprawdzić czy pod presją proces się sypie mimo że na co dzień wygląda sprawnie",
+      },
+      { t: "client", text: "[odpowiedź]" },
+      {
+        t: "say",
+        text: "A jak radzicie sobie gdy spedytor jest nieobecny, choroba, urlop — firma wtedy staje, czy ktoś to przejmuje bez problemu?",
+        cel: "Druga konkretna sytuacja, sprawdza czy istnieje pojedynczy punkt awarii w procesie",
+      },
+      { t: "client", text: "[odpowiedź]" },
+    ],
+    decision: {
+      question: "Czy w którejś z tych sytuacji pojawił się realny problem?",
+      options: [
+        {
+          trigger: "Tak, w szczycie lub przy nieobecności coś szwankuje",
+          action: "To jest realny ból, kontynuuj do ICP",
+          goToStepId: "diagnoza_icp_flota",
+          tone: "positive",
+        },
+        {
+          trigger: "Nie, oba scenariusze też ogarnięte",
+          action: "Użyj scenariusza braku bólu — teraz naprawdę kończ",
+          goToStepId: "brak_bolu",
           tone: "warning",
         },
       ],
@@ -198,10 +246,6 @@ export const STEPS_K: Step[] = [
         text: "Jest Pan właścicielem firmy?",
         cel: "Ustalić czy rozmawiasz z osobą decyzyjną, żeby nie umówić spotkania bez sensu",
       },
-      {
-        t: "note",
-        text: "Jeśli nie jest właścicielem: 'Kto u Pana podejmuje decyzję o zakupie oprogramowania? Czy byłoby możliwe żebyśmy porozmawiali razem na spotkaniu?'",
-      },
     ],
     decision: {
       question: "Czy jest właścicielem?",
@@ -232,12 +276,25 @@ export const STEPS_K: Step[] = [
         text: "Czy korzystacie z TMS-u, czyli programu do zarządzania flotą i zleceniami, na przykład coś w rodzaju Trans.eu, TIMOCOM, Sky-Pol, WEB-TRANS albo podobnego systemu?",
         cel: "Ustalić punkt odniesienia — co już mają, żeby wiedzieć czego NIE trzeba zastępować",
       },
-      {
-        t: "note",
-        text: "Jeśli klient ma TMS: zanotuj nazwę dosłownie. Jeśli mówi że nie ma żadnego programu i wszystko idzie przez Excela, WhatsApp albo telefon: zapisz jako 'brak TMS' — to też ważna informacja.",
-      },
+      { t: "client", text: "[odpowiedź]" },
     ],
-    nextStepId: "diagnoza_dokumenty_zlecenie",
+    decision: {
+      question: "Co odpowiedział klient?",
+      options: [
+        {
+          trigger: "Ma TMS, podał nazwę",
+          action: "Zanotuj nazwę dosłownie w Pipeline",
+          goToStepId: "diagnoza_dokumenty_zlecenie",
+          tone: "positive",
+        },
+        {
+          trigger: "Brak programu, Excel/WhatsApp/telefon",
+          action: "Zapisz jako 'brak TMS' — to też ważna informacja",
+          goToStepId: "diagnoza_dokumenty_zlecenie",
+          tone: "neutral",
+        },
+      ],
+    },
   },
   {
     id: "diagnoza_dokumenty_zlecenie",
@@ -265,6 +322,12 @@ export const STEPS_K: Step[] = [
           goToStepId: "diagnoza_dokumenty_cmr",
           tone: "positive",
           calculatorFlag: "zlecenia",
+        },
+        {
+          trigger: "Nie, to już zautomatyzowane inaczej",
+          action: "Nie zaznaczaj, kontynuuj",
+          goToStepId: "diagnoza_dokumenty_cmr",
+          tone: "neutral",
         },
       ],
     },
@@ -303,6 +366,12 @@ export const STEPS_K: Step[] = [
           tone: "positive",
           calculatorFlag: "cmr",
         },
+        {
+          trigger: "Nie, to już zautomatyzowane inaczej",
+          action: "Nie zaznaczaj, kontynuuj",
+          goToStepId: "diagnoza_dokumenty_faktura",
+          tone: "neutral",
+        },
       ],
     },
   },
@@ -331,9 +400,8 @@ export const STEPS_K: Step[] = [
         },
         {
           trigger: "Zewnętrzne biuro rachunkowe",
-          action:
-            "Zapytaj kto w firmie przygotowuje dane dla księgowej — to zwykle ta sama osoba co reszta administracji",
-          goToStepId: "diagnoza_dokumenty_faktura_platnosci",
+          action: "Pokaż jak pogłębić ten wątek",
+          openObjectionId: "zewnetrzne_biuro_ksiegowe",
           tone: "neutral",
         },
       ],
@@ -472,6 +540,11 @@ export const STEPS_K: Step[] = [
         t: "say",
         text: "Nie każdą z tych godzin da się zautomatyzować w stu procentach, bo część to rozmowy z klientami i decyzje. Realistycznie mówimy o 75 do 85 procentach tego czasu, czyli [WYNIK × 0.8] godzin miesięcznie wracających do biura.",
         cel: "Budować wiarygodność przez uczciwość — nie obiecywać więcej niż realnie możliwe",
+      },
+      {
+        t: "say",
+        text: "Ta liczba dotyczy konkretnie tych zadań które przed chwilą razem policzyliśmy — nie ogólnej wydajności zespołu, tylko tej powtarzalnej pracy którą Pan sam opisał.",
+        cel: "Zapobiec późniejszemu nieporozumieniu przy gwarancji na umowie — gwarancja dotyczy konkretnych, potwierdzonych procesów, nie ogólnej produktywności czy zarobków firmy",
       },
     ],
     nextStepId: "diagnoza_czas",
@@ -667,7 +740,7 @@ export const OBJECTIONS_K: Objection[] = [
     label: "Nie mam czasu (naprawdę zajęty)",
     stage: "opening",
     script:
-      "Rozumiem, słyszę że jest Pan w gąszczu spraw. Kiedy będzie Panu wygodniej — jutro rano czy popołudniu?",
+      "Rozumiem, widzę że jest Pan zajęty. Kiedy będzie Panu wygodniej — jutro rano czy popołudniu?",
     note: "Nie przekonuj, nie próbuj wcisnąć rozmowy na siłę. Szczery brak czasu szanujesz i umawiasz konkretny termin, nie 'kiedyś'.",
   },
   {
@@ -691,8 +764,8 @@ export const OBJECTIONS_K: Objection[] = [
     label: "Poniżej progu ICP — 1 osoba w biurze, brak planu zatrudnienia",
     stage: "icp",
     script:
-      "Dziękuję za szczerą rozmowę. Nasze rozwiązanie sprawdza się przy biurach z co najmniej dwiema osobami — u Pana tej skali jeszcze nie ma, i nie chcę sprzedawać czegoś co się nie zwróci. Czy mogę zapisać kontakt i wrócić za około 3 miesiące?",
-    note: "Status: Niekwalifikowany. Jeśli zgoda na kontakt: dodaj datę re-engagement +90 dni w Pipeline. To jest koniec rozmowy — nie wracaj do diagnozy.",
+      "Doceniam że Pan ze mną szczerze porozmawiał. Przy tej wielkości biura myślę że jeszcze nie odczułby Pan realnej różnicy, a wolę być z Panem szczery niż namawiać na coś co się nie zwróci. Mogę zapisać kontakt i wrócić za jakiś czas, gdy zespół się powiększy?",
+    note: "Status: Niekwalifikowany. Jeśli zgoda na kontakt: dodaj datę re-engagement +90 dni w Pipeline. To jest koniec rozmowy, nie wracaj do diagnozy. Ton ma być ciepły, nie odprawiający — to nie jest kara za małą firmę, to szczera ocena dopasowania.",
   },
   {
     id: "icp_nie_decydent",
@@ -701,6 +774,14 @@ export const OBJECTIONS_K: Objection[] = [
     script:
       "Rozumiem. Żeby nie tracić czasu ani Pana, ani osoby decyzyjnej — czy mógłby Pan zapytać czy ta osoba dołączyłaby do 45-minutowego spotkania razem z Panem? Wtedy oboje macie pełen obraz od razu, zamiast Pan tłumaczył to później z drugiej ręki.",
     note: "Jeśli osoba decyzyjna nie może dołączyć na Discovery: umów spotkanie z rozmówcą i zaznacz w Pipeline 'decydent nieobecny — do potwierdzenia przed ceną', Agent 2 musi to uwzględnić w brief.",
+  },
+  {
+    id: "zewnetrzne_biuro_ksiegowe",
+    label: "Faktury: zewnętrzne biuro rachunkowe",
+    stage: "diagnoza",
+    script:
+      "Rozumiem, biuro rachunkowe zajmuje się rozliczeniami. A kto u Was przygotowuje i wysyła im dane — faktury, potwierdzenia dostaw? To zwykle ta sama osoba co reszta administracji, zgadza się?",
+    note: "Cel: nawet z zewnętrzną księgowością, ktoś wewnątrz firmy zbiera i wysyła dokumenty ręcznie. To wciąż ból do zmapowania. Po tej wymianie wróć do skryptu i przejdź do kroku 2f2 (Pilnowanie płatności).",
   },
   {
     id: "czas_milczy",
