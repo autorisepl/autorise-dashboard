@@ -480,6 +480,7 @@ export const STEPS_D: Step[] = [
 export const OBJECTIONS_D: Objection[] = [
   {
     id: "od1",
+    stage: "wszedzie",
     label: "Muszę się zastanowić",
     script:
       "Oczywiście. Żebym wiedział jak Panu pomóc — co konkretnie wymaga zastanowienia? Czy to kwestia budżetu, kwestia czy to zadziała u Pana, czy może chce Pan porozmawiać z kimś bliskim?",
@@ -487,6 +488,7 @@ export const OBJECTIONS_D: Objection[] = [
   },
   {
     id: "od2",
+    stage: "wszedzie",
     label: "Muszę porozmawiać z żoną",
     script:
       "Gdyby Pana żona była dzisiaj na tym spotkaniu i miała pełen kontekst tak jak Pan, co myśli Pan że by powiedziała?",
@@ -496,6 +498,7 @@ export const OBJECTIONS_D: Objection[] = [
   },
   {
     id: "od2b",
+    stage: "wszedzie",
     label: "Muszę porozmawiać ze wspólnikiem / partnerem biznesowym",
     script:
       "Rozumiem. Czy możemy umówić drugie spotkanie razem ze wspólnikiem — tak żeby miał ten sam kontekst co Pan?",
@@ -503,6 +506,7 @@ export const OBJECTIONS_D: Objection[] = [
   },
   {
     id: "od3",
+    stage: "wszedzie",
     label: "Za drogo",
     script:
       "Rozumiem. Chcę się upewnić że dobrze rozumiem. Czy to kwestia samej kwoty, czy kwestia czy inwestycja się zwróci, czy porównuje Pan nas z inną ofertą?",
@@ -510,12 +514,14 @@ export const OBJECTIONS_D: Objection[] = [
   },
   {
     id: "od4",
+    stage: "wszedzie",
     label: "Jestem już przekonany, ale...",
     script: "Słyszę 'ale' — co konkretnie stoi na przeszkodzie żeby zdecydować się dziś?",
     note: "To najczęściej zamaskowana obiekcja od1, od3 lub od2. Słuchaj co pojawi się po 'ale'.",
   },
   {
     id: "od5",
+    stage: "wszedzie",
     label: "Mam teraz inne priorytety",
     script:
       "Rozumiem. Ile czasu zajmie Panu te priorytety? A czy w tym czasie biuro nadal traci te [X] godzin tygodniowo?",
@@ -523,30 +529,35 @@ export const OBJECTIONS_D: Objection[] = [
   },
   {
     id: "od6",
+    stage: "wszedzie",
     label: "Chcę najpierw zobaczyć demo / testować",
     script:
       "Nasze demo to realne wdrożenie z Pana danymi — dlatego mamy gwarancję 30-dniową z 100% zwrotem. Nie pokazujemy sandboxa — wdrażamy i Pan ocenia na żywych danych. Czy to zmienia Pana perspektywę?",
   },
   {
     id: "od7",
+    stage: "wszedzie",
     label: "Mam pracownika który to robi",
     script:
       "Dobrze. I właśnie o to chodzi — ta osoba robi coś co można zautomatyzować. Co mogłaby robić zamiast tego, gdyby miała te [X] godzin dziennie z powrotem?",
   },
   {
     id: "od8",
+    stage: "wszedzie",
     label: "Mam dwie firmy, nie wiem dla której",
     script:
       "Dla której z firm ból jest większy — gdzie traci się więcej czasu? Możemy zacząć od jednej i rozszerzyć na drugą po 30 dniach.",
   },
   {
     id: "od9",
+    stage: "wszedzie",
     label: "Korzystam już z konkurencji",
     script: "Rozumiem. Co Pan od nich dostaje i co działa dobrze? A czego Panu brakuje?",
     note: "Nie atakuj konkurencji. Szukaj luki — co nasze rozwiązanie robi czego tamto nie robi. Zaproponuj 30-dniowy test równoległy z gwarancją.",
   },
   {
     id: "od10",
+    stage: "wszedzie",
     label: "Muszę to przespać",
     script: "Oczywiście. Co musiałoby się stać żeby jutro rano powiedział Pan 'tak'?",
     followup: "Zadzwonię jutro o [godzina]. Pasuje Panu?",
@@ -554,6 +565,7 @@ export const OBJECTIONS_D: Objection[] = [
   },
   {
     id: "od11",
+    stage: "wszedzie",
     label: "Mogę płacić w ratach?",
     script:
       "Tak — mamy opcję 2 × 7 500 zł zamiast 15 000 zł jednorazowo. Retainer pozostaje 4 000 zł / mc. Przy ratach zaczynacie wdrożenie po pierwszej wpłacie. Pasuje Panu?",
