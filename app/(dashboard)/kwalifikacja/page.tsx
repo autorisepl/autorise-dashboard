@@ -30,7 +30,7 @@ import {
   STEPS_K,
 } from "@/lib/scripts/kwalifikacyjna";
 import { GROUP_COLORS, MESSAGES_DATA } from "@/lib/scripts/messages";
-import type { DecisionOption, ScriptLine, Objection } from "@/lib/scripts/types";
+import type { DecisionOption, Objection, ScriptLine } from "@/lib/scripts/types";
 import { objectionColor } from "@/lib/scripts/types";
 
 // ── Helpers ──────────────────────────────────────────────────────────
@@ -373,7 +373,16 @@ function ScriptKalkulator({
             />
           </label>
           <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
-            <span style={{ fontFamily: "var(--font-sans)", fontSize: 10, fontWeight: 600, color: "var(--text-tertiary)", textTransform: "uppercase", letterSpacing: "0.07em" }}>
+            <span
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 10,
+                fontWeight: 600,
+                color: "var(--text-tertiary)",
+                textTransform: "uppercase",
+                letterSpacing: "0.07em",
+              }}
+            >
               Stawka godzinowa
             </span>
             <input
@@ -382,12 +391,33 @@ function ScriptKalkulator({
               max={200}
               value={stawka}
               onChange={(e) => onStawkaChange(Math.max(20, Number(e.target.value) || 55))}
-              style={{ height: 36, borderRadius: 8, border: "1px solid #E5E5EA", padding: "0 10px", fontFamily: "var(--font-sans)", fontSize: 14, fontWeight: 600, color: "var(--text-primary)", background: "#F5F5F7", outline: "none", width: "100%" }}
+              style={{
+                height: 36,
+                borderRadius: 8,
+                border: "1px solid #E5E5EA",
+                padding: "0 10px",
+                fontFamily: "var(--font-sans)",
+                fontSize: 14,
+                fontWeight: 600,
+                color: "var(--text-primary)",
+                background: "#F5F5F7",
+                outline: "none",
+                width: "100%",
+              }}
             />
           </label>
         </div>
-        <div style={{ fontFamily: "var(--font-sans)", fontSize: 10, color: "var(--text-tertiary)", fontStyle: "italic", marginTop: 4 }}>
-          Stawka szacunkowa na podstawie typowego kosztu pracy spedytora w Polsce z narzutami. Dostosuj jeśli klient poda inną wartość.
+        <div
+          style={{
+            fontFamily: "var(--font-sans)",
+            fontSize: 10,
+            color: "var(--text-tertiary)",
+            fontStyle: "italic",
+            marginTop: 4,
+          }}
+        >
+          Stawka szacunkowa na podstawie typowego kosztu pracy spedytora w Polsce z narzutami.
+          Dostosuj jeśli klient poda inną wartość.
         </div>
 
         {/* Typy pracy */}
@@ -926,9 +956,7 @@ function ObjectionsPanel({
           />
         </div>
         {isOpen && (
-          <div
-            style={{ padding: "0 12px 12px", display: "flex", flexDirection: "column", gap: 8 }}
-          >
+          <div style={{ padding: "0 12px 12px", display: "flex", flexDirection: "column", gap: 8 }}>
             {obj.script && (
               <div style={{ display: "flex", alignItems: "flex-start", gap: 6 }}>
                 <p
@@ -1034,9 +1062,7 @@ function ObjectionsPanel({
               </div>
             )}
             {obj.extra && (
-              <div
-                style={{ background: "var(--bg-hover)", padding: "8px 10px", borderRadius: 6 }}
-              >
+              <div style={{ background: "var(--bg-hover)", padding: "8px 10px", borderRadius: 6 }}>
                 <div
                   style={{
                     fontSize: 9,

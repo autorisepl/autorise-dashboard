@@ -593,7 +593,7 @@ export const OBJECTIONS_K: Objection[] = [
   },
   {
     id: "ok_cc",
-    label: "Co Pan sprzedaje? O o co chodzi?",
+    label: "Co Pan sprzedaje? O co chodzi?",
     stage: "opening",
     script:
       "Automatyzujemy pracę biura spedycji — zlecenia, CMR, faktury. Zanim cokolwiek zaproponuję, chciałem się dowiedzieć jak wygląda ta praca u Pana. Zajmie mi to dosłownie 2 minuty. Dobrze?",
@@ -629,7 +629,7 @@ export const OBJECTIONS_K: Objection[] = [
     label: "Nie mam teraz czasu (pierwsze NIE)",
     stage: "opening",
     script:
-      "Rozumiem. Biura spedycji z którymi pracuję tracą kilkatriąt godzin miesięcznie na ręczne przepisywanie i pilnowanie dokumentów — liczone konkretnie dla każdej firmy, nie uśredniane. Jeśli to brzmi jak coś dla Pana — 2 minuty teraz mogą zmienić kilka tysięcy złotych miesięcznie. Ma Pan te 2 minuty?",
+      "Rozumiem. Biura spedycji z którymi pracuję tracą kilkadziesiąt godzin miesięcznie na ręczne przepisywanie i pilnowanie dokumentów — liczone konkretnie dla każdej firmy, nie uśredniane. Jeśli to brzmi jak coś dla Pana — 2 minuty teraz mogą zmienić kilka tysięcy złotych miesięcznie. Ma Pan te 2 minuty?",
   },
   {
     id: "ok2",
