@@ -1,11 +1,12 @@
 "use client";
 
-import { ChevronRight } from "lucide-react";
+import { Check, ChevronRight } from "lucide-react";
 import type { Decision, DecisionOption } from "@/lib/scripts/types";
 
 interface DecisionDiagramProps {
   decision: Decision;
   onSelect: (option: DecisionOption) => void;
+  selectedTrigger?: string;
 }
 
 const TONE_STYLES: Record<
@@ -17,7 +18,7 @@ const TONE_STYLES: Record<
   warning: { border: "var(--warning)", bg: "rgba(255,149,0,0.06)", accent: "var(--warning)" },
 };
 
-export function DecisionDiagram({ decision, onSelect }: DecisionDiagramProps) {
+export function DecisionDiagram({ decision, onSelect, selectedTrigger }: DecisionDiagramProps) {
   return (
     <div
       style={{
@@ -43,6 +44,7 @@ export function DecisionDiagram({ decision, onSelect }: DecisionDiagramProps) {
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         {decision.options.map((opt, i) => {
           const tone = TONE_STYLES[opt.tone ?? "neutral"];
+          const isSelected = opt.trigger === selectedTrigger;
           return (
             <button
               key={i}
@@ -54,7 +56,7 @@ export function DecisionDiagram({ decision, onSelect }: DecisionDiagramProps) {
                 gap: 12,
                 padding: "10px 12px",
                 borderRadius: 8,
-                border: `1px solid ${tone.border}`,
+                border: isSelected ? `2px solid ${tone.accent}` : `1px solid ${tone.border}`,
                 background: tone.bg,
                 textAlign: "left",
                 cursor: "pointer",
@@ -70,6 +72,8 @@ export function DecisionDiagram({ decision, onSelect }: DecisionDiagramProps) {
               <div>
                 <div
                   style={{
+                    display: "flex",
+                    alignItems: "center",
                     fontFamily: "var(--font-sans)",
                     fontSize: 13,
                     fontWeight: 600,
@@ -77,6 +81,23 @@ export function DecisionDiagram({ decision, onSelect }: DecisionDiagramProps) {
                   }}
                 >
                   {opt.trigger}
+                  {opt.calculatorFlag && (
+                    <span
+                      style={{
+                        fontSize: 9,
+                        fontWeight: 700,
+                        color: "var(--accent)",
+                        background: "rgba(10,132,255,0.08)",
+                        padding: "1px 6px",
+                        borderRadius: 4,
+                        marginLeft: 6,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.04em",
+                      }}
+                    >
+                      Kalkulator
+                    </span>
+                  )}
                 </div>
                 {opt.action && (
                   <div
@@ -91,7 +112,11 @@ export function DecisionDiagram({ decision, onSelect }: DecisionDiagramProps) {
                   </div>
                 )}
               </div>
-              <ChevronRight size={16} color={tone.accent} style={{ flexShrink: 0 }} />
+              {isSelected ? (
+                <Check size={16} color={tone.accent} style={{ flexShrink: 0 }} strokeWidth={2.5} />
+              ) : (
+                <ChevronRight size={16} color={tone.accent} style={{ flexShrink: 0 }} />
+              )}
             </button>
           );
         })}

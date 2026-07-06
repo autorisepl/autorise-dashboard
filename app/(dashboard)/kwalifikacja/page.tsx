@@ -202,11 +202,11 @@ function CalculatorFlagsBar({ flags }: { flags: Record<string, boolean> }) {
 // ── Inline kalkulator wbudowany w skrypt ─────────────────────────────
 
 const PRACA_TYPES = [
-  { id: "zlecenia", label: "Wpisywanie zleceń" },
-  { id: "cmr", label: "CMR / POD" },
-  { id: "faktury_recznie", label: "Faktury" },
-  { id: "komunikacja", label: "Komunikacja z klientem — status, aktualizacje" },
-  { id: "inne", label: "Inne dokumenty — do doprecyzowania ręcznie" },
+  { id: "zlecenia", label: "Zlecenia — automatyczne wczytywanie z maila" },
+  { id: "cmr", label: "Dokumenty transportowe — skan i odczyt" },
+  { id: "faktury_recznie", label: "Faktury i płatności — pilnowanie terminów" },
+  { id: "komunikacja", label: "Status zleceń — bez dzwonienia do spedytora" },
+  { id: "inne", label: "Inne — do doprecyzowania ręcznie" },
 ] as const;
 
 function ScriptKalkulator({
@@ -604,6 +604,7 @@ function ScriptStep({
   copiedId,
   onJump,
   onDecisionSelect,
+  selectedTrigger,
   children,
 }: {
   step: (typeof STEPS_K)[0];
@@ -612,7 +613,8 @@ function ScriptStep({
   onCopy: (id: string, text: string) => void;
   copiedId: string | null;
   onJump: (stepId: string) => void;
-  onDecisionSelect: (option: DecisionOption) => void;
+  onDecisionSelect: (stepId: string, option: DecisionOption) => void;
+  selectedTrigger?: string;
   children?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(true);
@@ -637,7 +639,7 @@ function ScriptStep({
         overflow: "hidden",
       }}
     >
-      {(step.decision || step.nextStepId) && (
+      {!step.decision && step.nextStepId && (
         <div
           style={{
             fontFamily: "var(--font-sans)",
@@ -652,9 +654,7 @@ function ScriptStep({
           }}
         >
           <ArrowDown size={10} />
-          {step.decision
-            ? `Dalej: ${step.decision.options.map((o) => o.trigger).join(" / ")}`
-            : `Dalej: ${findStepLabel(step.nextStepId!)}`}
+          {`Dalej: ${findStepLabel(step.nextStepId)}`}
         </div>
       )}
       <div
@@ -690,17 +690,6 @@ function ScriptStep({
         <span
           style={{
             fontFamily: "var(--font-sans)",
-            fontSize: 10,
-            fontWeight: 800,
-            color: "#AEAEB2",
-            minWidth: 18,
-          }}
-        >
-          {step.nr}
-        </span>
-        <span
-          style={{
-            fontFamily: "var(--font-sans)",
             fontSize: 13,
             fontWeight: 600,
             color: "var(--text-primary)",
@@ -722,6 +711,16 @@ function ScriptStep({
           }}
         >
           {step.tag}
+        </span>
+        <span
+          style={{
+            fontFamily: "var(--font-sans)",
+            fontSize: 9,
+            color: "var(--text-tertiary)",
+            flexShrink: 0,
+          }}
+        >
+          ({step.nr})
         </span>
         <ChevronDown
           size={13}
@@ -768,6 +767,7 @@ function ScriptStep({
                       fontSize: 13,
                       lineHeight: 1.55,
                       color: LINE_COLOR[line.t],
+                      textWrap: "pretty" as React.CSSProperties["textWrap"],
                     }}
                   >
                     {fill(paragraph)}
@@ -825,7 +825,11 @@ function ScriptStep({
             </div>
           ))}
           {step.decision && (
-            <DecisionDiagram decision={step.decision} onSelect={onDecisionSelect} />
+            <DecisionDiagram
+              decision={step.decision}
+              onSelect={(option) => onDecisionSelect(step.id, option)}
+              selectedTrigger={selectedTrigger}
+            />
           )}
           {!step.decision && step.nextStepId && (
             <NextStepArrow label="Dalej" onJump={() => onJump(step.nextStepId!)} />
@@ -853,6 +857,7 @@ function getStageForStepNr(nr: string): Objection["stage"] {
     nr.startsWith("2f") ||
     nr.startsWith("2g") ||
     nr.startsWith("2h") ||
+    nr === "2y" ||
     nr === "2z"
   )
     return "diagnoza";
@@ -1598,7 +1603,7 @@ const SPECIAL_CASES = [
     label: "Klient nie odbiera (3 próby)",
     content: [
       "Próba 1 i 2: zadzwoń o różnych porach dnia, rano i po południu. Nie zostawiaj wiadomości głosowej.",
-      "Po trzeciej próbie: wyślij SMS z gotowym tekstem z prawego panelu, obiekcja OK6.",
+      "Po trzeciej próbie: wyślij SMS z gotowym tekstem z panelu SMS / Wiadomości w prawej kolumnie, szablon 'Brak odbioru — po 3 próbach'.",
       "Zmień status klienta w Pipeline na 'Nieaktywny (follow up)'.",
       "Ustaw datę re-engagement na 14 dni od ostatniej próby, nie później — leady z reklamy tracą temperaturę szybko, dłuższe odkładanie zwykle kończy się brakiem odpowiedzi w ogóle.",
       "Jeśli klient odpisze na SMS w dowolnym momencie: zadzwoń w ciągu godziny, nie czekaj do zaplanowanej daty re-engagement.",
@@ -2013,6 +2018,7 @@ export default function KwalifikacjaPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [note, setNote] = useState("");
   const [calculatorFlags, setCalculatorFlags] = useState<Record<string, boolean>>({});
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const [openObjectionId, setOpenObjectionId] = useState<string | null>(null);
   const [calcOsoby, setCalcOsoby] = useState(2);
   const [calcGodziny, setCalcGodziny] = useState(3);
@@ -2118,7 +2124,8 @@ export default function KwalifikacjaPage() {
   }, []);
 
   const handleDecisionSelect = useCallback(
-    (option: DecisionOption) => {
+    (stepId: string, option: DecisionOption) => {
+      setSelectedOptions((prev) => ({ ...prev, [stepId]: option.trigger }));
       if (option.calculatorFlag) {
         setCalculatorFlags((prev) => ({ ...prev, [option.calculatorFlag!]: true }));
       }
@@ -2251,6 +2258,7 @@ export default function KwalifikacjaPage() {
                 copiedId={copiedId}
                 onJump={jumpToStep}
                 onDecisionSelect={handleDecisionSelect}
+                selectedTrigger={selectedOptions[step.id]}
               >
                 {step.hasCalculator && (
                   <ScriptKalkulator
