@@ -865,203 +865,203 @@ function renderObjection(
   onCopy: (id: string, text: string) => void,
   copiedId: string | null,
 ) {
-    const oc = objectionColor(obj.label);
-    const isOpen = openId === obj.id;
-    return (
+  const oc = objectionColor(obj.label);
+  const isOpen = openId === obj.id;
+  return (
+    <div
+      key={obj.id}
+      id={`objection-${obj.id}`}
+      style={{
+        border: "1px solid #E5E5EA",
+        borderLeft: `3px solid ${oc.accent}`,
+        borderRadius: 8,
+        overflow: "hidden",
+        background: isOpen ? oc.bg : "#fff",
+        transition: "background-color 200ms, box-shadow 250ms",
+      }}
+    >
       <div
-        key={obj.id}
-        id={`objection-${obj.id}`}
+        onClick={() => setOpenId(isOpen ? null : obj.id)}
         style={{
-          border: "1px solid #E5E5EA",
-          borderLeft: `3px solid ${oc.accent}`,
-          borderRadius: 8,
-          overflow: "hidden",
-          background: isOpen ? oc.bg : "#fff",
-          transition: "background-color 200ms, box-shadow 250ms",
+          padding: "8px 12px",
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          cursor: "pointer",
+          userSelect: "none",
         }}
       >
-        <div
-          onClick={() => setOpenId(isOpen ? null : obj.id)}
-          style={{
-            padding: "8px 12px",
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            cursor: "pointer",
-            userSelect: "none",
-          }}
-        >
-          <div style={{ flex: 1 }}>
-            <div
-              style={{
-                fontSize: 9,
-                fontWeight: 700,
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
-                color: oc.accent,
-                marginBottom: 1,
-              }}
-            >
-              {oc.category}
-            </div>
-            <div
-              style={{
-                fontFamily: "var(--font-sans)",
-                fontSize: 12,
-                fontWeight: 500,
-                color: "var(--text-primary)",
-              }}
-            >
-              {obj.label}
-            </div>
-          </div>
-          <ChevronDown
-            size={12}
-            color="var(--text-tertiary)"
+        <div style={{ flex: 1 }}>
+          <div
             style={{
-              transform: isOpen ? "rotate(180deg)" : "none",
-              transition: "transform 150ms",
-              flexShrink: 0,
+              fontSize: 9,
+              fontWeight: 700,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              color: oc.accent,
+              marginBottom: 1,
             }}
-          />
+          >
+            {oc.category}
+          </div>
+          <div
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 12,
+              fontWeight: 500,
+              color: "var(--text-primary)",
+            }}
+          >
+            {obj.label}
+          </div>
         </div>
-        {isOpen && (
-          <div style={{ padding: "0 12px 12px", display: "flex", flexDirection: "column", gap: 8 }}>
-            {obj.script && (
-              <div style={{ display: "flex", alignItems: "flex-start", gap: 6 }}>
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: 13,
-                    lineHeight: 1.6,
-                    color: "var(--text-primary)",
-                    fontFamily: "var(--font-sans)",
-                    flex: 1,
-                  }}
-                >
-                  {fill(obj.script)}
-                </p>
-                <button
-                  onClick={() => onCopy(`obj-${obj.id}-script`, obj.script!)}
-                  style={{
-                    flexShrink: 0,
-                    padding: "3px 7px",
-                    borderRadius: 5,
-                    border: "1px solid #E5E5EA",
-                    background: "transparent",
-                    cursor: "pointer",
-                    color:
-                      copiedId === `obj-${obj.id}-script`
-                        ? "var(--success-text)"
-                        : "var(--text-tertiary)",
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                >
-                  {copiedId === `obj-${obj.id}-script` ? (
-                    <CheckCircle2 size={10} />
-                  ) : (
-                    <Copy size={10} />
-                  )}
-                </button>
+        <ChevronDown
+          size={12}
+          color="var(--text-tertiary)"
+          style={{
+            transform: isOpen ? "rotate(180deg)" : "none",
+            transition: "transform 150ms",
+            flexShrink: 0,
+          }}
+        />
+      </div>
+      {isOpen && (
+        <div style={{ padding: "0 12px 12px", display: "flex", flexDirection: "column", gap: 8 }}>
+          {obj.script && (
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 6 }}>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: 13,
+                  lineHeight: 1.6,
+                  color: "var(--text-primary)",
+                  fontFamily: "var(--font-sans)",
+                  flex: 1,
+                }}
+              >
+                {fill(obj.script)}
+              </p>
+              <button
+                onClick={() => onCopy(`obj-${obj.id}-script`, obj.script!)}
+                style={{
+                  flexShrink: 0,
+                  padding: "3px 7px",
+                  borderRadius: 5,
+                  border: "1px solid #E5E5EA",
+                  background: "transparent",
+                  cursor: "pointer",
+                  color:
+                    copiedId === `obj-${obj.id}-script`
+                      ? "var(--success-text)"
+                      : "var(--text-tertiary)",
+                  display: "flex",
+                  alignItems: "center",
+                }}
+              >
+                {copiedId === `obj-${obj.id}-script` ? (
+                  <CheckCircle2 size={10} />
+                ) : (
+                  <Copy size={10} />
+                )}
+              </button>
+            </div>
+          )}
+          {obj.followup && (
+            <p
+              style={{
+                margin: 0,
+                fontSize: 12,
+                lineHeight: 1.55,
+                color: "var(--accent)",
+                fontFamily: "var(--font-sans)",
+                fontStyle: "italic",
+                borderTop: "1px solid #E5E5EA",
+                paddingTop: 8,
+              }}
+            >
+              {fill(obj.followup)}
+            </p>
+          )}
+          {obj.note && (
+            <p
+              style={{
+                margin: 0,
+                fontSize: 11,
+                lineHeight: 1.5,
+                color: "var(--text-secondary)",
+                fontFamily: "var(--font-sans)",
+                background: "var(--warning-bg)",
+                padding: "6px 8px",
+                borderRadius: 6,
+              }}
+            >
+              {obj.note}
+            </p>
+          )}
+          {obj.sms && (
+            <div
+              style={{
+                background: "var(--accent-muted)",
+                padding: "8px 10px",
+                borderRadius: 6,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 9,
+                  fontWeight: 700,
+                  color: "var(--accent)",
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  marginBottom: 4,
+                }}
+              >
+                SMS
               </div>
-            )}
-            {obj.followup && (
               <p
                 style={{
                   margin: 0,
                   fontSize: 12,
+                  color: "var(--text-primary)",
                   lineHeight: 1.55,
-                  color: "var(--accent)",
                   fontFamily: "var(--font-sans)",
-                  fontStyle: "italic",
-                  borderTop: "1px solid #E5E5EA",
-                  paddingTop: 8,
                 }}
               >
-                {fill(obj.followup)}
+                {fill(obj.sms)}
               </p>
-            )}
-            {obj.note && (
+            </div>
+          )}
+          {obj.extra && (
+            <div style={{ background: "var(--bg-hover)", padding: "8px 10px", borderRadius: 6 }}>
+              <div
+                style={{
+                  fontSize: 9,
+                  fontWeight: 700,
+                  color: "var(--text-secondary)",
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  marginBottom: 4,
+                }}
+              >
+                Wiadomość prywatna
+              </div>
               <p
                 style={{
                   margin: 0,
-                  fontSize: 11,
-                  lineHeight: 1.5,
-                  color: "var(--text-secondary)",
+                  fontSize: 12,
+                  color: "var(--text-primary)",
+                  lineHeight: 1.55,
                   fontFamily: "var(--font-sans)",
-                  background: "var(--warning-bg)",
-                  padding: "6px 8px",
-                  borderRadius: 6,
                 }}
               >
-                {obj.note}
+                {fill(obj.extra)}
               </p>
-            )}
-            {obj.sms && (
-              <div
-                style={{
-                  background: "var(--accent-muted)",
-                  padding: "8px 10px",
-                  borderRadius: 6,
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: 9,
-                    fontWeight: 700,
-                    color: "var(--accent)",
-                    letterSpacing: "0.08em",
-                    textTransform: "uppercase",
-                    marginBottom: 4,
-                  }}
-                >
-                  SMS
-                </div>
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: 12,
-                    color: "var(--text-primary)",
-                    lineHeight: 1.55,
-                    fontFamily: "var(--font-sans)",
-                  }}
-                >
-                  {fill(obj.sms)}
-                </p>
-              </div>
-            )}
-            {obj.extra && (
-              <div style={{ background: "var(--bg-hover)", padding: "8px 10px", borderRadius: 6 }}>
-                <div
-                  style={{
-                    fontSize: 9,
-                    fontWeight: 700,
-                    color: "var(--text-secondary)",
-                    letterSpacing: "0.08em",
-                    textTransform: "uppercase",
-                    marginBottom: 4,
-                  }}
-                >
-                  Wiadomość prywatna
-                </div>
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: 12,
-                    color: "var(--text-primary)",
-                    lineHeight: 1.55,
-                    fontFamily: "var(--font-sans)",
-                  }}
-                >
-                  {fill(obj.extra)}
-                </p>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    );
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function ObjectionsPanel({

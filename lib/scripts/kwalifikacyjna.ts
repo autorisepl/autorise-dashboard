@@ -393,7 +393,8 @@ export const STEPS_K: Step[] = [
       options: [
         {
           trigger: "Jedna osoba ręcznie wpisuje",
-          action: "Ile mniej więcej faktur miesięcznie to jest, licząc te które wystawiacie i te które dostajecie?",
+          action:
+            "Ile mniej więcej faktur miesięcznie to jest, licząc te które wystawiacie i te które dostajecie?",
           goToStepId: "diagnoza_dokumenty_faktura_platnosci",
           tone: "positive",
           calculatorFlag: "faktury_recznie",
