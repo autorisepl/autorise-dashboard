@@ -133,8 +133,8 @@ export const STEPS_K: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Rozumiem, dobrze że sprawnie działa na co dzień. Zapytam o dwie konkretne sytuacje: jak to wygląda gdy nagle przychodzi dużo zleceń naraz, na przykład w szczycie sezonu?",
-        cel: "Sprawdzić czy pod presją proces się sypie mimo że na co dzień wygląda sprawnie",
+        text: "Rozumiem, dobrze że sprawnie działa na co dzień. Zapytam o dwie konkretne sytuacje, bo to właśnie w takich momentach większość firm traci klientów albo popełnia kosztowne pomyłki. Jak to wygląda gdy nagle przychodzi dużo zleceń naraz, na przykład w szczycie sezonu?",
+        cel: "Sprawdzić czy pod presją proces się sypie mimo że na co dzień wygląda sprawnie — dodane zdanie o skali konsekwencji zwiększa szansę że klient szczerze opowie, bo widzi że pytanie ma realny sens biznesowy, nie jest przypadkowe",
       },
       { t: "client", text: "[odpowiedź]" },
       {
@@ -170,8 +170,8 @@ export const STEPS_K: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Rozumiem, czasem trudno to od razu nazwać. Powiem inaczej — co najbardziej Panu przeszkadza w codziennej pracy biura: dokumenty, czas, czy raczej brak kontroli nad tym co się dzieje?",
-        cel: "Dać klientowi trzy konkretne kierunki zamiast otwartego pytania — łatwiej wybrać niż wymyślić od zera",
+        text: "Rozumiem, czasem trudno to od razu nazwać. Powiem inaczej — co najbardziej Panu przeszkadza w codziennej pracy biura: dokumenty, czyli papiery które się gubią albo trzeba ich szukać, czas, czyli nadgodziny i zaległości, czy raczej kontrola, czyli musi Pan dopytywać ludzi zamiast po prostu wiedzieć co się dzieje?",
+        cel: "Trzy kierunki z konkretnym przykładem przy każdym — łatwiej rozpoznać własną sytuację w przykładzie niż w abstrakcyjnym słowie",
       },
       { t: "client", text: "[odpowiedź]" },
     ],
@@ -393,7 +393,7 @@ export const STEPS_K: Step[] = [
       options: [
         {
           trigger: "Jedna osoba ręcznie wpisuje",
-          action: "Zapytaj ile faktur miesięcznie po obu stronach",
+          action: "Ile mniej więcej faktur miesięcznie to jest, licząc te które wystawiacie i te które dostajecie?",
           goToStepId: "diagnoza_dokumenty_faktura_platnosci",
           tone: "positive",
           calculatorFlag: "faktury_recznie",

@@ -847,59 +847,24 @@ function ScriptStep({
 
 // ── Objections accordion ──────────────────────────────────────────────
 
-function getStageForStepNr(nr: string): Objection["stage"] {
-  if (nr === "1") return "opening";
-  if (nr.startsWith("2a") || nr.startsWith("2b")) return "icp";
-  if (
-    nr.startsWith("2c") ||
-    nr.startsWith("2d") ||
-    nr.startsWith("2e") ||
-    nr.startsWith("2f") ||
-    nr.startsWith("2g") ||
-    nr.startsWith("2h") ||
-    nr === "2y" ||
-    nr === "2z"
-  )
-    return "diagnoza";
-  if (nr.startsWith("2i") || nr.startsWith("2j") || nr.startsWith("2k")) return "kalkulator";
-  return "wszedzie";
-}
+const STAGE_LABELS: Record<Objection["stage"], string> = {
+  opening: "Otwarcie rozmowy",
+  icp: "Weryfikacja ICP",
+  diagnoza: "Diagnoza dokumentów",
+  kalkulator: "Kalkulator ROI",
+  wszedzie: "Obiekcje ogólne (mogą wystąpić wszędzie)",
+};
 
-function ObjectionsPanel({
-  fill,
-  onCopy,
-  copiedId,
-  openId,
-  setOpenId,
-  activeStepNr = "1",
-}: {
-  fill: (t: string) => string;
-  onCopy: (id: string, text: string) => void;
-  copiedId: string | null;
-  openId: string | null;
-  setOpenId: (id: string | null) => void;
-  activeStepNr?: string;
-}) {
-  const [showOthers, setShowOthers] = useState(false);
-  const currentStage = getStageForStepNr(activeStepNr);
+const STAGE_ORDER: Objection["stage"][] = ["opening", "icp", "diagnoza", "kalkulator", "wszedzie"];
 
-  useEffect(() => {
-    if (openId) {
-      const obj = OBJECTIONS_K.find((o) => o.id === openId);
-      if (obj && obj.stage !== currentStage && obj.stage !== "wszedzie") {
-        setShowOthers(true);
-      }
-    }
-  }, [openId, currentStage]);
-
-  const activeObjections = OBJECTIONS_K.filter(
-    (o) => o.stage === currentStage || o.stage === "wszedzie",
-  );
-  const otherObjections = OBJECTIONS_K.filter(
-    (o) => o.stage !== currentStage && o.stage !== "wszedzie",
-  );
-
-  const renderObjection = (obj: Objection) => {
+function renderObjection(
+  obj: Objection,
+  openId: string | null,
+  setOpenId: (id: string | null) => void,
+  fill: (t: string) => string,
+  onCopy: (id: string, text: string) => void,
+  copiedId: string | null,
+) {
     const oc = objectionColor(obj.label);
     const isOpen = openId === obj.id;
     return (
@@ -1097,96 +1062,58 @@ function ObjectionsPanel({
         )}
       </div>
     );
-  };
+}
 
+function ObjectionsPanel({
+  fill,
+  onCopy,
+  copiedId,
+  openId,
+  setOpenId,
+}: {
+  fill: (t: string) => string;
+  onCopy: (id: string, text: string) => void;
+  copiedId: string | null;
+  openId: string | null;
+  setOpenId: (id: string | null) => void;
+}) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      {/* Teraz może wystąpić */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        <div
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: 10,
-            fontWeight: 700,
-            color: "var(--accent)",
-            letterSpacing: "0.05em",
-            textTransform: "uppercase",
-          }}
-        >
-          Teraz może wystąpić
-        </div>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 4,
-            padding: 6,
-            borderRadius: 10,
-            background: "rgba(10,132,255,0.02)",
-            border: "1px solid rgba(10,132,255,0.08)",
-          }}
-        >
-          {activeObjections.length === 0 ? (
-            <div
-              style={{
-                padding: "8px 10px",
-                fontSize: 11,
-                color: "var(--text-tertiary)",
-                fontStyle: "italic",
-              }}
-            >
-              Brak dopasowanych obiekcji dla tego etapu
-            </div>
-          ) : (
-            activeObjections.map(renderObjection)
-          )}
-        </div>
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <div
+        style={{
+          fontFamily: "var(--font-sans)",
+          fontSize: 11,
+          fontWeight: 700,
+          color: "var(--text-primary)",
+          letterSpacing: "0.04em",
+          textTransform: "uppercase",
+        }}
+      >
+        Obiekcje w kwalifikacji
       </div>
-
-      {/* Pozostałe */}
-      {otherObjections.length > 0 && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <div
-            onClick={() => setShowOthers((p) => !p)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              cursor: "pointer",
-              padding: "6px 8px",
-              borderRadius: 6,
-              background: "#F5F5F7",
-              userSelect: "none",
-            }}
-          >
-            <span
+      {STAGE_ORDER.map((stage) => {
+        const items = OBJECTIONS_K.filter((o) => o.stage === stage);
+        if (items.length === 0) return null;
+        return (
+          <div key={stage} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <div
               style={{
                 fontFamily: "var(--font-sans)",
                 fontSize: 10,
                 fontWeight: 700,
-                color: "var(--text-secondary)",
+                color: "var(--text-tertiary)",
                 letterSpacing: "0.05em",
                 textTransform: "uppercase",
               }}
             >
-              Pozostałe obiekcje ({otherObjections.length})
-            </span>
-            <ChevronDown
-              size={12}
-              color="var(--text-secondary)"
-              style={{
-                transform: showOthers ? "rotate(180deg)" : "none",
-                transition: "transform 150ms",
-              }}
-            />
-          </div>
-          {showOthers && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 2 }}>
-              {otherObjections.map(renderObjection)}
+              {STAGE_LABELS[stage]}
             </div>
-          )}
-        </div>
-      )}
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              {items.map((obj) => renderObjection(obj, openId, setOpenId, fill, onCopy, copiedId))}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -1964,14 +1891,12 @@ function RightPanel({
   copiedId,
   openObjectionId,
   setOpenObjectionId,
-  activeStepNr,
 }: {
   fill: (t: string) => string;
   onCopy: (id: string, text: string) => void;
   copiedId: string | null;
   openObjectionId: string | null;
   setOpenObjectionId: (id: string | null) => void;
-  activeStepNr: string;
 }) {
   return (
     <div
@@ -1992,7 +1917,6 @@ function RightPanel({
           copiedId={copiedId}
           openId={openObjectionId}
           setOpenId={setOpenObjectionId}
-          activeStepNr={activeStepNr}
         />
       </Card>
       <Card title="Frazy potwierdzające" collapsible defaultOpen={false}>
@@ -2023,7 +1947,6 @@ export default function KwalifikacjaPage() {
   const [calcOsoby, setCalcOsoby] = useState(2);
   const [calcGodziny, setCalcGodziny] = useState(3);
   const [calcStawka, setCalcStawka] = useState(55); // NOWE
-  const [activeStepNr, setActiveStepNr] = useState("1"); // NOWE
   const [sprzedawcaImie, setSprzedawcaImie] = useState("Michał");
 
   const fetchClients = useCallback(async () => {
@@ -2057,6 +1980,14 @@ export default function KwalifikacjaPage() {
     const saved = localStorage.getItem("kwal_sprzedawca_imie");
     if (saved) setSprzedawcaImie(saved);
   }, []);
+
+  useEffect(() => {
+    setCalculatorFlags({});
+    setSelectedOptions({});
+    setCalcOsoby(2);
+    setCalcGodziny(3);
+    setOpenObjectionId(null);
+  }, [selected?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const updateSprzedawcaImie = (value: string) => {
     setSprzedawcaImie(value);
@@ -2093,10 +2024,6 @@ export default function KwalifikacjaPage() {
   };
 
   const jumpToStep = useCallback((stepId: string) => {
-    const step = STEPS_K.find((s) => s.id === stepId);
-    if (step) {
-      setActiveStepNr(step.nr);
-    }
     const el = document.getElementById(`step-${stepId}`);
     if (!el) return;
     el.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -2330,7 +2257,6 @@ export default function KwalifikacjaPage() {
           copiedId={copiedId}
           openObjectionId={openObjectionId}
           setOpenObjectionId={setOpenObjectionId}
-          activeStepNr={activeStepNr}
         />
       </div>
     </div>
