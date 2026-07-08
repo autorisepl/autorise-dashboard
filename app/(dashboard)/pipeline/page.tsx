@@ -152,7 +152,9 @@ function KanbanColumn({
 }) {
   const color = STATUS_COLORS[status] ?? "var(--text-tertiary)";
   return (
-    <div style={{ display: "flex", flexDirection: "column", minWidth: 0, height: "100%" }}>
+    <div
+      style={{ display: "flex", flexDirection: "column", minWidth: 0, minHeight: 0, height: "100%" }}
+    >
       {/* Column header */}
       <div
         style={{
