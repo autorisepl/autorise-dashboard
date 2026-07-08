@@ -359,7 +359,7 @@ FORMAT ODPOWIEDZI: JSON. Pola bez danych: null. Nie dodawaj komentarzy poza pole
   },
   "followup": null,
   "uwagi_agenta": "",
-  "wersja_skryptu": "2026-06-28"
+  "wersja_skryptu": "[WSTAW DATĘ RZECZYWISTEJ ROZMOWY Z TRANSKRYPTU, format DD.MM.RRRR — NIE kopiuj przykładowej daty dosłownie]"
 }
 
 PRZYKŁAD followup (gdy decydent nieobecny):
@@ -433,6 +433,16 @@ Autorise sprzedaje System Operacyjny Firmy Transportowej (PR-0), 4 moduły:
 - Odczyt faktur i CMR: dokumenty PDF → dane, automatycznie
 - Monitoring płatności: przeterminowane faktury wykrywane i eskalowane
 - Alerty WhatsApp: właściciel dostaje tylko to co wymaga jego uwagi
+
+DANE Z KALKULATORA KWALIFIKACJI — KATEGORIE (od 2026-07-08):
+Agent 1 może przekazać dane z kalkulatora obejmujące pięć kategorii pracy manualnej, nie tylko trzy oryginalne:
+- zlecenia (odpowiada email-parser)
+- cmr (odpowiada document-ocr, dokumenty transportowe)
+- faktury_recznie (odpowiada document-ocr + payment-monitor)
+- komunikacja (odpowiada whatsapp-alerts, brak widoczności statusu bez dzwonienia)
+- inne (nieskategoryzowane, wymaga dopytania na Discovery czym dokładnie jest)
+
+Jeśli w danych od Agenta 1 pojawi się kategoria "komunikacja" jako zaznaczona, potraktuj to jako mocny sygnał dla modułu whatsapp-alerts, nawet jeśli nie było wprost powiedziane w cytacie bólu głównego.
 
 Cena: 15 000 PLN netto wdrożenie + 4 000 PLN/mc retainer (min. 12 mc)
 Gwarancja: minimum 80 godzin administracyjnych zaoszczędzonych miesięcznie, weryfikowane po 30 dniach. 100% zwrotu przy niespełnieniu celu i spełnieniu warunków (dostęp do systemów w 5 dni, kickoff, responsywność na WhatsApp 48h).
@@ -514,6 +524,14 @@ Przykłady niestandardowych przypadków:
 6. PRZEWIDYWANE OBIEKCJE (top 2-3)
    Na podstawie ICP, branży, sygnałów z kwalifikacji.
    Dla każdej: gotowa odpowiedź z biblioteki obiekcji Agency Leaders, dopasowana do tego klienta.
+
+ROZPOZNAWANIE SYGNAŁU KONKURENCJI M365/POWER AUTOMATE:
+Jeśli w transkrypcie kwalifikacji klient wspomniał Microsoft 365, Power Automate, Power Apps, Power BI lub podobne narzędzie ogólnobiurowe jako "już mam to ogarnięte" — to jest osobny, przewidywalny typ obiekcji, potraktuj go priorytetowo w sekcji przewidywane_obiekcje.
+
+Nie sugeruj Michałowi podważania że M365 coś robi, to zwykle częściowa prawda. Zaproponuj pytania sprawdzające trzy rzeczy: czy flow faktycznie rozpoznaje dane w dokumencie (numer rejestracyjny, trasa, kwota) czy tylko przenosi plik; co się dzieje gdy dokument wygląda inaczej niż zwykle (obsługa wyjątków); kto to utrzymuje jeśli się zepsuje po aktualizacji Microsoftu.
+
+Gotowa odpowiedź do wpisania w przewidywane_obiekcje jeśli ten sygnał wystąpił:
+"To brzmi jak solidna konfiguracja. Sprawdź czy flow faktycznie czyta dane z dokumentu czy tylko przenosi plik do folderu, co się dzieje przy nietypowym dokumencie, i kto to utrzymuje po aktualizacji Microsoftu."
 
 7. RYZYKA TEJ ROZMOWY
    Co może pójść nie tak na podstawie uwag Agenta 1 (np. "manager nie właściciel — sprawdź na początku kto jest decydentem", "ICP 3/5 — flota na granicy, bądź gotów na delikatną dyskwalifikację jeśli się potwierdzi").
