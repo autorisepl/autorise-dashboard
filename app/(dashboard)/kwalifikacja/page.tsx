@@ -77,13 +77,20 @@ function Card({
   children,
   collapsible = false,
   defaultOpen = true,
+  forceOpen = false,
 }: {
   title: string;
   children: React.ReactNode;
   collapsible?: boolean;
   defaultOpen?: boolean;
+  forceOpen?: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);
+
+  useEffect(() => {
+    if (forceOpen) setOpen(true);
+  }, [forceOpen]);
+
   return (
     <div
       style={{
@@ -1147,7 +1154,11 @@ function SmsPanel({
         SMS / WhatsApp
       </div>
       {kwalItems.map((item) => (
-        <div key={item.id} style={{ background: "#F5F5F7", borderRadius: 8, padding: "10px 12px" }}>
+        <div
+          key={item.id}
+          id={`sms-${item.id}`}
+          style={{ background: "#F5F5F7", borderRadius: 8, padding: "10px 12px" }}
+        >
           <div
             style={{
               fontSize: 11,
@@ -1790,6 +1801,36 @@ function ClientSidebar({
                   {c.email}
                 </div>
               )}
+              {typeof c.liczbaProb === "number" && c.liczbaProb > 0 && (
+                <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 3 }}>
+                  {[1, 2, 3].map((n) => (
+                    <div
+                      key={n}
+                      style={{
+                        width: 14,
+                        height: 14,
+                        borderRadius: "50%",
+                        border: `1.5px solid ${n <= c.liczbaProb ? "var(--warning)" : "var(--border)"}`,
+                        background: n <= c.liczbaProb ? "var(--warning)" : "transparent",
+                      }}
+                    />
+                  ))}
+                  {c.liczbaProb >= 3 && (
+                    <span
+                      style={{
+                        fontSize: 9,
+                        fontWeight: 700,
+                        color: "var(--error)",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.04em",
+                        marginLeft: 2,
+                      }}
+                    >
+                      Wyślij SMS
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           );
         })}
@@ -1891,12 +1932,14 @@ function RightPanel({
   copiedId,
   openObjectionId,
   setOpenObjectionId,
+  smsForceOpen,
 }: {
   fill: (t: string) => string;
   onCopy: (id: string, text: string) => void;
   copiedId: string | null;
   openObjectionId: string | null;
   setOpenObjectionId: (id: string | null) => void;
+  smsForceOpen: boolean;
 }) {
   return (
     <div
@@ -1922,7 +1965,7 @@ function RightPanel({
       <Card title="Frazy potwierdzające" collapsible defaultOpen={false}>
         <PhrasesPanel onCopy={onCopy} copiedId={copiedId} />
       </Card>
-      <Card title="SMS / Wiadomości" collapsible defaultOpen={false}>
+      <Card title="SMS / Wiadomości" collapsible defaultOpen={false} forceOpen={smsForceOpen}>
         <SmsPanel fill={fill} onCopy={onCopy} copiedId={copiedId} />
       </Card>
       <Card title="ICP Quick Reference" collapsible defaultOpen={false}>
@@ -1948,6 +1991,7 @@ export default function KwalifikacjaPage() {
   const [calcGodziny, setCalcGodziny] = useState(3);
   const [calcStawka, setCalcStawka] = useState(55); // NOWE
   const [sprzedawcaImie, setSprzedawcaImie] = useState("Michał");
+  const [smsForceOpen, setSmsForceOpen] = useState(false);
 
   const fetchClients = useCallback(async () => {
     setLoading(true);
@@ -1987,6 +2031,7 @@ export default function KwalifikacjaPage() {
     setCalcOsoby(2);
     setCalcGodziny(3);
     setOpenObjectionId(null);
+    setSmsForceOpen(false);
   }, [selected?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const updateSprzedawcaImie = (value: string) => {
@@ -2067,6 +2112,35 @@ export default function KwalifikacjaPage() {
     [jumpToStep, jumpToObjection],
   );
 
+  const jumpToSmsTemplate = useCallback((smsId: string) => {
+    setSmsForceOpen(true);
+    setTimeout(() => {
+      const el = document.getElementById(`sms-${smsId}`);
+      if (!el) return;
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.style.transition = "box-shadow 250ms, background-color 250ms";
+      el.style.boxShadow = "0 0 0 2px var(--warning)";
+      setTimeout(() => {
+        el.style.boxShadow = "";
+      }, 2000);
+    }, 100);
+  }, []);
+
+  const incrementCallAttempt = useCallback(async () => {
+    if (!selected) return;
+    const newCount = (selected.liczbaProb ?? 0) + 1;
+    await fetch("/api/notion/pipeline-update", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pageId: selected.id, liczbaProb: newCount }),
+    });
+    setSelected((prev) => (prev ? { ...prev, liczbaProb: newCount } : prev));
+    void fetchClients();
+    if (newCount >= 3) {
+      jumpToSmsTemplate("m1");
+    }
+  }, [selected, fetchClients, jumpToSmsTemplate]);
+
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
       {/* Header */}
@@ -2130,6 +2204,25 @@ export default function KwalifikacjaPage() {
         </div>
         {selected && (
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: "auto" }}>
+            <button
+              onClick={incrementCallAttempt}
+              style={{
+                height: 32,
+                padding: "0 12px",
+                borderRadius: 8,
+                border: "1px solid var(--border)",
+                background: "#F5F5F7",
+                fontSize: 12,
+                color: "var(--text-secondary)",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+              }}
+            >
+              <Phone size={12} />
+              Próba {(selected.liczbaProb ?? 0) + 1}
+            </button>
             <span
               style={{
                 fontSize: 12,
@@ -2257,6 +2350,7 @@ export default function KwalifikacjaPage() {
           copiedId={copiedId}
           openObjectionId={openObjectionId}
           setOpenObjectionId={setOpenObjectionId}
+          smsForceOpen={smsForceOpen}
         />
       </div>
     </div>

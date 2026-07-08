@@ -175,7 +175,7 @@ export function AudioRecorder() {
 
   const save = useCallback(() => {
     if (!blob) return;
-    const ext = blob.type.includes("mp4") ? "m4a" : "mp3";
+    const ext = blob.type.includes("mp4") ? "m4a" : blob.type.includes("webm") ? "webm" : "mp3";
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -200,7 +200,7 @@ export function AudioRecorder() {
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
         <Mic size={14} color="var(--accent)" />
         <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
-          Rejestr dźwięku (mp3)
+          Rejestr dźwięku
         </span>
         {state === "recording" && (
           <span
@@ -324,7 +324,7 @@ export function AudioRecorder() {
                 alignItems: "center",
               }}
             >
-              .mp3
+              .{blob.type.includes("mp4") ? "m4a" : blob.type.includes("webm") ? "webm" : "mp3"}
             </span>
           </div>
           <div style={{ display: "flex", gap: 8 }}>

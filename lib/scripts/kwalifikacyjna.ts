@@ -277,6 +277,10 @@ export const STEPS_K: Step[] = [
         cel: "Ustalić punkt odniesienia — co już mają, żeby wiedzieć czego NIE trzeba zastępować",
       },
       { t: "client", text: "[odpowiedź]" },
+      {
+        t: "note",
+        text: "Jeśli klient wspomni Microsoft 365, Power Automate, Power Apps lub podobne narzędzie ogólnobiurowe jako 'już mam to ogarnięte': przejdź do obiekcji 'konkurencja_m365' w prawym panelu zamiast kontynuować standardową diagnozę, zanim ustalisz co realnie robi ta konfiguracja.",
+      },
     ],
     decision: {
       question: "Co odpowiedział klient?",
@@ -641,6 +645,11 @@ export const STEPS_K: Step[] = [
       { t: "client", text: "[proponuje termin]" },
       {
         t: "say",
+        text: "Jeszcze jedno — całe wdrożenie, od tego spotkania aż po uruchomienie systemu u Pana w firmie, prowadzę osobiście, nie przekazuję tego nikomu innemu. Będzie Pan miał jeden kontakt przez cały proces, nie różnych ludzi na różnych etapach.",
+        cel: "Budować autorytet i ciągłość — klient rozmawia z decydentem i wykonawcą w jednej osobie, nie trafia do korporacyjnego przekazywania sprawy między działami",
+      },
+      {
+        t: "say",
         text: [
           "Świetnie. Wyślę Panu link do rezerwacji przez Calendly — proszę wybrać dokładny termin który Panu odpowiada.",
           "Dostanie Pan też automatyczne przypomnienie SMS dzień przed.",
@@ -662,8 +671,8 @@ export const OBJECTIONS_K: Objection[] = [
     label: "Nie pamiętam żadnego formularza",
     stage: "opening",
     script:
-      "Rozumiem, pewnie wiele rzeczy się przewija. Formularz pojawił się na Facebooku kilka dni temu — dotyczył oszczędności czasu w firmie transportowej. Mam dla Pana 2 pytania zanim opowiem więcej — czy ma Pan chwilę?",
-    note: "Po 'tak': przejdź do 2 Otwarcie diagnozy.",
+      "Rozumiem, tych reklam jest sporo. Zajmuję się wyłącznie automatyzacją dokumentów transportowych — zlecenia, CMR, faktury, które dziś ktoś u Pana przepisuje ręcznie. To akurat ten temat dotyczył formularza który Pan zostawił na Facebooku. Mam 2 pytania zanim opowiem więcej — ma Pan chwilę?",
+    note: "Po 'tak': przejdź do 2 Otwarcie diagnozy. Kluczowa zmiana: zamiast ogólnego 'oszczędność czasu' teraz od razu pada konkret (zlecenia, CMR, faktury) i wyłączność branżowa (wyłącznie transport), co różnicuje od ogólnych firm marketingowych czy IT.",
   },
   {
     id: "ok_cc",
@@ -783,6 +792,16 @@ export const OBJECTIONS_K: Objection[] = [
     script:
       "Rozumiem, biuro rachunkowe zajmuje się rozliczeniami. A kto u Was przygotowuje i wysyła im dane — faktury, potwierdzenia dostaw? To zwykle ta sama osoba co reszta administracji, zgadza się?",
     note: "Cel: nawet z zewnętrzną księgowością, ktoś wewnątrz firmy zbiera i wysyła dokumenty ręcznie. To wciąż ból do zmapowania. Po tej wymianie wróć do skryptu i przejdź do kroku 2f2 (Pilnowanie płatności).",
+  },
+  {
+    id: "konkurencja_m365",
+    label: "Ma wszystko w Microsoft 365 / Power Automate",
+    stage: "diagnoza",
+    script:
+      "To brzmi jak solidna konfiguracja. Powiem Panu co zwykle sprawdzam w takich przypadkach: czy ten flow faktycznie czyta dane z dokumentu, na przykład numer rejestracyjny, trasę, kwotę z faktury — czy tylko przenosi sam plik do folderu i ktoś nadal musi go otworzyć i przepisać?",
+    followup:
+      "A co się dzieje gdy dokument wygląda inaczej niż zwykle, na przykład nowy klient przysyła w innym układzie — flow to obsługuje automatycznie, czy wtedy ktoś ręcznie interweniuje? I kto to utrzymuje jeśli coś się zepsuje po aktualizacji Microsoftu?",
+    note: "Cel: nie podważaj że M365 coś robi, dopytaj konkretnie o rozpoznawanie danych (nie tylko przenoszenie plików), obsługę wyjątków, i utrzymanie. W praktyce większość konfiguracji Power Automate przenosi pliki, nie wyciąga z nich danych specyficznych dla transportu, i nikt ich nie utrzymuje poza jedną osobą która to kiedyś skonfigurowała. Jeśli klient faktycznie ma zaawansowaną integrację z prawdziwym OCR i utrzymaniem — to rzadkość, ale uczciwie przyznaj że w takim przypadku może już nie być miejsca na nas, nie naciskaj wbrew faktom.",
   },
   {
     id: "czas_milczy",
