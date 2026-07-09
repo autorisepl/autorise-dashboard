@@ -184,7 +184,7 @@ function ScriptStep({
         overflow: "hidden",
       }}
     >
-      {(step.decision || step.nextStepId) && (
+      {!step.decision && step.nextStepId && (
         <div
           style={{
             fontFamily: "var(--font-sans)",
@@ -199,9 +199,7 @@ function ScriptStep({
           }}
         >
           <ArrowDown size={10} />
-          {step.decision
-            ? `Dalej: ${step.decision.options.map((o) => o.trigger).join(" / ")}`
-            : `Dalej: ${findStepLabelD(step.nextStepId!)}`}
+          {`Dalej: ${findStepLabelD(step.nextStepId)}`}
         </div>
       )}
       <div
@@ -1116,21 +1114,34 @@ function PrezentacjaSection({ client }: { client: PipelineClientDetailed | null 
 
 // ── Dalsze kroki Discovery ────────────────────────────────────────────
 
-const DALSZE_KROKI_DISCOVERY_LABELS: Record<"fathom" | "brief" | "agent3" | "closing", string> = {
+const DALSZE_KROKI_DISCOVERY_LABELS: Record<
+  "fathom" | "brief" | "agent3" | "reminderSms" | "closing",
+  string
+> = {
   fathom: "Fathom włączony przed spotkaniem",
   brief: "Brief Agenta 02 przeczytany",
   agent3: "Prezentacja zaktualizowana przez Agenta 03",
+  reminderSms: "Wyślij przypomnienie dzień przed",
   closing: "Closing i cena zamknięte na tym spotkaniu",
 };
+
+const smsPrzypomnienieTekstDiscovery = (clientName: string) =>
+  (MESSAGES_DATA.sms.find((m) => m.id === "m3")?.text ?? "").replace(
+    /\{IMIĘ\}/g,
+    clientName || "[Imię]",
+  );
 
 function DalszeKrokiDiscovery({ client }: { client: PipelineClientDetailed | null }) {
   const [checks, setChecks] = useState({
     fathom: false,
     brief: false,
     agent3: false,
+    reminderSms: false,
     closing: false,
   });
   const toggle = (k: keyof typeof checks) => setChecks((p) => ({ ...p, [k]: !p[k] }));
+  const [reminderSmsExpanded, setReminderSmsExpanded] = useState(false);
+  const [reminderSmsCopied, setReminderSmsCopied] = useState(false);
   const [reminderOn, setReminderOn] = useState(false);
   const [extraContext, setExtraContext] = useState("");
   const [taskLists, setTaskLists] = useState<GoogleTaskList[] | null>(null);
@@ -1155,7 +1166,7 @@ function DalszeKrokiDiscovery({ client }: { client: PipelineClientDetailed | nul
       }
       const targetList = lists.find((l) => l.title.toLowerCase().includes("autorise")) ?? lists[0];
       if (!targetList) throw new Error("Brak dostępnej listy zadań");
-      const checkedLabels = (["fathom", "brief", "agent3", "closing"] as const)
+      const checkedLabels = (["fathom", "brief", "agent3", "reminderSms", "closing"] as const)
         .filter((k) => checks[k])
         .map((k) => DALSZE_KROKI_DISCOVERY_LABELS[k]);
       const title = `Discovery ${client?.kontakt || client?.firma || "klient"} — ${
@@ -1200,6 +1211,62 @@ function DalszeKrokiDiscovery({ client }: { client: PipelineClientDetailed | nul
         label={DALSZE_KROKI_DISCOVERY_LABELS.agent3}
         onToggle={() => toggle("agent3")}
       />
+      <StepCard
+        done={checks.reminderSms}
+        label={DALSZE_KROKI_DISCOVERY_LABELS.reminderSms}
+        onToggle={() => toggle("reminderSms")}
+        actionLabel={reminderSmsExpanded ? "Ukryj" : "Pokaż SMS"}
+        onAction={() => setReminderSmsExpanded((p) => !p)}
+      />
+      {reminderSmsExpanded && (
+        <div
+          style={{
+            marginTop: -2,
+            marginBottom: 8,
+            padding: "10px 12px",
+            borderRadius: 8,
+            background: "#F5F5F7",
+            border: "1px solid #E5E5EA",
+          }}
+        >
+          <p
+            style={{
+              margin: "0 0 8px",
+              fontFamily: "var(--font-sans)",
+              fontSize: 12,
+              lineHeight: 1.55,
+              color: "var(--text-primary)",
+            }}
+          >
+            {smsPrzypomnienieTekstDiscovery(client?.kontakt?.split(" ")[0] ?? "")}
+          </p>
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText(
+                smsPrzypomnienieTekstDiscovery(client?.kontakt?.split(" ")[0] ?? ""),
+              );
+              setReminderSmsCopied(true);
+              setTimeout(() => setReminderSmsCopied(false), 1500);
+            }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
+              padding: "4px 10px",
+              borderRadius: 6,
+              border: "1px solid #E5E5EA",
+              background: "#fff",
+              cursor: "pointer",
+              fontFamily: "var(--font-sans)",
+              fontSize: 11,
+              color: reminderSmsCopied ? "var(--success-text)" : "var(--text-secondary)",
+            }}
+          >
+            {reminderSmsCopied ? <CheckCircle2 size={11} /> : <Copy size={11} />}
+            Kopiuj
+          </button>
+        </div>
+      )}
       <StepCard
         done={checks.closing}
         label={DALSZE_KROKI_DISCOVERY_LABELS.closing}
@@ -1663,6 +1730,10 @@ export default function SprzedazPage() {
         poprzednieProby
           ? `„${poprzednieProby}"`
           : "— odwołaj się do odpowiedzi z kroku 'Poprzednie próby' —",
+      );
+      out = out.replace(
+        /\[godziny z Pipeline\]/g,
+        selected.godzinyWpisywania ? `${selected.godzinyWpisywania}` : "[X]",
       );
     }
     return out;

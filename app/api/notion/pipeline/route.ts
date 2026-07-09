@@ -29,6 +29,7 @@ export interface PipelineClientDetailed {
   przewidywaneObiekcje: string;
   pitchRecipe: string;
   ryzyka: string;
+  godzinyWpisywania: number;
 }
 
 function extractText(prop: PageObjectResponse["properties"][string] | undefined): string {
@@ -92,6 +93,7 @@ export async function GET() {
           przewidywaneObiekcje: extractText(props["Przewidywane obiekcje"]),
           pitchRecipe: extractText(props["Pitch Recipe"]),
           ryzyka: extractText(props["Ryzyka rozmowy"]),
+          godzinyWpisywania: extractNumber(props["Godziny wpisywania / spedytor"]),
         };
       })
       .filter((c: PipelineClientDetailed) => c.firma !== "Bez nazwy");
