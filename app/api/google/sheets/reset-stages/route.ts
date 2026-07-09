@@ -1,6 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { getRefreshToken, getSheetsClient } from "@/lib/google/auth";
-import { buildColumnMap, CHECKBOX_KEYS, colIndexToLetter } from "@/lib/google/sheets-card";
+import {
+  buildColumnMap,
+  CHECKBOX_KEYS,
+  colIndexToLetter,
+  TEXT_NOTE_KEYS,
+} from "@/lib/google/sheets-card";
 
 export const dynamic = "force-dynamic";
 
@@ -52,6 +57,18 @@ export async function POST(req: NextRequest) {
       batchData.push({
         range: `${sheetTitle}!${letter}2:${letter}${numDataRows + 1}`,
         values: Array.from({ length: numDataRows }, () => ["FALSE"]),
+      });
+    }
+
+    // Wyczyść też ręcznie wpisane notatki tekstowe — checkboxy same nie wracają
+    // karty do stanu "czysto ze Slacka" jeśli notatki po rozmowie zostają.
+    for (const key of TEXT_NOTE_KEYS) {
+      const colIdx = colMap[key];
+      if (colIdx === undefined) continue;
+      const letter = colIndexToLetter(colIdx);
+      batchData.push({
+        range: `${sheetTitle}!${letter}2:${letter}${numDataRows + 1}`,
+        values: Array.from({ length: numDataRows }, () => [""]),
       });
     }
 

@@ -98,6 +98,19 @@ const CHECKBOX_KEYS = (Object.keys(KONTAKTY_FIELDS) as CardFieldKey[]).filter(
   (k) => KONTAKTY_FIELDS[k].type === "checkbox",
 );
 
+/**
+ * Free-text fields filled in manually by the team after a call, as opposed to
+ * imieNazwisko/numer/email/data which arrive automatically from the Slack intake.
+ * Deliberately excludes nagranie* (recording links — irreplaceable artifacts),
+ * followUpDate and wartoscUmowy (structured business state, not narrative notes) —
+ * "Wyczyść kartę" only clears the written notes, not those.
+ */
+const TEXT_NOTE_KEYS: CardFieldKey[] = [
+  "notatkiKwalifikacyjne",
+  "notatkiSprzedazowe",
+  "notatkiDecyzyjne",
+];
+
 const DIACRITICS: Record<string, string> = {
   ł: "l",
   ż: "z",
@@ -234,4 +247,4 @@ export function cardUpdatesToCells(
   return cells;
 }
 
-export { CHECKBOX_KEYS };
+export { CHECKBOX_KEYS, TEXT_NOTE_KEYS };

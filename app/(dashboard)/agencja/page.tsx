@@ -541,7 +541,7 @@ export default function AgencjaPage() {
   const resetAllStages = useCallback(async () => {
     if (
       !window.confirm(
-        "Wyczyścić etapy wszystkich kontaktów w arkuszu?\nNotatki i nagrania pozostaną. Tylko checkboxy etapów zostaną zresetowane.",
+        "Wyczyścić kartę wszystkich kontaktów w arkuszu?\nNagrania pozostaną. Checkboxy etapów i notatki tekstowe zostaną zresetowane do stanu czysto ze Slacka.",
       )
     )
       return;
@@ -669,7 +669,7 @@ export default function AgencjaPage() {
         <button
           onClick={() => void resetAllStages()}
           disabled={resettingStages || loading}
-          title="Wyczyść etapy (checkboxy) wszystkich kontaktów. Notatki i nagrania pozostaną."
+          title="Wyczyść checkboxy etapów i notatki tekstowe wszystkich kontaktów. Nagrania pozostaną."
           style={{
             display: "flex",
             alignItems: "center",
@@ -689,7 +689,7 @@ export default function AgencjaPage() {
             size={11}
             style={{ animation: resettingStages ? "spin 0.8s linear infinite" : "none" }}
           />
-          {resettingStages ? "Resetuję..." : "Wyczyść etapy"}
+          {resettingStages ? "Resetuję..." : "Wyczyść kartę"}
         </button>
 
         {resetError && (
