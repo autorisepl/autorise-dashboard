@@ -27,8 +27,9 @@ import { DecisionDiagram } from "@/components/scripts/DecisionDiagram";
 import { NextStepArrow } from "@/components/scripts/NextStepArrow";
 import { formatPhone } from "@/lib/format/phone";
 import { DISCOVERY_STATUSES, OBJECTIONS_D, STEPS_D } from "@/lib/scripts/discovery";
+import { useFormaGrzecznosciowa } from "@/lib/scripts/formaGrzecznosciowa";
 import { GROUP_COLORS, MESSAGES_DATA } from "@/lib/scripts/messages";
-import type { DecisionOption, ScriptLine } from "@/lib/scripts/types";
+import type { DecisionOption, Objection, ScriptLine } from "@/lib/scripts/types";
 import { objectionColor } from "@/lib/scripts/types";
 
 // ── Helpers ───────────────────────────────────────────────────────────
@@ -41,14 +42,6 @@ function toVocative(name: string): string {
   if (first.endsWith("ek") && first.length > 3) return first.slice(0, -2) + "ku";
   if (first.endsWith("a") && first.length > 2) return first.slice(0, -1) + "o";
   return first;
-}
-
-function detectGender(firstName: string): "M" | "F" {
-  const name = firstName.trim().toLowerCase();
-  if (!name) return "M";
-  const maleExceptions = ["kuba", "barnaba", "bonawentura", "kosma", "bogusza"];
-  if (maleExceptions.includes(name)) return "M";
-  return name.endsWith("a") ? "F" : "M";
 }
 
 function findStepLabelD(stepId: string): string {
@@ -159,13 +152,15 @@ function ScriptStep({
   copiedId,
   onJump,
   onDecisionSelect,
+  selectedTrigger,
 }: {
   step: (typeof STEPS_D)[0];
   fill: (t: string) => string;
   onCopy: (id: string, text: string) => void;
   copiedId: string | null;
   onJump: (stepId: string) => void;
-  onDecisionSelect: (option: DecisionOption) => void;
+  onDecisionSelect: (stepId: string, option: DecisionOption) => void;
+  selectedTrigger?: string;
 }) {
   const [open, setOpen] = useState(true);
 
@@ -364,7 +359,11 @@ function ScriptStep({
             </div>
           ))}
           {step.decision && (
-            <DecisionDiagram decision={step.decision} onSelect={onDecisionSelect} />
+            <DecisionDiagram
+              decision={step.decision}
+              onSelect={(option) => onDecisionSelect(step.id, option)}
+              selectedTrigger={selectedTrigger}
+            />
           )}
           {!step.decision && step.nextStepId && (
             <NextStepArrow label="Dalej" onJump={() => onJump(step.nextStepId!)} />
@@ -576,188 +575,267 @@ function BriefSection({ client }: { client: PipelineClientDetailed | null }) {
 
 // ── Objections accordion ──────────────────────────────────────────────
 
+const STAGE_LABELS_D: Partial<Record<Objection["stage"], string>> = {
+  diagnoza: "Diagnoza",
+  pitch: "Prezentacja",
+  cena: "Cena",
+  closing: "Zamknięcie",
+  wszedzie: "Obiekcje ogólne",
+};
+
+const STAGE_ORDER_D: Objection["stage"][] = ["diagnoza", "pitch", "cena", "closing", "wszedzie"];
+
+function renderObjectionD(
+  obj: Objection,
+  openId: string | null,
+  setOpenId: (id: string | null) => void,
+  fill: (t: string) => string,
+  onCopy: (id: string, text: string) => void,
+  copiedId: string | null,
+  onDecisionSelect: (objectionId: string, option: DecisionOption) => void,
+  selectedOptions: Record<string, string>,
+) {
+  const oc = objectionColor(obj.label);
+  const isOpen = openId === obj.id;
+  return (
+    <div
+      key={obj.id}
+      id={`objection-${obj.id}`}
+      style={{
+        border: "1px solid #E5E5EA",
+        borderLeft: `3px solid ${oc.accent}`,
+        borderRadius: 8,
+        overflow: "hidden",
+        background: isOpen ? oc.bg : "#fff",
+        transition: "background-color 200ms, box-shadow 250ms",
+      }}
+    >
+      <div
+        onClick={() => setOpenId(isOpen ? null : obj.id)}
+        style={{
+          padding: "8px 12px",
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          cursor: "pointer",
+          userSelect: "none",
+        }}
+      >
+        <div style={{ flex: 1 }}>
+          <div
+            style={{
+              fontSize: 9,
+              fontWeight: 700,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              color: oc.accent,
+              marginBottom: 1,
+            }}
+          >
+            {oc.category}
+          </div>
+          <div
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 12,
+              fontWeight: 500,
+              color: "var(--text-primary)",
+            }}
+          >
+            {obj.label}
+          </div>
+        </div>
+        <ChevronDown
+          size={12}
+          color="var(--text-tertiary)"
+          style={{
+            transform: isOpen ? "rotate(180deg)" : "none",
+            transition: "transform 150ms",
+            flexShrink: 0,
+          }}
+        />
+      </div>
+      {isOpen && (
+        <div style={{ padding: "0 12px 12px", display: "flex", flexDirection: "column", gap: 8 }}>
+          {obj.script && (
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 6 }}>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: 13,
+                  lineHeight: 1.6,
+                  color: "var(--text-primary)",
+                  fontFamily: "var(--font-sans)",
+                  flex: 1,
+                }}
+              >
+                {fill(obj.script)}
+              </p>
+              <button
+                onClick={() => onCopy(`obj-${obj.id}-script`, obj.script!)}
+                style={{
+                  flexShrink: 0,
+                  padding: "3px 7px",
+                  borderRadius: 5,
+                  border: "1px solid #E5E5EA",
+                  background: "transparent",
+                  cursor: "pointer",
+                  color:
+                    copiedId === `obj-${obj.id}-script`
+                      ? "var(--success-text)"
+                      : "var(--text-tertiary)",
+                  display: "flex",
+                  alignItems: "center",
+                }}
+              >
+                {copiedId === `obj-${obj.id}-script` ? (
+                  <CheckCircle2 size={10} />
+                ) : (
+                  <Copy size={10} />
+                )}
+              </button>
+            </div>
+          )}
+          {obj.followup && (
+            <p
+              style={{
+                margin: 0,
+                fontSize: 12,
+                lineHeight: 1.55,
+                color: "var(--accent)",
+                fontFamily: "var(--font-sans)",
+                fontStyle: "italic",
+                borderTop: "1px solid #E5E5EA",
+                paddingTop: 8,
+              }}
+            >
+              {fill(obj.followup)}
+            </p>
+          )}
+          {obj.decision && (
+            <DecisionDiagram
+              decision={obj.decision}
+              onSelect={(option) => onDecisionSelect(obj.id, option)}
+              selectedTrigger={selectedOptions[obj.id]}
+            />
+          )}
+          {obj.note && (
+            <p
+              style={{
+                margin: 0,
+                fontSize: 11,
+                lineHeight: 1.5,
+                color: "var(--text-secondary)",
+                fontFamily: "var(--font-sans)",
+                background: "var(--warning-bg)",
+                padding: "6px 8px",
+                borderRadius: 6,
+              }}
+            >
+              {obj.note}
+            </p>
+          )}
+          {obj.sms && (
+            <div
+              style={{
+                background: "var(--accent-muted)",
+                padding: "8px 10px",
+                borderRadius: 6,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 9,
+                  fontWeight: 700,
+                  color: "var(--accent)",
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  marginBottom: 4,
+                }}
+              >
+                SMS
+              </div>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: 12,
+                  color: "var(--text-primary)",
+                  lineHeight: 1.55,
+                  fontFamily: "var(--font-sans)",
+                }}
+              >
+                {fill(obj.sms)}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ObjectionsPanel({
   fill,
   onCopy,
   copiedId,
+  openId,
+  setOpenId,
+  onDecisionSelect,
+  selectedOptions,
 }: {
   fill: (t: string) => string;
   onCopy: (id: string, text: string) => void;
   copiedId: string | null;
+  openId: string | null;
+  setOpenId: (id: string | null) => void;
+  onDecisionSelect: (objectionId: string, option: DecisionOption) => void;
+  selectedOptions: Record<string, string>;
 }) {
-  const [openId, setOpenId] = useState<string | null>(null);
-
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-      {OBJECTIONS_D.map((obj) => {
-        const oc = objectionColor(obj.label);
-        const isOpen = openId === obj.id;
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <div
+        style={{
+          fontFamily: "var(--font-sans)",
+          fontSize: 11,
+          fontWeight: 700,
+          color: "var(--text-primary)",
+          letterSpacing: "0.04em",
+          textTransform: "uppercase",
+        }}
+      >
+        Obiekcje w Discovery
+      </div>
+      {STAGE_ORDER_D.map((stage) => {
+        const items = OBJECTIONS_D.filter((o) => o.stage === stage);
+        if (items.length === 0) return null;
         return (
-          <div
-            key={obj.id}
-            style={{
-              border: "1px solid #E5E5EA",
-              borderLeft: `3px solid ${oc.accent}`,
-              borderRadius: 8,
-              overflow: "hidden",
-              background: isOpen ? oc.bg : "#fff",
-            }}
-          >
+          <div key={stage} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             <div
-              onClick={() => setOpenId(isOpen ? null : obj.id)}
               style={{
-                padding: "8px 12px",
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                cursor: "pointer",
-                userSelect: "none",
+                fontFamily: "var(--font-sans)",
+                fontSize: 10,
+                fontWeight: 700,
+                color: "var(--text-tertiary)",
+                letterSpacing: "0.05em",
+                textTransform: "uppercase",
               }}
             >
-              <div style={{ flex: 1 }}>
-                <div
-                  style={{
-                    fontSize: 9,
-                    fontWeight: 700,
-                    letterSpacing: "0.1em",
-                    textTransform: "uppercase",
-                    color: oc.accent,
-                    marginBottom: 1,
-                  }}
-                >
-                  {oc.category}
-                </div>
-                <div
-                  style={{
-                    fontFamily: "var(--font-sans)",
-                    fontSize: 12,
-                    fontWeight: 500,
-                    color: "var(--text-primary)",
-                  }}
-                >
-                  {obj.label}
-                </div>
-              </div>
-              <ChevronDown
-                size={12}
-                color="var(--text-tertiary)"
-                style={{
-                  transform: isOpen ? "rotate(180deg)" : "none",
-                  transition: "transform 150ms",
-                  flexShrink: 0,
-                }}
-              />
+              {STAGE_LABELS_D[stage]}
             </div>
-            {isOpen && (
-              <div
-                style={{ padding: "0 12px 12px", display: "flex", flexDirection: "column", gap: 8 }}
-              >
-                {obj.script && (
-                  <div style={{ display: "flex", alignItems: "flex-start", gap: 6 }}>
-                    <p
-                      style={{
-                        margin: 0,
-                        fontSize: 13,
-                        lineHeight: 1.6,
-                        color: "var(--text-primary)",
-                        fontFamily: "var(--font-sans)",
-                        flex: 1,
-                      }}
-                    >
-                      {fill(obj.script)}
-                    </p>
-                    <button
-                      onClick={() => onCopy(`obj-${obj.id}-script`, obj.script!)}
-                      style={{
-                        flexShrink: 0,
-                        padding: "3px 7px",
-                        borderRadius: 5,
-                        border: "1px solid #E5E5EA",
-                        background: "transparent",
-                        cursor: "pointer",
-                        color:
-                          copiedId === `obj-${obj.id}-script`
-                            ? "var(--success-text)"
-                            : "var(--text-tertiary)",
-                        display: "flex",
-                        alignItems: "center",
-                      }}
-                    >
-                      {copiedId === `obj-${obj.id}-script` ? (
-                        <CheckCircle2 size={10} />
-                      ) : (
-                        <Copy size={10} />
-                      )}
-                    </button>
-                  </div>
-                )}
-                {obj.followup && (
-                  <p
-                    style={{
-                      margin: 0,
-                      fontSize: 12,
-                      lineHeight: 1.55,
-                      color: "var(--accent)",
-                      fontFamily: "var(--font-sans)",
-                      fontStyle: "italic",
-                      borderTop: "1px solid #E5E5EA",
-                      paddingTop: 8,
-                    }}
-                  >
-                    {fill(obj.followup)}
-                  </p>
-                )}
-                {obj.note && (
-                  <p
-                    style={{
-                      margin: 0,
-                      fontSize: 11,
-                      lineHeight: 1.5,
-                      color: "var(--text-secondary)",
-                      fontFamily: "var(--font-sans)",
-                      background: "var(--warning-bg)",
-                      padding: "6px 8px",
-                      borderRadius: 6,
-                    }}
-                  >
-                    {obj.note}
-                  </p>
-                )}
-                {obj.sms && (
-                  <div
-                    style={{
-                      background: "var(--accent-muted)",
-                      padding: "8px 10px",
-                      borderRadius: 6,
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: 9,
-                        fontWeight: 700,
-                        color: "var(--accent)",
-                        letterSpacing: "0.08em",
-                        textTransform: "uppercase",
-                        marginBottom: 4,
-                      }}
-                    >
-                      SMS
-                    </div>
-                    <p
-                      style={{
-                        margin: 0,
-                        fontSize: 12,
-                        color: "var(--text-primary)",
-                        lineHeight: 1.55,
-                        fontFamily: "var(--font-sans)",
-                      }}
-                    >
-                      {fill(obj.sms)}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              {items.map((obj) =>
+                renderObjectionD(
+                  obj,
+                  openId,
+                  setOpenId,
+                  fill,
+                  onCopy,
+                  copiedId,
+                  onDecisionSelect,
+                  selectedOptions,
+                ),
+              )}
+            </div>
           </div>
         );
       })}
@@ -1452,11 +1530,19 @@ function RightPanel({
   fill,
   onCopy,
   copiedId,
+  openObjectionId,
+  setOpenObjectionId,
+  onDecisionSelect,
+  selectedOptions,
 }: {
   client: PipelineClientDetailed | null;
   fill: (t: string) => string;
   onCopy: (id: string, text: string) => void;
   copiedId: string | null;
+  openObjectionId: string | null;
+  setOpenObjectionId: (id: string | null) => void;
+  onDecisionSelect: (objectionId: string, option: DecisionOption) => void;
+  selectedOptions: Record<string, string>;
 }) {
   return (
     <div
@@ -1471,7 +1557,15 @@ function RightPanel({
       }}
     >
       <Card title="Obiekcje Discovery">
-        <ObjectionsPanel fill={fill} onCopy={onCopy} copiedId={copiedId} />
+        <ObjectionsPanel
+          fill={fill}
+          onCopy={onCopy}
+          copiedId={copiedId}
+          openId={openObjectionId}
+          setOpenId={setOpenObjectionId}
+          onDecisionSelect={onDecisionSelect}
+          selectedOptions={selectedOptions}
+        />
       </Card>
       <Card title="SMS / Wiadomości" collapsible defaultOpen={false}>
         <SmsPanel fill={fill} onCopy={onCopy} copiedId={copiedId} />
@@ -1492,7 +1586,8 @@ export default function SprzedazPage() {
   const [vocative, setVocative] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [note, setNote] = useState("");
-  const [formaOverride, setFormaOverride] = useState<"auto" | "Pan" | "Pani">("auto");
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
+  const [openObjectionId, setOpenObjectionId] = useState<string | null>(null);
 
   const fetchClients = useCallback(async () => {
     setLoading(true);
@@ -1514,7 +1609,11 @@ export default function SprzedazPage() {
   useEffect(() => {
     if (selected) setVocative(toVocative(selected.kontakt || selected.firma || ""));
     else setVocative("");
-    setFormaOverride("auto");
+  }, [selected?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    setSelectedOptions({});
+    setOpenObjectionId(null);
   }, [selected?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -1523,9 +1622,10 @@ export default function SprzedazPage() {
   }, [selected?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const firstName = (selected?.kontakt || selected?.firma || "").trim().split(/\s+/)[0] ?? "";
-  const detectedGender = detectGender(firstName);
-  const forma =
-    formaOverride === "auto" ? (detectedGender === "F" ? "Pani" : "Pan") : formaOverride;
+  const { forma, formaOverride, setFormaOverride } = useFormaGrzecznosciowa(
+    firstName,
+    selected?.id,
+  );
 
   const fill = (text: string): string => {
     let out = text;
@@ -1534,6 +1634,7 @@ export default function SprzedazPage() {
       out = out.replace(/Pan \{IMIĘ\}/g, `${forma} ${nominative}`);
       out = out.replace(/Pani \{IMIĘ\}/g, `${forma} ${nominative}`);
     }
+    out = out.replace(/\{FORMA\}/g, forma);
     if (vocative.trim()) out = out.replace(/\{IMIĘ\}/g, vocative.trim());
     if (selected) {
       const bolGlowny = selected.bolGlowny?.trim() ?? "";
@@ -1572,11 +1673,30 @@ export default function SprzedazPage() {
     }, 2000);
   }, []);
 
+  const jumpToObjection = useCallback((objectionId: string) => {
+    setOpenObjectionId(objectionId);
+    requestAnimationFrame(() => {
+      const el = document.getElementById(`objection-${objectionId}`);
+      if (!el) return;
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.style.transition = "box-shadow 250ms, background-color 250ms";
+      el.style.boxShadow = "0 0 0 2px var(--warning)";
+      setTimeout(() => {
+        el.style.boxShadow = "";
+      }, 2000);
+    });
+  }, []);
+
   const handleDecisionSelect = useCallback(
-    (option: DecisionOption) => {
+    (sourceId: string, option: DecisionOption) => {
+      setSelectedOptions((prev) => ({ ...prev, [sourceId]: option.trigger }));
+      if (option.openObjectionId) {
+        jumpToObjection(option.openObjectionId);
+        return;
+      }
       if (option.goToStepId) jumpToStep(option.goToStepId);
     },
-    [jumpToStep],
+    [jumpToStep, jumpToObjection],
   );
 
   return (
@@ -1720,6 +1840,7 @@ export default function SprzedazPage() {
                 copiedId={copiedId}
                 onJump={jumpToStep}
                 onDecisionSelect={handleDecisionSelect}
+                selectedTrigger={selectedOptions[step.id]}
               />
             ))}
           </Card>
@@ -1775,7 +1896,16 @@ export default function SprzedazPage() {
         </div>
 
         {/* Right: objections + SMS + prezentacja */}
-        <RightPanel client={selected} fill={fill} onCopy={onCopy} copiedId={copiedId} />
+        <RightPanel
+          client={selected}
+          fill={fill}
+          onCopy={onCopy}
+          copiedId={copiedId}
+          openObjectionId={openObjectionId}
+          setOpenObjectionId={setOpenObjectionId}
+          onDecisionSelect={handleDecisionSelect}
+          selectedOptions={selectedOptions}
+        />
       </div>
     </div>
   );
