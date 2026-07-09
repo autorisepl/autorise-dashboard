@@ -2054,7 +2054,8 @@ export default function KwalifikacjaPage() {
 
   const firstName = (selected?.kontakt || selected?.firma || "").trim().split(/\s+/)[0] ?? "";
   const detectedGender = detectGender(firstName);
-  const forma = formaOverride === "auto" ? (detectedGender === "F" ? "Pani" : "Pan") : formaOverride;
+  const forma =
+    formaOverride === "auto" ? (detectedGender === "F" ? "Pani" : "Pan") : formaOverride;
 
   const fill = (text: string): string => {
     let out = text;
@@ -2239,7 +2240,11 @@ export default function KwalifikacjaPage() {
             </button>
             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
               <span
-                style={{ fontSize: 12, color: "var(--text-secondary)", fontFamily: "var(--font-sans)" }}
+                style={{
+                  fontSize: 12,
+                  color: "var(--text-secondary)",
+                  fontFamily: "var(--font-sans)",
+                }}
               >
                 Zwrot:
               </span>
