@@ -23,6 +23,7 @@ import { ProgressBar, SectionLabelSmall, StepCard } from "@/components/dalsze-kr
 import { DecisionDiagram } from "@/components/scripts/DecisionDiagram";
 import { NextStepArrow } from "@/components/scripts/NextStepArrow";
 import { formatPhone } from "@/lib/format/phone";
+import { useFormaGrzecznosciowa } from "@/lib/scripts/formaGrzecznosciowa";
 import {
   ACKNOWLEDGMENT_PHRASES,
   ICP_RULES,
@@ -43,14 +44,6 @@ function toVocative(name: string): string {
   if (first.endsWith("ek") && first.length > 3) return first.slice(0, -2) + "ku";
   if (first.endsWith("a") && first.length > 2) return first.slice(0, -1) + "o";
   return first;
-}
-
-function detectGender(firstName: string): "M" | "F" {
-  const name = firstName.trim().toLowerCase();
-  if (!name) return "M";
-  const maleExceptions = ["kuba", "barnaba", "bonawentura", "kosma", "bogusza"];
-  if (maleExceptions.includes(name)) return "M";
-  return name.endsWith("a") ? "F" : "M";
 }
 
 function findStepLabel(stepId: string): string {
@@ -862,7 +855,7 @@ function ScriptStep({
 
 // ── Objections accordion ──────────────────────────────────────────────
 
-const STAGE_LABELS: Record<Objection["stage"], string> = {
+const STAGE_LABELS: Partial<Record<Objection["stage"], string>> = {
   opening: "Otwarcie rozmowy",
   icp: "Weryfikacja ICP",
   diagnoza: "Diagnoza dokumentów",
@@ -2000,7 +1993,6 @@ export default function KwalifikacjaPage() {
   const [calcStawka, setCalcStawka] = useState(55); // NOWE
   const [sprzedawcaImie, setSprzedawcaImie] = useState("Michał");
   const [smsForceOpen, setSmsForceOpen] = useState(false);
-  const [formaOverride, setFormaOverride] = useState<"auto" | "Pan" | "Pani">("auto");
 
   const fetchClients = useCallback(async () => {
     setLoading(true);
@@ -2041,7 +2033,6 @@ export default function KwalifikacjaPage() {
     setCalcGodziny(3);
     setOpenObjectionId(null);
     setSmsForceOpen(false);
-    setFormaOverride("auto");
   }, [selected?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const updateSprzedawcaImie = (value: string) => {
@@ -2053,9 +2044,10 @@ export default function KwalifikacjaPage() {
     n.toLocaleString("pl-PL", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
   const firstName = (selected?.kontakt || selected?.firma || "").trim().split(/\s+/)[0] ?? "";
-  const detectedGender = detectGender(firstName);
-  const forma =
-    formaOverride === "auto" ? (detectedGender === "F" ? "Pani" : "Pan") : formaOverride;
+  const { forma, formaOverride, setFormaOverride } = useFormaGrzecznosciowa(
+    firstName,
+    selected?.id,
+  );
 
   const fill = (text: string): string => {
     let out = text;
