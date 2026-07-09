@@ -204,6 +204,22 @@ export const STEPS_D: Step[] = [
         text: "Pomóż klientowi policzyć: godziny × stawka + błędy + opóźnienia w fakturach.",
       },
     ],
+    nextStepId: "finanse_zasoby",
+  },
+  {
+    id: "finanse_zasoby",
+    nr: "2d2",
+    label: "FINANSE I ZASOBY",
+    tag: "PYTASZ",
+    lines: [
+      {
+        t: "say",
+        text: "Zanim przejdziemy dalej — czy macie Państwo już zarezerwowany budżet na tego typu rozwiązanie w tym roku, czy to byłaby zupełnie nowa decyzja inwestycyjna?",
+        cel: "Sprawdzić realne zasoby finansowe zanim zainwestujesz czas w pełny pitch — uniknąć 20 minut prezentacji komuś bez fizycznej możliwości zapłaty",
+      },
+      { t: "client", text: "[odpowiedź]" },
+    ],
+    nextStepId: "cel",
   },
   {
     id: "cel",
@@ -310,32 +326,79 @@ export const STEPS_D: Step[] = [
           "Mogę ją teraz pokazać?",
         ],
       },
+      { t: "client", text: "Tak, proszę." },
+      {
+        t: "say",
+        text: "Zanim pokażę rozwiązanie — jedno pytanie na rozgrzewkę. Gdyby to co za chwilę pokażę było dokładnie tym czego {FORMA} szuka, jak szybko dałoby się zacząć?",
+        cel: "Pre-frame gotowości przed pitchem, technika Agency Leaders — łapiesz sygnał pilności zanim jeszcze zobaczy cenę, i zbijasz obiekcję czasową zanim się pojawi",
+      },
+      { t: "client", text: "[odpowiedź — zapisz, wróć do niej przy closing]" },
     ],
   },
   {
     id: "pitch",
     nr: "4",
-    label: "PITCH",
+    label: "PREZENTACJA ROZWIĄZANIA",
     tag: "PREZENTACJA",
     lines: [
       {
         t: "action",
-        text: "SLAJD 1: Okładka z nazwą firmy klienta. Przewiń gdy skończysz intro o firmie.",
+        text: "SLAJD 1: Okładka z nazwą firmy klienta.",
+      },
+      {
+        t: "say",
+        text: [
+          "Autorise pracuje wyłącznie z firmami transportowymi — nic innego nie robimy.",
+          "Dzięki temu rozumiemy tę branżę od środka — nie uczymy się jej kosztem klienta.",
+        ],
+        cel: "Kilka słów o firmie, krótko — Kimura Framework: nie za długo, max 30 sekund",
       },
       {
         t: "action",
-        text: "SLAJD 2: Sytuacja dziś. Pokaż 4 problem-cards. Wskaż TYLKO te które dotyczą tego klienta.",
+        text: "SLAJD 2: Sytuacja dziś. Pokaż TYLKO problem-cards które dotyczą tego klienta.",
+      },
+      {
+        t: "say",
+        text: [
+          "To co przed chwilą zostało opisane — [ból główny słowami klienta z parafrazy] — to dokładnie to, co u naszych klientów znika w ciągu 30 dni.",
+          "Odzyskuje {FORMA} minimum 80 godzin miesięcznie, albo zwracamy 100% inwestycji. Bez wyjątków.",
+        ],
+        cel: "Obietnica/big promise — prowadzisz pitch od razu ofertą i gwarancją, nie chowasz jej na koniec",
+      },
+      {
+        t: "say",
+        text: [
+          "Wcześniej pojawiła się próba rozwiązania tego inaczej: [poprzednia próba z rozmowy], która nie zadziałała bo [powód z rozmowy].",
+          "My robimy to inaczej — nie sprzedajemy kolejnego generycznego narzędzia, tylko wdrożenie dopasowane do [nazwa TMS/system klienta] i tego konkretnego procesu.",
+        ],
+        cel: "Inaczej/lepiej niż konkurencja lub niż poprzednie próby — konkretne, nie ogólnikowe 'jesteśmy najlepsi'",
       },
       {
         t: "action",
-        text: "SLAJD 3: System. Pokaż TYLKO moduły z pitch recipe Agenta 02. Pomiń moduły które nie dotyczą klienta.",
+        text: "SLAJD 3: System. Pokaż TYLKO moduły rekomendowane dla tego klienta z briefu.",
+      },
+      {
+        t: "say",
+        text: [
+          "System transformacji wygląda tak: krok pierwszy, [moduł 1 opisany korzyścią].",
+          "Krok drugi, [moduł 2 opisany korzyścią].",
+          "Krok trzeci, [moduł 3 opisany korzyścią].",
+          "Od tego co ma {FORMA} dziś, do stanu w którym te godziny wracają do biura.",
+        ],
+        cel: "System Transformacji A do B w 3 krokach — USP, konkretne kroki nie abstrakcyjna obietnica",
       },
       {
         t: "action",
-        text: "SLAJD 5: Efekt. Wykres ROI z liczbami tego klienta. Sprawdź czy Agent 03 je wstawił.",
+        text: "SLAJD 5: Efekt. Wykres ROI z liczbami tego klienta.",
       },
-      { t: "action", text: "SLAJD 6: Inwestycja. Cena na ekranie. CISZA 20 sekund." },
-      { t: "action", text: "SLAJD 7: Gwarancja 80h. Ten slajd zamyka pitch. Nie przewijaj dalej." },
+      {
+        t: "action",
+        text: "SLAJD 6: Inwestycja. Cena na ekranie. Nie czytaj jeszcze ceny na głos, to osobny krok.",
+      },
+      {
+        t: "action",
+        text: "SLAJD 7: Gwarancja 80h. Ten slajd zamyka pitch, nie przewijaj dalej.",
+      },
       {
         t: "say",
         text: ["To jest to co przygotowałem dla tej firmy.", "Jak {FORMA} to widzi?"],
@@ -438,7 +501,11 @@ export const STEPS_D: Step[] = [
         ],
         cel: "Podać konkretną liczbę i przetrzymać ciszę — pierwsza osoba która przerwie milczenie zwykle przegrywa negocjację",
       },
-      { t: "action", text: "CISZA. Poczekaj. Nie wypełniaj ciszy." },
+      { t: "action", text: "CISZA. Minimum 20 sekund. Nie wypełniaj jej niczym." },
+      {
+        t: "note",
+        text: "Jeśli klient nie odezwie się sam po 6-8 sekundach: 'Jak to {FORMA} widzi?' To jedyna dopuszczalna interwencja w tej ciszy, nic więcej.",
+      },
     ],
   },
   {
