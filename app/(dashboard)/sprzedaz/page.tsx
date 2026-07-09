@@ -1649,6 +1649,21 @@ export default function SprzedazPage() {
       );
       out = out.replace(/\[kwota roczna\]/g, "— policz z kalkulatorem ROI —");
       out = out.replace(/\[kwota\]/g, "— policz z kalkulatorem ROI —");
+      const hipotezaBol = selected.hipotezaBolGlowny?.trim() ?? "";
+      const bolGlownyDisplay = bolGlowny || hipotezaBol;
+      out = out.replace(
+        /\[ból główny słowami klienta z parafrazy\]/g,
+        bolGlownyDisplay
+          ? `„${bolGlownyDisplay}"`
+          : "— odwołaj się do tego co klient powiedział w parafrazie —",
+      );
+      const poprzednieProby = selected.poprzednieProby?.trim() ?? "";
+      out = out.replace(
+        /\[poprzednia próba z rozmowy\]/g,
+        poprzednieProby
+          ? `„${poprzednieProby}"`
+          : "— odwołaj się do odpowiedzi z kroku 'Poprzednie próby' —",
+      );
     }
     return out;
   };
