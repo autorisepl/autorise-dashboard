@@ -7,11 +7,15 @@ export const STEPS_D: Step[] = [
     label: "PRZYGOTOWANIE",
     tag: "AKCJA",
     lines: [
-      { t: "action", text: "Przeczytaj Brief Agenta 02 (zakładka Brief)." },
-      { t: "action", text: "Przeczytaj Pitch Recipe Agenta 02 — które moduły pokazać." },
-      { t: "action", text: "Sprawdź czy Agent 03 zaktualizował prezentację liczbami klienta." },
-      { t: "action", text: "Otwórz prezentację i kalkulator ROI. Fathom włączony." },
-      { t: "action", text: "Cel: diagnoza + pitch + cena + closing w jednym spotkaniu." },
+      {
+        t: "action",
+        text: "Przeczytaj przygotowany brief dla tego klienta — hipoteza bólu, przewidywane obiekcje, rekomendowane moduły.",
+      },
+      {
+        t: "action",
+        text: "Sprawdź czy prezentacja jest podpięta z liczbami tego konkretnego klienta, nie wersją generyczną.",
+      },
+      { t: "action", text: "Otwórz prezentację i kalkulator ROI zanim zadzwonisz. Włącz Fathom." },
     ],
   },
   {
@@ -24,7 +28,7 @@ export const STEPS_D: Step[] = [
         t: "say",
         text: [
           "Dzień dobry, Pan {IMIĘ}. Cieszę się że możemy porozmawiać.",
-          "Przed chwilą przejrzałem stronę firmy — widzę że prowadzi Pan firmę [nazwa] z flotą [X] pojazdów.",
+          "Przed chwilą przejrzałem stronę firmy — widzę że firma [nazwa] ma flotę [X] pojazdów.",
           "Dobrze widzę?",
         ],
       },
@@ -33,7 +37,7 @@ export const STEPS_D: Step[] = [
         t: "say",
         text: [
           "Pracujemy wyłącznie z firmami transportowymi, flota 10 do 150 pojazdów.",
-          "Za chwilę porozmawiamy o Pana konkretnej sytuacji i policzymy realną liczbę dla Pana firmy, nie średnią.",
+          "Za chwilę porozmawiamy o sytuacji w firmie i policzymy realną liczbę dla tej konkretnej firmy, nie średnią.",
         ],
       },
     ],
@@ -48,10 +52,10 @@ export const STEPS_D: Step[] = [
         t: "say",
         text: [
           "Na to spotkanie mam dla nas 45 minut.",
-          "Plan: pierwsze 20 minut pytam Pana o firmę i jak działa biuro.",
-          "Drugie 20 minut pokazuję co robimy dla Pana firmy.",
+          "Plan: pierwsze 20 minut to pytania o firmę i o to jak działa biuro.",
+          "Drugie 20 minut pokazuję co możemy zrobić dla tej firmy.",
           "Ostatnie 5 minut pytania i decyzja co dalej.",
-          "Pasuje Panu?",
+          "Pasuje taki plan?",
         ],
       },
       { t: "client", text: "Tak, jasne." },
@@ -66,7 +70,7 @@ export const STEPS_D: Step[] = [
       {
         t: "say",
         text: [
-          "Na rozmowie telefonicznej powiedział Pan że [podsumowanie z kwalifikacji].",
+          "Na rozmowie telefonicznej padło że [podsumowanie z kwalifikacji].",
           "Czy to nadal aktualne?",
         ],
       },
@@ -89,7 +93,7 @@ export const STEPS_D: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Co spowodowało że właśnie teraz zdecydował się Pan na to spotkanie?",
+        text: "Co spowodowało że akurat teraz zapadła decyzja o tym spotkaniu?",
         cel: "Znaleźć konkretny wyzwalacz decyzji, przydatny później w podsumowaniu i pitchu",
       },
       { t: "client", text: "[odpowiedź]" },
@@ -153,13 +157,13 @@ export const STEPS_D: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Co Pan do tej pory próbował żeby to usprawnić?",
+        text: "Co dotychczas próbowano zrobić żeby to usprawnić?",
         cel: "Sprawdzić czy klient już próbował rozwiązać problem, i jak, zanim zaproponujesz nowe rozwiązanie",
       },
       { t: "client", text: "[odpowiedź]" },
       {
         t: "say",
-        text: "Dlaczego to nie zadziałało tak jak Pan chciał?",
+        text: "Dlaczego to nie zadziałało tak jak było zamierzone?",
         cel: "Znaleźć lukę którą wypełni Autorise, nie powtarzać cudzych błędów",
       },
       { t: "client", text: "[odpowiedź]" },
@@ -191,7 +195,7 @@ export const STEPS_D: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Ile szacuje Pan że kosztuje firma ta ręczna praca miesięcznie — w godzinach, błędach, stresie?",
+        text: "Ile szacuje {FORMA} że kosztuje firma ta ręczna praca miesięcznie — w godzinach, błędach, stresie?",
         cel: "Sprawić żeby klient sam wyliczył koszt bezczynności — mocniejsze niż podanie liczby przez Ciebie",
       },
       { t: "client", text: "[odpowiedź]" },
@@ -210,7 +214,7 @@ export const STEPS_D: Step[] = [
       {
         t: "say",
         text: [
-          "Gdybyśmy to rozwiązali w ciągu 30 dni — jak wyglądałby dla Pana idealny wynik?",
+          "Gdybyśmy to rozwiązali w ciągu 30 dni — jak wyglądałby idealny wynik?",
           "Co by się zmieniło w firmie?",
         ],
         cel: "Zbudować wizję pożądanego stanu, do której odwołasz się w pitchu i closing",
@@ -226,7 +230,7 @@ export const STEPS_D: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Na skali 1-10 jak pilne jest dla Pana rozwiązanie tego teraz?",
+        text: "Na skali 1-10, jak pilne jest rozwiązanie tego teraz?",
         cel: "Zmierzyć realną gotowość do działania, nie tylko zainteresowanie tematem",
       },
     ],
@@ -267,7 +271,7 @@ export const STEPS_D: Step[] = [
       {
         t: "say",
         text: [
-          "Chcę się upewnić że dobrze rozumiem Pana sytuację.",
+          "Chcę się upewnić że dobrze rozumiem sytuację.",
           "Proszę mnie poprawić jeśli coś pomylę.",
         ],
         cel: "Uzyskać jawne potwierdzenie bólu przed pitchem — klient który potwierdza własny problem kupuje ideę, nie produkt",
@@ -275,12 +279,12 @@ export const STEPS_D: Step[] = [
       {
         t: "say",
         text: [
-          "Prowadzi Pan [nazwa firmy] z flotą [X] pojazdów.",
+          "Prowadzi {FORMA} [nazwa firmy] z flotą [X] pojazdów.",
           "Biuro zajmuje się [opis pracy].",
           "Problem to [ból główny].",
-          "Próbował Pan [poprzednie próby] ale to nie zadziałało bo [powód].",
+          "Wcześniej próbowano [poprzednie próby] ale to nie zadziałało bo [powód].",
           "Samodzielnie trudno to rozwiązać bo [powód].",
-          "Idealnie chciałby Pan [cel].",
+          "W idealnym scenariuszu chodzi o [cel].",
           "To kosztuje firmę szacunkowo [kwota] miesięcznie.",
           "Zgadza się?",
         ],
@@ -302,7 +306,7 @@ export const STEPS_D: Step[] = [
         t: "say",
         text: [
           "Dziękuję za szczerość.",
-          "Mam przygotowaną prezentację specjalnie dla [nazwa firmy] — z Pana liczbami.",
+          "Mam przygotowaną prezentację specjalnie dla [nazwa firmy] — z liczbami tej firmy.",
           "Mogę ją teraz pokazać?",
         ],
       },
@@ -334,7 +338,7 @@ export const STEPS_D: Step[] = [
       { t: "action", text: "SLAJD 7: Gwarancja 80h. Ten slajd zamyka pitch. Nie przewijaj dalej." },
       {
         t: "say",
-        text: ["To jest to co przygotowałem dla Pana firmy.", "Jak Pan to widzi?"],
+        text: ["To jest to co przygotowałem dla tej firmy.", "Jak {FORMA} to widzi?"],
       },
     ],
   },
@@ -377,7 +381,7 @@ export const STEPS_D: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Czy jest Pan osobą która podejmuje tę decyzję, czy potrzebujemy kogoś jeszcze?",
+        text: "Czy {FORMA} jest osobą która podejmuje tę decyzję, czy potrzebujemy kogoś jeszcze?",
         cel: "Ustalić decyzyjność przed przejściem do Commitment Question — uniknąć pustego pitchu bez decydenta",
       },
       { t: "client", text: "[odpowiedź]" },
@@ -387,7 +391,7 @@ export const STEPS_D: Step[] = [
       },
       {
         t: "say",
-        text: "Zanim przejdę do ceny, chcę zadać jedno pytanie. Jeżeli finanse okażą się akceptowalne, czy ten model współpracy rezonuje i widzi Pan siebie w tym rozwiązaniu?",
+        text: "Zanim przejdę do ceny, chcę zadać jedno pytanie. Jeżeli finanse okażą się akceptowalne, czy ten model współpracy rezonuje i widzi {FORMA} siebie w tym rozwiązaniu?",
         cel: "To jest właściwe Commitment Question, obowiązkowe przed każdą ceną — klient sam sobie sprzedaje odpowiedzią na kolejne pytanie",
       },
       { t: "client", text: "[TAK / niepewny / NIE]" },
@@ -430,7 +434,7 @@ export const STEPS_D: Step[] = [
         text: [
           "Inwestycja to 15 000 zł jednorazowo lub dwie raty po 7 500 zł.",
           "Plus 4 000 zł miesięcznie opieki.",
-          "Gwarancja: jeśli w 30 dni nie odzyska Pan 80 godzin — zwrot 100% bez pytań.",
+          "Gwarancja: jeśli w 30 dni nie odzyska {FORMA} 80 godzin — zwrot 100% bez pytań.",
         ],
         cel: "Podać konkretną liczbę i przetrzymać ciszę — pierwsza osoba która przerwie milczenie zwykle przegrywa negocjację",
       },
@@ -447,7 +451,7 @@ export const STEPS_D: Step[] = [
         t: "say",
         text: [
           "Przy [kwota oszczędności] miesięcznie, inwestycja zwraca się w [X] miesięcy.",
-          "Czy to ma sens dla Pana firmy?",
+          "Czy to ma sens dla tej firmy?",
         ],
       },
     ],
@@ -458,7 +462,7 @@ export const STEPS_D: Step[] = [
     label: "CLOSING",
     tag: "ZAMKNIĘCIE",
     lines: [
-      { t: "say", text: "Co potrzebuje Pan żeby podjąć decyzję dziś?" },
+      { t: "say", text: "Co potrzebuje {FORMA} żeby podjąć decyzję dziś?" },
       { t: "client", text: "[odpowiedź]" },
       {
         t: "note",
@@ -480,15 +484,47 @@ export const STEPS_D: Step[] = [
 export const OBJECTIONS_D: Objection[] = [
   {
     id: "od1",
-    stage: "wszedzie",
+    stage: "cena",
     label: "Muszę się zastanowić",
+    script: "Oczywiście. Żebym wiedział jak Panu pomóc — co konkretnie wymaga zastanowienia?",
+    decision: {
+      question: "Co odpowiedział klient?",
+      options: [
+        {
+          trigger: "Wątpliwość co do produktu",
+          openObjectionId: "od1_watpliwosc",
+          tone: "warning",
+        },
+        { trigger: "Kwestia budżetu", openObjectionId: "od1_finanse", tone: "warning" },
+        { trigger: "Chce skonsultować z kimś", openObjectionId: "od1_partner", tone: "warning" },
+      ],
+    },
+  },
+  {
+    id: "od1_watpliwosc",
+    stage: "cena",
+    label: "Zastanowienie: wątpliwość co do produktu",
     script:
-      "Oczywiście. Żebym wiedział jak Panu pomóc — co konkretnie wymaga zastanowienia? Czy to kwestia budżetu, kwestia czy to zadziała u Pana, czy może chce Pan porozmawiać z kimś bliskim?",
-    note: "3 gałęzie: (A) wątpliwość co do produktu — wróć do wartości i gwarancji; (B) finanse — zaproponuj raty; (C) partner — przejdź do od2 lub od2b.",
+      "Rozumiem. Co konkretnie budzi wątpliwość — chętnie to wyjaśnię teraz, zamiast żeby to Panu chodziło po głowie.",
+  },
+  {
+    id: "od1_finanse",
+    stage: "cena",
+    label: "Zastanowienie: kwestia finansowa",
+    script:
+      "Rozumiem, to częste. Mamy opcję rat, 2 razy 7500 zł zamiast 15000 zł jednorazowo. Czy to zmienia sytuację?",
+  },
+  {
+    id: "od1_partner",
+    stage: "closing",
+    label: "Zastanowienie: chce skonsultować z kimś",
+    script:
+      "Jasne. Z kim chciałby Pan to skonsultować — to pomoże mi zrozumieć jak najlepiej Panu pomóc.",
+    note: "Po odpowiedzi: przejdź do od2 (żona) lub od2b (wspólnik) zależnie od tego kogo klient wskazał.",
   },
   {
     id: "od2",
-    stage: "wszedzie",
+    stage: "closing",
     label: "Muszę porozmawiać z żoną",
     script:
       "Gdyby Pana żona była dzisiaj na tym spotkaniu i miała pełen kontekst tak jak Pan, co myśli Pan że by powiedziała?",
@@ -498,7 +534,7 @@ export const OBJECTIONS_D: Objection[] = [
   },
   {
     id: "od2b",
-    stage: "wszedzie",
+    stage: "closing",
     label: "Muszę porozmawiać ze wspólnikiem / partnerem biznesowym",
     script:
       "Rozumiem. Czy możemy umówić drugie spotkanie razem ze wspólnikiem — tak żeby miał ten sam kontekst co Pan?",
@@ -506,22 +542,53 @@ export const OBJECTIONS_D: Objection[] = [
   },
   {
     id: "od3",
-    stage: "wszedzie",
+    stage: "cena",
     label: "Za drogo",
+    script: "Rozumiem. Chcę się upewnić że dobrze rozumiem — co konkretnie budzi wątpliwość?",
+    decision: {
+      question: "Co odpowiedział klient?",
+      options: [
+        {
+          trigger: "Kwestia logistyki płatności",
+          openObjectionId: "od3_logistyka",
+          tone: "warning",
+        },
+        { trigger: "Wątpliwość czy się zwróci", openObjectionId: "od3_wartosc", tone: "warning" },
+        { trigger: "Porównuje z inną ofertą", openObjectionId: "od3_konkurencja", tone: "warning" },
+      ],
+    },
+  },
+  {
+    id: "od3_logistyka",
+    stage: "cena",
+    label: "Za drogo: kwestia logistyki płatności",
     script:
-      "Rozumiem. Chcę się upewnić że dobrze rozumiem. Czy to kwestia samej kwoty, czy kwestia czy inwestycja się zwróci, czy porównuje Pan nas z inną ofertą?",
-    note: "LOGISTYKA (kwota): 'Mamy raty: 2 × 7 500 zł. Zwrot w [X] mc.' WARTOŚĆ (zwrot): wróć do ROI z liczbami klienta. KONKURENCJA: 'Kto i co oferuje za tę cenę? Czy mają gwarancję zwrotu 80h?'",
+      "Rozumiem, to nie jest mała kwota jednorazowo. Mamy raty: 2 razy 7500 zł. Retainer zostaje 4000 zł miesięcznie. Czy to ułatwia decyzję?",
+  },
+  {
+    id: "od3_wartosc",
+    stage: "cena",
+    label: "Za drogo: wątpliwość czy się zwróci",
+    script:
+      "To dobre pytanie. Policzyliśmy razem że traci Pan [kwota] miesięcznie na tym co teraz robicie ręcznie. 15000 zł zwraca się w [X] miesięcy, retainer jest mniejszy niż jedna trzecia tego co teraz tracicie. Widzi Pan to inaczej po tych liczbach?",
+  },
+  {
+    id: "od3_konkurencja",
+    stage: "cena",
+    label: "Za drogo: porównuje z inną ofertą",
+    script:
+      "Rozumiem. Kto i co dokładnie oferuje za tę cenę? Czy dają gwarancję konkretnego efektu na umowie, tak jak my dajemy 80 godzin albo zwrot całości?",
   },
   {
     id: "od4",
-    stage: "wszedzie",
+    stage: "closing",
     label: "Jestem już przekonany, ale...",
     script: "Słyszę 'ale' — co konkretnie stoi na przeszkodzie żeby zdecydować się dziś?",
     note: "To najczęściej zamaskowana obiekcja od1, od3 lub od2. Słuchaj co pojawi się po 'ale'.",
   },
   {
     id: "od5",
-    stage: "wszedzie",
+    stage: "closing",
     label: "Mam teraz inne priorytety",
     script:
       "Rozumiem. Ile czasu zajmie Panu te priorytety? A czy w tym czasie biuro nadal traci te [X] godzin tygodniowo?",
@@ -529,35 +596,45 @@ export const OBJECTIONS_D: Objection[] = [
   },
   {
     id: "od6",
-    stage: "wszedzie",
+    stage: "pitch",
     label: "Chcę najpierw zobaczyć demo / testować",
     script:
       "Nasze demo to realne wdrożenie z Pana danymi — dlatego mamy gwarancję 30-dniową z 100% zwrotem. Nie pokazujemy sandboxa — wdrażamy i Pan ocenia na żywych danych. Czy to zmienia Pana perspektywę?",
   },
   {
     id: "od7",
-    stage: "wszedzie",
+    stage: "diagnoza",
     label: "Mam pracownika który to robi",
     script:
       "Dobrze. I właśnie o to chodzi — ta osoba robi coś co można zautomatyzować. Co mogłaby robić zamiast tego, gdyby miała te [X] godzin dziennie z powrotem?",
   },
   {
     id: "od8",
-    stage: "wszedzie",
+    stage: "diagnoza",
     label: "Mam dwie firmy, nie wiem dla której",
     script:
       "Dla której z firm ból jest większy — gdzie traci się więcej czasu? Możemy zacząć od jednej i rozszerzyć na drugą po 30 dniach.",
   },
   {
     id: "od9",
-    stage: "wszedzie",
+    stage: "pitch",
     label: "Korzystam już z konkurencji",
     script: "Rozumiem. Co Pan od nich dostaje i co działa dobrze? A czego Panu brakuje?",
     note: "Nie atakuj konkurencji. Szukaj luki — co nasze rozwiązanie robi czego tamto nie robi. Zaproponuj 30-dniowy test równoległy z gwarancją.",
   },
   {
+    id: "konkurencja_m365_d",
+    stage: "pitch",
+    label: "Ma wszystko w Microsoft 365 / Power Automate",
+    script:
+      "To brzmi jak solidna konfiguracja. Czy ten flow faktycznie czyta dane z dokumentu — numer rejestracyjny, trasę, kwotę — czy tylko przenosi plik do folderu?",
+    followup:
+      "A co się dzieje przy nietypowym dokumencie, i kto to utrzymuje po aktualizacji Microsoftu?",
+    note: "Ten sam scenariusz co konkurencja_m365 w kwalifikacji. Jeśli klient już o tym wspominał na kwalifikacji, brief powinien to flagować — sprawdź przed spotkaniem.",
+  },
+  {
     id: "od10",
-    stage: "wszedzie",
+    stage: "cena",
     label: "Muszę to przespać",
     script: "Oczywiście. Co musiałoby się stać żeby jutro rano powiedział Pan 'tak'?",
     followup: "Zadzwonię jutro o [godzina]. Pasuje Panu?",
@@ -565,7 +642,7 @@ export const OBJECTIONS_D: Objection[] = [
   },
   {
     id: "od11",
-    stage: "wszedzie",
+    stage: "cena",
     label: "Mogę płacić w ratach?",
     script:
       "Tak — mamy opcję 2 × 7 500 zł zamiast 15 000 zł jednorazowo. Retainer pozostaje 4 000 zł / mc. Przy ratach zaczynacie wdrożenie po pierwszej wpłacie. Pasuje Panu?",

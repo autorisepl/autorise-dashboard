@@ -23,7 +23,8 @@ export function useFormaGrzecznosciowa(
   }, [resetKey]);
 
   const detectedGender = detectGender(firstName);
-  const forma = formaOverride === "auto" ? (detectedGender === "F" ? "Pani" : "Pan") : formaOverride;
+  const forma =
+    formaOverride === "auto" ? (detectedGender === "F" ? "Pani" : "Pan") : formaOverride;
 
   return { forma, formaOverride, setFormaOverride };
 }
