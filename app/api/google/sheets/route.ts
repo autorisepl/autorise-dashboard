@@ -76,6 +76,6 @@ export async function GET(req: NextRequest) {
     if (message.includes("insufficient") || message.includes("scope")) {
       return NextResponse.json({ error: "scope_required" }, { status: 403 });
     }
-    return NextResponse.json({ error: "Failed to read sheet", detail: message }, { status: 500 });
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

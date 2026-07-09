@@ -473,6 +473,7 @@ export default function AgencjaPage() {
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<SheetsSyncResult | null>(null);
   const [resettingStages, setResettingStages] = useState(false);
+  const [resetError, setResetError] = useState<string | null>(null);
   const [windowWidth, setWindowWidth] = useState(1200);
 
   const SHEET_ID = "18BjXDFAWDVQnQkrE_1Kmvj0-ZJIGXQejLY6IJOOXnH0";
@@ -519,7 +520,8 @@ export default function AgencjaPage() {
         return;
       }
       if (!res.ok) {
-        setError("failed");
+        const body = await res.json().catch(() => ({}));
+        setError(body.error ?? "failed");
         return;
       }
       setData(await res.json());
@@ -544,9 +546,17 @@ export default function AgencjaPage() {
     )
       return;
     setResettingStages(true);
+    setResetError(null);
     try {
-      await fetch("/api/google/sheets/reset-stages", { method: "POST" });
+      const res = await fetch("/api/google/sheets/reset-stages", { method: "POST" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setResetError(body.error ?? `Błąd resetowania (${res.status})`);
+        return;
+      }
       await load();
+    } catch {
+      setResetError("Błąd połączenia podczas resetowania");
     } finally {
       setResettingStages(false);
     }
@@ -682,6 +692,12 @@ export default function AgencjaPage() {
           {resettingStages ? "Resetuję..." : "Wyczyść etapy"}
         </button>
 
+        {resetError && (
+          <span style={{ fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--error)" }}>
+            {resetError}
+          </span>
+        )}
+
         <button
           onClick={load}
           disabled={loading}
@@ -710,10 +726,7 @@ export default function AgencjaPage() {
       </div>
 
       {/* ── Body ── */}
-      {error === "not_connected" ||
-      error === "scope_required" ||
-      error === "failed" ||
-      (loading && !error) ? (
+      {error || (loading && !error) ? (
         <div style={{ flex: 1, overflow: "auto", padding: 16 }}>
           {error === "not_connected" && (
             <Panel style={{ padding: 20, textAlign: "center" }}>
@@ -800,7 +813,7 @@ export default function AgencjaPage() {
             </Panel>
           )}
 
-          {error === "failed" && (
+          {error && error !== "not_connected" && error !== "scope_required" && (
             <Panel style={{ padding: 16 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <AlertCircle size={14} color="var(--error)" />
@@ -811,7 +824,7 @@ export default function AgencjaPage() {
                     color: "var(--text-secondary)",
                   }}
                 >
-                  Błąd ładowania arkusza.
+                  {error === "failed" ? "Błąd ładowania arkusza." : error}
                 </span>
                 <button
                   onClick={load}

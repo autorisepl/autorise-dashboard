@@ -45,6 +45,14 @@ function toVocative(name: string): string {
   return first;
 }
 
+function detectGender(firstName: string): "M" | "F" {
+  const name = firstName.trim().toLowerCase();
+  if (!name) return "M";
+  const maleExceptions = ["kuba", "barnaba", "bonawentura", "kosma", "bogusza"];
+  if (maleExceptions.includes(name)) return "M";
+  return name.endsWith("a") ? "F" : "M";
+}
+
 function findStepLabel(stepId: string): string {
   const step = STEPS_K.find((s) => s.id === stepId);
   return step ? `${step.nr} ${step.label}` : stepId;
@@ -1992,6 +2000,7 @@ export default function KwalifikacjaPage() {
   const [calcStawka, setCalcStawka] = useState(55); // NOWE
   const [sprzedawcaImie, setSprzedawcaImie] = useState("Michał");
   const [smsForceOpen, setSmsForceOpen] = useState(false);
+  const [formaOverride, setFormaOverride] = useState<"auto" | "Pan" | "Pani">("auto");
 
   const fetchClients = useCallback(async () => {
     setLoading(true);
@@ -2032,6 +2041,7 @@ export default function KwalifikacjaPage() {
     setCalcGodziny(3);
     setOpenObjectionId(null);
     setSmsForceOpen(false);
+    setFormaOverride("auto");
   }, [selected?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const updateSprzedawcaImie = (value: string) => {
@@ -2042,12 +2052,16 @@ export default function KwalifikacjaPage() {
   const fmtPln = (n: number) =>
     n.toLocaleString("pl-PL", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
+  const firstName = (selected?.kontakt || selected?.firma || "").trim().split(/\s+/)[0] ?? "";
+  const detectedGender = detectGender(firstName);
+  const forma = formaOverride === "auto" ? (detectedGender === "F" ? "Pani" : "Pan") : formaOverride;
+
   const fill = (text: string): string => {
     let out = text;
-    const nominative = (selected?.kontakt ?? "").trim().split(/\s+/)[0];
+    const nominative = (selected?.kontakt || selected?.firma || "").trim().split(/\s+/)[0];
     if (nominative) {
-      out = out.replace(/Pan \{IMIĘ\}/g, `Pan ${nominative}`);
-      out = out.replace(/Pani \{IMIĘ\}/g, `Pani ${nominative}`);
+      out = out.replace(/Pan \{IMIĘ\}/g, `${forma} ${nominative}`);
+      out = out.replace(/Pani \{IMIĘ\}/g, `${forma} ${nominative}`);
     }
     if (vocative.trim()) out = out.replace(/\{IMIĘ\}/g, vocative.trim());
     if (sprzedawcaImie.trim()) out = out.replace(/\{IMIĘ_SPRZEDAWCY\}/g, sprzedawcaImie.trim());
@@ -2223,6 +2237,51 @@ export default function KwalifikacjaPage() {
               <Phone size={12} />
               Próba {(selected.liczbaProb ?? 0) + 1}
             </button>
+            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              <span
+                style={{ fontSize: 12, color: "var(--text-secondary)", fontFamily: "var(--font-sans)" }}
+              >
+                Zwrot:
+              </span>
+              {(["Pan", "Pani"] as const).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setFormaOverride(f)}
+                  style={{
+                    height: 32,
+                    padding: "0 10px",
+                    borderRadius: 8,
+                    border: `1px solid ${forma === f ? "var(--accent)" : "#E5E5EA"}`,
+                    background: forma === f ? "rgba(10,132,255,0.08)" : "#F5F5F7",
+                    color: forma === f ? "var(--accent)" : "var(--text-secondary)",
+                    fontSize: 12,
+                    fontWeight: forma === f ? 600 : 400,
+                    cursor: "pointer",
+                    fontFamily: "var(--font-sans)",
+                  }}
+                >
+                  {f}
+                </button>
+              ))}
+              {formaOverride !== "auto" && (
+                <button
+                  onClick={() => setFormaOverride("auto")}
+                  title="Wróć do automatycznego wykrywania"
+                  style={{
+                    height: 32,
+                    padding: "0 8px",
+                    borderRadius: 8,
+                    border: "1px solid #E5E5EA",
+                    background: "transparent",
+                    color: "var(--text-tertiary)",
+                    fontSize: 11,
+                    cursor: "pointer",
+                  }}
+                >
+                  auto
+                </button>
+              )}
+            </div>
             <span
               style={{
                 fontSize: 12,

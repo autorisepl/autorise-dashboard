@@ -18,27 +18,6 @@ import type { IcpRule, Objection, Step } from "./types";
 
 export const STEPS_K: Step[] = [
   {
-    id: "prep",
-    nr: "0",
-    label: "PRZYGOTOWANIE",
-    tag: "AKCJA",
-    lines: [
-      {
-        t: "action",
-        text: "Sprawdź w Pipeline: imię i nazwisko, numer telefonu, email, firma lub NIP.",
-      },
-      {
-        t: "action",
-        text: "Opcjonalnie: 15 sekund — wyszukaj NIP w CEIDG lub wyszukiwarce GUS. Sprawdź pełną nazwę firmy i aktywność.",
-      },
-      { t: "action", text: "Włącz nagrywarkę na komputerze." },
-      {
-        t: "action",
-        text: "Miej pod ręką: imię klienta w nominatywie (Pan Jacek, nie Panie Jacku) i numer telefonu.",
-      },
-    ],
-  },
-  {
     id: "opener",
     nr: "1",
     label: "OPENING",
