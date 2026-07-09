@@ -3,8 +3,16 @@ import { NextResponse } from "next/server";
 type Role = "admin" | "setter";
 
 const CREDENTIALS: { passwordEnvVar: string; sessionEnvVar: string; role: Role }[] = [
-  { passwordEnvVar: "DASHBOARD_PASSWORD_ADMIN", sessionEnvVar: "DASHBOARD_SESSION_SECRET_ADMIN", role: "admin" },
-  { passwordEnvVar: "DASHBOARD_PASSWORD_SETTER", sessionEnvVar: "DASHBOARD_SESSION_SECRET_SETTER", role: "setter" },
+  {
+    passwordEnvVar: "DASHBOARD_PASSWORD_ADMIN",
+    sessionEnvVar: "DASHBOARD_SESSION_SECRET_ADMIN",
+    role: "admin",
+  },
+  {
+    passwordEnvVar: "DASHBOARD_PASSWORD_SETTER",
+    sessionEnvVar: "DASHBOARD_SESSION_SECRET_SETTER",
+    role: "setter",
+  },
 ];
 
 export async function POST(req: Request) {
