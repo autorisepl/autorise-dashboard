@@ -41,7 +41,8 @@ export interface Objection {
   type?: "sms" | "fb";
   note?: string;
   followup?: string;
-  stage: "opening" | "icp" | "diagnoza" | "kalkulator" | "wszedzie"; // NOWE, wymagane
+  stage: "opening" | "icp" | "diagnoza" | "kalkulator" | "pitch" | "cena" | "closing" | "wszedzie";
+  decision?: Decision;
 }
 
 export interface IcpRule {
