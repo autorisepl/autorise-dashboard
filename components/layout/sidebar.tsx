@@ -70,6 +70,21 @@ function useClock() {
   return now;
 }
 
+// ── Role hook ───────────────────────────────────────────────────────
+
+const SETTER_VISIBLE_HREFS = ["/kwalifikacja", "/sprzedaz", "/agencja", "/prezentacja"];
+
+function useRole() {
+  const [role, setRole] = useState<"admin" | "setter" | null>(null);
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then((data) => setRole(data.role ?? null))
+      .catch(() => setRole(null));
+  }, []);
+  return role;
+}
+
 // ── Nav structure ───────────────────────────────────────────────────
 
 const NAV: {
@@ -209,6 +224,15 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
   const router = useRouter();
   const weather = useWeather();
   const now = useClock();
+  const role = useRole();
+
+  const visibleNav =
+    role === "setter"
+      ? NAV.map((section) => ({
+          ...section,
+          items: section.items.filter((item) => SETTER_VISIBLE_HREFS.includes(item.href)),
+        })).filter((section) => section.items.length > 0)
+      : NAV;
 
   const dateStr = now
     ? now.toLocaleDateString("pl-PL", {
@@ -408,7 +432,7 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
           gap: 0,
         }}
       >
-        {NAV.map((section, si) => (
+        {visibleNav.map((section, si) => (
           <div key={si} style={{ marginBottom: 4 }}>
             <SectionLabel paddingX={6}>{section.label}</SectionLabel>
             <div style={{ display: "flex", flexDirection: "column", gap: 1, marginTop: 2 }}>

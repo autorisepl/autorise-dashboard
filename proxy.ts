@@ -3,6 +3,23 @@ import { NextResponse } from "next/server";
 
 const PUBLIC_PATHS = ["/login", "/api/auth"];
 
+const SETTER_ALLOWED_PREFIXES = [
+  "/kwalifikacja",
+  "/sprzedaz",
+  "/agencja",
+  "/prezentacja",
+  "/api/notion",
+  "/api/agents",
+  "/api/google",
+];
+
+function resolveRole(session: string | undefined): "admin" | "setter" | null {
+  if (!session) return null;
+  if (session === process.env.DASHBOARD_SESSION_SECRET_ADMIN) return "admin";
+  if (session === process.env.DASHBOARD_SESSION_SECRET_SETTER) return "setter";
+  return null;
+}
+
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -15,12 +32,19 @@ export function proxy(request: NextRequest) {
   }
 
   const session = request.cookies.get("autorise_session")?.value;
-  const expected = process.env.DASHBOARD_SESSION_SECRET;
+  const role = resolveRole(session);
 
-  if (!expected || session !== expected) {
+  if (!role) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("from", pathname);
     return NextResponse.redirect(loginUrl);
+  }
+
+  if (role === "setter") {
+    const allowed = SETTER_ALLOWED_PREFIXES.some((p) => pathname.startsWith(p));
+    if (!allowed) {
+      return NextResponse.redirect(new URL("/sprzedaz", request.url));
+    }
   }
 
   return NextResponse.next();
