@@ -1321,20 +1321,34 @@ function IcpPanel() {
 
 const CALENDLY_URL = "https://calendly.com/autorise";
 
-const DALSZE_KROKI_LABELS: Record<"calendly" | "sms" | "pipeline", string> = {
+const DALSZE_KROKI_LABELS: Record<"calendly" | "sms" | "reminderSms" | "pipeline", string> = {
   calendly: "Link Calendly wysłany",
   sms: "SMS potwierdzający wysłany",
+  reminderSms: "Wyślij przypomnienie dzień przed",
   pipeline: "Uruchom Agenta 1 (ustawi status automatycznie)",
 };
 
 const smsPotwierdzajacyTekst = (clientName: string, dzien: string, godzina: string) =>
   `Dzień dobry Panie ${clientName || "[Imię]"}, potwierdzam nasze spotkanie na ${dzien || "[dzień]"} o ${godzina || "[godzina]"}. Link do spotkania wyśle Panu Calendly na maila. Do usłyszenia.`;
 
+const smsPrzypomnienieTekst = (clientName: string) =>
+  (MESSAGES_DATA.sms.find((m) => m.id === "m3")?.text ?? "").replace(
+    /\{IMIĘ\}/g,
+    clientName || "[Imię]",
+  );
+
 function DalszeKroki({ client }: { client: PipelineClientDetailed | null }) {
-  const [checks, setChecks] = useState({ calendly: false, sms: false, pipeline: false });
+  const [checks, setChecks] = useState({
+    calendly: false,
+    sms: false,
+    reminderSms: false,
+    pipeline: false,
+  });
   const toggle = (k: keyof typeof checks) => setChecks((p) => ({ ...p, [k]: !p[k] }));
   const [smsExpanded, setSmsExpanded] = useState(false);
   const [smsCopied, setSmsCopied] = useState(false);
+  const [reminderSmsExpanded, setReminderSmsExpanded] = useState(false);
+  const [reminderSmsCopied, setReminderSmsCopied] = useState(false);
   const [reminderOn, setReminderOn] = useState(false);
   const [extraContext, setExtraContext] = useState("");
   const [taskLists, setTaskLists] = useState<GoogleTaskList[] | null>(null);
@@ -1359,7 +1373,7 @@ function DalszeKroki({ client }: { client: PipelineClientDetailed | null }) {
       }
       const targetList = lists.find((l) => l.title.toLowerCase().includes("autorise")) ?? lists[0];
       if (!targetList) throw new Error("Brak dostępnej listy zadań");
-      const checkedLabels = (["calendly", "sms", "pipeline"] as const)
+      const checkedLabels = (["calendly", "sms", "reminderSms", "pipeline"] as const)
         .filter((k) => checks[k])
         .map((k) => DALSZE_KROKI_LABELS[k]);
       const title = `Kwalifikacja ${client?.kontakt || client?.firma || "klient"} — ${
@@ -1448,6 +1462,62 @@ function DalszeKroki({ client }: { client: PipelineClientDetailed | null }) {
             }}
           >
             {smsCopied ? <CheckCircle2 size={11} /> : <Copy size={11} />}
+            Kopiuj
+          </button>
+        </div>
+      )}
+      <StepCard
+        done={checks.reminderSms}
+        label={DALSZE_KROKI_LABELS.reminderSms}
+        onToggle={() => toggle("reminderSms")}
+        actionLabel={reminderSmsExpanded ? "Ukryj" : "Pokaż SMS"}
+        onAction={() => setReminderSmsExpanded((p) => !p)}
+      />
+      {reminderSmsExpanded && (
+        <div
+          style={{
+            marginTop: -2,
+            marginBottom: 8,
+            padding: "10px 12px",
+            borderRadius: 8,
+            background: "#F5F5F7",
+            border: "1px solid #E5E5EA",
+          }}
+        >
+          <p
+            style={{
+              margin: "0 0 8px",
+              fontFamily: "var(--font-sans)",
+              fontSize: 12,
+              lineHeight: 1.55,
+              color: "var(--text-primary)",
+            }}
+          >
+            {smsPrzypomnienieTekst(client?.kontakt?.split(" ")[0] ?? "")}
+          </p>
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText(
+                smsPrzypomnienieTekst(client?.kontakt?.split(" ")[0] ?? ""),
+              );
+              setReminderSmsCopied(true);
+              setTimeout(() => setReminderSmsCopied(false), 1500);
+            }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
+              padding: "4px 10px",
+              borderRadius: 6,
+              border: "1px solid #E5E5EA",
+              background: "#fff",
+              cursor: "pointer",
+              fontFamily: "var(--font-sans)",
+              fontSize: 11,
+              color: reminderSmsCopied ? "var(--success-text)" : "var(--text-secondary)",
+            }}
+          >
+            {reminderSmsCopied ? <CheckCircle2 size={11} /> : <Copy size={11} />}
             Kopiuj
           </button>
         </div>
