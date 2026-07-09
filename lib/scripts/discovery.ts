@@ -81,7 +81,7 @@ export const STEPS_D: Step[] = [
       },
       {
         t: "note",
-        text: "Jeśli w trakcie rozmowy klient zareaguje 'ale ja już to mówiłem' lub podobnie: nie tłumacz się i nie przepraszaj długo, jedno zdanie wystarczy. 'Ma Pan rację, przepraszam, chciałem się tylko upewnić że dobrze to zrozumiałem, idźmy dalej.' Natychmiast przejdź do kolejnego pytania z innej kategorii, nie wracaj do tego samego wątku.",
+        text: "Jeśli klient zareaguje 'już to mówiłem': patrz obiekcja 'Klient: już to mówiłem' w prawym panelu (stage: diagnoza).",
       },
     ],
   },
@@ -137,15 +137,15 @@ export const STEPS_D: Step[] = [
   {
     id: "info_czas",
     nr: "2a",
-    label: "SKALA PROBLEMU",
-    tag: "PYTASZ",
+    label: "POTWIERDZENIE SKALI",
+    tag: "MÓWISZ",
     lines: [
       {
         t: "say",
-        text: "Ile osób jest zaangażowanych w ten proces i ile czasu to zajmuje łącznie?",
-        cel: "Oszacować skalę problemu w godzinach i ludziach — wejście do kalkulatora ROI",
+        text: "Z naszej rozmowy telefonicznej wynika że to około [godziny z Pipeline] godzin dziennie na spedytora przy ręcznym wpisywaniu — to się nadal zgadza, i ilu w sumie osób jest teraz zaangażowanych w ten proces?",
+        cel: "Potwierdzić dane z kalkulatora kwalifikacji zamiast pytać od zera, zgodnie z zasadą że Discovery nie powtarza pytań z kwalifikacji. Godziny na spedytora to realne pole zapisane w Pipeline; liczba osób nie jest jeszcze zapisywana do Notion (kalkulator liczy ją tylko lokalnie w UI kwalifikacji), więc to jedyna część pytana od nowa",
       },
-      { t: "client", text: "[odpowiedź]" },
+      { t: "client", text: "[potwierdza lub koryguje]" },
     ],
     nextStepId: "proby",
   },
@@ -246,27 +246,27 @@ export const STEPS_D: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Na skali 1-10, jak pilne jest rozwiązanie tego teraz?",
-        cel: "Zmierzyć realną gotowość do działania, nie tylko zainteresowanie tematem",
+        text: "Jak {FORMA} ocenia, jak mocno to teraz doskwiera w firmie — to coś co spokojnie poczeka do przyszłego kwartału, czy to raczej coś czego {FORMA} chce się pozbyć jak najszybciej?",
+        cel: "Zmierzyć realną gotowość do działania bez brzmienia jak ankieta satysfakcji — odpowiedź daje ten sam sygnał co liczba 1-10, tylko w naturalnej formie",
       },
     ],
     decision: {
       question: "Jaka odpowiedź?",
       options: [
         {
-          trigger: "7 lub więcej",
+          trigger: "Chce mieć to z głowy szybko",
           action: "Pilność potwierdzona, kontynuuj",
           goToStepId: "parafraza",
           tone: "positive",
         },
         {
-          trigger: "5-6",
-          action: "Powiedz: 'Co musiałoby się wydarzyć żeby to było 9?'",
+          trigger: "Niepewny, waha się między priorytetami",
+          action: "Powiedz: 'Co musiałoby się wydarzyć żeby to stało się priorytetem?'",
           goToStepId: "parafraza",
           tone: "neutral",
         },
         {
-          trigger: "Poniżej 5",
+          trigger: "To może poczekać, niepilne",
           action: "Zastanów się czy warto kontynuować pitch dziś",
           goToStepId: "parafraza",
           tone: "warning",
@@ -410,24 +410,30 @@ export const STEPS_D: Step[] = [
     nr: "5",
     label: "TEMPERATURA",
     tag: "PYTASZ",
-    lines: [{ t: "say", text: "Na skali 1-10 — gdzie jesteśmy?" }],
+    lines: [
+      {
+        t: "say",
+        text: "Jak to wygląda po tym co pokazałem — widzi {FORMA} w tym coś co faktycznie rozwiązuje problem, czy zostało coś co nie przekonuje?",
+        cel: "Sprawdzić temperaturę bez sztywnej skali liczbowej, naturalniej niż 'gdzie jesteśmy 1-10'",
+      },
+    ],
     decision: {
       question: "Jaka odpowiedź?",
       options: [
         {
-          trigger: "7 lub więcej",
+          trigger: "Wyraźnie pozytywna reakcja",
           action: "Gotowy na commitment",
           goToStepId: "commitment",
           tone: "positive",
         },
         {
-          trigger: "5-6",
-          action: "Powiedz: 'Co musiałoby się zmienić żeby to było 9?'",
+          trigger: "Niepewna, wymaga dopytania",
+          action: "Powiedz: 'Co konkretnie budzi wątpliwość, zanim przejdziemy dalej?'",
           goToStepId: "commitment",
           tone: "neutral",
         },
         {
-          trigger: "Poniżej 5",
+          trigger: "Negatywna, coś nie przekonuje",
           action:
             "Nie wracaj do tej samej parafrazy słowo w słowo. Powiedz: 'Widzę że coś z tego co pokazałem nie do końca trafia. Co konkretnie nie przekonuje?' Wysłuchaj, dopiero potem zdecyduj czy wracać do pitchu czy do ceny.",
           goToStepId: "parafraza",
@@ -681,6 +687,14 @@ export const OBJECTIONS_D: Objection[] = [
     label: "Mam dwie firmy, nie wiem dla której",
     script:
       "Dla której z firm ból jest większy — gdzie traci się więcej czasu? Możemy zacząć od jednej i rozszerzyć na drugą po 30 dniach.",
+  },
+  {
+    id: "juz_mowilem",
+    stage: "diagnoza",
+    label: "Klient: 'już to mówiłem'",
+    script:
+      "Ma {FORMA} rację, przepraszam — chciałem się tylko upewnić że dobrze to zrozumiałem. Idźmy dalej.",
+    note: "Natychmiast przejdź do kolejnego pytania z innej kategorii, nie wracaj do tego samego wątku.",
   },
   {
     id: "od9",
