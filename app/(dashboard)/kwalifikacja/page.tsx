@@ -31,6 +31,7 @@ import {
   STEPS_K,
 } from "@/lib/scripts/kwalifikacyjna";
 import { GROUP_COLORS, MESSAGES_DATA } from "@/lib/scripts/messages";
+import { getRecommendedModules } from "@/lib/scripts/moduleRecommendation";
 import type { DecisionOption, Objection, ScriptLine } from "@/lib/scripts/types";
 import { objectionColor } from "@/lib/scripts/types";
 
@@ -203,6 +204,68 @@ function CalculatorFlagsBar({ flags }: { flags: Record<string, boolean> }) {
           </span>
         );
       })}
+    </div>
+  );
+}
+
+function RecommendedModulesPanel({
+  calculatorFlags,
+  selectedOptions,
+}: {
+  calculatorFlags: Record<string, boolean>;
+  selectedOptions: Record<string, string>;
+}) {
+  const modules = getRecommendedModules(calculatorFlags, selectedOptions);
+  if (modules.length === 0) return null;
+  return (
+    <div
+      style={{
+        marginTop: 8,
+        marginBottom: 8,
+        padding: 14,
+        borderRadius: 12,
+        background: "rgba(52,199,89,0.05)",
+        border: "1px solid rgba(52,199,89,0.18)",
+      }}
+    >
+      <div
+        style={{
+          fontFamily: "var(--font-sans)",
+          fontSize: 10,
+          fontWeight: 700,
+          color: "var(--success-text, #248a3d)",
+          textTransform: "uppercase",
+          letterSpacing: "0.06em",
+          marginBottom: 8,
+        }}
+      >
+        Co możemy mu zaoferować, na podstawie tej rozmowy
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        {modules.map((m) => (
+          <div key={m.module} style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            <span
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 13,
+                fontWeight: 600,
+                color: "var(--text-primary)",
+              }}
+            >
+              {m.module}
+            </span>
+            <span
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 12,
+                color: "var(--text-secondary)",
+              }}
+            >
+              {m.reason}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -2416,6 +2479,12 @@ export default function KwalifikacjaPage() {
                     onOsobyChange={setCalcOsoby}
                     onGodzinyChange={setCalcGodziny}
                     onStawkaChange={setCalcStawka}
+                  />
+                )}
+                {step.hasModuleRecommendation && (
+                  <RecommendedModulesPanel
+                    calculatorFlags={calculatorFlags}
+                    selectedOptions={selectedOptions}
                   />
                 )}
               </ScriptStep>

@@ -28,6 +28,7 @@ export interface Step {
   duration?: string;
   lines: ScriptLine[];
   hasCalculator?: boolean;
+  hasModuleRecommendation?: boolean;
   decision?: Decision;
   nextStepId?: string;
 }

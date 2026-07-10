@@ -508,6 +508,7 @@ export const STEPS_K: Step[] = [
     nr: "2j",
     label: "PODANIE LICZBY KLIENTOWI",
     tag: "MÓWISZ",
+    hasModuleRecommendation: true,
     lines: [
       {
         t: "note",
@@ -728,8 +729,7 @@ export const OBJECTIONS_K: Objection[] = [
     id: "ok1_szczere",
     label: "Nie mam czasu (naprawdę zajęty)",
     stage: "opening",
-    script:
-      "Jasne, widzę że jest Pan zajęty. Kiedy wygodniej, jutro rano czy popołudniu?",
+    script: "Jasne, widzę że jest Pan zajęty. Kiedy wygodniej, jutro rano czy popołudniu?",
     note: "Nie przekonuj, nie próbuj wcisnąć rozmowy na siłę. Szczery brak czasu szanujesz i umawiasz konkretny termin, nie 'kiedyś'.",
   },
   {
