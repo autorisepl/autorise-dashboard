@@ -30,6 +30,10 @@ export interface PipelineClientDetailed {
   pitchRecipe: string;
   ryzyka: string;
   godzinyWpisywania: number;
+  flota: number;
+  tms: string;
+  kosztRoczny: number;
+  cytatyKlienta: string;
 }
 
 function extractText(prop: PageObjectResponse["properties"][string] | undefined): string {
@@ -94,6 +98,10 @@ export async function GET() {
           pitchRecipe: extractText(props["Pitch Recipe"]),
           ryzyka: extractText(props["Ryzyka rozmowy"]),
           godzinyWpisywania: extractNumber(props["Godziny wpisywania / spedytor"]),
+          flota: extractNumber(props["Flota"]),
+          tms: extractText(props["TMS"]),
+          kosztRoczny: extractNumber(props["Koszt roczny PLN/rok"]),
+          cytatyKlienta: extractText(props["Cytaty klienta"]),
         };
       })
       .filter((c: PipelineClientDetailed) => c.firma !== "Bez nazwy");

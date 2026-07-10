@@ -514,6 +514,7 @@ export async function saveAgent2Output(
   pageId: string,
   preDiscoveryBrief: Record<string, unknown>,
   planDiscovery: string,
+  pitchRecipe?: string,
 ): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const props: Record<string, any> = {};
@@ -523,7 +524,7 @@ export async function saveAgent2Output(
     przewidywane_obiekcje?: Array<{ objekcja?: string }> | null;
     ryzyka_rozmowy?: string | null;
     uwagi_agenta?: string | null;
-    pitch_recipe?: string | null;
+    cytaty_klienta?: Array<{ cytat?: string; kontekst?: string }> | null;
   };
 
   if (brief.hipoteza_bol_glowny) {
@@ -542,8 +543,16 @@ export async function saveAgent2Output(
   if (brief.uwagi_agenta) {
     props["Uwagi Agenta 2"] = { rich_text: richText(brief.uwagi_agenta) };
   }
-  if (brief.pitch_recipe) {
-    props["Pitch Recipe"] = { rich_text: richText(brief.pitch_recipe) };
+  if (pitchRecipe) {
+    props["Pitch Recipe"] = { rich_text: richText(pitchRecipe) };
+  }
+  if (brief.cytaty_klienta?.length) {
+    // Format: "cytat|||kontekst" per linia, sparsowane z powrotem w BriefSection (/sprzedaz)
+    const text = brief.cytaty_klienta
+      .filter((c) => c.cytat)
+      .map((c) => `${c.cytat}|||${c.kontekst ?? ""}`)
+      .join("\n");
+    if (text) props["Cytaty klienta"] = { rich_text: richText(text) };
   }
 
   await notion.pages.update({ page_id: pageId, properties: props });
@@ -650,6 +659,7 @@ export async function migrateNotionSchema(): Promise<{ added: string[]; errors: 
         "Następny krok": { rich_text: {} },
         "Pitch Recipe": { rich_text: {} },
         "Liczba prób kontaktu": { number: {} },
+        "Cytaty klienta": { rich_text: {} },
       },
     });
     added.push(
@@ -681,6 +691,7 @@ export async function migrateNotionSchema(): Promise<{ added: string[]; errors: 
       "Obiekcje",
       "Notatki",
       "Następny krok",
+      "Cytaty klienta",
     );
   } catch (err) {
     errors.push(`Batch 1: ${err instanceof Error ? err.message : "Błąd migracji schematu"}`);

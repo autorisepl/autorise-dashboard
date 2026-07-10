@@ -51,7 +51,11 @@ export async function POST(req: Request) {
       .map((b) => (b as { type: "text"; text: string }).text)
       .join("");
 
-    let output: { pre_discovery_brief: Record<string, unknown>; plan_discovery: string };
+    let output: {
+      pre_discovery_brief: Record<string, unknown>;
+      plan_discovery: string;
+      pitch_recipe?: string;
+    };
     try {
       output = extractAndParseJson(rawText) as typeof output;
     } catch (parseErr) {
@@ -68,7 +72,12 @@ export async function POST(req: Request) {
     let notionError: string | null = null;
     if (notion_page_id && output.pre_discovery_brief && output.plan_discovery) {
       try {
-        await saveAgent2Output(notion_page_id, output.pre_discovery_brief, output.plan_discovery);
+        await saveAgent2Output(
+          notion_page_id,
+          output.pre_discovery_brief,
+          output.plan_discovery,
+          output.pitch_recipe,
+        );
         const brief = output.pre_discovery_brief as { hipoteza_bol_glowny?: string };
         const summary = brief.hipoteza_bol_glowny
           ? `Hipoteza bólu: ${brief.hipoteza_bol_glowny.slice(0, 150)}`

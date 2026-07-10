@@ -463,6 +463,8 @@ OTRZYMASZ:
 
 TWOJE ZADANIE: przygotuj Michała na Discovery Call z TYM klientem. Nie zgaduj cytatów które jeszcze nie padły — przygotuj PYTANIA i HIPOTEZY, oraz SZKIELET pitchu z polami do wypełnienia live.
 
+KRYTYCZNE: Nigdy nie zostawiaj placeholderów w nawiasach kwadratowych typu [nazwa], [X pojazdów] w finalnym tekście. Wszystkie te wartości znasz z karty klienta którą analizujesz — wypełnij je konkretnie. Jeśli naprawdę jakiejś wartości brakuje w danych źródłowych, napisz to wprost słowami, np. "liczba pojazdów nie została potwierdzona na kwalifikacji", nigdy surowy placeholder.
+
 ---
 
 CZĘŚĆ A — PRE-DISCOVERY BRIEF (analiza)
@@ -657,6 +659,12 @@ Zawiera cztery elementy, każdy jako osobna sekcja w stringu:
 
 Jeśli brak danych do któregokolwiek elementu — oznacz [DO WERYFIKACJI NA DISCOVERY].
 
+POLE cytaty_klienta (wymagane, osobne od pitch_recipe):
+Zamiast sklejania wielu cytatów w jedno zdanie z zagnieżdżonymi cudzysłowami, zwróć każdy cytat
+osobno jako obiekt w tablicy: { "cytat": "dosłowne słowa klienta", "kontekst": "co to pokazuje, jednym zdaniem" }.
+2-4 najmocniejsze cytaty z transkryptu. Frontend wyrenderuje je jako osobne czytelne bloki —
+nie Twoim zadaniem jest formatować interpunkcję finalnego wyświetlania, zwróć surowe dane.
+
 {
   "pre_discovery_brief": {
     "profil_klienta": "",
@@ -671,6 +679,9 @@ Jeśli brak danych do któregokolwiek elementu — oznacz [DO WERYFIKACJI NA DIS
     "tms_potwierdzenie": "",
     "przewidywane_obiekcje": [
       {"objekcja": "", "odpowiedz": ""}
+    ],
+    "cytaty_klienta": [
+      {"cytat": "", "kontekst": ""}
     ],
     "ryzyka_rozmowy": "",
     "uwagi_agenta": ""

@@ -27,6 +27,7 @@ import { DecisionDiagram } from "@/components/scripts/DecisionDiagram";
 import { NextStepArrow } from "@/components/scripts/NextStepArrow";
 import { formatPhone } from "@/lib/format/phone";
 import { DISCOVERY_STATUSES, OBJECTIONS_D, STEPS_D } from "@/lib/scripts/discovery";
+import { fillBrief, parseCytatyKlienta } from "@/lib/scripts/fillBrief";
 import { useFormaGrzecznosciowa } from "@/lib/scripts/formaGrzecznosciowa";
 import { GROUP_COLORS, MESSAGES_DATA } from "@/lib/scripts/messages";
 import type { DecisionOption, Objection, ScriptLine } from "@/lib/scripts/types";
@@ -392,6 +393,7 @@ function BriefSection({ client }: { client: PipelineClientDetailed | null }) {
   }
 
   const hasBrief = !!(client.uwagiFAgent2 || client.hipotezaBolGlowny || client.pitchRecipe);
+  const cytaty = parseCytatyKlienta(client.cytatyKlienta);
 
   if (!hasBrief) {
     return (
@@ -460,8 +462,63 @@ function BriefSection({ client }: { client: PipelineClientDetailed | null }) {
               whiteSpace: "pre-wrap",
             }}
           >
-            {client.hipotezaBolGlowny}
+            {fillBrief(client.hipotezaBolGlowny, client)}
           </p>
+        </div>
+      )}
+      {cytaty.length > 0 && (
+        <div>
+          <div
+            style={{
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              color: "var(--text-tertiary)",
+              marginBottom: 6,
+            }}
+          >
+            Cytaty klienta
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {cytaty.map((c, i) => (
+              <div
+                key={i}
+                style={{
+                  padding: "10px 14px",
+                  borderRadius: 8,
+                  background: "#FAFAFA",
+                  border: "1px solid #E5E5EA",
+                  borderLeft: "3px solid var(--accent)",
+                }}
+              >
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: 13,
+                    lineHeight: 1.6,
+                    color: "var(--text-primary)",
+                    fontFamily: "var(--font-sans)",
+                    fontStyle: "italic",
+                  }}
+                >
+                  „{c.cytat}"
+                </p>
+                {c.kontekst && (
+                  <p
+                    style={{
+                      margin: "4px 0 0",
+                      fontSize: 11,
+                      color: "var(--text-tertiary)",
+                      fontFamily: "var(--font-sans)",
+                    }}
+                  >
+                    {c.kontekst}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       )}
       {client.pitchRecipe && (
@@ -488,7 +545,7 @@ function BriefSection({ client }: { client: PipelineClientDetailed | null }) {
               whiteSpace: "pre-wrap",
             }}
           >
-            {client.pitchRecipe}
+            {fillBrief(client.pitchRecipe, client)}
           </p>
         </div>
       )}
@@ -516,7 +573,7 @@ function BriefSection({ client }: { client: PipelineClientDetailed | null }) {
               whiteSpace: "pre-wrap",
             }}
           >
-            {client.przewidywaneObiekcje}
+            {fillBrief(client.przewidywaneObiekcje, client)}
           </p>
         </div>
       )}
