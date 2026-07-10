@@ -156,6 +156,7 @@ function AgenciPageInner() {
   );
   const [copied, setCopied] = useState(false);
   const [verificationMode, setVerificationMode] = useState(false);
+  const [analysisMode, setAnalysisMode] = useState<"nowa" | "uzupelnienie">("nowa");
 
   // ── Data fetching ──────────────────────────────────────────────
 
@@ -209,8 +210,38 @@ function AgenciPageInner() {
   const handleClientSelect = useCallback(
     (id: string) => {
       setSelectedClientIds((prev) => ({ ...prev, [activeAgent]: id }));
+
+      // Część 7: jeśli dla tego klienta istnieje już zapisana analiza Agenta 01, wczytaj ją
+      // od razu zamiast wymuszać ponowne uruchomienie.
+      if (activeAgent === "agent1" && id && analysisMode === "nowa") {
+        void (async () => {
+          try {
+            const histRes = await fetch(`/api/notion/client-history?pageId=${id}`);
+            const histData = await histRes.json();
+            if (!histData.success) return;
+            const entry = (histData.history as Array<{ id: string; type: string }>).find(
+              (h) => h.type === "Agent 01 — Analiza kwalifikacyjna",
+            );
+            if (!entry) return;
+            const detailRes = await fetch(`/api/notion/client-history?entryId=${entry.id}`);
+            const detailData = await detailRes.json();
+            if (!detailData.success || !detailData.details) return;
+            const output = JSON.parse(detailData.details);
+            updateAgentState("agent1", {
+              status: "done",
+              output,
+              loadedFromHistory: true,
+              notionPageId: id,
+              notionError: null,
+              elapsed: null,
+            });
+          } catch {
+            /* silent — user can still run fresh */
+          }
+        })();
+      }
     },
-    [activeAgent],
+    [activeAgent, analysisMode, updateAgentState],
   );
 
   // ── Write "Kontakty" card after a stage agent run ──────────────
@@ -259,6 +290,17 @@ function AgenciPageInner() {
     const state = agentStates[activeAgent];
     const primaryInput = state.transcript.trim();
     if (!primaryInput) return;
+    if (
+      activeAgent === "agent1" &&
+      analysisMode === "uzupelnienie" &&
+      !selectedClientIds[activeAgent]
+    ) {
+      updateAgentState(activeAgent, {
+        status: "error",
+        errorMsg: "Wybierz klienta do którego chcesz dodać uzupełnienie.",
+      });
+      return;
+    }
 
     const startTime = Date.now();
     updateAgentState(activeAgent, {
@@ -271,6 +313,7 @@ function AgenciPageInner() {
       elapsed: null,
       cardStatus: "idle",
       cardError: null,
+      loadedFromHistory: false,
     });
 
     try {
@@ -279,7 +322,10 @@ function AgenciPageInner() {
         notion_page_id: selectedClientId || undefined,
       };
 
-      if (activeAgent === "agent1" && verificationMode) {
+      if (activeAgent === "agent1" && analysisMode === "uzupelnienie") {
+        payload.mode = "uzupelnienie";
+        payload.existing_client_id = selectedClientId || undefined;
+      } else if (activeAgent === "agent1" && verificationMode) {
         payload.mode = "weryfikacja";
       }
 
@@ -354,7 +400,15 @@ function AgenciPageInner() {
         elapsed,
       });
     }
-  }, [activeAgent, agentStates, selectedClientIds, updateAgentState, verificationMode, writeCard]);
+  }, [
+    activeAgent,
+    agentStates,
+    selectedClientIds,
+    updateAgentState,
+    verificationMode,
+    analysisMode,
+    writeCard,
+  ]);
 
   // ── Notion push ────────────────────────────────────────────────
 
@@ -435,12 +489,47 @@ function AgenciPageInner() {
           />
         ))}
         {activeAgent === "agent1" && (
+          <div style={{ display: "flex", gap: 6, marginLeft: "auto", paddingRight: 4 }}>
+            <button
+              onClick={() => setAnalysisMode("nowa")}
+              style={{
+                padding: "5px 12px",
+                borderRadius: 7,
+                border: `1px solid ${analysisMode === "nowa" ? "var(--accent)" : "var(--border)"}`,
+                background: analysisMode === "nowa" ? "var(--accent-muted)" : "transparent",
+                color: analysisMode === "nowa" ? "var(--accent)" : "var(--text-secondary)",
+                fontFamily: "var(--font-sans)",
+                fontSize: 11,
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              Nowa analiza
+            </button>
+            <button
+              onClick={() => setAnalysisMode("uzupelnienie")}
+              style={{
+                padding: "5px 12px",
+                borderRadius: 7,
+                border: `1px solid ${analysisMode === "uzupelnienie" ? "var(--accent)" : "var(--border)"}`,
+                background: analysisMode === "uzupelnienie" ? "var(--accent-muted)" : "transparent",
+                color: analysisMode === "uzupelnienie" ? "var(--accent)" : "var(--text-secondary)",
+                fontFamily: "var(--font-sans)",
+                fontSize: 11,
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              Uzupełnienie do istniejącego klienta
+            </button>
+          </div>
+        )}
+        {activeAgent === "agent1" && analysisMode === "nowa" && (
           <label
             style={{
               display: "flex",
               alignItems: "center",
               gap: 6,
-              marginLeft: "auto",
               cursor: "pointer",
               userSelect: "none",
               paddingRight: 4,
@@ -504,6 +593,16 @@ function AgenciPageInner() {
           onNotionPush={handleNotionPush}
           onCopy={handleCopy}
           copied={copied}
+          bypassDriveRequirement={activeAgent === "agent1" && analysisMode === "uzupelnienie"}
+          transcriptFieldOverride={
+            activeAgent === "agent1" && analysisMode === "uzupelnienie"
+              ? {
+                  label: "Uzupełnienie do istniejącego klienta",
+                  placeholder:
+                    "Wklej dodatkową notatkę, transkrypt krótkiej rozmowy, albo cokolwiek co klient dodatkowo powiedział...",
+                }
+              : undefined
+          }
         />
       </div>
     </div>

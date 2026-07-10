@@ -26,7 +26,6 @@ import { Button } from "@/components/ui/Button";
 import { Panel } from "@/components/ui/Panel";
 import { PromptViewer } from "@/components/ui/PromptViewer";
 import type { RoadmapStep } from "@/components/ui/StatusRoadmap";
-import { StatusRoadmap } from "@/components/ui/StatusRoadmap";
 import {
   AGENT1_SYSTEM_PROMPT,
   AGENT2_SYSTEM_PROMPT,
@@ -71,6 +70,8 @@ export interface AgentState {
   // Google Sheets "Kontakty" card write result
   cardStatus: CardWriteStatus;
   cardError: string | null;
+  /** True when `output` came from a previously saved Notion history entry, not a fresh run. */
+  loadedFromHistory?: boolean;
 }
 
 interface AgentWorkspaceProps {
@@ -87,6 +88,10 @@ interface AgentWorkspaceProps {
   onNotionPush: () => void;
   onCopy: () => void;
   copied: boolean;
+  /** agent1-only: bypasses the TXT+MP3 attachment requirement (uzupełnienie mode uses a free-text fragment instead). */
+  bypassDriveRequirement?: boolean;
+  /** agent1-only: overrides the transcript textarea label/placeholder in uzupełnienie mode. */
+  transcriptFieldOverride?: { label: string; placeholder: string };
 }
 
 // ── Agent configuration ─────────────────────────────────────────────
@@ -1180,6 +1185,7 @@ function OutputPanel({
   copied,
   onNotionPush,
   writesNotion,
+  onRun,
 }: {
   agentId: AgentId;
   state: AgentState;
@@ -1187,6 +1193,7 @@ function OutputPanel({
   copied: boolean;
   onNotionPush: () => void;
   writesNotion: boolean;
+  onRun: () => void;
 }) {
   if (state.status === "idle") return null;
 
@@ -1205,7 +1212,7 @@ function OutputPanel({
         <span
           style={{ fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--text-secondary)" }}
         >
-          Analiza w toku...
+          Analizuję rozmowę...
         </span>
       </Panel>
     );
@@ -1267,6 +1274,30 @@ function OutputPanel({
           {copied ? <Check size={11} /> : <Copy size={11} />}
           {copied ? "Skopiowano" : "Kopiuj"}
         </button>
+
+        {state.loadedFromHistory && (
+          <button
+            onClick={onRun}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              padding: "6px 12px",
+              background: "var(--glass)",
+              backdropFilter: "var(--glass-blur)",
+              border: "1px solid var(--accent-border)",
+              borderRadius: "var(--radius-xs)",
+              cursor: "pointer",
+              fontFamily: "var(--font-sans)",
+              fontSize: 12,
+              fontWeight: 500,
+              color: "var(--accent)",
+            }}
+          >
+            <Play size={11} fill="currentColor" />
+            Uruchom ponownie
+          </button>
+        )}
 
         {state.notionPageId && writesNotion && (
           <div
@@ -1505,20 +1536,16 @@ export function AgentWorkspace({
   onNotionPush,
   onCopy,
   copied,
+  bypassDriveRequirement,
+  transcriptFieldOverride,
 }: AgentWorkspaceProps) {
   const cfg = CONFIGS[agentId];
 
   const filesReady =
     !cfg.requiresDriveFiles ||
+    bypassDriveRequirement ||
     (state.transcript.trim().length > 0 && state.attachedMp3Link.length > 0);
   const runDisabled = state.status === "running" || !filesReady;
-
-  const roadmapStep =
-    state.status === "idle"
-      ? 0
-      : state.status === "running"
-        ? Math.max(1, Math.floor(cfg.roadmapSteps.length / 2))
-        : cfg.roadmapSteps.length - 1;
 
   return (
     <div
@@ -1720,7 +1747,7 @@ export function AgentWorkspace({
                 key={inp.field}
                 style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}
               >
-                {cfg.requiresDriveFiles && inp.field === "transcript" ? (
+                {cfg.requiresDriveFiles && !bypassDriveRequirement && inp.field === "transcript" ? (
                   <DriveAttachments
                     label={inp.label}
                     hasTranscript={state.transcript.trim().length > 0}
@@ -1737,11 +1764,19 @@ export function AgentWorkspace({
                   />
                 ) : (
                   <StyledTextarea
-                    label={inp.label}
-                    placeholder={inp.placeholder}
+                    label={
+                      inp.field === "transcript" && transcriptFieldOverride
+                        ? transcriptFieldOverride.label
+                        : inp.label
+                    }
+                    placeholder={
+                      inp.field === "transcript" && transcriptFieldOverride
+                        ? transcriptFieldOverride.placeholder
+                        : inp.placeholder
+                    }
                     value={state[inp.field] as string}
                     onChange={(v) => onFieldChange(inp.field, v)}
-                    showPicker={inp.field === "transcript"}
+                    showPicker={inp.field === "transcript" && !bypassDriveRequirement}
                   />
                 )}
               </div>
@@ -1772,21 +1807,24 @@ export function AgentWorkspace({
                 </>
               )}
             </Button>
-            {cfg.requiresDriveFiles && !filesReady && state.status !== "running" && (
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 5,
-                  marginTop: 6,
-                  fontSize: 11,
-                  color: "var(--text-tertiary)",
-                }}
-              >
-                <AlertTriangle size={11} color="var(--warning)" />
-                Załącz transkrypt TXT i nagranie MP3 z Dysku, aby uruchomić.
-              </div>
-            )}
+            {cfg.requiresDriveFiles &&
+              !bypassDriveRequirement &&
+              !filesReady &&
+              state.status !== "running" && (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 5,
+                    marginTop: 6,
+                    fontSize: 11,
+                    color: "var(--text-tertiary)",
+                  }}
+                >
+                  <AlertTriangle size={11} color="var(--warning)" />
+                  Załącz transkrypt TXT i nagranie MP3 z Dysku, aby uruchomić.
+                </div>
+              )}
           </div>
 
           {/* Prompt viewer */}
@@ -1806,23 +1844,6 @@ export function AgentWorkspace({
             overflowY: "auto",
           }}
         >
-          {/* Status Roadmap */}
-          <Panel padding={16} style={{ flexShrink: 0 }}>
-            <div
-              style={{
-                fontSize: 10,
-                fontWeight: 600,
-                letterSpacing: "0.07em",
-                textTransform: "uppercase",
-                color: "var(--text-tertiary)",
-                marginBottom: 12,
-              }}
-            >
-              Przebieg zadania
-            </div>
-            <StatusRoadmap steps={cfg.roadmapSteps} currentStep={roadmapStep} />
-          </Panel>
-
           {/* Output */}
           <OutputPanel
             agentId={agentId}
@@ -1831,6 +1852,7 @@ export function AgentWorkspace({
             copied={copied}
             onNotionPush={onNotionPush}
             writesNotion={cfg.writesNotion}
+            onRun={onRun}
           />
 
           {state.status === "idle" && (
