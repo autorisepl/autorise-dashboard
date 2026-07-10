@@ -559,7 +559,7 @@ export const OBJECTIONS_D: Objection[] = [
     id: "od1",
     stage: "cena",
     label: "Muszę się zastanowić",
-    script: "Oczywiście. Żebym wiedział jak Panu pomóc — co konkretnie wymaga zastanowienia?",
+    script: "Jasne, oczywiście. Żebym wiedział jak pomóc, co konkretnie wymaga zastanowienia?",
     decision: {
       question: "Co odpowiedział klient?",
       options: [
@@ -578,21 +578,21 @@ export const OBJECTIONS_D: Objection[] = [
     stage: "cena",
     label: "Zastanowienie: wątpliwość co do produktu",
     script:
-      "Rozumiem. Co konkretnie budzi wątpliwość — chętnie to wyjaśnię teraz, zamiast żeby to Panu chodziło po głowie.",
+      "Jasne. Co konkretnie budzi wątpliwość, chętnie wyjaśnię teraz zamiast żeby to chodziło Panu po głowie.",
   },
   {
     id: "od1_finanse",
     stage: "cena",
     label: "Zastanowienie: kwestia finansowa",
     script:
-      "Rozumiem, to częste. Mamy opcję rat, 2 razy 7500 zł zamiast 15000 zł jednorazowo. Czy to zmienia sytuację?",
+      "To częste, rozumiem. Mamy opcję rat, dwa razy 7500 zł zamiast 15000 zł jednorazowo. Zmienia to sytuację?",
   },
   {
     id: "od1_partner",
     stage: "closing",
     label: "Zastanowienie: chce skonsultować z kimś",
     script:
-      "Jasne. Z kim chciałby Pan to skonsultować — to pomoże mi zrozumieć jak najlepiej Panu pomóc.",
+      "Jasne. Z kim chciałby Pan to skonsultować, to pomoże mi zrozumieć jak najlepiej pomóc.",
     note: "Po odpowiedzi: przejdź do od2 (żona) lub od2b (wspólnik) zależnie od tego kogo klient wskazał.",
   },
   {
@@ -600,9 +600,9 @@ export const OBJECTIONS_D: Objection[] = [
     stage: "closing",
     label: "Muszę porozmawiać z żoną",
     script:
-      "Gdyby Pana żona była dzisiaj na tym spotkaniu i miała pełen kontekst tak jak Pan, co myśli Pan że by powiedziała?",
+      "Gdyby Pana żona była dziś na tym spotkaniu i miała pełen kontekst tak jak Pan, co myśli Pan że by powiedziała?",
     followup:
-      "A jeśli mimo pełnego kontekstu z jakiegoś powodu powiedziałaby nie, co Pan wtedy robi?",
+      "A gdyby mimo pełnego kontekstu z jakiegoś powodu powiedziała nie, co Pan wtedy robi?",
     note: "Anchor decision przed rozłączeniem: 'Kiedy rozmawia Pan z żoną — dziś wieczór czy jutro?' Zapisz konkretną datę follow-up.",
   },
   {
@@ -610,14 +610,14 @@ export const OBJECTIONS_D: Objection[] = [
     stage: "closing",
     label: "Muszę porozmawiać ze wspólnikiem / partnerem biznesowym",
     script:
-      "Rozumiem. Czy możemy umówić drugie spotkanie razem ze wspólnikiem — tak żeby miał ten sam kontekst co Pan?",
+      "Rozumiem. Możemy umówić drugie spotkanie razem ze wspólnikiem, żeby miał ten sam kontekst co Pan?",
     note: "Opcja A: umów 2. spotkanie z decydentem. Opcja B: reframing — 'Co musiałoby się wydarzyć żeby Pan mógł podjąć tę decyzję samodzielnie?'",
   },
   {
     id: "od3",
     stage: "cena",
     label: "Za drogo",
-    script: "Rozumiem. Chcę się upewnić że dobrze rozumiem — co konkretnie budzi wątpliwość?",
+    script: "Rozumiem. Chcę się upewnić że dobrze to rozumiem, co konkretnie budzi wątpliwość?",
     decision: {
       question: "Co odpowiedział klient?",
       options: [
@@ -636,27 +636,27 @@ export const OBJECTIONS_D: Objection[] = [
     stage: "cena",
     label: "Za drogo: kwestia logistyki płatności",
     script:
-      "Rozumiem, to nie jest mała kwota jednorazowo. Mamy raty: 2 razy 7500 zł. Retainer zostaje 4000 zł miesięcznie. Czy to ułatwia decyzję?",
+      "Rozumiem, to nie jest mała kwota jednorazowo. Mamy raty: dwa razy 7500 zł. Retainer zostaje 4000 zł miesięcznie. Ułatwia to decyzję?",
   },
   {
     id: "od3_wartosc",
     stage: "cena",
     label: "Za drogo: wątpliwość czy się zwróci",
     script:
-      "To dobre pytanie. Policzyliśmy razem że traci Pan [kwota] miesięcznie na tym co teraz robicie ręcznie. 15000 zł zwraca się w [X] miesięcy, retainer jest mniejszy niż jedna trzecia tego co teraz tracicie. Widzi Pan to inaczej po tych liczbach?",
+      "Dobre pytanie. Sam Pan policzył ze mną że to [kwota] miesięcznie, prawda? 15000 zł zwraca się w [X] miesięcy, a retainer jest mniejszy niż jedna trzecia tego co teraz tracicie. Widzi Pan to inaczej po tych liczbach?",
   },
   {
     id: "od3_konkurencja",
     stage: "cena",
     label: "Za drogo: porównuje z inną ofertą",
     script:
-      "Rozumiem. Kto i co dokładnie oferuje za tę cenę? Czy dają gwarancję konkretnego efektu na umowie, tak jak my dajemy 80 godzin albo zwrot całości?",
+      "Jasne. Kto i co dokładnie oferuje za tę cenę? Dają gwarancję konkretnego efektu na umowie, tak jak my dajemy 80 godzin albo zwrot całości?",
   },
   {
     id: "od4",
     stage: "closing",
     label: "Jestem już przekonany, ale...",
-    script: "Słyszę 'ale' — co konkretnie stoi na przeszkodzie żeby zdecydować się dziś?",
+    script: "Słyszę 'ale'. Co konkretnie stoi na przeszkodzie żeby zdecydować się dziś?",
     note: "To najczęściej zamaskowana obiekcja od1, od3 lub od2. Słuchaj co pojawi się po 'ale'.",
   },
   {
@@ -664,7 +664,7 @@ export const OBJECTIONS_D: Objection[] = [
     stage: "closing",
     label: "Mam teraz inne priorytety",
     script:
-      "Rozumiem. Ile czasu zajmie Panu te priorytety? A czy w tym czasie biuro nadal traci te [X] godzin tygodniowo?",
+      "Rozumiem. Ile czasu zajmą te priorytety? A czy w tym czasie biuro nadal traci te [X] godzin tygodniowo?",
     note: "Cel: pokazać koszt zwlekania. Nie naciskaj — zaproponuj konkretną datę powrotu.",
   },
   {
@@ -672,35 +672,35 @@ export const OBJECTIONS_D: Objection[] = [
     stage: "pitch",
     label: "Chcę najpierw zobaczyć demo / testować",
     script:
-      "Nasze demo to realne wdrożenie z Pana danymi — dlatego mamy gwarancję 30-dniową z 100% zwrotem. Nie pokazujemy sandboxa — wdrażamy i Pan ocenia na żywych danych. Czy to zmienia Pana perspektywę?",
+      "Nasze demo to realne wdrożenie z Pana danymi, dlatego mamy gwarancję 30-dniową ze 100% zwrotem. Nie pokazujemy sandboxa, wdrażamy i Pan ocenia na żywych danych. Zmienia to Pana perspektywę?",
   },
   {
     id: "od7",
     stage: "diagnoza",
     label: "Mam pracownika który to robi",
     script:
-      "Dobrze. I właśnie o to chodzi — ta osoba robi coś co można zautomatyzować. Co mogłaby robić zamiast tego, gdyby miała te [X] godzin dziennie z powrotem?",
+      "No i właśnie o to chodzi, ta osoba robi coś co można zautomatyzować. Co mogłaby robić zamiast tego z tymi [X] godzinami dziennie z powrotem?",
   },
   {
     id: "od8",
     stage: "diagnoza",
     label: "Mam dwie firmy, nie wiem dla której",
     script:
-      "Dla której z firm ból jest większy — gdzie traci się więcej czasu? Możemy zacząć od jednej i rozszerzyć na drugą po 30 dniach.",
+      "Dla której z firm ból jest większy, gdzie traci się więcej czasu? Możemy zacząć od jednej i rozszerzyć na drugą po 30 dniach.",
   },
   {
     id: "juz_mowilem",
     stage: "diagnoza",
     label: "Klient: 'już to mówiłem'",
     script:
-      "Ma {FORMA} rację, przepraszam — chciałem się tylko upewnić że dobrze to zrozumiałem. Idźmy dalej.",
+      "Ma {FORMA} rację, przepraszam. Chciałem się tylko upewnić że dobrze to zrozumiałem, idźmy dalej.",
     note: "Natychmiast przejdź do kolejnego pytania z innej kategorii, nie wracaj do tego samego wątku.",
   },
   {
     id: "od9",
     stage: "pitch",
     label: "Korzystam już z konkurencji",
-    script: "Rozumiem. Co Pan od nich dostaje i co działa dobrze? A czego Panu brakuje?",
+    script: "Jasne. Co Pan od nich dostaje, co działa dobrze? A czego brakuje?",
     note: "Nie atakuj konkurencji. Szukaj luki — co nasze rozwiązanie robi czego tamto nie robi. Zaproponuj 30-dniowy test równoległy z gwarancją.",
   },
   {
@@ -708,16 +708,16 @@ export const OBJECTIONS_D: Objection[] = [
     stage: "pitch",
     label: "Ma wszystko w Microsoft 365 / Power Automate",
     script:
-      "To brzmi jak solidna konfiguracja. Czy ten flow faktycznie czyta dane z dokumentu — numer rejestracyjny, trasę, kwotę — czy tylko przenosi plik do folderu?",
+      "To brzmi jak solidna konfiguracja. Ten flow faktycznie czyta dane z dokumentu, numer rejestracyjny, trasę, kwotę, czy tylko przenosi plik do folderu?",
     followup:
-      "A co się dzieje przy nietypowym dokumencie, i kto to utrzymuje po aktualizacji Microsoftu?",
+      "A co się dzieje przy nietypowym dokumencie? I kto to utrzymuje po aktualizacji Microsoftu?",
     note: "Ten sam scenariusz co konkurencja_m365 w kwalifikacji. Jeśli klient już o tym wspominał na kwalifikacji, brief powinien to flagować — sprawdź przed spotkaniem.",
   },
   {
     id: "od10",
     stage: "cena",
     label: "Muszę to przespać",
-    script: "Oczywiście. Co musiałoby się stać żeby jutro rano powiedział Pan 'tak'?",
+    script: "Jasne, oczywiście. Co musiałoby się stać żeby jutro rano powiedział Pan 'tak'?",
     followup: "Zadzwonię jutro o [godzina]. Pasuje Panu?",
     note: "Anchor konkretnego czasu. Jeśli nie chce jutro — zapisz w pipeline jako follow-up z datą.",
   },
@@ -726,7 +726,7 @@ export const OBJECTIONS_D: Objection[] = [
     stage: "cena",
     label: "Mogę płacić w ratach?",
     script:
-      "Tak — mamy opcję 2 × 7 500 zł zamiast 15 000 zł jednorazowo. Retainer pozostaje 4 000 zł / mc. Przy ratach zaczynacie wdrożenie po pierwszej wpłacie. Pasuje Panu?",
+      "Tak, mamy opcję 2 × 7 500 zł zamiast 15 000 zł jednorazowo. Retainer zostaje 4 000 zł/mc. Przy ratach wdrożenie startuje po pierwszej wpłacie. Pasuje Panu?",
   },
 ];
 

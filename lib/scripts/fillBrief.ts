@@ -16,11 +16,17 @@ export function fillBrief(text: string, client: PipelineClientDetailed): string 
   out = out.replace(/\[imię\]/gi, client.kontakt?.split(" ")[0] || client.firma || "klient");
   out = out.replace(
     /\[kwota roczna\]|\[koszt roczny\]/gi,
-    client.kosztRoczny ? `${formatPln(client.kosztRoczny)}/rok` : "kwota do wyliczenia z kalkulatora",
+    client.kosztRoczny
+      ? `${formatPln(client.kosztRoczny)}/rok`
+      : "kwota do wyliczenia z kalkulatora",
   );
   out = out.replace(
     /\[X\]/gi,
-    client.flota ? `${client.flota}` : client.godzinyWpisywania ? `${client.godzinyWpisywania}` : "___",
+    client.flota
+      ? `${client.flota}`
+      : client.godzinyWpisywania
+        ? `${client.godzinyWpisywania}`
+        : "___",
   );
   return out;
 }

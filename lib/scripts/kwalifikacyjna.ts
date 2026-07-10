@@ -650,7 +650,7 @@ export const OBJECTIONS_K: Objection[] = [
     label: "Nie pamiętam żadnego formularza",
     stage: "opening",
     script:
-      "Rozumiem, tych reklam jest sporo. Zajmuję się wyłącznie automatyzacją dokumentów transportowych — zlecenia, CMR, faktury, które dziś ktoś u Pana przepisuje ręcznie. To akurat ten temat dotyczył formularza który Pan zostawił na Facebooku. Mam 2 pytania zanim opowiem więcej — ma Pan chwilę?",
+      "Jasne, tych reklam jest sporo, rozumiem. Zajmuję się automatyzacją dokumentów transportowych: zlecenia, CMR, faktury, to co dziś ktoś u Pana przepisuje ręcznie. Tego dotyczył formularz który Pan zostawił na Facebooku. Mam dwa pytania zanim opowiem więcej, ma Pan chwilę?",
     note: "Po 'tak': przejdź do 2 Otwarcie diagnozy. Kluczowa zmiana: zamiast ogólnego 'oszczędność czasu' teraz od razu pada konkret (zlecenia, CMR, faktury) i wyłączność branżowa (wyłącznie transport), co różnicuje od ogólnych firm marketingowych czy IT.",
   },
   {
@@ -658,7 +658,7 @@ export const OBJECTIONS_K: Objection[] = [
     label: "Co Pan sprzedaje? O co chodzi?",
     stage: "opening",
     script:
-      "Automatyzujemy pracę biura spedycji — zlecenia, CMR, faktury. Zanim cokolwiek zaproponuję, chciałem się dowiedzieć jak wygląda ta praca u Pana. Zajmie mi to dosłownie 2 minuty. Dobrze?",
+      "Automatyzujemy pracę biura spedycji: zlecenia, CMR, faktury. Zanim cokolwiek zaproponuję, chcę wiedzieć jak to u Pana wygląda. Zajmie dosłownie dwie minuty. Dobrze?",
     note: "Po 'tak': przejdź do 2 Otwarcie diagnozy.",
   },
   {
@@ -666,7 +666,7 @@ export const OBJECTIONS_K: Objection[] = [
     label: "Od razu chce umówić spotkanie",
     stage: "opening",
     script:
-      "Chętnie. Żeby spotkanie miało sens dla obu stron — muszę zadać 3 krótkie pytania o firmę. Zajmie mi to 2 minuty. Dobrze?",
+      "Chętnie. Żeby spotkanie miało sens dla nas obu, muszę zadać trzy krótkie pytania o firmę. Dwie minuty. Dobrze?",
     note: "Po 'tak': przejdź do 2 Otwarcie diagnozy.",
   },
   {
@@ -674,7 +674,7 @@ export const OBJECTIONS_K: Objection[] = [
     label: "Od razu pyta o cenę",
     stage: "opening",
     script:
-      "Cena zależy od skali i konfiguracji — dlatego najpierw chcę sprawdzić czy to w ogóle ma sens dla Pana firmy. Jeśli tak — podam cenę wprost na spotkaniu, bez owijania w bawełnę. Mam 2 pytania — dobrze?",
+      "Cena zależy od skali i konfiguracji, dlatego najpierw sprawdzam czy to w ogóle ma sens dla Pana firmy. Jeśli tak, podam ją wprost na spotkaniu, bez owijania w bawełnę. Mam dwa pytania, dobrze?",
     note: "Po 'tak': przejdź do 2 Otwarcie diagnozy.",
   },
   {
@@ -682,7 +682,7 @@ export const OBJECTIONS_K: Objection[] = [
     label: "Wyślij na maila",
     stage: "opening",
     script:
-      "Mogę wysłać materiały, ale żeby to nie były ogólne informacje tylko coś dopasowanego do Pana firmy — wolałbym zadać dwa krótkie pytania, zajmie to góra minutę.",
+      "Mogę wysłać materiały, ale wolałbym zadać dwa krótkie pytania, zajmie to góra minutę, żeby nie były to ogólne informacje tylko coś dopasowane pod Pana firmę.",
     note: "Po zgodzie: przejdź do 2 Otwarcie diagnozy. Jeśli klient nadal odmawia rozmowy: 'Rozumiem, wyślę ogólne informacje na [email z Pipeline], a jeśli po przeczytaniu będzie Pan chciał pogłębić temat, zapraszam do kontaktu.' Status: follow-up, nie zamknięta sprawa.",
   },
   // Standardowe obiekcje
@@ -691,7 +691,7 @@ export const OBJECTIONS_K: Objection[] = [
     label: "Nie mam teraz czasu (pierwsze NIE)",
     stage: "opening",
     script:
-      "Rozumiem. Biura spedycji z którymi pracuję tracą kilkadziesiąt godzin miesięcznie na ręczne przepisywanie i pilnowanie dokumentów — liczone konkretnie dla każdej firmy, nie uśredniane. Jeśli to brzmi jak coś dla Pana — 2 minuty teraz mogą zmienić kilka tysięcy złotych miesięcznie. Ma Pan te 2 minuty?",
+      "Rozumiem. Wie Pan co, biura spedycji z którymi pracuję tracą kilkadziesiąt godzin miesięcznie na ręczne przepisywanie i pilnowanie dokumentów, liczone konkretnie dla każdej firmy, nie uśredniane. Jeśli to brzmi znajomo, te dwie minuty teraz mogą zmienić kilka tysięcy złotych miesięcznie. Ma Pan je?",
   },
   {
     id: "ok2",
@@ -705,7 +705,7 @@ export const OBJECTIONS_K: Objection[] = [
     label: "Mam już program do zarządzania",
     stage: "opening",
     script:
-      "Większość firm z którymi pracuję ma TMS. My nie zastępujemy systemu, tylko zdejmujemy z Pana biura ręczną robotę wokół niego: wpisywanie zleceń, przepisywanie CMR i potwierdzeń dostawy, pilnowanie faktur i płatności, informowanie Pana o statusie zleceń bez dzwonienia do spedytora. Mam kilka pytań o to jak dziś wygląda ta praca u Pana, mimo TMS-u. Dobrze?",
+      "No to Pan nie jest sam, większość firm z którymi pracuję ma TMS. My nie zastępujemy systemu, tylko zdejmujemy z biura ręczną robotę wokół niego: wpisywanie zleceń, przepisywanie CMR i potwierdzeń dostawy, pilnowanie faktur i płatności, informowanie o statusie bez dzwonienia do spedytora. Mam kilka pytań jak to dziś wygląda u Pana mimo TMS-u, dobrze?",
     note: "Po 'tak': przejdź do 2 Otwarcie diagnozy.",
   },
   {
@@ -721,7 +721,7 @@ export const OBJECTIONS_K: Objection[] = [
     label: "Muszę porozmawiać ze wspólnikiem / synem / żoną",
     stage: "wszedzie",
     script:
-      "Czy mogliby Państwo dołączyć we dwoje na spotkanie przez internet? Trwa 45 minut i mam przygotowane liczby konkretnie dla Pana firmy. Wtedy oboje macie pełen obraz i możecie zdecydować razem.",
+      "A mogliby Państwo dołączyć we dwoje na spotkanie przez internet? Trwa 45 minut, mam przygotowane liczby konkretnie dla Pana firmy. Wtedy oboje macie pełen obraz i decydujecie razem.",
     note: "Jeśli nie może dołączyć: 'Rozumiem. Co musiałoby się wydarzyć na spotkaniu żeby [osoba] powiedziała tak?'",
   },
   {
@@ -729,7 +729,7 @@ export const OBJECTIONS_K: Objection[] = [
     label: "Nie mam czasu (naprawdę zajęty)",
     stage: "opening",
     script:
-      "Rozumiem, widzę że jest Pan zajęty. Kiedy będzie Panu wygodniej — jutro rano czy popołudniu?",
+      "Jasne, widzę że jest Pan zajęty. Kiedy wygodniej, jutro rano czy popołudniu?",
     note: "Nie przekonuj, nie próbuj wcisnąć rozmowy na siłę. Szczery brak czasu szanujesz i umawiasz konkretny termin, nie 'kiedyś'.",
   },
   {
@@ -737,7 +737,7 @@ export const OBJECTIONS_K: Objection[] = [
     label: "Nie mam czasu (brzmi jak wymówka)",
     stage: "opening",
     script:
-      "Rozumiem. Powiem jednym zdaniem po co dzwonię, a Pan zdecyduje czy warto poświęcić dwie minuty: sprawdzam czy Pana biuro traci więcej niż kilkadziesiąt godzin miesięcznie na ręczne wpisywanie zleceń i dokumentów. Jeśli tak — to są realne pieniądze. Ma Pan te dwie minuty?",
+      "Jasne, rozumiem. Powiem krótko o co chodzi, a Pan sam oceni czy warto dać mi te dwie minuty: sprawdzam czy Pana biuro traci więcej niż kilkadziesiąt godzin miesięcznie na ręczne wpisywanie zleceń i dokumentów. Jeśli tak, to są realne pieniądze. Ma Pan te dwie minuty?",
     note: "Rozpoznajesz wymówkę po tonie — szybkie 'nie mam czasu' zaraz po przedstawieniu się, bez pytania o co chodzi, zanim jeszcze wiedział czego dotyczy telefon. Jeśli po tej odpowiedzi nadal odmawia: przejdź do ok2 (drugie NIE).",
   },
   {
@@ -745,7 +745,7 @@ export const OBJECTIONS_K: Objection[] = [
     label: "Klient mówi że minęły już 2 minuty",
     stage: "opening",
     script:
-      "Ma Pan rację, przepraszam — zapytam Pana wprost: chce Pan żebym dokończył w skrócie teraz, czy wolałby Pan żebym oddzwonił i zrobił to porządnie?",
+      "Ma Pan rację, przepraszam. Zapytam wprost: dokończyć w skrócie teraz, czy woli Pan żebym oddzwonił i zrobił to porządnie?",
     note: "To się zdarza gdy diagnoza faktycznie trwa dłużej niż deklarowane 2 minuty. Nie ignoruj tego, przyznaj wprost i daj klientowi wybór. Większość zostaje jeśli dasz im kontrolę nad decyzją.",
   },
   {
@@ -753,7 +753,7 @@ export const OBJECTIONS_K: Objection[] = [
     label: "Poniżej progu ICP — 1 osoba w biurze, brak planu zatrudnienia",
     stage: "icp",
     script:
-      "Doceniam że Pan ze mną szczerze porozmawiał. Przy tej wielkości biura myślę że jeszcze nie odczułby Pan realnej różnicy, a wolę być z Panem szczery niż namawiać na coś co się nie zwróci. Mogę zapisać kontakt i wrócić za jakiś czas, gdy zespół się powiększy?",
+      "Dziękuję za szczerość. Szczerze mówiąc, przy tej wielkości biura pewnie jeszcze nie poczułby Pan realnej różnicy, a wolę powiedzieć to wprost niż namawiać na coś co się nie zwróci. Mogę zapisać kontakt i wrócić gdy zespół się powiększy?",
     note: "Status: Niekwalifikowany. Jeśli zgoda na kontakt: dodaj datę re-engagement +90 dni w Pipeline. To jest koniec rozmowy, nie wracaj do diagnozy. Ton ma być ciepły, nie odprawiający — to nie jest kara za małą firmę, to szczera ocena dopasowania.",
   },
   {
@@ -761,7 +761,7 @@ export const OBJECTIONS_K: Objection[] = [
     label: "Rozmówca nie jest decydentem",
     stage: "icp",
     script:
-      "Rozumiem. Żeby nie tracić czasu ani Pana, ani osoby decyzyjnej — czy mógłby Pan zapytać czy ta osoba dołączyłaby do 45-minutowego spotkania razem z Panem? Wtedy oboje macie pełen obraz od razu, zamiast Pan tłumaczył to później z drugiej ręki.",
+      "Rozumiem. Żeby nie tracić czasu, ani Pana, ani osoby decyzyjnej: mógłby Pan zapytać czy dołączyłaby do 45-minutowego spotkania razem z Panem? Wtedy oboje macie od razu pełen obraz, zamiast Pan tłumaczył to później z drugiej ręki.",
     note: "Jeśli osoba decyzyjna nie może dołączyć na Discovery: umów spotkanie z rozmówcą i zaznacz w Pipeline 'decydent nieobecny — do potwierdzenia przed ceną', Agent 2 musi to uwzględnić w brief.",
   },
   {
@@ -769,7 +769,7 @@ export const OBJECTIONS_K: Objection[] = [
     label: "Faktury: zewnętrzne biuro rachunkowe",
     stage: "diagnoza",
     script:
-      "Rozumiem, biuro rachunkowe zajmuje się rozliczeniami. A kto u Was przygotowuje i wysyła im dane — faktury, potwierdzenia dostaw? To zwykle ta sama osoba co reszta administracji, zgadza się?",
+      "Jasne, biuro rachunkowe zajmuje się rozliczeniami. A kto u Was przygotowuje i wysyła im dane, faktury, potwierdzenia dostaw? To zwykle ta sama osoba co reszta administracji, zgadza się?",
     note: "Cel: nawet z zewnętrzną księgowością, ktoś wewnątrz firmy zbiera i wysyła dokumenty ręcznie. To wciąż ból do zmapowania. Po tej wymianie wróć do skryptu i przejdź do kroku 2f2 (Pilnowanie płatności).",
   },
   {
@@ -777,9 +777,9 @@ export const OBJECTIONS_K: Objection[] = [
     label: "Ma wszystko w Microsoft 365 / Power Automate",
     stage: "diagnoza",
     script:
-      "To brzmi jak solidna konfiguracja. Powiem Panu co zwykle sprawdzam w takich przypadkach: czy ten flow faktycznie czyta dane z dokumentu, na przykład numer rejestracyjny, trasę, kwotę z faktury — czy tylko przenosi sam plik do folderu i ktoś nadal musi go otworzyć i przepisać?",
+      "To brzmi jak solidna konfiguracja. Powiem co zwykle sprawdzam w takich przypadkach: ten flow faktycznie czyta dane z dokumentu, numer rejestracyjny, trasę, kwotę z faktury, czy tylko przenosi sam plik do folderu i ktoś nadal musi go otworzyć i przepisać?",
     followup:
-      "A co się dzieje gdy dokument wygląda inaczej niż zwykle, na przykład nowy klient przysyła w innym układzie — flow to obsługuje automatycznie, czy wtedy ktoś ręcznie interweniuje? I kto to utrzymuje jeśli coś się zepsuje po aktualizacji Microsoftu?",
+      "A co się dzieje gdy dokument wygląda inaczej, na przykład nowy klient przysyła w innym układzie? Flow to ogarnia sam, czy wtedy ktoś ręcznie interweniuje? I kto to utrzymuje jak coś się zepsuje po aktualizacji Microsoftu?",
     note: "Cel: nie podważaj że M365 coś robi, dopytaj konkretnie o rozpoznawanie danych (nie tylko przenoszenie plików), obsługę wyjątków, i utrzymanie. W praktyce większość konfiguracji Power Automate przenosi pliki, nie wyciąga z nich danych specyficznych dla transportu, i nikt ich nie utrzymuje poza jedną osobą która to kiedyś skonfigurowała. Jeśli klient faktycznie ma zaawansowaną integrację z prawdziwym OCR i utrzymaniem — to rzadkość, ale uczciwie przyznaj że w takim przypadku może już nie być miejsca na nas, nie naciskaj wbrew faktom.",
   },
   {
@@ -787,20 +787,20 @@ export const OBJECTIONS_K: Objection[] = [
     label: "Milczy po pytaniu co zrobiłby z czasem",
     stage: "kalkulator",
     script:
-      "Rozumiem, chodzi o inne rzeczy niż redukcja etatów. Na przykład więcej zleceń przy tej samej ekipie, mniej błędów w dokumentach, szybsza obsługa klientów, mniej nadgodzin dla zespołu. Który z tych kierunków jest dla Pana teraz ważny?",
+      "Jasne, nie chodzi o redukcję etatów. Chodzi na przykład o więcej zleceń przy tej samej ekipie, mniej błędów w dokumentach, szybszą obsługę klientów, mniej nadgodzin dla zespołu. Który z tych kierunków jest dla Pana teraz ważny?",
   },
   {
     id: "czas_obronny",
     label: "Reaguje obronnie — 'i tak nie zwolnię pracowników'",
     stage: "kalkulator",
     script:
-      "Jasne, nie chodzi o zwalnianie nikogo. Chodzi o to, żeby ten sam zespół miał więcej przestrzeni na obsługę klientów zamiast tonąć w papierach. Czy to jest coś co miałoby dla Pana znaczenie?",
+      "Jasne, nie chodzi o zwalnianie nikogo. Chodzi o to, żeby ten sam zespół miał więcej przestrzeni na klientów zamiast tonąć w papierach. Ma to dla Pana znaczenie?",
   },
   {
     id: "czas_przeskakuje",
     label: "Przeskakuje od razu do pytania o cenę",
     stage: "kalkulator",
-    script: "Do ceny dojdziemy za moment, chcę tylko dokończyć ten wątek.",
+    script: "Do ceny zaraz dojdziemy, chcę tylko dokończyć ten wątek.",
     note: "Jeśli mimo to nalega: nie walcz, przejdź dalej normalnie, zanotuj w Pipeline że pytanie o korzyść czasu nie zostało w pełni odpowiedziane.",
   },
 ];
