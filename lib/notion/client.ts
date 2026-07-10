@@ -163,6 +163,7 @@ export interface ExistingClientData {
   kontakt?: string;
   telefon?: string;
   notatki?: string;
+  uwagiAgenta1?: string;
 }
 
 // --- public API ---
@@ -199,6 +200,14 @@ export async function getClientPage(pageId: string): Promise<ExistingClientData>
       .join("")
       .trim();
     if (val) result.notatki = val;
+  }
+  const uwagiAgenta1 = props["Uwagi Agenta 1"];
+  if (uwagiAgenta1?.type === "rich_text") {
+    const val = uwagiAgenta1.rich_text
+      .map((t) => t.plain_text)
+      .join("")
+      .trim();
+    if (val) result.uwagiAgenta1 = val;
   }
 
   return result;
@@ -315,7 +324,19 @@ export async function upsertClientInPipeline(
     props["Ocena ICP"] = { select: { name: icpSelect } };
   }
 
-  if (isDiskwalifikowany) {
+  // Aktualizacja istniejącego klienta bez nowego sygnału ICP (np. tryb uzupełnienia gdzie
+  // fragment nie dotyczył kwalifikacji) — nie nadpisuj Statusu domyślną wartością.
+  const skipStatusWrite = Boolean(pageId) && !isDiskwalifikowany && a1.icp?.kwalifikacja == null;
+
+  if (skipStatusWrite) {
+    if (a1.meet_data) {
+      const isoDate = anyDateToISO(a1.meet_data);
+      if (isoDate) props["Data discovery"] = { date: { start: isoDate } };
+    }
+    if (a1.nastepny_krok) {
+      props["Następny krok"] = { rich_text: richText(a1.nastepny_krok) };
+    }
+  } else if (isDiskwalifikowany) {
     props["Status"] = { select: { name: "Niekwalifikowany" } };
   } else {
     let pipelineStatus = kwalifikacjaToStatus(a1.icp?.kwalifikacja ?? null, hasMeeting);
@@ -845,6 +866,22 @@ export async function getOperationHistory(pageId: string): Promise<HistoryEntry[
   }
 
   return entries.sort((a, b) => b.date.localeCompare(a.date));
+}
+
+export async function getOperationHistoryDetails(entryPageId: string): Promise<string> {
+  const blocks = await notion.blocks.children.list({ block_id: entryPageId, page_size: 100 });
+  const parts: string[] = [];
+  for (const block of blocks.results) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const b = block as any;
+    if (b.type === "code") {
+      const text = (b.code?.rich_text ?? [])
+        .map((r: { plain_text?: string }) => r.plain_text ?? "")
+        .join("");
+      parts.push(text);
+    }
+  }
+  return parts.join("");
 }
 
 // --- Kwalifikacja Knowledge Base (Etap 1) ---

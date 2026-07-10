@@ -5,6 +5,7 @@ import { extractAndParseJson } from "@/lib/agents/parseJson";
 import {
   AGENT_MODELS,
   AGENT1_SYSTEM_PROMPT,
+  AGENT1_UZUPELNIENIE_SUFFIX,
   AGENT1_VERIFICATION_SUFFIX,
 } from "@/lib/agents/prompts";
 import {
@@ -19,7 +20,8 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const ReqSchema = z.object({
   transcript: z.string().min(10, "Transkrypt jest za krótki"),
   notion_page_id: z.string().optional(),
-  mode: z.enum(["standard", "weryfikacja"]).default("standard"),
+  mode: z.enum(["standard", "weryfikacja", "uzupelnienie"]).default("standard"),
+  existing_client_id: z.string().optional(),
 });
 
 export async function POST(req: Request) {
@@ -33,7 +35,8 @@ export async function POST(req: Request) {
       );
     }
 
-    const { transcript, notion_page_id, mode } = parsed.data;
+    const { transcript, notion_page_id, mode, existing_client_id } = parsed.data;
+    const targetPageId = mode === "uzupelnienie" ? existing_client_id : notion_page_id;
 
     // Fetch qualification knowledge base (5-min cache) — always injected
     let kbSection = "";
@@ -46,15 +49,25 @@ export async function POST(req: Request) {
 
     // Fetch existing Notion data so agent can use/reconcile with transcript
     let userMessage = transcript;
-    if (notion_page_id) {
+    let existingUwagiAgenta1 = "";
+    if (targetPageId) {
       try {
-        const existing = await getClientPage(notion_page_id);
+        const existing = await getClientPage(targetPageId);
+        existingUwagiAgenta1 = existing.uwagiAgenta1 ?? "";
         const lines: string[] = [];
         if (existing.firma) lines.push(`Firma: ${existing.firma}`);
         if (existing.kontakt) lines.push(`Kontakt: ${existing.kontakt}`);
         if (existing.telefon) lines.push(`Telefon: ${existing.telefon}`);
+        if (mode === "uzupelnienie" && existing.uwagiAgenta1) {
+          lines.push(`Dotychczasowe uwagi z poprzednich analiz:\n${existing.uwagiAgenta1}`);
+        }
         if (lines.length > 0) {
-          userMessage = `DANE Z NOTION (już zweryfikowane — użyj zamiast "(z adresu email)" itp.):\n${lines.join("\n")}\n\n---\nTRANSKRYPT:\n${transcript}`;
+          const label =
+            mode === "uzupelnienie"
+              ? "ISTNIEJĄCY REKORD KLIENTA (uzupełniasz go nowym fragmentem poniżej)"
+              : 'DANE Z NOTION (już zweryfikowane — użyj zamiast "(z adresu email)" itp.)';
+          const fragmentLabel = mode === "uzupelnienie" ? "NOWY FRAGMENT" : "TRANSKRYPT";
+          userMessage = `${label}:\n${lines.join("\n")}\n\n---\n${fragmentLabel}:\n${transcript}`;
         }
       } catch {
         // non-fatal — proceed with transcript only
@@ -66,7 +79,9 @@ export async function POST(req: Request) {
     const systemPrompt =
       mode === "weryfikacja"
         ? AGENT1_SYSTEM_PROMPT + AGENT1_VERIFICATION_SUFFIX
-        : AGENT1_SYSTEM_PROMPT;
+        : mode === "uzupelnienie"
+          ? AGENT1_SYSTEM_PROMPT + AGENT1_UZUPELNIENIE_SUFFIX
+          : AGENT1_SYSTEM_PROMPT;
 
     const message = await client.messages.create({
       model: AGENT_MODELS.agent1,
@@ -101,23 +116,41 @@ export async function POST(req: Request) {
 
     // Deterministyczny wynik ICP — nie ufamy arytmetyce LLM (model liczył 3/5 przy 1 TAK).
     // "TAK" = 1 pkt; "NIE" i "BRAK DANYCH" = 0. Źródło prawdy dla Notion/UI/historii.
+    // W trybie uzupełnienia: jeśli model nie dotknął żadnego pola ICP (wszystkie null, bo
+    // fragment tego nie zmieniał), NIE przeliczaj i NIE nadpisuj — zostaw istniejący wynik w Notion.
     const icp = (output.icp ?? {}) as Record<string, unknown>;
-    const isYes = (v: unknown) =>
-      String(v ?? "")
-        .trim()
-        .toUpperCase() === "TAK";
-    const computedIcp = [
-      icp.flota_ok,
-      icp.biuro_ok,
-      icp.decyzyjnosc_ok,
-      icp.bol_ok,
-      icp.aktywne_szukanie_ok,
-    ].filter(isYes).length;
-    icp.wynik = computedIcp;
-    if (!icp.kwalifikacja || String(icp.kwalifikacja).trim() === "") {
-      icp.kwalifikacja = computedIcp <= 1 ? "SŁABA" : computedIcp <= 3 ? "ŚREDNIA" : "MOCNA";
+    const icpFieldsTouched =
+      mode !== "uzupelnienie" ||
+      [icp.flota_ok, icp.biuro_ok, icp.decyzyjnosc_ok, icp.bol_ok, icp.aktywne_szukanie_ok].some(
+        (v) => v != null,
+      );
+    if (icpFieldsTouched) {
+      const isYes = (v: unknown) =>
+        String(v ?? "")
+          .trim()
+          .toUpperCase() === "TAK";
+      const computedIcp = [
+        icp.flota_ok,
+        icp.biuro_ok,
+        icp.decyzyjnosc_ok,
+        icp.bol_ok,
+        icp.aktywne_szukanie_ok,
+      ].filter(isYes).length;
+      icp.wynik = computedIcp;
+      if (!icp.kwalifikacja || String(icp.kwalifikacja).trim() === "") {
+        icp.kwalifikacja = computedIcp <= 1 ? "SŁABA" : computedIcp <= 3 ? "ŚREDNIA" : "MOCNA";
+      }
+      output.icp = icp;
+    } else {
+      output.icp = undefined;
     }
-    output.icp = icp;
+
+    // Tryb uzupełnienia: dopisz nową uwagę do historii zamiast ją nadpisać.
+    if (mode === "uzupelnienie" && typeof output.uwagi_agenta === "string" && output.uwagi_agenta) {
+      output.uwagi_agenta = existingUwagiAgenta1
+        ? `${existingUwagiAgenta1}\n\n${output.uwagi_agenta}`
+        : output.uwagi_agenta;
+    }
 
     // Compute client name + status for immediate UI update (no Notion round-trip needed)
     const o1 = output as {
@@ -149,7 +182,7 @@ export async function POST(req: Request) {
     let savedNotionPageId: string | null = null;
     let notionError: string | null = null;
     try {
-      savedNotionPageId = await upsertClientInPipeline(notion_page_id, output);
+      savedNotionPageId = await upsertClientInPipeline(targetPageId, output);
     } catch (notionErr) {
       console.error("[agent1] Notion error:", notionErr);
       notionError = notionErr instanceof Error ? notionErr.message : "Błąd Notion";

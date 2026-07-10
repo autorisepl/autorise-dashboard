@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getOperationHistory, saveOperationHistory } from "@/lib/notion/client";
+import {
+  getOperationHistory,
+  getOperationHistoryDetails,
+  saveOperationHistory,
+} from "@/lib/notion/client";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +37,18 @@ export async function POST(req: Request) {
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const pageId = searchParams.get("pageId");
+  const entryId = searchParams.get("entryId");
+
+  if (entryId) {
+    try {
+      const details = await getOperationHistoryDetails(entryId);
+      return NextResponse.json({ success: true, details });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Błąd Notion";
+      return NextResponse.json({ success: false, error: msg }, { status: 500 });
+    }
+  }
+
   if (!pageId) {
     return NextResponse.json({ success: false, error: "pageId required" }, { status: 400 });
   }
