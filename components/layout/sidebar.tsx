@@ -72,7 +72,7 @@ function useClock() {
 
 // ── Role hook ───────────────────────────────────────────────────────
 
-const SETTER_VISIBLE_HREFS = ["/kwalifikacja", "/sprzedaz", "/agencja", "/prezentacja"];
+const SETTER_VISIBLE_HREFS = ["/kwalifikacja", "/sprzedaz", "/agencja", "/prezentacja.html"];
 
 function useRole() {
   const [role, setRole] = useState<"admin" | "setter" | null>(null);
@@ -123,7 +123,7 @@ const NAV: {
     label: "Współpraca",
     items: [
       { href: "/agencja", label: "Nasza karta", icon: Users },
-      { href: "/prezentacja", label: "Prezentacja", icon: Presentation },
+      { href: "/prezentacja.html", label: "Prezentacja", icon: Presentation },
     ],
   },
 ];
