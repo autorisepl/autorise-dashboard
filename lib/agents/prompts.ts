@@ -166,6 +166,12 @@ WYCIĄGNIJ:
    - główny ból (WYŁĄCZNIE dosłowne słowa klienta w cudzysłowie; jeśli żaden konkretny cytat nie padł → null, nie parafrazuj)
    - co powiedział że go skłoniło do zgłoszenia formularza
 
+   Dodatkowo, zbierz WSZYSTKIE mocne, dosłowne cytaty klienta (ból główny, motywacja, powód niepowodzenia poprzednich prób) do jednej wspólnej tablicy "cytaty_klienta":
+   "cytaty_klienta": [
+     { "cytat": "dosłowne słowa klienta", "kategoria": "bol_glowny | motywacja | poprzednie_proby", "kontekst": "jednym zdaniem co to pokazuje" }
+   ]
+   To pole współistnieje z bol_glowny_cytat / motywacja_cytat / poprzednie_proby_powod_niepowodzenia poniżej (te trzy zostają, czyta je Agent 2) — cytaty_klienta to ustrukturyzowana, łatwa do wyrenderowania wersja tych samych cytatów dla interfejsu.
+
 4. HISTORIA PRÓB
    - co próbował wcześniej żeby to rozwiązać (dosłownie)
    - dlaczego to nie zadziałało (jego słowami) — TO JEST KLUCZOWE dla Agenta 2, zapisz precyzyjnie
@@ -180,6 +186,18 @@ WYCIĄGNIJ:
    Jeśli podał przedział stawki ("siedem, może siedem i pół") → użyj środka (7 250 PLN), czy_szacunek=true.
 
    koszt_roczny = koszt_miesiecznie × 12 (ZAWSZE mnóż przez 12, nie zostawiaj samego miesięcznego).
+
+   Pole "koszt_problemu" MUSI zawierać dodatkowe pole "wzor_obliczenia" jako czytelny string pokazujący dosłowną arytmetykę:
+
+   "wzor_obliczenia": "[liczba osób] osób × [godziny dziennie] h × 21 dni roboczych × [stawka] PLN/h = [wynik] PLN/mc"
+
+   Przykład: "25 osób × 1.5h × 21 dni × 50 PLN/h = 39 375 PLN/mc"
+
+   Wypełniaj "koszt_miesiecznie" WYŁĄCZNIE wynikiem z tego samego wzoru, nigdy inną liczbą. Przelicz to dwa razy w głowie przed wpisaniem do JSON-a.
+
+   TWARDY PRÓG SANITY-CHECK: firma transportowa w Polsce z biurem do 30 osób traci realnie od 3 000 do 150 000 PLN miesięcznie na pracy manualnej, nigdy setki tysięcy ani miliony. Jeśli Twój wynik "koszt_miesiecznie" przekracza 200 000 PLN, to prawie na pewno błąd jednostek (np. pomyliłeś godziny z złotówkami, albo przez pomyłkę pomnożyłeś przez 1000). Zatrzymaj się, przelicz wzór od nowa krok po kroku, nie zwracaj wyniku dopóki nie mieści się w rozsądnym zakresie dla tej skali firmy.
+
+   Jeśli liczba którą klient podał na żywo w rozmowie ("ponad 1000 godzin", "55 tysięcy") różni się od Twojego przeliczenia z podanych przez niego surowych danych (osoby, godziny, stawka) — ZAWSZE ufaj własnemu przeliczeniu z surowych danych, nigdy liczbie którą ktokolwiek wypowiedział na głos w trakcie rozmowy, ludzie się mylą licząc w pamięci na żywo. Zanotuj tę rozbieżność w uwagi_agenta jednym zdaniem, ale pole koszt_miesiecznie ma zawierać Twoje poprawne przeliczenie, nie to co padło na głos.
 
 6. TMS I INTEGRACJA
 
@@ -289,6 +307,13 @@ WYCIĄGNIJ:
 
 13. UWAGI AGENTA
 
+    STYL PISANIA WSZYSTKICH PÓL TEKSTOWYCH: piszesz jak doświadczony analityk sprzedaży przygotowujący raport dla przełożonego, nie jak notatka robocza do samego siebie. Zdania pełne, konkretne, bez urwanych myśli zakończonych myślnikiem.
+
+    Zamiast: "Arek Burkowski (właściciel); wspomniał o 'jednej wariatce' — niejasne, nie doprecyzowano"
+    Napisz: "Arek Burkowski, właściciel, jest głównym decydentem. W rozmowie zasugerował że w decyzjach uczestniczy też jeszcze jedna osoba, bez podania szczegółów kim jest ta osoba — warto to doprecyzować na Discovery."
+
+    Każde pole które zawiera niepewność lub brakującą informację (decydent, wlasciciel_czy_manager, podejscie_integracyjne, urgency, itd.) opisz pełnym zdaniem wyjaśniającym co dokładnie jest niepewne i co z tym zrobić, nie skrótem myślowym z myślnikiem. Dotyczy to również pola "uwagi_agenta" poniżej.
+
     Piszesz jak doświadczony handlowiec który sam był na tej rozmowie i teraz relacjonuje to Michałowi. Naturalny język. Konkretne obserwacje. Jedno zdanie = jeden fakt.
 
     ZAKAZ (zero wyjątków):
@@ -321,11 +346,15 @@ FORMAT ODPOWIEDZI: JSON. Pola bez danych: null. Nie dodawaj komentarzy poza pole
   "motywacja_cytat": "",
   "poprzednie_proby": "",
   "poprzednie_proby_powod_niepowodzenia": "",
+  "cytaty_klienta": [
+    { "cytat": "", "kategoria": "bol_glowny", "kontekst": "" }
+  ],
   "koszt_problemu": {
     "spedytorzy_liczba": null,
     "godziny_dziennie": null,
     "procent_czasu": null,
     "stawka_miesiecznie": null,
+    "wzor_obliczenia": "",
     "koszt_miesiecznie": null,
     "koszt_roczny": null,
     "czy_szacunek": false
@@ -359,8 +388,22 @@ FORMAT ODPOWIEDZI: JSON. Pola bez danych: null. Nie dodawaj komentarzy poza pole
   },
   "followup": null,
   "uwagi_agenta": "",
+  "ocena_rozmowy": {
+    "mocne_strony": [""],
+    "do_poprawy": [""],
+    "zgodnosc_ze_skryptem": "wysoka",
+    "kluczowa_rekomendacja": ""
+  },
   "wersja_skryptu": "[WSTAW DATĘ RZECZYWISTEJ ROZMOWY Z TRANSKRYPTU, format DD.MM.RRRR — NIE kopiuj przykładowej daty dosłownie]"
 }
+
+POLE "ocena_rozmowy" (wymagane, oceniasz jak poszła sama rozmowa względem skryptu kwalifikacyjnego, analogicznie do tego co Agent 4 robi dla Discovery):
+- "mocne_strony": konkretne rzeczy które sprzedawca zrobił dobrze, z odniesieniem do konkretnego momentu rozmowy
+- "do_poprawy": konkretne rzeczy które można było zrobić lepiej, np. "ICP sprawdzone zbyt późno, po 3 minutach diagnozy zamiast na początku", "pre-commit nie padł przed propozycją spotkania"
+- "zgodnosc_ze_skryptem": "wysoka" | "średnia" | "niska"
+- "kluczowa_rekomendacja": jedno, najważniejsze zdanie co poprawić następnym razem
+
+To pole ma być szczere i konkretne, nie ogólnikowe pochwały. Jeśli sprzedawca pominął krok, powiedz to wprost z podaniem którego kroku brakowało.
 
 PRZYKŁAD followup (gdy decydent nieobecny):
 "followup": {
@@ -399,6 +442,18 @@ Dodaj do odpowiedzi JSON trzy dodatkowe pola na KOŃCU obiektu (po "wersja_skryp
   — uwzględnij ICP score, czy umówiono spotkanie, ból operacyjny
   — przykład: "ICP 4/5, umówione Discovery które nie odbyło — zadzwoń nawiązując do kalkulatora z rozmowy."
   — jeśli klient był zdyskwalifikowany: krótko dlaczego nie warto reaktywować
+`;
+
+export const AGENT1_UZUPELNIENIE_SUFFIX = `
+
+---
+TRYB UZUPEŁNIENIA — DODATKOWE ZADANIE:
+
+Dostajesz istniejący rekord klienta z Pipeline PLUS nowy fragment (dodatkowa rozmowa, notatka). Twoje zadanie: zaktualizuj TYLKO te pola które nowy fragment faktycznie zmienia lub doprecyzowuje, zostaw resztę pól jako null (null oznacza "bez zmian", nie "brak danych" — istniejący rekord w Notion nie zostanie nadpisany pustką).
+
+W polu "uwagi_agenta" napisz WYŁĄCZNIE adnotację o tym uzupełnieniu, w formacie "UZUPEŁNIENIE [data]: [co się zmieniło i dlaczego]" — to zostanie dopisane do istniejącej historii uwag, nie zastąpi jej.
+
+Nie wymyślaj wartości dla pól o których nowy fragment nic nie mówi. Jeśli fragment nie zmienia np. danych ICP, floty, czy TMS — zostaw te pola null.
 `;
 
 export const AGENT2_SYSTEM_PROMPT = `WAŻNE: Transkrypt który analizujesz może pochodzić ze starszej wersji rozmowy kwalifikacyjnej.
