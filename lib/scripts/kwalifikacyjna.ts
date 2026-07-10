@@ -96,10 +96,10 @@ export const STEPS_K: Step[] = [
           tone: "warning",
         },
         {
-          trigger: "Zaciekawiła reklama, twierdzi że wszystko sprawnie",
-          action: "To co innego niż brak umiejętności nazwania bólu — użyj konkretnych scenariuszy",
+          trigger: "Zaciekawiła go reklama, nic więcej nie mówi",
+          action: "Krótka ciekawość bez konkretnego bólu — dopytaj delikatnie",
           goToStepId: "diagnoza_scenariusze_konkretne",
-          tone: "warning",
+          tone: "neutral",
         },
       ],
     },
