@@ -1,6 +1,7 @@
 "use client";
 
-import { Check, ChevronRight } from "lucide-react";
+import { Check } from "lucide-react";
+import type { CSSProperties } from "react";
 import type { Decision, DecisionOption } from "@/lib/scripts/types";
 
 interface DecisionDiagramProps {
@@ -9,23 +10,51 @@ interface DecisionDiagramProps {
   selectedTrigger?: string;
 }
 
-const TONE_STYLES: Record<
-  "neutral" | "positive" | "warning",
-  { border: string; bg: string; accent: string }
-> = {
-  neutral: { border: "var(--border)", bg: "var(--bg-card)", accent: "var(--text-secondary)" },
-  positive: { border: "var(--success)", bg: "rgba(52,199,89,0.06)", accent: "var(--success)" },
-  warning: { border: "var(--warning)", bg: "rgba(255,149,0,0.06)", accent: "var(--warning)" },
+const TONE_ACCENT: Record<"neutral" | "positive" | "warning", string> = {
+  neutral: "var(--text-secondary)",
+  positive: "var(--success)",
+  warning: "var(--warning)",
 };
+
+const OPTION_BASE: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: 6,
+  width: "100%",
+  padding: "16px 18px",
+  borderRadius: 14,
+  border: "1px solid var(--border)",
+  background: "var(--bg-card, #ffffff)",
+  cursor: "pointer",
+  textAlign: "left",
+  transition:
+    "transform 160ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 160ms ease, background 160ms ease",
+  boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+};
+
+const OPTION_HOVER: CSSProperties = {
+  transform: "translateY(-1px) scale(1.008)",
+  boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+};
+
+function selectedStyle(accent: string): CSSProperties {
+  return {
+    borderColor: accent,
+    background: "linear-gradient(180deg, rgba(10,132,255,0.06), rgba(10,132,255,0.03))",
+    boxShadow: `0 0 0 1px ${accent}, 0 4px 16px rgba(10,132,255,0.12)`,
+  };
+}
 
 export function DecisionDiagram({ decision, onSelect, selectedTrigger }: DecisionDiagramProps) {
   return (
     <div
       style={{
-        border: "1px dashed var(--border)",
-        borderRadius: 10,
-        padding: 12,
-        background: "var(--bg)",
+        background: "rgba(245,245,247,0.7)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        borderRadius: 16,
+        padding: 14,
+        border: "1px solid rgba(0,0,0,0.06)",
         marginTop: 8,
         marginBottom: 8,
       }}
@@ -36,86 +65,81 @@ export function DecisionDiagram({ decision, onSelect, selectedTrigger }: Decisio
           fontSize: 12,
           fontWeight: 600,
           color: "var(--text-secondary)",
-          marginBottom: 8,
+          marginBottom: 10,
+          paddingLeft: 2,
         }}
       >
         {decision.question}
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {decision.options.map((opt, i) => {
-          const tone = TONE_STYLES[opt.tone ?? "neutral"];
+          const accent = TONE_ACCENT[opt.tone ?? "neutral"];
           const isSelected = opt.trigger === selectedTrigger;
+          const restingStyle = isSelected ? selectedStyle(accent) : OPTION_BASE;
           return (
             <button
               key={i}
               onClick={() => onSelect(opt)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: 12,
-                padding: "10px 12px",
-                borderRadius: 8,
-                border: isSelected ? `2px solid ${tone.accent}` : `1px solid ${tone.border}`,
-                background: tone.bg,
-                textAlign: "left",
-                cursor: "pointer",
-                transition: "transform 120ms",
-              }}
+              style={{ ...OPTION_BASE, ...restingStyle }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateX(2px)";
+                Object.assign(e.currentTarget.style, OPTION_HOVER);
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateX(0)";
+                Object.assign(e.currentTarget.style, { ...OPTION_BASE, ...restingStyle });
               }}
             >
-              <div>
-                <div
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 10,
+                }}
+              >
+                <span
                   style={{
-                    display: "flex",
-                    alignItems: "center",
                     fontFamily: "var(--font-sans)",
-                    fontSize: 13,
-                    fontWeight: 600,
+                    fontSize: 15,
+                    fontWeight: 650,
                     color: "var(--text-primary)",
+                    letterSpacing: "-0.01em",
+                    lineHeight: 1.3,
                   }}
                 >
                   {opt.trigger}
-                  {opt.calculatorFlag && (
-                    <span
-                      style={{
-                        fontSize: 9,
-                        fontWeight: 700,
-                        color: "var(--accent)",
-                        background: "rgba(10,132,255,0.08)",
-                        padding: "1px 6px",
-                        borderRadius: 4,
-                        marginLeft: 6,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.04em",
-                      }}
-                    >
-                      Kalkulator
-                    </span>
-                  )}
-                </div>
-                {opt.action && (
-                  <div
-                    style={{
-                      fontFamily: "var(--font-sans)",
-                      fontSize: 11,
-                      color: tone.accent,
-                      marginTop: 2,
-                    }}
-                  >
-                    {opt.action}
-                  </div>
-                )}
+                </span>
+                {isSelected && <Check size={16} color={accent} strokeWidth={3} />}
               </div>
-              {isSelected ? (
-                <Check size={16} color={tone.accent} style={{ flexShrink: 0 }} strokeWidth={2.5} />
-              ) : (
-                <ChevronRight size={16} color={tone.accent} style={{ flexShrink: 0 }} />
+              {opt.action && (
+                <div
+                  style={{
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 13,
+                    lineHeight: 1.5,
+                    color: "var(--text-secondary)",
+                    fontWeight: 450,
+                  }}
+                >
+                  {opt.action}
+                </div>
+              )}
+              {opt.calculatorFlag && (
+                <span
+                  style={{
+                    alignSelf: "flex-start",
+                    marginTop: 4,
+                    fontSize: 10,
+                    fontWeight: 700,
+                    color: "var(--accent)",
+                    background: "rgba(10,132,255,0.1)",
+                    padding: "3px 8px",
+                    borderRadius: 6,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.04em",
+                  }}
+                >
+                  Kalkulator
+                </span>
               )}
             </button>
           );
