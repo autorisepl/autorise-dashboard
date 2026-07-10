@@ -37,6 +37,7 @@ export interface Agent1Output {
     spedytorzy_liczba?: number | null;
     procent_czasu?: number | null;
     stawka_miesiecznie?: number | null;
+    wzor_obliczenia?: string | null;
     koszt_miesiecznie?: number | null;
     koszt_roczny?: number | null;
     czy_szacunek?: boolean;
@@ -63,6 +64,13 @@ export interface Agent1Output {
   uwagi_agenta?: string | null;
   dyskwalifikacja?: boolean | null;
   dyskwalifikacja_powod?: string | null;
+  cytaty_klienta?: Array<{ cytat?: string; kategoria?: string; kontekst?: string }> | null;
+  ocena_rozmowy?: {
+    mocne_strony?: string[] | null;
+    do_poprawy?: string[] | null;
+    zgodnosc_ze_skryptem?: string | null;
+    kluczowa_rekomendacja?: string | null;
+  } | null;
 }
 
 // ─── Apple system palette (hardcoded per spec) ───────────────────────────────
@@ -363,7 +371,6 @@ export function Agent1Card({ output }: { output: Agent1Output }) {
               border: `1.5px solid ${verdictBorder}`,
             }}
           >
-            <Zap size={13} color={verdictColor} />
             <span
               style={{
                 fontFamily: "var(--font-system)",
@@ -693,6 +700,18 @@ export function Agent1Card({ output }: { output: Agent1Output }) {
                 Niepoliczalny — brak danych
               </div>
             )}
+            {output.koszt_problemu?.wzor_obliczenia && (
+              <div
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 12,
+                  color: "var(--text-tertiary)",
+                  marginTop: 4,
+                }}
+              >
+                {output.koszt_problemu.wzor_obliczenia}
+              </div>
+            )}
             {output.koszt_problemu?.procent_czasu != null && (
               <div style={{ marginTop: 8, fontSize: 12, color: "var(--text-secondary)" }}>
                 {output.koszt_problemu.procent_czasu}% czasu spedytora
@@ -801,6 +820,50 @@ export function Agent1Card({ output }: { output: Agent1Output }) {
         </div>
       </div>
 
+      {/* ─── CYTATY KLIENTA (wyróżnione karty) ─── */}
+      {output.cytaty_klienta && output.cytaty_klienta.filter((q) => q.cytat).length > 0 && (
+        <div
+          style={{
+            padding: "20px 22px",
+            borderTop: "1px solid var(--border)",
+            background: "var(--bg-elevated)",
+          }}
+        >
+          <SectionHeader icon={<AlertTriangle size={13} />} label="Cytaty klienta" />
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {output.cytaty_klienta
+              .filter((q) => q.cytat)
+              .map((q, i) => (
+                <div
+                  key={i}
+                  style={{
+                    borderLeft: `3px solid ${ACCENT}`,
+                    paddingLeft: 14,
+                    fontStyle: "italic",
+                    fontSize: 14,
+                    color: "var(--text-primary)",
+                    lineHeight: 1.55,
+                  }}
+                >
+                  &ldquo;{q.cytat}&rdquo;
+                  {q.kontekst && (
+                    <div
+                      style={{
+                        fontStyle: "normal",
+                        fontSize: 11,
+                        color: "var(--text-tertiary)",
+                        marginTop: 4,
+                      }}
+                    >
+                      {q.kontekst}
+                    </div>
+                  )}
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+
       {/* ─── SMS DO WYSŁANIA (kopiuj-wklej, scenariusz auto z danych) ─── */}
       <SmsPanel
         ctx={{
@@ -811,6 +874,129 @@ export function Agent1Card({ output }: { output: Agent1Output }) {
           kwalifikacja: icp?.kwalifikacja,
         }}
       />
+
+      {/* ─── OCENA ROZMOWY (coaching feedback) ─── */}
+      {output.ocena_rozmowy && (
+        <div
+          style={{
+            padding: "20px 22px",
+            borderTop: "1px solid var(--border)",
+            background: "var(--bg-card)",
+          }}
+        >
+          {(() => {
+            const zgodnosc = (output.ocena_rozmowy?.zgodnosc_ze_skryptem ?? "").toLowerCase();
+            const zColor = zgodnosc === "wysoka" ? SUCCESS : zgodnosc === "niska" ? ERROR : WARNING;
+            return (
+              <>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginBottom: 14,
+                  }}
+                >
+                  <SectionHeader icon={<Target size={13} />} label="Jak poszła rozmowa" />
+                  {output.ocena_rozmowy?.zgodnosc_ze_skryptem && (
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        padding: "4px 10px",
+                        borderRadius: 6,
+                        background: `${zColor}1a`,
+                        border: `1px solid ${zColor}38`,
+                      }}
+                    >
+                      <div
+                        style={{ width: 7, height: 7, borderRadius: "50%", background: zColor }}
+                      />
+                      <span
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 700,
+                          color: zColor,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.06em",
+                        }}
+                      >
+                        Zgodność ze skryptem: {output.ocena_rozmowy.zgodnosc_ze_skryptem}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {output.ocena_rozmowy?.kluczowa_rekomendacja && (
+                  <div
+                    style={{
+                      padding: "10px 14px",
+                      background: `${ACCENT}1a`,
+                      border: `1px solid ${ACCENT}38`,
+                      borderRadius: 7,
+                      fontSize: 14,
+                      fontWeight: 600,
+                      color: ACCENT,
+                      lineHeight: 1.5,
+                      marginBottom: 14,
+                    }}
+                  >
+                    {output.ocena_rozmowy.kluczowa_rekomendacja}
+                  </div>
+                )}
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+                  {output.ocena_rozmowy?.mocne_strony &&
+                    output.ocena_rozmowy.mocne_strony.length > 0 && (
+                      <div>
+                        <Label color={SUCCESS}>Mocne strony</Label>
+                        <div
+                          style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 6 }}
+                        >
+                          {output.ocena_rozmowy.mocne_strony.map((s, i) => (
+                            <div
+                              key={i}
+                              style={{
+                                fontSize: 13,
+                                color: "var(--text-secondary)",
+                                lineHeight: 1.5,
+                              }}
+                            >
+                              {s}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  {output.ocena_rozmowy?.do_poprawy &&
+                    output.ocena_rozmowy.do_poprawy.length > 0 && (
+                      <div>
+                        <Label color={WARNING}>Do poprawy</Label>
+                        <div
+                          style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 6 }}
+                        >
+                          {output.ocena_rozmowy.do_poprawy.map((s, i) => (
+                            <div
+                              key={i}
+                              style={{
+                                fontSize: 13,
+                                color: "var(--text-secondary)",
+                                lineHeight: 1.5,
+                              }}
+                            >
+                              {s}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                </div>
+              </>
+            );
+          })()}
+        </div>
+      )}
 
       {/* ─── AGENT NOTES (collapsible) ─── */}
       {notes.length > 0 && (
