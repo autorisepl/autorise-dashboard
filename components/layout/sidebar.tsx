@@ -24,6 +24,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import type { WeatherData } from "@/app/api/weather/route";
 import { SectionLabel } from "@/components/ui/SectionLabel";
+import { useRole } from "@/lib/auth/RoleContext";
 
 // ── Wind speed text ─────────────────────────────────────────────────
 
@@ -70,7 +71,7 @@ function useClock() {
   return now;
 }
 
-// ── Role hook ───────────────────────────────────────────────────────
+// ── Role ────────────────────────────────────────────────────────────
 
 const SETTER_VISIBLE_HREFS = [
   "/kwalifikacja",
@@ -79,17 +80,6 @@ const SETTER_VISIBLE_HREFS = [
   "/prezentacja.html",
   "/agenci",
 ];
-
-function useRole() {
-  const [role, setRole] = useState<"admin" | "setter" | null>(null);
-  useEffect(() => {
-    fetch("/api/auth/me")
-      .then((res) => res.json())
-      .then((data) => setRole(data.role ?? null))
-      .catch(() => setRole(null));
-  }, []);
-  return role;
-}
 
 // ── Nav structure ───────────────────────────────────────────────────
 

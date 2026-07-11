@@ -5,6 +5,7 @@ import { type ReactNode, Suspense, useCallback, useEffect, useState } from "reac
 import type { HealthResponse } from "@/app/api/health/route";
 import type { AgentId, AgentState, CardStage } from "@/components/agents/AgentWorkspace";
 import { AgentWorkspace, CARD_STAGE_BY_AGENT } from "@/components/agents/AgentWorkspace";
+import { useRole } from "@/lib/auth/RoleContext";
 import type { CardState } from "@/lib/google/sheets-card";
 import type { PipelineClient } from "@/lib/notion/client";
 
@@ -136,17 +137,6 @@ function TabBtn({
 }
 
 // ── Page inner ─────────────────────────────────────────────────────
-
-function useRole() {
-  const [role, setRole] = useState<"admin" | "setter" | null>(null);
-  useEffect(() => {
-    fetch("/api/auth/me")
-      .then((res) => res.json())
-      .then((data) => setRole(data.role ?? null))
-      .catch(() => setRole(null));
-  }, []);
-  return role;
-}
 
 function AgenciPageInner() {
   const role = useRole();
