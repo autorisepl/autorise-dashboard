@@ -15,6 +15,7 @@ const BLOCKED_STATUSES = ["Kickoff", "Wdrożenie", "Retainer", "Upsell", "Zakoń
 const bodySchema = z.object({
   telefon: z.string().optional(),
   firma: z.string().optional(),
+  kontakt: z.string().optional(),
 });
 
 // Ta sama normalizacja co w app/api/notion/pipeline/route.ts — dedup po ostatnich 9 cyfrach.
@@ -26,6 +27,14 @@ function normalizePhone(raw: string): string {
 function extractTitle(prop: PageObjectResponse["properties"][string] | undefined): string {
   if (!prop || prop.type !== "title") return "";
   return prop.title
+    .map((t) => t.plain_text)
+    .join("")
+    .trim();
+}
+
+function extractRichText(prop: PageObjectResponse["properties"][string] | undefined): string {
+  if (!prop || prop.type !== "rich_text") return "";
+  return prop.rich_text
     .map((t) => t.plain_text)
     .join("")
     .trim();
@@ -50,29 +59,39 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
-  const { telefon, firma } = parsed.data;
+  const { telefon, firma, kontakt } = parsed.data;
 
   try {
-    const response = await notion.dataSources.query({
-      data_source_id: PIPELINE_DATA_SOURCE_ID,
-      page_size: 100,
-    });
-
-    const pages = response.results.filter((p): p is PageObjectResponse => p.object === "page");
+    const pages: PageObjectResponse[] = [];
+    let cursor: string | undefined;
+    do {
+      const response = await notion.dataSources.query({
+        data_source_id: PIPELINE_DATA_SOURCE_ID,
+        page_size: 100,
+        start_cursor: cursor,
+      });
+      pages.push(...response.results.filter((p): p is PageObjectResponse => p.object === "page"));
+      cursor = response.has_more ? (response.next_cursor ?? undefined) : undefined;
+    } while (cursor);
 
     let match: PageObjectResponse | undefined;
 
     const phoneKey = telefon ? normalizePhone(telefon) : "";
     if (phoneKey) {
-      match = pages.find(
-        (p) => normalizePhone(extractPhone(p.properties["Telefon"])) === phoneKey,
-      );
+      match = pages.find((p) => normalizePhone(extractPhone(p.properties["Telefon"])) === phoneKey);
     }
 
     if (!match && firma?.trim()) {
       const firmaKey = firma.toLowerCase().trim();
       match = pages.find(
         (p) => extractTitle(p.properties["Firma"]).toLowerCase().trim() === firmaKey,
+      );
+    }
+
+    if (!match && kontakt?.trim()) {
+      const kontaktKey = kontakt.toLowerCase().trim();
+      match = pages.find(
+        (p) => extractRichText(p.properties["Kontakt"]).toLowerCase().trim() === kontaktKey,
       );
     }
 

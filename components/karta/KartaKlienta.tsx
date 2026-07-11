@@ -47,9 +47,10 @@ interface KartaKlientaProps {
   clientName: string;
   phone?: string;
   email?: string;
+  company?: string;
 }
 
-export function KartaKlienta({ clientName, phone, email }: KartaKlientaProps) {
+export function KartaKlienta({ clientName, phone, email, company }: KartaKlientaProps) {
   const [card, setCard] = useState<CardState | null>(null);
   const [found, setFound] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -174,7 +175,11 @@ export function KartaKlienta({ clientName, phone, email }: KartaKlientaProps) {
         const res = await fetch("/api/notion/reset-lead", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ telefon: phone, firma: clientName }),
+          body: JSON.stringify({
+            telefon: phone,
+            firma: company || clientName,
+            kontakt: clientName,
+          }),
         });
         const data = await res.json();
         if (data.blocked) {
@@ -187,7 +192,7 @@ export function KartaKlienta({ clientName, phone, email }: KartaKlientaProps) {
         if (data.found === false) {
           notionSummary = "Notion: lead jeszcze nie istnieje w Pipeline, nic do wyczyszczenia";
         } else if (data.cleared) {
-          notionSummary = "Notion: karta wyczyszczona, status wrócił do \"Nowy lead\"";
+          notionSummary = 'Notion: karta wyczyszczona, status wrócił do "Nowy lead"';
         } else {
           notionSummary = `Notion: nie udało się wyczyścić (${data.error || "nieznany błąd"})`;
         }
@@ -220,7 +225,7 @@ export function KartaKlienta({ clientName, phone, email }: KartaKlientaProps) {
     window.alert(
       `${notionSummary}\nArkusz Google: ${sheetsOk ? "wyczyszczony" : "błąd zapisu, patrz komunikat na karcie"}`,
     );
-  }, [clientName, phone, save]);
+  }, [clientName, phone, company, save]);
 
   if (loading) {
     return (

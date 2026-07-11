@@ -1022,9 +1022,14 @@ export default function AgencjaPage() {
                 <DetailHeader row={selected} headers={displayHeaders} sheetId={SHEET_ID} />
                 <div style={{ flex: 1, overflowY: "auto", minHeight: 0, padding: "16px 20px" }}>
                   {(() => {
-                    const { phone, email } = contactFields(selected, displayHeaders);
+                    const { phone, email, firma } = contactFields(selected, displayHeaders);
                     return (
-                      <KartaKlienta clientName={selectedName ?? ""} phone={phone} email={email} />
+                      <KartaKlienta
+                        clientName={selectedName ?? ""}
+                        phone={phone}
+                        email={email}
+                        company={firma}
+                      />
                     );
                   })()}
                 </div>
