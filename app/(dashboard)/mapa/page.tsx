@@ -4,15 +4,21 @@ import {
   ArrowRight,
   Check,
   CheckCircle2,
+  ChevronDown,
+  ChevronRight,
   Database,
   GitBranch,
   Loader2,
   RefreshCw,
+  Split,
   X,
   Zap,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import type { PipelineClientDetailed } from "@/app/api/notion/pipeline/route";
+import { OBJECTIONS_K, STEPS_K } from "@/lib/scripts/kwalifikacyjna";
+import { OBJECTIONS_D, STEPS_D } from "@/lib/scripts/discovery";
+import type { Objection, Step } from "@/lib/scripts/types";
 
 // ── Blueprint danych — DATA_FLOW ──────────────────────────────────────
 
@@ -299,6 +305,233 @@ function BlueprintView() {
   );
 }
 
+// ── Drzewo kroków — pochodzi bezpośrednio z STEPS_K/STEPS_D/OBJECTIONS_K/OBJECTIONS_D ──
+// Celowo NIE jest to osobna, ręcznie pisana struktura — czyta te same dane co realny
+// skrypt w /kwalifikacja i /sprzedaz, więc nie może się z czasem rozjechać z żywą treścią.
+
+function firstLineText(step: Step): string {
+  const line = step.lines[0];
+  if (!line) return "";
+  return Array.isArray(line.text) ? line.text[0] : line.text;
+}
+
+function isTerminalStep(step: Step, allSteps: Step[]): boolean {
+  if (step.decision || step.nextStepId) return false;
+  const isLast = allSteps[allSteps.length - 1]?.id === step.id;
+  return isLast || /koniec|closing|zaproszenie|spotkanie/i.test(step.id);
+}
+
+function StepRow({
+  step,
+  allSteps,
+  objections,
+  color,
+}: {
+  step: Step;
+  allSteps: Step[];
+  objections: Objection[];
+  color: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const terminal = isTerminalStep(step, allSteps);
+  const opis = firstLineText(step);
+
+  const findLabel = (id: string) =>
+    allSteps.find((s) => s.id === id)?.label ??
+    objections.find((o) => o.id === id)?.label ??
+    id;
+
+  return (
+    <div style={{ marginBottom: 4 }}>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        style={{
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          padding: "8px 10px",
+          borderRadius: 8,
+          border: `1px solid ${terminal ? "var(--border)" : `${color}30`}`,
+          background: terminal
+            ? "rgba(22,163,74,0.05)"
+            : step.decision
+              ? "rgba(217,119,6,0.05)"
+              : `${color}06`,
+          borderLeft: `3px solid ${terminal ? "#16a34a" : step.decision ? "#d97706" : color}`,
+          cursor: "pointer",
+          textAlign: "left",
+        }}
+      >
+        {open ? (
+          <ChevronDown size={12} color="var(--text-tertiary)" />
+        ) : (
+          <ChevronRight size={12} color="var(--text-tertiary)" />
+        )}
+        <span
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: 10,
+            fontWeight: 700,
+            color: "var(--text-tertiary)",
+            minWidth: 24,
+          }}
+        >
+          {step.nr}
+        </span>
+        <span
+          style={{
+            fontFamily: "var(--font-sans)",
+            fontSize: 12.5,
+            fontWeight: 500,
+            color: "var(--text-primary)",
+            flex: 1,
+          }}
+        >
+          {step.label}
+        </span>
+        {step.decision && <Split size={12} color="#d97706" />}
+        {terminal && (
+          <span
+            style={{
+              fontSize: 9,
+              fontWeight: 700,
+              color: "#16a34a",
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
+            }}
+          >
+            Koniec
+          </span>
+        )}
+      </button>
+      {open && (
+        <div style={{ padding: "8px 10px 8px 34px", display: "flex", flexDirection: "column", gap: 6 }}>
+          {opis && (
+            <p
+              style={{
+                margin: 0,
+                fontFamily: "var(--font-sans)",
+                fontSize: 12,
+                color: "var(--text-secondary)",
+                lineHeight: 1.5,
+                fontStyle: "italic",
+              }}
+            >
+              „{opis}"
+            </p>
+          )}
+          {step.decision?.options.map((opt, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <Split size={10} color="#d97706" style={{ flexShrink: 0 }} />
+              <span style={{ fontFamily: "var(--font-sans)", fontSize: 11, color: "#d97706" }}>
+                {opt.trigger}
+              </span>
+              {(opt.goToStepId || opt.openObjectionId) && (
+                <span style={{ fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--text-tertiary)" }}>
+                  : {findLabel(opt.goToStepId ?? opt.openObjectionId ?? "")}
+                </span>
+              )}
+            </div>
+          ))}
+          {!step.decision && step.nextStepId && (
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <ArrowRight size={10} color="var(--text-tertiary)" style={{ flexShrink: 0 }} />
+              <span style={{ fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--text-tertiary)" }}>
+                {findLabel(step.nextStepId)}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ScriptTreeView() {
+  const [openPhase, setOpenPhase] = useState<"k" | "d" | null>("k");
+
+  const phases: { id: "k" | "d"; label: string; sublabel: string; color: string; steps: Step[]; objections: Objection[] }[] = [
+    {
+      id: "k",
+      label: "Kwalifikacja",
+      sublabel: `${STEPS_K.length} kroków`,
+      color: "#0a84ff",
+      steps: STEPS_K,
+      objections: OBJECTIONS_K,
+    },
+    {
+      id: "d",
+      label: "Discovery Call (Kimura Framework)",
+      sublabel: `${STEPS_D.length} kroków`,
+      color: "#7c3aed",
+      steps: STEPS_D,
+      objections: OBJECTIONS_D,
+    },
+  ];
+
+  return (
+    <div style={{ padding: 24, overflowY: "auto", flex: 1 }}>
+      {phases.map((phase) => {
+        const isOpen = openPhase === phase.id;
+        return (
+          <div key={phase.id} style={{ marginBottom: 16 }}>
+            <button
+              onClick={() => setOpenPhase(isOpen ? null : phase.id)}
+              style={{
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "12px 16px",
+                borderRadius: 10,
+                border: `1px solid ${phase.color}30`,
+                borderLeft: `3px solid ${phase.color}`,
+                background: `${phase.color}08`,
+                cursor: "pointer",
+                textAlign: "left",
+              }}
+            >
+              {isOpen ? (
+                <ChevronDown size={14} color={phase.color} />
+              ) : (
+                <ChevronRight size={14} color={phase.color} />
+              )}
+              <span
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: "var(--text-primary)",
+                  flex: 1,
+                }}
+              >
+                {phase.label}
+              </span>
+              <span style={{ fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--text-tertiary)" }}>
+                {phase.sublabel}
+              </span>
+            </button>
+            {isOpen && (
+              <div style={{ marginTop: 8, paddingLeft: 4 }}>
+                {phase.steps.map((step) => (
+                  <StepRow
+                    key={step.id}
+                    step={step}
+                    allSteps={phase.steps}
+                    objections={phase.objections}
+                    color={phase.color}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // Mapowanie statusu → indeks etapu (0-3)
 function statusToStageIdx(status: string): number {
   const s = (status ?? "").toLowerCase();
@@ -392,7 +625,7 @@ export default function MapaPage() {
   const [clients, setClients] = useState<PipelineClientDetailed[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string>("");
-  const [view, setView] = useState<"etapy" | "blueprint">("etapy");
+  const [view, setView] = useState<"etapy" | "drzewo" | "blueprint">("etapy");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -463,7 +696,7 @@ export default function MapaPage() {
               gap: 2,
             }}
           >
-            {(["etapy", "blueprint"] as const).map((v) => (
+            {(["etapy", "drzewo", "blueprint"] as const).map((v) => (
               <button
                 key={v}
                 onClick={() => setView(v)}
@@ -481,7 +714,7 @@ export default function MapaPage() {
                   transition: "all 120ms",
                 }}
               >
-                {v === "etapy" ? "Widok etapów" : "Blueprint danych"}
+                {v === "etapy" ? "Widok etapów" : v === "drzewo" ? "Drzewo kroków" : "Blueprint danych"}
               </button>
             ))}
           </div>
@@ -627,6 +860,9 @@ export default function MapaPage() {
 
       {/* Blueprint view */}
       {view === "blueprint" && <BlueprintView />}
+
+      {/* Script tree view */}
+      {view === "drzewo" && <ScriptTreeView />}
 
       {/* Stages */}
       {view === "etapy" &&
