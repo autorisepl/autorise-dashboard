@@ -1020,7 +1020,10 @@ export interface DailyStatsTotals {
   sms: number;
 }
 
-export async function getDailyStatsRangeTotals(from: string, to: string): Promise<DailyStatsTotals> {
+export async function getDailyStatsRangeTotals(
+  from: string,
+  to: string,
+): Promise<DailyStatsTotals> {
   const totals: DailyStatsTotals = { dials: 0, rozmowy: 0, sms: 0 };
   let cursor: string | undefined;
 

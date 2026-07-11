@@ -133,7 +133,10 @@ export async function GET(request: Request) {
     return NextResponse.json({ success: true, stats: payload });
   } catch (error) {
     return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : "Błąd pobierania statystyk" },
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Błąd pobierania statystyk",
+      },
       { status: 500 },
     );
   }

@@ -310,9 +310,7 @@ export default function StatystykiPage() {
       {/* Body */}
       <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: "#F5F5F7" }}>
         {error && (
-          <Panel
-            style={{ padding: 16, marginBottom: 16, background: "var(--error-bg)" }}
-          >
+          <Panel style={{ padding: 16, marginBottom: 16, background: "var(--error-bg)" }}>
             <div style={{ fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--error)" }}>
               {error}
             </div>
@@ -363,7 +361,13 @@ export default function StatystykiPage() {
               gap: 12,
             }}
           >
-            <KpiCard label="Show Rate" value={`${stats.show_rate.toFixed(0)}%`} tone="accent" icon={ThumbsUp} emphasize />
+            <KpiCard
+              label="Show Rate"
+              value={`${stats.show_rate.toFixed(0)}%`}
+              tone="accent"
+              icon={ThumbsUp}
+              emphasize
+            />
             <KpiCard
               label="Wartość sprzedaży PLN"
               value={`${fmtPln(stats.wartosc_sprzedazy_pln)} zł`}
@@ -373,9 +377,24 @@ export default function StatystykiPage() {
             />
 
             <KpiCard label="Dials" value={String(stats.dials)} tone="neutral" icon={Phone} />
-            <KpiCard label="Rozmowy" value={String(stats.rozmowy)} tone="neutral" icon={PhoneCall} />
-            <KpiCard label="SMS Wysłane" value={String(stats.sms)} tone="neutral" icon={MessageSquare} />
-            <KpiCard label="Nowe leady" value={String(stats.nowe_leady)} tone="accent" icon={UserPlus} />
+            <KpiCard
+              label="Rozmowy"
+              value={String(stats.rozmowy)}
+              tone="neutral"
+              icon={PhoneCall}
+            />
+            <KpiCard
+              label="SMS Wysłane"
+              value={String(stats.sms)}
+              tone="neutral"
+              icon={MessageSquare}
+            />
+            <KpiCard
+              label="Nowe leady"
+              value={String(stats.nowe_leady)}
+              tone="accent"
+              icon={UserPlus}
+            />
 
             <KpiCard
               label="Discovery umówione"
@@ -396,7 +415,12 @@ export default function StatystykiPage() {
               icon={PhoneOff}
               tooltip="Szacunek: brak dedykowanego pola no-show w Notion. Liczone jako 'Data discovery' w przeszłości bez wypełnionego 'Wynik Discovery'."
             />
-            <KpiCard label="Sprzedaże" value={String(stats.sprzedaze)} tone="success" icon={TrendingUp} />
+            <KpiCard
+              label="Sprzedaże"
+              value={String(stats.sprzedaze)}
+              tone="success"
+              icon={TrendingUp}
+            />
 
             <KpiCard
               label="Niekwalifikowani"
