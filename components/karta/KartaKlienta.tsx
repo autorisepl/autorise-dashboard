@@ -190,9 +190,10 @@ export function KartaKlienta({ clientName, phone, email, company }: KartaKlienta
           return;
         }
         if (data.found === false) {
-          notionSummary = "Notion: lead jeszcze nie istnieje w Pipeline, nic do wyczyszczenia";
+          const s = data.searched ?? {};
+          notionSummary = `Notion: nie znaleziono leada w Pipeline (szukano telefon: ${s.telefonKey ?? "brak"}, firma: "${s.firma ?? ""}", kontakt: "${s.kontakt ?? ""}", przeszukano ${data.pipelineCount ?? "?"} kart)`;
         } else if (data.cleared) {
-          notionSummary = 'Notion: karta wyczyszczona, status wrócił do "Nowy lead"';
+          notionSummary = `Notion: karta wyczyszczona (dopasowano po: ${data.matchedBy}), status wrócił do "Nowy lead"`;
         } else {
           notionSummary = `Notion: nie udało się wyczyścić (${data.error || "nieznany błąd"})`;
         }
@@ -291,7 +292,7 @@ export function KartaKlienta({ clientName, phone, email, company }: KartaKlienta
         )}
         <button
           onClick={() => void resetCard()}
-          title="Wyczyść dane klienta"
+          title="Wyczyść kartę i Pipeline"
           disabled={resetPending}
           style={{
             background: "none",

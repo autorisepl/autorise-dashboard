@@ -75,10 +75,12 @@ export async function POST(request: Request) {
     } while (cursor);
 
     let match: PageObjectResponse | undefined;
+    let matchedBy: "telefon" | "firma" | "kontakt" | null = null;
 
     const phoneKey = telefon ? normalizePhone(telefon) : "";
     if (phoneKey) {
       match = pages.find((p) => normalizePhone(extractPhone(p.properties["Telefon"])) === phoneKey);
+      if (match) matchedBy = "telefon";
     }
 
     if (!match && firma?.trim()) {
@@ -86,6 +88,7 @@ export async function POST(request: Request) {
       match = pages.find(
         (p) => extractTitle(p.properties["Firma"]).toLowerCase().trim() === firmaKey,
       );
+      if (match) matchedBy = "firma";
     }
 
     if (!match && kontakt?.trim()) {
@@ -93,10 +96,19 @@ export async function POST(request: Request) {
       match = pages.find(
         (p) => extractRichText(p.properties["Kontakt"]).toLowerCase().trim() === kontaktKey,
       );
+      if (match) matchedBy = "kontakt";
     }
 
     if (!match) {
-      return NextResponse.json({ success: true, found: false });
+      // Diagnostyka: pokazuje dokładnie czego szukano, żeby dało się od razu
+      // stwierdzić czy problem jest w normalizacji telefonu, pisowni Firma/Kontakt,
+      // czy w tym że lead faktycznie jeszcze nie istnieje w Pipeline.
+      return NextResponse.json({
+        success: true,
+        found: false,
+        searched: { telefonKey: phoneKey || null, firma: firma ?? null, kontakt: kontakt ?? null },
+        pipelineCount: pages.length,
+      });
     }
 
     const status = extractSelect(match.properties["Status"]);
@@ -143,7 +155,13 @@ export async function POST(request: Request) {
 
     await notion.pages.update({ page_id: match.id, properties });
 
-    return NextResponse.json({ success: true, found: true, cleared: true, pageId: match.id });
+    return NextResponse.json({
+      success: true,
+      found: true,
+      cleared: true,
+      pageId: match.id,
+      matchedBy,
+    });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Błąd resetu karty w Notion";
     return NextResponse.json({ success: false, error: msg }, { status: 500 });
