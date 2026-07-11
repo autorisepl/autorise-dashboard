@@ -72,7 +72,13 @@ function useClock() {
 
 // ── Role hook ───────────────────────────────────────────────────────
 
-const SETTER_VISIBLE_HREFS = ["/kwalifikacja", "/sprzedaz", "/agencja", "/prezentacja.html"];
+const SETTER_VISIBLE_HREFS = [
+  "/kwalifikacja",
+  "/sprzedaz",
+  "/agencja",
+  "/prezentacja.html",
+  "/agenci",
+];
 
 function useRole() {
   const [role, setRole] = useState<"admin" | "setter" | null>(null);

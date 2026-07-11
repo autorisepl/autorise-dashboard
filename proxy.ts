@@ -8,6 +8,7 @@ const SETTER_ALLOWED_PREFIXES = [
   "/sprzedaz",
   "/agencja",
   "/prezentacja",
+  "/agenci",
   "/api/notion",
   "/api/agents",
   "/api/google",

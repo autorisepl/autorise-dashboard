@@ -11,6 +11,7 @@ import type { PipelineClient } from "@/lib/notion/client";
 // ── Constants ──────────────────────────────────────────────────────
 
 const AGENT_IDS: AgentId[] = ["agent1", "agent2", "agent3", "agent4", "agent5", "agent6"];
+const SETTER_VISIBLE_AGENT_TABS: AgentId[] = ["agent1", "agent2", "agent3", "agent4"];
 
 const INITIAL_STATE: AgentState = {
   transcript: "",
@@ -136,11 +137,32 @@ function TabBtn({
 
 // ── Page inner ─────────────────────────────────────────────────────
 
+function useRole() {
+  const [role, setRole] = useState<"admin" | "setter" | null>(null);
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then((data) => setRole(data.role ?? null))
+      .catch(() => setRole(null));
+  }, []);
+  return role;
+}
+
 function AgenciPageInner() {
+  const role = useRole();
+  const visibleTabs =
+    role === "setter" ? TABS.filter((t) => SETTER_VISIBLE_AGENT_TABS.includes(t.id)) : TABS;
+
   const [activeAgent, setActiveAgent] = useState<AgentId>(() => {
     if (typeof window === "undefined") return "agent1";
     return (localStorage.getItem("agenci_active_tab") as AgentId) ?? "agent1";
   });
+
+  useEffect(() => {
+    if (role === "setter" && !SETTER_VISIBLE_AGENT_TABS.includes(activeAgent)) {
+      setActiveAgent("agent1");
+    }
+  }, [role, activeAgent]);
 
   const changeAgent = (id: AgentId) => {
     localStorage.setItem("agenci_active_tab", id);
@@ -479,7 +501,7 @@ function AgenciPageInner() {
           scrollbarWidth: "none",
         }}
       >
-        {TABS.map((tab) => (
+        {visibleTabs.map((tab) => (
           <TabBtn
             key={tab.id}
             icon={tab.icon}
