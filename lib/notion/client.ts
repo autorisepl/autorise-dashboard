@@ -1,5 +1,6 @@
 import { Client } from "@notionhq/client";
 import type { PageObjectResponse } from "@notionhq/client/build/src/api-endpoints";
+import { normalizePhonePL } from "@/lib/format/normalizePhonePL";
 
 const notion = new Client({ auth: process.env.NOTION_TOKEN });
 
@@ -296,7 +297,9 @@ export async function upsertClientInPipeline(
     props["Kontakt"] = { rich_text: richText(a1.imie_nazwisko) };
   }
   if (a1.telefon) {
-    props["Telefon"] = { phone_number: a1.telefon };
+    const normalized = normalizePhonePL(a1.telefon);
+    if (!normalized) console.warn(`normalizePhonePL: nie udało się znormalizować "${a1.telefon}"`);
+    props["Telefon"] = { phone_number: normalized ?? a1.telefon };
   }
   if (a1.pojazdy != null) {
     const num = parseInt(String(a1.pojazdy), 10);
@@ -484,7 +487,12 @@ export async function upsertLeadIntake(data: LeadIntakeData): Promise<string> {
   const firma = data.firma || data.kontakt;
   if (firma) props["Firma"] = { title: richText(firma) };
   if (data.kontakt) props["Kontakt"] = { rich_text: richText(data.kontakt) };
-  if (data.telefon) props["Telefon"] = { phone_number: data.telefon };
+  if (data.telefon) {
+    const normalized = normalizePhonePL(data.telefon);
+    if (!normalized)
+      console.warn(`normalizePhonePL: nie udało się znormalizować "${data.telefon}"`);
+    props["Telefon"] = { phone_number: normalized ?? data.telefon };
+  }
 
   if (data.email) props["Email"] = { email: data.email };
 
@@ -630,7 +638,9 @@ export async function updateDiscoveryAnalysis(
 
 // --- Schema migration: add new Pipeline properties ---
 
-async function confirmSchemaFields(fieldNames: string[]): Promise<{ confirmed: string[]; missing: string[] }> {
+async function confirmSchemaFields(
+  fieldNames: string[],
+): Promise<{ confirmed: string[]; missing: string[] }> {
   const dataSource = await notion.dataSources.retrieve({ data_source_id: PIPELINE_DATA_SOURCE_ID });
   const liveProperties = dataSource.properties ?? {};
   const confirmed = fieldNames.filter((name) => name in liveProperties);
@@ -725,7 +735,9 @@ export async function migrateNotionSchema(): Promise<{ added: string[]; errors: 
     ]);
     added.push(...confirmed);
     for (const name of missing) {
-      errors.push(`Batch 1: pole "${name}" nie pojawiło się w schemacie po update (brak wyjątku, ale retrieve go nie potwierdza)`);
+      errors.push(
+        `Batch 1: pole "${name}" nie pojawiło się w schemacie po update (brak wyjątku, ale retrieve go nie potwierdza)`,
+      );
     }
   } catch (err) {
     errors.push(`Batch 1: ${err instanceof Error ? err.message : "Błąd migracji schematu"}`);
@@ -811,7 +823,9 @@ export async function migrateNotionSchema(): Promise<{ added: string[]; errors: 
     ]);
     added.push(...confirmed);
     for (const name of missing) {
-      errors.push(`Batch 2: pole "${name}" nie pojawiło się w schemacie po update (brak wyjątku, ale retrieve go nie potwierdza)`);
+      errors.push(
+        `Batch 2: pole "${name}" nie pojawiło się w schemacie po update (brak wyjątku, ale retrieve go nie potwierdza)`,
+      );
     }
   } catch (err) {
     errors.push(`Batch 2: ${err instanceof Error ? err.message : "Błąd migracji schematu"}`);

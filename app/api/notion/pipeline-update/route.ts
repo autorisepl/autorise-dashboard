@@ -1,6 +1,7 @@
 import { Client } from "@notionhq/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { normalizePhonePL } from "@/lib/format/normalizePhonePL";
 
 export const dynamic = "force-dynamic";
 
@@ -80,7 +81,10 @@ export async function PATCH(req: Request) {
       properties["Kontakt"] = { rich_text: richText(d.kontakt) };
     }
     if (d.telefon !== undefined) {
-      properties["Telefon"] = { phone_number: d.telefon };
+      const normalized = d.telefon ? normalizePhonePL(d.telefon) : null;
+      if (d.telefon && !normalized)
+        console.warn(`normalizePhonePL: nie udało się znormalizować "${d.telefon}"`);
+      properties["Telefon"] = { phone_number: normalized ?? d.telefon };
     }
     if (d.notatki !== undefined) {
       properties["Notatki"] = { rich_text: richText(d.notatki) };

@@ -1,5 +1,6 @@
 import { Client } from "@notionhq/client";
 import { type NextRequest, NextResponse } from "next/server";
+import { normalizePhonePL } from "@/lib/format/normalizePhonePL";
 import { getRefreshToken, getSheetsClient } from "@/lib/google/auth";
 import { getPipelineClients } from "@/lib/notion/client";
 
@@ -208,7 +209,11 @@ export async function POST(req: NextRequest) {
           props["Kontakt"] = { rich_text: richText(nameVal) };
         }
 
-        if (phoneVal) props["Telefon"] = { phone_number: phoneVal };
+        if (phoneVal) {
+          const normalized = normalizePhonePL(phoneVal);
+          if (!normalized) console.warn(`normalizePhonePL: nie udało się znormalizować "${phoneVal}"`);
+          props["Telefon"] = { phone_number: normalized ?? phoneVal };
+        }
         if (notesWithEmail) props["Notatki"] = { rich_text: richText(notesWithEmail) };
 
         await notion.pages.create({
