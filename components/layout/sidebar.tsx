@@ -16,6 +16,7 @@ import {
   Phone,
   Presentation,
   Target,
+  TrendingUp,
   UserCircle2,
   Users,
 } from "lucide-react";
@@ -104,6 +105,7 @@ const NAV: {
       { href: "/zadania", label: "Zadania", icon: CheckSquare },
       { href: "/pliki", label: "Pliki", icon: Files },
       { href: "/kontrola", label: "Kontrola", icon: Monitor },
+      { href: "/statystyki", label: "Statystyki", icon: TrendingUp },
     ],
   },
   {

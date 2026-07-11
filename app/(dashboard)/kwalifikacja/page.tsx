@@ -11,6 +11,7 @@ import {
   Lock,
   MessageSquare,
   Phone,
+  PhoneCall,
   RefreshCw,
   Search,
   Users,
@@ -1195,10 +1196,12 @@ function SmsPanel({
   fill,
   onCopy,
   copiedId,
+  onSmsCopy,
 }: {
   fill: (t: string) => string;
   onCopy: (id: string, text: string) => void;
   copiedId: string | null;
+  onSmsCopy: () => void;
 }) {
   const kwalItems = MESSAGES_DATA.sms.filter((m) => m.group === "Kwalifikacja");
   const fbItems = MESSAGES_DATA.fb;
@@ -1245,7 +1248,10 @@ function SmsPanel({
             {fill(item.text)}
           </p>
           <button
-            onClick={() => onCopy(`sms-${item.id}`, item.text)}
+            onClick={() => {
+              onCopy(`sms-${item.id}`, item.text);
+              onSmsCopy();
+            }}
             style={{
               display: "flex",
               alignItems: "center",
@@ -2067,6 +2073,7 @@ function RightPanel({
   openObjectionId,
   setOpenObjectionId,
   smsForceOpen,
+  onSmsCopy,
 }: {
   fill: (t: string) => string;
   onCopy: (id: string, text: string) => void;
@@ -2074,6 +2081,7 @@ function RightPanel({
   openObjectionId: string | null;
   setOpenObjectionId: (id: string | null) => void;
   smsForceOpen: boolean;
+  onSmsCopy: () => void;
 }) {
   return (
     <div
@@ -2100,7 +2108,7 @@ function RightPanel({
         <PhrasesPanel onCopy={onCopy} copiedId={copiedId} />
       </Card>
       <Card title="SMS / Wiadomości" collapsible defaultOpen={false} forceOpen={smsForceOpen}>
-        <SmsPanel fill={fill} onCopy={onCopy} copiedId={copiedId} />
+        <SmsPanel fill={fill} onCopy={onCopy} copiedId={copiedId} onSmsCopy={onSmsCopy} />
       </Card>
       <Card title="ICP Quick Reference" collapsible defaultOpen={false}>
         <IcpPanel />
@@ -2126,6 +2134,7 @@ export default function KwalifikacjaPage() {
   const [calcStawka, setCalcStawka] = useState(55); // NOWE
   const [sprzedawcaImie, setSprzedawcaImie] = useState("Michał");
   const [smsForceOpen, setSmsForceOpen] = useState(false);
+  const [tallyFlash, setTallyFlash] = useState<"dial" | "rozmowa" | "sms" | null>(null);
 
   const fetchClients = useCallback(async () => {
     setLoading(true);
@@ -2207,6 +2216,18 @@ export default function KwalifikacjaPage() {
       setTimeout(() => setCopiedId(null), 1500);
     });
   };
+
+  const tally = useCallback((type: "dial" | "rozmowa" | "sms") => {
+    setTallyFlash(type);
+    setTimeout(() => setTallyFlash((prev) => (prev === type ? null : prev)), 900);
+    void fetch("/api/stats/tally", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type }),
+    }).catch(() => {
+      /* licznik jest pomocniczy — brak sieci nie blokuje pracy */
+    });
+  }, []);
 
   const jumpToStep = useCallback((stepId: string) => {
     const el = document.getElementById(`step-${stepId}`);
@@ -2308,6 +2329,54 @@ export default function KwalifikacjaPage() {
         >
           Kwalifikacja
         </span>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <button
+            onClick={() => tally("dial")}
+            style={{
+              height: 28,
+              padding: "0 10px",
+              borderRadius: 7,
+              border: "1px solid #E5E5EA",
+              background: tallyFlash === "dial" ? "var(--success-bg)" : "#F5F5F7",
+              color: tallyFlash === "dial" ? "var(--success-text)" : "var(--text-secondary)",
+              fontSize: 11,
+              fontWeight: 600,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              fontFamily: "var(--font-sans)",
+              transition: "background 150ms, color 150ms",
+            }}
+            title="Zlicz wykręcony numer (statystyki dzienne)"
+          >
+            {tallyFlash === "dial" ? <Check size={11} /> : <Phone size={11} />}
+            Wykręcono
+          </button>
+          <button
+            onClick={() => tally("rozmowa")}
+            style={{
+              height: 28,
+              padding: "0 10px",
+              borderRadius: 7,
+              border: "1px solid #E5E5EA",
+              background: tallyFlash === "rozmowa" ? "var(--success-bg)" : "#F5F5F7",
+              color: tallyFlash === "rozmowa" ? "var(--success-text)" : "var(--text-secondary)",
+              fontSize: 11,
+              fontWeight: 600,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              fontFamily: "var(--font-sans)",
+              transition: "background 150ms, color 150ms",
+            }}
+            title="Zlicz nawiązaną rozmowę (statystyki dzienne)"
+          >
+            {tallyFlash === "rozmowa" ? <Check size={11} /> : <PhoneCall size={11} />}
+            Rozmowa
+          </button>
+        </div>
         <div style={{ height: 20, width: 1, background: "#E5E5EA", marginLeft: 4 }} />
         <span
           style={{ fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--text-tertiary)" }}
@@ -2546,6 +2615,7 @@ export default function KwalifikacjaPage() {
           openObjectionId={openObjectionId}
           setOpenObjectionId={setOpenObjectionId}
           smsForceOpen={smsForceOpen}
+          onSmsCopy={() => tally("sms")}
         />
       </div>
     </div>

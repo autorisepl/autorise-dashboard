@@ -7,6 +7,12 @@ const notion = new Client({ auth: process.env.NOTION_TOKEN });
 const PIPELINE_DB_ID = "75ac8bc6fd6d4c36934bedc1270217eb";
 const PIPELINE_DATA_SOURCE_ID = "2ea38355-7529-48f9-8d7f-1c62f5570df3";
 
+// "Autorise Statystyki Dzienne" — osobna baza do ręcznej rejestracji dziennych
+// liczników (Dials, Rozmowy, SMS Wysłane) na potrzeby /statystyki. Jeden wiersz
+// na dzień, klucz to pole "Data".
+const DAILY_STATS_DB_ID = "48177ac606b84395a148da12a6ea10eb";
+const DAILY_STATS_DATA_SOURCE_ID = "b3c20544-a5b1-450c-a757-8a0cb0ca2203";
+
 // --- block helpers ---
 
 function richText(text: string) {
@@ -960,4 +966,90 @@ export async function getKwalifikacjaKnowledge(): Promise<string> {
   } catch {
     return kbCache?.text ?? "";
   }
+}
+
+// --- Statystyki Dzienne (ręczne liczniki: Dials / Rozmowy / SMS) ---
+
+export type DailyStatType = "dial" | "rozmowa" | "sms";
+
+const DAILY_STAT_FIELD: Record<DailyStatType, string> = {
+  dial: "Dials",
+  rozmowa: "Rozmowy",
+  sms: "SMS Wysłane",
+};
+
+async function findDailyStatsRow(dateISO: string): Promise<PageObjectResponse | null> {
+  const response = (await notion.dataSources.query({
+    data_source_id: DAILY_STATS_DATA_SOURCE_ID,
+    filter: { property: "Data", date: { equals: dateISO } },
+    page_size: 1,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } as any)) as { results: PageObjectResponse[] };
+
+  return response.results.find((p): p is PageObjectResponse => p.object === "page") ?? null;
+}
+
+export async function incrementDailyStat(type: DailyStatType): Promise<void> {
+  const dateISO = todayISO();
+  const field = DAILY_STAT_FIELD[type];
+  const existing = await findDailyStatsRow(dateISO);
+
+  if (existing) {
+    const currentProp = existing.properties[field];
+    const current = currentProp?.type === "number" ? (currentProp.number ?? 0) : 0;
+    await notion.pages.update({
+      page_id: existing.id,
+      properties: { [field]: { number: current + 1 } },
+    });
+    return;
+  }
+
+  await notion.pages.create({
+    parent: { database_id: DAILY_STATS_DB_ID },
+    properties: {
+      Nazwa: { title: richText(dateISO) },
+      Data: { date: { start: dateISO } },
+      [field]: { number: 1 },
+    },
+  });
+}
+
+export interface DailyStatsTotals {
+  dials: number;
+  rozmowy: number;
+  sms: number;
+}
+
+export async function getDailyStatsRangeTotals(from: string, to: string): Promise<DailyStatsTotals> {
+  const totals: DailyStatsTotals = { dials: 0, rozmowy: 0, sms: 0 };
+  let cursor: string | undefined;
+
+  do {
+    const response = (await notion.dataSources.query({
+      data_source_id: DAILY_STATS_DATA_SOURCE_ID,
+      filter: {
+        and: [
+          { property: "Data", date: { on_or_after: from } },
+          { property: "Data", date: { on_or_before: to } },
+        ],
+      },
+      page_size: 100,
+      start_cursor: cursor,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any)) as { results: PageObjectResponse[]; has_more: boolean; next_cursor: string | null };
+
+    for (const page of response.results) {
+      if (page.object !== "page") continue;
+      const dials = page.properties["Dials"];
+      const rozmowy = page.properties["Rozmowy"];
+      const sms = page.properties["SMS Wysłane"];
+      if (dials?.type === "number") totals.dials += dials.number ?? 0;
+      if (rozmowy?.type === "number") totals.rozmowy += rozmowy.number ?? 0;
+      if (sms?.type === "number") totals.sms += sms.number ?? 0;
+    }
+
+    cursor = response.has_more ? (response.next_cursor ?? undefined) : undefined;
+  } while (cursor);
+
+  return totals;
 }
