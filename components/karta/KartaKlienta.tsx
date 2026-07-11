@@ -116,8 +116,8 @@ export function KartaKlienta({ clientName, phone, email }: KartaKlientaProps) {
   }, []);
 
   const save = useCallback(
-    async (patch: Partial<CardState>) => {
-      if (!card) return;
+    async (patch: Partial<CardState>): Promise<boolean> => {
+      if (!card) return false;
       const snapshot = card;
       setCard({ ...card, ...patch }); // optimistic
       setSaveStatus("saving");
@@ -139,19 +139,21 @@ export function KartaKlienta({ clientName, phone, email }: KartaKlientaProps) {
           setFound(true);
           if (data.card) setCard(data.card as CardState);
           flashSaved();
-        } else {
-          setCard(snapshot); // rollback
-          setSaveStatus("error");
-          setSaveError(
-            data.error === "scope_required"
-              ? "Brak uprawnień do arkusza."
-              : data.detail || data.error || "Nie udało się zapisać.",
-          );
+          return true;
         }
+        setCard(snapshot); // rollback
+        setSaveStatus("error");
+        setSaveError(
+          data.error === "scope_required"
+            ? "Brak uprawnień do arkusza."
+            : data.detail || data.error || "Nie udało się zapisać.",
+        );
+        return false;
       } catch (err) {
         setCard(snapshot); // rollback
         setSaveStatus("error");
         setSaveError(err instanceof Error ? err.message : "Błąd połączenia.");
+        return false;
       }
     },
     [card, clientName, phone, email, flashSaved],
@@ -160,12 +162,41 @@ export function KartaKlienta({ clientName, phone, email }: KartaKlientaProps) {
   const resetCard = useCallback(async () => {
     if (
       !window.confirm(
-        `Wyczyścić dane karty klienta "${clientName}"? Zostaną skasowane wszystkie notatki, nagrania i statusy etapów.`,
+        `Wyczyścić dane karty klienta "${clientName}" w arkuszu Kontakty ORAZ w karcie Notion Pipeline (analizy agentów, notatki, status wracają do "Nowy lead")? Tej operacji nie można cofnąć.`,
       )
     )
       return;
     setResetPending(true);
-    await save({
+
+    let notionSummary = "Notion: pominięto (brak telefonu i nazwy do wyszukania)";
+    if (phone || clientName.trim()) {
+      try {
+        const res = await fetch("/api/notion/reset-lead", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ telefon: phone, firma: clientName }),
+        });
+        const data = await res.json();
+        if (data.blocked) {
+          window.alert(
+            `Nic nie wyczyszczono. Klient ma w Notion status "${data.status}" — to aktywny lub zakończony klient płacący, reset zablokowany. Nie ruszono też arkusza Google.`,
+          );
+          setResetPending(false);
+          return;
+        }
+        if (data.found === false) {
+          notionSummary = "Notion: lead jeszcze nie istnieje w Pipeline, nic do wyczyszczenia";
+        } else if (data.cleared) {
+          notionSummary = "Notion: karta wyczyszczona, status wrócił do \"Nowy lead\"";
+        } else {
+          notionSummary = `Notion: nie udało się wyczyścić (${data.error || "nieznany błąd"})`;
+        }
+      } catch (err) {
+        notionSummary = `Notion: błąd połączenia (${err instanceof Error ? err.message : "nieznany"})`;
+      }
+    }
+
+    const sheetsOk = await save({
       rozmowaKwalifikacyjna: false,
       notatkiKwalifikacyjne: "",
       nagranieKwalifikacyjne: "",
@@ -185,7 +216,11 @@ export function KartaKlienta({ clientName, phone, email }: KartaKlientaProps) {
       oplaconaFaktura: false,
     });
     setResetPending(false);
-  }, [clientName, save]);
+
+    window.alert(
+      `${notionSummary}\nArkusz Google: ${sheetsOk ? "wyczyszczony" : "błąd zapisu, patrz komunikat na karcie"}`,
+    );
+  }, [clientName, phone, save]);
 
   if (loading) {
     return (
