@@ -630,15 +630,22 @@ export async function updateDiscoveryAnalysis(
 
 // --- Schema migration: add new Pipeline properties ---
 
+async function confirmSchemaFields(fieldNames: string[]): Promise<{ confirmed: string[]; missing: string[] }> {
+  const dataSource = await notion.dataSources.retrieve({ data_source_id: PIPELINE_DATA_SOURCE_ID });
+  const liveProperties = dataSource.properties ?? {};
+  const confirmed = fieldNames.filter((name) => name in liveProperties);
+  const missing = fieldNames.filter((name) => !(name in liveProperties));
+  return { confirmed, missing };
+}
+
 export async function migrateNotionSchema(): Promise<{ added: string[]; errors: string[] }> {
   const added: string[] = [];
   const errors: string[] = [];
 
   // Batch 1: core agent-written fields and calculators
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (notion.databases.update as any)({
-      database_id: PIPELINE_DB_ID,
+    await notion.dataSources.update({
+      data_source_id: PIPELINE_DATA_SOURCE_ID,
       properties: {
         "Hipoteza ból główny": { rich_text: {} },
         "Przewidywane obiekcje": { rich_text: {} },
@@ -683,7 +690,7 @@ export async function migrateNotionSchema(): Promise<{ added: string[]; errors: 
         "Cytaty klienta": { rich_text: {} },
       },
     });
-    added.push(
+    const { confirmed, missing } = await confirmSchemaFields([
       "Hipoteza ból główny",
       "Przewidywane obiekcje",
       "Ryzyka rozmowy",
@@ -712,17 +719,22 @@ export async function migrateNotionSchema(): Promise<{ added: string[]; errors: 
       "Obiekcje",
       "Notatki",
       "Następny krok",
+      "Pitch Recipe",
+      "Liczba prób kontaktu",
       "Cytaty klienta",
-    );
+    ]);
+    added.push(...confirmed);
+    for (const name of missing) {
+      errors.push(`Batch 1: pole "${name}" nie pojawiło się w schemacie po update (brak wyjątku, ale retrieve go nie potwierdza)`);
+    }
   } catch (err) {
     errors.push(`Batch 1: ${err instanceof Error ? err.message : "Błąd migracji schematu"}`);
   }
 
   // Batch 2: date fields, selects, and additional fields
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (notion.databases.update as any)({
-      database_id: PIPELINE_DB_ID,
+    await notion.dataSources.update({
+      data_source_id: PIPELINE_DATA_SOURCE_ID,
       properties: {
         "Data pierwszego kontaktu": { date: {} },
         "Data discovery": { date: {} },
@@ -781,7 +793,7 @@ export async function migrateNotionSchema(): Promise<{ added: string[]; errors: 
         },
       },
     });
-    added.push(
+    const { confirmed, missing } = await confirmSchemaFields([
       "Data pierwszego kontaktu",
       "Data discovery",
       "Data następnego kroku",
@@ -796,7 +808,11 @@ export async function migrateNotionSchema(): Promise<{ added: string[]; errors: 
       "Retainer PLN/mc",
       "Gotowość zakupowa",
       "Pilność",
-    );
+    ]);
+    added.push(...confirmed);
+    for (const name of missing) {
+      errors.push(`Batch 2: pole "${name}" nie pojawiło się w schemacie po update (brak wyjątku, ale retrieve go nie potwierdza)`);
+    }
   } catch (err) {
     errors.push(`Batch 2: ${err instanceof Error ? err.message : "Błąd migracji schematu"}`);
   }
