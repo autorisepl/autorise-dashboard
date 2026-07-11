@@ -2,15 +2,13 @@ import { Client } from "@notionhq/client";
 import type { PageObjectResponse } from "@notionhq/client/build/src/api-endpoints";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { BLOCKED_RESET_STATUSES, LEAD_RESET_PROPERTIES } from "@/lib/notion/resetFields";
 
 export const dynamic = "force-dynamic";
 
 const notion = new Client({ auth: process.env.NOTION_TOKEN });
 // In @notionhq/client v5, databases.query moved to dataSources.query
 const PIPELINE_DATA_SOURCE_ID = "2ea38355-7529-48f9-8d7f-1c62f5570df3";
-
-// Klienci płacący lub zakończeni — reset wymaga ręcznego potwierdzenia, nigdy automatycznego.
-const BLOCKED_STATUSES = ["Kickoff", "Wdrożenie", "Retainer", "Upsell", "Zakończona współpraca"];
 
 const bodySchema = z.object({
   telefon: z.string().optional(),
@@ -112,7 +110,7 @@ export async function POST(request: Request) {
     }
 
     const status = extractSelect(match.properties["Status"]);
-    if (BLOCKED_STATUSES.includes(status)) {
+    if (BLOCKED_RESET_STATUSES.includes(status)) {
       return NextResponse.json({
         success: false,
         found: true,
@@ -122,38 +120,7 @@ export async function POST(request: Request) {
       });
     }
 
-    type NotionProps = Parameters<typeof notion.pages.update>[0]["properties"];
-    const emptyRichText = { rich_text: [] };
-    const properties = {
-      "Hipoteza ból główny": emptyRichText,
-      "Przewidywane obiekcje": emptyRichText,
-      "Ryzyka rozmowy": emptyRichText,
-      "Uwagi Agenta 2": emptyRichText,
-      "Poprzednie próby": emptyRichText,
-      "Koszt problemu PLN/mc": { number: null },
-      "Koszt roczny PLN/rok": { number: null },
-      "Uwagi Agenta 1": emptyRichText,
-      "Uwagi Agenta 4": emptyRichText,
-      "Maile ze zleceniami / dzień": { number: null },
-      "Godziny wpisywania / spedytor": { number: null },
-      "Faktury po terminie / mc": { number: null },
-      "Średnia wartość faktury PLN": { number: null },
-      "Ból główny": emptyRichText,
-      "Podejście TMS": emptyRichText,
-      Obiekcje: emptyRichText,
-      Notatki: emptyRichText,
-      "Następny krok": emptyRichText,
-      "Pitch Recipe": emptyRichText,
-      "Cytaty klienta": emptyRichText,
-      "Personalizacja prezentacji": emptyRichText,
-      "Ocena ICP": { select: null },
-      "Data discovery": { date: null },
-      "Data następnego kroku": { date: null },
-      "Liczba prób kontaktu": { number: 0 },
-      Status: { select: { name: "Nowy lead" } },
-    } as Record<string, unknown> as NotionProps;
-
-    await notion.pages.update({ page_id: match.id, properties });
+    await notion.pages.update({ page_id: match.id, properties: LEAD_RESET_PROPERTIES });
 
     return NextResponse.json({
       success: true,

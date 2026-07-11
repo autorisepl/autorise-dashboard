@@ -474,6 +474,7 @@ export default function AgencjaPage() {
   const [syncResult, setSyncResult] = useState<SheetsSyncResult | null>(null);
   const [resettingStages, setResettingStages] = useState(false);
   const [resetError, setResetError] = useState<string | null>(null);
+  const [resettingAll, setResettingAll] = useState(false);
   const [windowWidth, setWindowWidth] = useState(1200);
 
   const SHEET_ID = "18BjXDFAWDVQnQkrE_1Kmvj0-ZJIGXQejLY6IJOOXnH0";
@@ -560,6 +561,49 @@ export default function AgencjaPage() {
     } finally {
       setResettingStages(false);
     }
+  }, [load]);
+
+  const resetAllEverything = useCallback(async () => {
+    if (
+      !window.confirm(
+        "Wyczyścić WSZYSTKICH kontaktów naraz w arkuszu Kontakty ORAZ w całym Notion Pipeline (analizy agentów, notatki, status wraca do \"Nowy lead\")? Klienci ze statusem Kickoff/Wdrożenie/Retainer/Upsell/Zakończona współpraca zostaną pominięci. Tej operacji nie można cofnąć.",
+      )
+    )
+      return;
+    setResettingAll(true);
+    setResetError(null);
+
+    let notionSummary = "Notion: błąd";
+    try {
+      const res = await fetch("/api/notion/reset-all-leads", { method: "POST" });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        notionSummary = `Notion: wyczyszczono ${data.resetCount}/${data.total}, pominięto ${data.blockedCount} aktywnych/zakończonych klientów`;
+        if (data.errors?.length > 0) {
+          notionSummary += `, ${data.errors.length} błędów`;
+        }
+      } else {
+        notionSummary = `Notion: ${data.error || `błąd (${res.status})`}`;
+      }
+    } catch (err) {
+      notionSummary = `Notion: błąd połączenia (${err instanceof Error ? err.message : "nieznany"})`;
+    }
+
+    let sheetsSummary = "Arkusz: pominięty z powodu błędu Notion";
+    try {
+      const res = await fetch("/api/google/sheets/reset-stages", { method: "POST" });
+      const body = await res.json().catch(() => ({}));
+      sheetsSummary =
+        res.ok && body.success
+          ? `Arkusz: wyczyszczono ${body.resetRows ?? 0} kontaktów`
+          : `Arkusz: ${body.error ?? `błąd (${res.status})`}`;
+    } catch {
+      sheetsSummary = "Arkusz: błąd połączenia";
+    }
+
+    await load();
+    setResettingAll(false);
+    window.alert(`${notionSummary}\n${sheetsSummary}`);
   }, [load]);
 
   const displayHeaders = data ? getDisplayHeaders(data.headers) : [];
@@ -690,6 +734,32 @@ export default function AgencjaPage() {
             style={{ animation: resettingStages ? "spin 0.8s linear infinite" : "none" }}
           />
           {resettingStages ? "Resetuję..." : "Wyczyść kartę"}
+        </button>
+
+        <button
+          onClick={() => void resetAllEverything()}
+          disabled={resettingAll || loading}
+          title="Wyczyść WSZYSTKICH kontaktów naraz w arkuszu Kontakty ORAZ w Notion Pipeline. Klienci Kickoff/Wdrożenie/Retainer/Upsell/Zakończona współpraca są pomijani."
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 5,
+            padding: "5px 10px",
+            background: "transparent",
+            border: "1px solid var(--error-border)",
+            borderRadius: "var(--radius-xs)",
+            cursor: resettingAll || loading ? "default" : "pointer",
+            fontFamily: "var(--font-sans)",
+            fontSize: 12,
+            color: "var(--error)",
+            opacity: resettingAll || loading ? 0.5 : 0.85,
+          }}
+        >
+          <RotateCcw
+            size={11}
+            style={{ animation: resettingAll ? "spin 0.8s linear infinite" : "none" }}
+          />
+          {resettingAll ? "Resetuję wszystko..." : "Wyczyść kartę i Pipeline (wszyscy)"}
         </button>
 
         {resetError && (
