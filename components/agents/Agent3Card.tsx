@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Presentation, Quote } from "lucide-react";
+import { ArrowRight, ExternalLink, Presentation, Quote } from "lucide-react";
 
 export interface Agent3Output {
   hero_stat_godziny?: string | number | null;
@@ -42,9 +42,21 @@ function formatHours(val: number | null | undefined): string {
   return val % 1 === 0 ? `${val}h` : `${val.toFixed(1)}h`;
 }
 
+// prezentacja.html czyta parametry URL "roi"/"po" (nie hero_stat_godziny/roi_dzis_h/roi_po_h
+// jak zwraca Agent 3) — bez tego mapowania spersonalizowane dane Agenta 3 nigdy realnie
+// nie trafiały do prezentacji pokazywanej klientowi.
+function buildPrezentacjaUrl(output: Agent3Output): string {
+  const p = new URLSearchParams();
+  if (output.roi_dzis_h != null) p.set("roi", String(Math.round(output.roi_dzis_h)));
+  if (output.roi_po_h != null) p.set("po", String(Math.round(output.roi_po_h)));
+  const qs = p.toString();
+  return `/prezentacja.html${qs ? `?${qs}` : ""}`;
+}
+
 export function Agent3Card({ output }: { output: Agent3Output }) {
   const hasRoi =
     output.roi_dzis_h != null || output.roi_po_h != null || output.roi_roznica_h != null;
+  const prezentacjaUrl = buildPrezentacjaUrl(output);
 
   return (
     <div
@@ -92,21 +104,30 @@ export function Agent3Card({ output }: { output: Agent3Output }) {
             HTML Prezentacja · Dane gotowe
           </div>
         </div>
-        <div
+        <a
+          href={prezentacjaUrl}
+          target="_blank"
+          rel="noreferrer"
           style={{
-            width: 36,
-            height: 36,
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "8px 14px",
             borderRadius: 10,
             background: "rgba(26,86,255,0.10)",
             border: "1px solid rgba(26,86,255,0.22)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
             flexShrink: 0,
+            textDecoration: "none",
+            fontFamily: "var(--font-system)",
+            fontSize: 12,
+            fontWeight: 600,
+            color: "#1a56ff",
           }}
         >
-          <Presentation size={16} color="#1a56ff" />
-        </div>
+          <Presentation size={15} />
+          Otwórz prezentację
+          <ExternalLink size={11} />
+        </a>
       </div>
 
       <div style={{ padding: "20px 24px" }}>
