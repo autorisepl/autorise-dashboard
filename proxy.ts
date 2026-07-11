@@ -13,6 +13,7 @@ const SETTER_ALLOWED_PREFIXES = [
   "/api/notion",
   "/api/agents",
   "/api/google",
+  "/api/stats/tally",
 ];
 
 export function proxy(request: NextRequest) {
