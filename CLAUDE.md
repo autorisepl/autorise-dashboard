@@ -97,7 +97,7 @@ Nagrywanie: kwalifikacja to komputerowa nagrywarka (AudioRecorder w `/narzedzia`
 
 ## Prezentacja (public/prezentacja.html)
 
-Statyczny plik HTML/JS poza Next.js, celowo zero-dependency: fonty przez Google Fonts `<link>` (Manrope + JetBrains Mono, z preload na oba pliki woff2), ikony jako inline SVG Tabler (nie webfont), brak frameworka, brak build stepu.
+Statyczny plik HTML/JS poza Next.js, celowo zero-dependency: fonty przez Google Fonts `<link>` (Manrope + Roboto Mono, z preload na oba pliki woff2), ikony jako inline SVG Tabler (nie webfont), brak frameworka, brak build stepu. Roboto Mono max waga 700 (nie 800, sprawdzone realnie przez Google Fonts API — ten sam wzorzec co Manrope max 800 nie 900).
 
 Dokładny łańcuch skąd biorą się dane personalizacji, żeby to pytanie nie wymagało wyjaśniania od zera:
 
@@ -252,6 +252,7 @@ context/AUTORISE_PRIORYTETY_v1.md          — jedyne źródło prawdy o prioryt
 | 2026-07-03 | MEGA PATCH scripts-v3 + Sesja 2 redesign etapowy: /kwalifikacja, /sprzedaz, /mapa, /brand-book jako nowe widoki; Roboto; nawigacja 4 grupy |
 | 2026-07-03 | Skrypt Kwalifikacyjny V4: 12 kroków, ICP wbudowane w diagnozę, kalkulator inline krok 2.6, Calendly, Fathom usunięty z kwalifikacji, jawne branch notes 2.1-2.8, fix ok_em/ok7 |
 | 2026-07-12 | prezentacja.html: drugi tor personalizacji przez `?id=` (bez AI) — nowy `GET /api/notion/prezentacja-dane`, fetch z loading state, wyróżnienie modułu wg `bol_kategoria`, oś czasu na slajdzie 5, realne dane inwestycji na slajdzie 6 z honest fallbackami. Stary tor URL-params nietknięty jako fallback |
+| 2026-07-12 | 4 fixy: wyblakłe karty slajd 2 (stagger timing), font JetBrains→Roboto Mono (max waga 700), zwijany ClientSidebar w /kwalifikacja+/sprzedaz (współdzielony localStorage klucz), przycisk "Otwórz prezentację" w Pipeline+ClientSidebar dla dowolnego klienta |
 
 ## LOGI SESJI (OBOWIĄZKOWE)
 
