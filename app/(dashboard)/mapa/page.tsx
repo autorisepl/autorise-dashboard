@@ -1,23 +1,28 @@
 "use client";
 
 import {
+  ArrowDown,
   ArrowRight,
   Check,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
   Database,
+  Flag,
   GitBranch,
   Loader2,
   RefreshCw,
+  RotateCcw,
+  ShieldCheck,
   Split,
   X,
   Zap,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import type { PipelineClientDetailed } from "@/app/api/notion/pipeline/route";
-import { OBJECTIONS_K, STEPS_K } from "@/lib/scripts/kwalifikacyjna";
+import { SectionLabel } from "@/components/ui/SectionLabel";
 import { OBJECTIONS_D, STEPS_D } from "@/lib/scripts/discovery";
+import { OBJECTIONS_K, STEPS_K } from "@/lib/scripts/kwalifikacyjna";
 import type { Objection, Step } from "@/lib/scripts/types";
 
 // ── Blueprint danych — DATA_FLOW ──────────────────────────────────────
@@ -337,9 +342,7 @@ function StepRow({
   const opis = firstLineText(step);
 
   const findLabel = (id: string) =>
-    allSteps.find((s) => s.id === id)?.label ??
-    objections.find((o) => o.id === id)?.label ??
-    id;
+    allSteps.find((s) => s.id === id)?.label ?? objections.find((o) => o.id === id)?.label ?? id;
 
   return (
     <div style={{ marginBottom: 4 }}>
@@ -406,7 +409,9 @@ function StepRow({
         )}
       </button>
       {open && (
-        <div style={{ padding: "8px 10px 8px 34px", display: "flex", flexDirection: "column", gap: 6 }}>
+        <div
+          style={{ padding: "8px 10px 8px 34px", display: "flex", flexDirection: "column", gap: 6 }}
+        >
           {opis && (
             <p
               style={{
@@ -428,7 +433,13 @@ function StepRow({
                 {opt.trigger}
               </span>
               {(opt.goToStepId || opt.openObjectionId) && (
-                <span style={{ fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--text-tertiary)" }}>
+                <span
+                  style={{
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 11,
+                    color: "var(--text-tertiary)",
+                  }}
+                >
                   : {findLabel(opt.goToStepId ?? opt.openObjectionId ?? "")}
                 </span>
               )}
@@ -437,7 +448,13 @@ function StepRow({
           {!step.decision && step.nextStepId && (
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <ArrowRight size={10} color="var(--text-tertiary)" style={{ flexShrink: 0 }} />
-              <span style={{ fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--text-tertiary)" }}>
+              <span
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 11,
+                  color: "var(--text-tertiary)",
+                }}
+              >
                 {findLabel(step.nextStepId)}
               </span>
             </div>
@@ -451,7 +468,14 @@ function StepRow({
 function ScriptTreeView() {
   const [openPhase, setOpenPhase] = useState<"k" | "d" | null>("k");
 
-  const phases: { id: "k" | "d"; label: string; sublabel: string; color: string; steps: Step[]; objections: Objection[] }[] = [
+  const phases: {
+    id: "k" | "d";
+    label: string;
+    sublabel: string;
+    color: string;
+    steps: Step[];
+    objections: Objection[];
+  }[] = [
     {
       id: "k",
       label: "Kwalifikacja",
@@ -508,7 +532,13 @@ function ScriptTreeView() {
               >
                 {phase.label}
               </span>
-              <span style={{ fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--text-tertiary)" }}>
+              <span
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 11,
+                  color: "var(--text-tertiary)",
+                }}
+              >
                 {phase.sublabel}
               </span>
             </button>
@@ -621,11 +651,803 @@ const STAGES = [
   },
 ];
 
+// ── Pełny lejek — paleta dokumentowa (spójna z public/prezentacja.html) ──
+
+const LJ_ASPHALT = "#1B1D22";
+const LJ_ACCENT = "#F5A623";
+const LJ_RED = "#C1443A";
+const LJ_SUCCESS = "#2F7D5C";
+const LJ_BORDER = "rgba(27,29,34,0.14)";
+const LJ_BORDER_STRONG = "rgba(27,29,34,0.24)";
+
+const SOURCE_OPTIONS = ["META Ads", "Polecenie", "LinkedIn", "Cold outreach", "Inne"];
+
+type FunnelTone = "neutral" | "accent" | "success" | "negative" | "source";
+
+interface FunnelBranch {
+  label: string;
+  targetId: string;
+  tone: FunnelTone;
+  note: string;
+}
+
+interface FunnelSubStep {
+  week: string;
+  label: string;
+}
+
+interface FunnelReturnItem {
+  label: string;
+}
+
+interface FunnelNode {
+  id: string;
+  nr: string;
+  title: string;
+  subtitle?: string;
+  tone: FunnelTone;
+  isBranch?: boolean;
+  agent: string;
+  entry: string;
+  exit: string;
+  statusKey?: string;
+  branches?: FunnelBranch[];
+  subSteps?: FunnelSubStep[];
+  returnItems?: FunnelReturnItem[];
+  loopNote?: string;
+  endNote?: string;
+}
+
+const FUNNEL_NODES: FunnelNode[] = [
+  {
+    id: "source",
+    nr: "00",
+    title: "Źródło leada",
+    subtitle: "Pole Źródło",
+    tone: "source",
+    agent: "Pole Źródło w Notion Pipeline: META Ads, Polecenie, LinkedIn, Cold outreach, Inne.",
+    entry: "Formularz wypełniony albo pierwszy kontakt nawiązany jednym z kanałów.",
+    exit: "Agent 0 rejestruje lead w Pipeline i wzbogaca dane firmowe (KRS, MF), zanim trafi do setterów.",
+  },
+  {
+    id: "nowy-lead",
+    nr: "01",
+    title: "Nowy lead",
+    tone: "neutral",
+    agent: "Agent 0: rejestracja i wzbogacenie danych (KRS, MF), zanim setter wykona pierwszy telefon.",
+    entry: "Lead pojawił się z jednego ze źródeł i został zapisany w Pipeline.",
+    exit: "Setter dzwoni pierwszy raz według skryptu kwalifikacyjnego: status zmienia się na Kwalifikacja.",
+    statusKey: "Nowy lead",
+  },
+  {
+    id: "kwalifikacja",
+    nr: "02",
+    title: "Kwalifikacja",
+    tone: "accent",
+    isBranch: true,
+    agent:
+      "Agent 1, kwalifikacja telefoniczna (Sonnet 4.6): ocenia ICP na żywo podczas rozmowy i zapisuje wynik wprost do Pipeline.",
+    entry: "Setter przeprowadził rozmowę według skryptu kwalifikacyjnego (Opening, Diagnoza, Spotkanie).",
+    exit: "Agent 1 klasyfikuje rozmowę na jedną z trzech gałęzi.",
+    statusKey: "Kwalifikacja",
+    branches: [
+      {
+        label: "Discovery umówione",
+        targetId: "discovery-umowione",
+        tone: "neutral",
+        note: "ICP spełnione i termin Discovery Call potwierdzony w Calendly.",
+      },
+      {
+        label: "Nieaktywny (follow up)",
+        targetId: "nieaktywny",
+        tone: "accent",
+        note: "ICP spełnione, ale konkretny, udokumentowany powód odroczenia.",
+      },
+      {
+        label: "Niekwalifikowany",
+        targetId: "niekwalifikowany",
+        tone: "negative",
+        note: "ICP nie pasuje albo brak decydenta po stronie klienta.",
+      },
+    ],
+  },
+  {
+    id: "discovery-umowione",
+    nr: "03",
+    title: "Discovery umówione",
+    tone: "neutral",
+    agent:
+      "Agent 2, pre-discovery brief (Opus 4.8, extended thinking): hipoteza bólu, przewidywane obiekcje, pitch recipe. Agent 3 personalizuje prezentację pod ten brief.",
+    entry: "Agent 1 zakwalifikował leada, a termin Discovery Call jest potwierdzony.",
+    exit: "Discovery Call się odbywa (Fathom nagrywa rozmowę), po czym Agent 4 analizuje wynik.",
+    statusKey: "Discovery umówione",
+  },
+  {
+    id: "discovery-analiza",
+    nr: "04",
+    title: "Discovery Call",
+    subtitle: "Analiza rozmowy",
+    tone: "accent",
+    isBranch: true,
+    agent:
+      "Agent 4, analiza Discovery Call (Sonnet 4.6): czyta transkrypt i klasyfikuje wynik w polu Wynik Discovery (TAK / NIE / W TRAKCIE).",
+    entry: "Spotkanie Discovery Call się odbyło i transkrypt jest dostępny do analizy.",
+    exit:
+      "TAK: Finalizacja. NIE: Niekwalifikowany. W TRAKCIE: klient zostaje w Discovery umówione do czasu decyzji.",
+    branches: [
+      {
+        label: "Finalizacja",
+        targetId: "finalizacja",
+        tone: "neutral",
+        note: "Wynik Discovery: TAK.",
+      },
+      {
+        label: "Niekwalifikowany",
+        targetId: "niekwalifikowany",
+        tone: "negative",
+        note: "Wynik Discovery: NIE.",
+      },
+    ],
+  },
+  {
+    id: "finalizacja",
+    nr: "05",
+    title: "Finalizacja",
+    tone: "neutral",
+    agent: "Ręcznie: rozmowa finalizacyjna, obsługa obiekcji cenowych, przygotowanie i podpisanie umowy.",
+    entry: "Agent 4 ocenił wynik Discovery Call jako TAK.",
+    exit: "Umowa podpisana albo przedpłata potwierdzona: status zmienia się na Kickoff.",
+    statusKey: "Finalizacja",
+  },
+  {
+    id: "kickoff",
+    nr: "06",
+    title: "Kickoff",
+    tone: "neutral",
+    agent: "Ręcznie: onboarding, konfiguracja dostępów, ustalenie harmonogramu wdrożenia z klientem.",
+    entry: "Umowa podpisana albo przedpłata potwierdzona.",
+    exit: "Start czterotygodniowego procesu wdrożenia.",
+    statusKey: "Kickoff",
+  },
+  {
+    id: "wdrozenie",
+    nr: "07",
+    title: "Wdrożenie",
+    subtitle: "4 tygodnie",
+    tone: "neutral",
+    agent:
+      "Zespół wdrożeniowy: Discovery procesów, integracja z TMS, testy na realnych danych, uruchomienie live.",
+    entry: "Kickoff zakończony, dostępy skonfigurowane.",
+    exit: "System działa na produkcji: zaczyna się 30-dniowe okno weryfikacji gwarancji.",
+    statusKey: "Wdrożenie",
+    subSteps: [
+      { week: "Tydzień 1", label: "Discovery procesów" },
+      { week: "Tydzień 2-3", label: "Integracja z TMS" },
+      { week: "Tydzień 3", label: "Testy na danych" },
+      { week: "Tydzień 4", label: "Live" },
+    ],
+  },
+  {
+    id: "weryfikacja",
+    nr: "08",
+    title: "Weryfikacja gwarancji",
+    subtitle: "30 dni",
+    tone: "neutral",
+    agent: "Porównanie godzin zaoszczędzonych miesięcznie z progiem gwarancji (minimum 80h/mc).",
+    entry: "System działa na produkcji od co najmniej 30 dni na realnych zleceniach.",
+    exit:
+      "Próg spełniony: Retainer. Próg niespełniony: renegocjacja zakresu albo przedłużenie wdrożenia, obsługiwane ręcznie.",
+  },
+  {
+    id: "retainer",
+    nr: "09",
+    title: "Retainer",
+    tone: "success",
+    agent: "Opieka stała: monitoring wykorzystania, kontakt cykliczny, wsparcie bieżące.",
+    entry: "Gwarancja potwierdzona: minimum 80h/mc zaoszczędzone po 30 dniach.",
+    exit: "Ciągła współpraca. Wyzwalacz rozszerzenia zakresu przenosi klienta do Upsell.",
+    statusKey: "Retainer",
+  },
+  {
+    id: "upsell",
+    nr: "10",
+    title: "Upsell",
+    tone: "accent",
+    isBranch: true,
+    agent:
+      "Inicjowane ręcznie przez opiekuna klienta, gdy pojawi się wyzwalacz: nowy oddział, rozszerzenie floty o kolejne pojazdy, albo dodatkowy moduł nie wdrożony przy pierwszym zakresie (np. Payment Monitor, WhatsApp Alerts).",
+    entry: "Klient jest aktywny na Retainer i pojawia się konkretny wyzwalacz rozszerzenia.",
+    exit: "Nowy zakres wdrożony: klient wraca na Retainer. Pętla może się powtórzyć przy kolejnym wyzwalaczu.",
+    statusKey: "Upsell",
+    loopNote:
+      "Węzeł zawija się do samego siebie: ten sam klient może przechodzić przez Upsell wielokrotnie w trakcie współpracy.",
+  },
+  {
+    id: "zakonczona",
+    nr: "11",
+    title: "Zakończona współpraca",
+    tone: "success",
+    agent:
+      "Kontrakt wygasa albo zostaje zakończony z dowolnego powodu: koniec umowy, redukcja floty, zmiana strategii klienta.",
+    entry: "Retainer albo Upsell kończy się z dowolnego powodu.",
+    exit: "Węzeł końcowy dla aktywnej współpracy, ale nie ślepy koniec dla relacji.",
+    statusKey: "Zakończona współpraca",
+    endNote: "Jeśli klient wraca po jakimś czasie: proces startuje ponownie od Kwalifikacja, jako re-engagement.",
+  },
+  {
+    id: "niekwalifikowany",
+    nr: "N1",
+    title: "Niekwalifikowany",
+    tone: "negative",
+    agent: "Wynik decyzji Agenta 1 (kwalifikacja telefoniczna) albo Agenta 4 (analiza Discovery Call).",
+    entry: "ICP nie pasuje, brak decydenta, brak bólu albo jawna odmowa w dowolnym momencie procesu.",
+    exit: "Karta zostaje w Pipeline. Uczciwy wynik, nie porażka: może wrócić przez re-engagement, jeśli sytuacja klienta się zmieni.",
+    statusKey: "Niekwalifikowany",
+    returnItems: [{ label: "Poza ICP: re-engagement" }],
+  },
+  {
+    id: "nieaktywny",
+    nr: "N2",
+    title: "Nieaktywny (follow up)",
+    tone: "accent",
+    agent: "Agent 1: wyraźne 'nie teraz' z konkretnym, udokumentowanym powodem, nigdy ogólnikowe odłożenie.",
+    entry:
+      "Klient spełnia ICP, ale ma udokumentowany powód: urlop dłuższy niż dwa tygodnie, aktualnie wdraża inny TMS, budżet dostępny dopiero za X miesięcy, brak bólu po dwóch próbach kontaktu.",
+    exit: "Agent ustala datę re-engagement (plus 30 dni, jeśli klient jej nie podał) i wraca do Kwalifikacja z jednym z pięciu typów follow-up.",
+    statusKey: "Nieaktywny (follow up)",
+    returnItems: [
+      { label: "Dograne wspólnika/decydenta" },
+      { label: "Brak 2 minut" },
+      { label: "Re-engagement" },
+      { label: "Po Discovery: niezdecydowany" },
+      { label: "Poza ICP: re-engagement" },
+    ],
+  },
+];
+
+function funnelToneColor(tone: FunnelTone): string {
+  switch (tone) {
+    case "accent":
+      return LJ_ACCENT;
+    case "success":
+      return LJ_SUCCESS;
+    case "negative":
+      return LJ_RED;
+    case "source":
+      return LJ_BORDER_STRONG;
+    default:
+      return LJ_ASPHALT;
+  }
+}
+
+function FunnelStamp({ nr, tone }: { nr: string; tone: FunnelTone }) {
+  const color = funnelToneColor(tone);
+  return (
+    <div
+      style={{
+        width: 32,
+        height: 32,
+        flexShrink: 0,
+        transform: "rotate(-4deg)",
+        border: `1.5px solid ${color}`,
+        background: "#fff",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <span
+        style={{
+          fontFamily: "var(--font-jetbrains-mono)",
+          fontSize: 11,
+          fontWeight: 800,
+          color,
+        }}
+      >
+        {nr}
+      </span>
+    </div>
+  );
+}
+
+interface FunnelCardProps {
+  node: FunnelNode;
+  count: number | null;
+  active: boolean;
+  onClick: () => void;
+  compact?: boolean;
+}
+
+function FunnelCard({ node, count, active, onClick, compact }: FunnelCardProps) {
+  const [hover, setHover] = useState(false);
+  const color = funnelToneColor(node.tone);
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        display: "flex",
+        alignItems: "flex-start",
+        gap: 12,
+        width: compact ? 260 : "100%",
+        maxWidth: compact ? 260 : 560,
+        textAlign: "left",
+        cursor: "pointer",
+        padding: compact ? "9px 11px" : "13px 16px",
+        background: active ? "rgba(0,0,0,0.03)" : hover ? "rgba(0,0,0,0.015)" : "#fff",
+        border: `1px solid ${active ? color : LJ_BORDER}`,
+        borderBottom: `2px solid ${active ? color : LJ_BORDER_STRONG}`,
+        borderRadius: 6,
+        transition: "background 120ms, border-color 120ms",
+      }}
+    >
+      <FunnelStamp nr={node.nr} tone={node.tone} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: compact ? 12.5 : 14,
+              fontWeight: 700,
+              color: "var(--text-primary)",
+            }}
+          >
+            {node.title}
+          </span>
+          {node.isBranch && <Split size={12} color={LJ_ACCENT} />}
+        </div>
+        {node.subtitle && (
+          <div
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 11,
+              color: "var(--text-tertiary)",
+              marginTop: 1,
+            }}
+          >
+            {node.subtitle}
+          </div>
+        )}
+        {count !== null && (
+          <div
+            style={{
+              fontFamily: "var(--font-jetbrains-mono)",
+              fontSize: 11,
+              fontWeight: 700,
+              color,
+              marginTop: 4,
+            }}
+          >
+            {count} {count === 1 ? "karta dziś" : "kart dziś"}
+          </div>
+        )}
+        {node.subSteps && (
+          <div style={{ display: "flex", gap: 4, marginTop: 8, flexWrap: "wrap" }}>
+            {node.subSteps.map((s) => (
+              <div
+                key={s.week}
+                style={{
+                  padding: "3px 7px",
+                  border: `1px solid ${LJ_BORDER}`,
+                  borderRadius: 4,
+                  background: "var(--bg)",
+                }}
+              >
+                <span
+                  style={{
+                    fontFamily: "var(--font-jetbrains-mono)",
+                    fontSize: 8.5,
+                    fontWeight: 700,
+                    color: "var(--text-tertiary)",
+                  }}
+                >
+                  {s.week}
+                </span>
+                <span
+                  style={{
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 10,
+                    color: "var(--text-primary)",
+                    marginLeft: 4,
+                  }}
+                >
+                  {s.label}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </button>
+  );
+}
+
+function BranchPillRow({
+  branches,
+  onSelect,
+}: {
+  branches: FunnelBranch[];
+  onSelect: (id: string) => void;
+}) {
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8, marginLeft: 44 }}>
+      {branches.map((b) => {
+        const color = funnelToneColor(b.tone);
+        return (
+          <button
+            key={b.label}
+            onClick={() => onSelect(b.targetId)}
+            title={b.note}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
+              padding: "3px 8px",
+              borderRadius: 4,
+              border: `1px solid ${color}`,
+              background: "#fff",
+              fontFamily: "var(--font-sans)",
+              fontSize: 10.5,
+              fontWeight: 600,
+              color,
+              cursor: "pointer",
+            }}
+          >
+            <Split size={9} />
+            {b.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function Connector() {
+  return (
+    <div style={{ display: "flex", justifyContent: "center", padding: "3px 0" }}>
+      <ArrowDown size={16} color="var(--text-tertiary)" strokeWidth={1.5} />
+    </div>
+  );
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ marginBottom: 10 }}>
+      <div
+        style={{
+          fontFamily: "var(--font-sans)",
+          fontSize: 9.5,
+          fontWeight: 700,
+          letterSpacing: "0.06em",
+          textTransform: "uppercase",
+          color: "var(--text-tertiary)",
+          marginBottom: 2,
+        }}
+      >
+        {label}
+      </div>
+      <div
+        style={{
+          fontFamily: "var(--font-sans)",
+          fontSize: 12.5,
+          color: "var(--text-primary)",
+          lineHeight: 1.5,
+        }}
+      >
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function NodeDetail({ node, count }: { node: FunnelNode; count: number | null }) {
+  const color = funnelToneColor(node.tone);
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+        <FunnelStamp nr={node.nr} tone={node.tone} />
+        <div>
+          <div
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 15,
+              fontWeight: 700,
+              color: "var(--text-primary)",
+            }}
+          >
+            {node.title}
+          </div>
+          {node.subtitle && (
+            <div
+              style={{ fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--text-tertiary)" }}
+            >
+              {node.subtitle}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {count !== null && (
+        <div
+          style={{
+            marginBottom: 14,
+            padding: "10px 12px",
+            border: `1px solid ${color}`,
+            borderRadius: 6,
+            background: "#fff",
+          }}
+        >
+          <div
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 9.5,
+              fontWeight: 700,
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              color: "var(--text-tertiary)",
+            }}
+          >
+            Dziś w Pipeline
+          </div>
+          <div
+            style={{
+              fontFamily: "var(--font-jetbrains-mono)",
+              fontSize: 26,
+              fontWeight: 800,
+              color,
+              marginTop: 2,
+            }}
+          >
+            {count}
+          </div>
+        </div>
+      )}
+
+      <DetailRow label="Agent / mechanizm" value={node.agent} />
+      <DetailRow label="Warunek wejścia" value={node.entry} />
+      <DetailRow label="Warunek wyjścia" value={node.exit} />
+
+      {node.branches && (
+        <div style={{ marginTop: 14 }}>
+          <SectionLabel>Rozgałęzienie</SectionLabel>
+          {node.branches.map((b) => (
+            <div
+              key={b.label}
+              style={{
+                padding: "8px 10px",
+                border: `1px solid ${LJ_BORDER}`,
+                borderRadius: 6,
+                marginBottom: 6,
+              }}
+            >
+              <div
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: funnelToneColor(b.tone),
+                }}
+              >
+                {b.label}
+              </div>
+              <div
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 11,
+                  color: "var(--text-tertiary)",
+                  marginTop: 2,
+                }}
+              >
+                {b.note}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {node.returnItems && (
+        <div
+          style={{ marginTop: 14, padding: "10px 12px", border: `1px dashed ${color}`, borderRadius: 6 }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+            <RotateCcw size={12} color={color} />
+            <span style={{ fontFamily: "var(--font-sans)", fontSize: 11, fontWeight: 700, color }}>
+              Powrót do Kwalifikacja
+            </span>
+          </div>
+          {node.returnItems.map((r) => (
+            <div
+              key={r.label}
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 11.5,
+                color: "var(--text-secondary)",
+                padding: "2px 0",
+              }}
+            >
+              {r.label}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {node.loopNote && (
+        <div
+          style={{
+            marginTop: 14,
+            padding: "10px 12px",
+            border: `1px dashed ${color}`,
+            borderRadius: 6,
+            display: "flex",
+            gap: 8,
+          }}
+        >
+          <RotateCcw size={14} color={color} style={{ flexShrink: 0, marginTop: 1 }} />
+          <span style={{ fontFamily: "var(--font-sans)", fontSize: 11.5, color: "var(--text-secondary)" }}>
+            {node.loopNote}
+          </span>
+        </div>
+      )}
+
+      {node.endNote && (
+        <div
+          style={{
+            marginTop: 14,
+            padding: "10px 12px",
+            border: `1px dashed ${LJ_BORDER_STRONG}`,
+            borderRadius: 6,
+            display: "flex",
+            gap: 8,
+          }}
+        >
+          <RotateCcw size={14} color="var(--text-tertiary)" style={{ flexShrink: 0, marginTop: 1 }} />
+          <span style={{ fontFamily: "var(--font-sans)", fontSize: 11.5, color: "var(--text-secondary)" }}>
+            {node.endNote}
+          </span>
+        </div>
+      )}
+
+      {node.id === "source" && (
+        <div style={{ marginTop: 14 }}>
+          <SectionLabel>Kanały</SectionLabel>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {SOURCE_OPTIONS.map((s) => (
+              <span
+                key={s}
+                style={{
+                  padding: "3px 8px",
+                  borderRadius: 4,
+                  border: `1px solid ${LJ_BORDER}`,
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 11,
+                  color: "var(--text-secondary)",
+                }}
+              >
+                {s}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LejekView({ clients }: { clients: PipelineClientDetailed[] }) {
+  const [selectedNodeId, setSelectedNodeId] = useState<string>("kwalifikacja");
+
+  const statusCounts: Record<string, number> = {};
+  for (const c of clients) statusCounts[c.status] = (statusCounts[c.status] ?? 0) + 1;
+
+  const nodeById = (id: string): FunnelNode => {
+    const node = FUNNEL_NODES.find((n) => n.id === id);
+    if (!node) throw new Error(`Nieznany węzeł lejka: ${id}`);
+    return node;
+  };
+
+  const renderCard = (id: string, compact = false) => {
+    const node = nodeById(id);
+    const count = node.statusKey ? (statusCounts[node.statusKey] ?? 0) : null;
+    return (
+      <FunnelCard
+        node={node}
+        count={count}
+        active={selectedNodeId === id}
+        onClick={() => setSelectedNodeId(id)}
+        compact={compact}
+      />
+    );
+  };
+
+  const selectedNode = nodeById(selectedNodeId);
+  const selectedCount = selectedNode.statusKey ? (statusCounts[selectedNode.statusKey] ?? 0) : null;
+
+  return (
+    <div style={{ flex: 1, display: "flex", minHeight: 0, overflow: "hidden" }} className="lejek-root">
+      <style>{`
+        @media (max-width: 900px) {
+          .lejek-root { flex-direction: column !important; overflow-y: auto !important; }
+          .lejek-spine { flex: none !important; overflow-y: visible !important; }
+          .lejek-panel { width: 100% !important; flex-shrink: 0 !important; border-left: none !important; border-top: 1px solid ${LJ_BORDER}; max-height: none !important; overflow-y: visible !important; }
+        }
+      `}</style>
+
+      <div className="lejek-spine" style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "24px 24px 56px" }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", maxWidth: 620, margin: "0 auto" }}>
+          <p
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 12,
+              color: "var(--text-tertiary)",
+              textAlign: "center",
+              marginBottom: 20,
+              maxWidth: 480,
+              lineHeight: 1.5,
+            }}
+          >
+            Kliknij dowolny węzeł, żeby zobaczyć mechanizm, warunki przejścia i liczbę kart Pipeline dziś w tym
+            statusie.
+          </p>
+
+          {renderCard("source")}
+          <Connector />
+          {renderCard("nowy-lead")}
+          <Connector />
+          {renderCard("kwalifikacja")}
+          <BranchPillRow branches={nodeById("kwalifikacja").branches ?? []} onSelect={setSelectedNodeId} />
+          <div style={{ display: "flex", gap: 10, marginTop: 10, marginLeft: 44, flexWrap: "wrap" }}>
+            {renderCard("nieaktywny", true)}
+            {renderCard("niekwalifikowany", true)}
+          </div>
+          <Connector />
+          {renderCard("discovery-umowione")}
+          <Connector />
+          {renderCard("discovery-analiza")}
+          <BranchPillRow
+            branches={nodeById("discovery-analiza").branches ?? []}
+            onSelect={setSelectedNodeId}
+          />
+          <Connector />
+          {renderCard("finalizacja")}
+          <Connector />
+          {renderCard("kickoff")}
+          <Connector />
+          {renderCard("wdrozenie")}
+          <Connector />
+          {renderCard("weryfikacja")}
+          <Connector />
+          {renderCard("retainer")}
+          <Connector />
+          {renderCard("upsell")}
+          <Connector />
+          {renderCard("zakonczona")}
+        </div>
+      </div>
+
+      <div
+        className="lejek-panel"
+        style={{
+          width: 340,
+          flexShrink: 0,
+          minHeight: 0,
+          borderLeft: `1px solid ${LJ_BORDER}`,
+          overflowY: "auto",
+          background: "var(--bg)",
+          padding: 20,
+        }}
+      >
+        <NodeDetail node={selectedNode} count={selectedCount} />
+      </div>
+    </div>
+  );
+}
+
 export default function MapaPage() {
   const [clients, setClients] = useState<PipelineClientDetailed[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string>("");
-  const [view, setView] = useState<"etapy" | "drzewo" | "blueprint">("etapy");
+  const [view, setView] = useState<"etapy" | "drzewo" | "blueprint" | "lejek">("etapy");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -696,7 +1518,7 @@ export default function MapaPage() {
               gap: 2,
             }}
           >
-            {(["etapy", "drzewo", "blueprint"] as const).map((v) => (
+            {(["etapy", "drzewo", "blueprint", "lejek"] as const).map((v) => (
               <button
                 key={v}
                 onClick={() => setView(v)}
@@ -714,7 +1536,13 @@ export default function MapaPage() {
                   transition: "all 120ms",
                 }}
               >
-                {v === "etapy" ? "Widok etapów" : v === "drzewo" ? "Drzewo kroków" : "Blueprint danych"}
+                {v === "etapy"
+                  ? "Widok etapów"
+                  : v === "drzewo"
+                    ? "Drzewo kroków"
+                    : v === "blueprint"
+                      ? "Blueprint danych"
+                      : "Pełny lejek"}
               </button>
             ))}
           </div>
@@ -863,6 +1691,9 @@ export default function MapaPage() {
 
       {/* Script tree view */}
       {view === "drzewo" && <ScriptTreeView />}
+
+      {/* Pełny lejek */}
+      {view === "lejek" && <LejekView clients={clients} />}
 
       {/* Stages */}
       {view === "etapy" &&
