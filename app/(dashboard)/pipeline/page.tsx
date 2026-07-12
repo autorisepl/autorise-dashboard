@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Loader2, Mail, Phone, RefreshCw, X } from "lucide-react";
+import { ArrowRight, ExternalLink, Loader2, Mail, Phone, RefreshCw, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import type { PipelineClientDetailed } from "@/app/api/notion/pipeline/route";
 import { Button } from "@/components/ui/Button";
@@ -361,7 +361,7 @@ function ClientPanel({ client, onClose }: { client: PipelineClientDetailed; onCl
           ))}
         </div>
 
-        <div style={{ marginTop: 20 }}>
+        <div style={{ marginTop: 20, display: "flex", gap: 8, flexWrap: "wrap" }}>
           <a
             href={`https://notion.so/${client.id.replace(/-/g, "")}`}
             target="_blank"
@@ -381,6 +381,27 @@ function ClientPanel({ client, onClose }: { client: PipelineClientDetailed; onCl
           >
             <ArrowRight size={12} />
             Otwórz w Notion
+          </a>
+          <a
+            href={`/prezentacja.html?id=${encodeURIComponent(client.id)}`}
+            target="_blank"
+            rel="noreferrer"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 5,
+              fontSize: 12,
+              color: "var(--accent)",
+              textDecoration: "none",
+              padding: "6px 10px",
+              border: "1px solid var(--accent-border)",
+              background: "var(--accent-muted)",
+              borderRadius: "var(--radius-xs)",
+              fontFamily: "var(--font-sans)",
+            }}
+          >
+            <ExternalLink size={12} />
+            Otwórz prezentację
           </a>
         </div>
       </div>

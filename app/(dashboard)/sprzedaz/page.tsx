@@ -1481,7 +1481,8 @@ function ClientSidebar({
         flexDirection: "column",
         background: "#fff",
         position: "relative",
-        transition: "width 240ms cubic-bezier(0.4, 0, 0.2, 1), min-width 240ms cubic-bezier(0.4, 0, 0.2, 1)",
+        transition:
+          "width 240ms cubic-bezier(0.4, 0, 0.2, 1), min-width 240ms cubic-bezier(0.4, 0, 0.2, 1)",
         overflow: "hidden",
       }}
     >
@@ -1533,7 +1534,9 @@ function ClientSidebar({
         </div>
       ) : (
         <>
-          <div style={{ padding: "12px 12px 8px", borderBottom: "1px solid #E5E5EA", flexShrink: 0 }}>
+          <div
+            style={{ padding: "12px 12px 8px", borderBottom: "1px solid #E5E5EA", flexShrink: 0 }}
+          >
             <div
               style={{
                 display: "flex",
@@ -1603,116 +1606,144 @@ function ClientSidebar({
           </div>
 
           <div style={{ flex: 1, overflowY: "auto", padding: "6px 8px" }}>
-        {DISCOVERY_STATUSES.map((status) => {
-          const group = grouped[status] ?? [];
-          if (!group.length) return null;
-          const color = STATUS_COLORS[status] ?? "var(--text-tertiary)";
-          return (
-            <div key={status} style={{ marginBottom: 8 }}>
-              <div
-                style={{
-                  fontSize: 9,
-                  fontWeight: 800,
-                  letterSpacing: "0.1em",
-                  textTransform: "uppercase",
-                  color,
-                  padding: "3px 8px 4px",
-                }}
-              >
-                {status} ({group.length})
-              </div>
-              {group.map((c) => {
-                const isSelected = selected?.id === c.id;
-                return (
+            {DISCOVERY_STATUSES.map((status) => {
+              const group = grouped[status] ?? [];
+              if (!group.length) return null;
+              const color = STATUS_COLORS[status] ?? "var(--text-tertiary)";
+              return (
+                <div key={status} style={{ marginBottom: 8 }}>
                   <div
-                    key={c.id}
-                    onClick={() => onSelect(isSelected ? null : c)}
                     style={{
-                      padding: "8px 10px",
-                      borderRadius: 8,
-                      marginBottom: 2,
-                      cursor: "pointer",
-                      background: isSelected ? "var(--accent-muted)" : "transparent",
-                      border: isSelected
-                        ? "1px solid var(--accent-border)"
-                        : "1px solid transparent",
+                      fontSize: 9,
+                      fontWeight: 800,
+                      letterSpacing: "0.1em",
+                      textTransform: "uppercase",
+                      color,
+                      padding: "3px 8px 4px",
                     }}
                   >
-                    <div
-                      style={{
-                        fontFamily: "var(--font-sans)",
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: isSelected ? "var(--accent)" : "var(--text-primary)",
-                        marginBottom: 2,
-                      }}
-                    >
-                      {c.kontakt || c.firma || "—"}
-                    </div>
-                    {c.firma && c.kontakt && c.firma !== c.kontakt && (
-                      <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>{c.firma}</div>
-                    )}
-                    {c.telefon && (
+                    {status} ({group.length})
+                  </div>
+                  {group.map((c) => {
+                    const isSelected = selected?.id === c.id;
+                    return (
                       <div
+                        key={c.id}
+                        onClick={() => onSelect(isSelected ? null : c)}
                         style={{
-                          fontSize: 11,
-                          color: "var(--text-secondary)",
-                          marginTop: 1,
-                          fontFamily: "var(--font-sans)",
+                          padding: "8px 10px",
+                          borderRadius: 8,
+                          marginBottom: 2,
+                          cursor: "pointer",
+                          background: isSelected ? "var(--accent-muted)" : "transparent",
+                          border: isSelected
+                            ? "1px solid var(--accent-border)"
+                            : "1px solid transparent",
                         }}
                       >
-                        {formatPhone(c.telefon)}
+                        <div
+                          style={{
+                            fontFamily: "var(--font-sans)",
+                            fontSize: 13,
+                            fontWeight: 600,
+                            color: isSelected ? "var(--accent)" : "var(--text-primary)",
+                            marginBottom: 2,
+                          }}
+                        >
+                          {c.kontakt || c.firma || "—"}
+                        </div>
+                        {c.firma && c.kontakt && c.firma !== c.kontakt && (
+                          <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>
+                            {c.firma}
+                          </div>
+                        )}
+                        {c.telefon && (
+                          <div
+                            style={{
+                              fontSize: 11,
+                              color: "var(--text-secondary)",
+                              marginTop: 1,
+                              fontFamily: "var(--font-sans)",
+                            }}
+                          >
+                            {formatPhone(c.telefon)}
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          );
-        })}
-        {filtered.length === 0 && (
-          <div
-            style={{
-              padding: "20px 8px",
-              textAlign: "center",
-              color: "var(--text-tertiary)",
-              fontSize: 12,
-              fontFamily: "var(--font-sans)",
-            }}
-          >
-            Brak klientów Discovery
+                    );
+                  })}
+                </div>
+              );
+            })}
+            {filtered.length === 0 && (
+              <div
+                style={{
+                  padding: "20px 8px",
+                  textAlign: "center",
+                  color: "var(--text-tertiary)",
+                  fontSize: 12,
+                  fontFamily: "var(--font-sans)",
+                }}
+              >
+                Brak klientów Discovery
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
-      {selected && (
-        <div
-          style={{
-            padding: "10px 12px",
-            borderTop: "1px solid #E5E5EA",
-            flexShrink: 0,
-            background: "#F5F5F7",
-          }}
-        >
-          <button
-            onClick={() => onSelect(null)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 5,
-              background: "transparent",
-              border: "none",
-              cursor: "pointer",
-              color: "var(--text-tertiary)",
-              fontSize: 11,
-              fontFamily: "var(--font-sans)",
-            }}
-          >
-            <X size={11} />
-            Odznacz klienta
-          </button>
-        </div>
-      )}
+          {selected && (
+            <div
+              style={{
+                padding: "10px 12px",
+                borderTop: "1px solid #E5E5EA",
+                flexShrink: 0,
+                background: "#F5F5F7",
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
+              }}
+            >
+              <a
+                href={`/prezentacja.html?id=${encodeURIComponent(selected.id)}`}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 5,
+                  background: "var(--accent-muted)",
+                  border: "1px solid var(--accent-border)",
+                  borderRadius: 8,
+                  padding: "6px 8px",
+                  cursor: "pointer",
+                  color: "var(--accent)",
+                  fontSize: 11,
+                  fontWeight: 600,
+                  fontFamily: "var(--font-sans)",
+                  textDecoration: "none",
+                }}
+              >
+                <ExternalLink size={11} />
+                Otwórz prezentację
+              </a>
+              <button
+                onClick={() => onSelect(null)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 5,
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "var(--text-tertiary)",
+                  fontSize: 11,
+                  fontFamily: "var(--font-sans)",
+                }}
+              >
+                <X size={11} />
+                Odznacz klienta
+              </button>
+            </div>
+          )}
         </>
       )}
     </div>

@@ -9,6 +9,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Copy,
+  ExternalLink,
   FileText,
   Lock,
   MessageSquare,
@@ -1819,7 +1820,8 @@ function ClientSidebar({
         flexDirection: "column",
         background: "#fff",
         position: "relative",
-        transition: "width 240ms cubic-bezier(0.4, 0, 0.2, 1), min-width 240ms cubic-bezier(0.4, 0, 0.2, 1)",
+        transition:
+          "width 240ms cubic-bezier(0.4, 0, 0.2, 1), min-width 240ms cubic-bezier(0.4, 0, 0.2, 1)",
         overflow: "hidden",
       }}
     >
@@ -1871,7 +1873,9 @@ function ClientSidebar({
         </div>
       ) : (
         <>
-          <div style={{ padding: "12px 12px 8px", borderBottom: "1px solid #E5E5EA", flexShrink: 0 }}>
+          <div
+            style={{ padding: "12px 12px 8px", borderBottom: "1px solid #E5E5EA", flexShrink: 0 }}
+          >
             <div
               style={{
                 display: "flex",
@@ -1941,139 +1945,165 @@ function ClientSidebar({
           </div>
 
           <div style={{ flex: 1, overflowY: "auto", padding: "6px 8px" }}>
-        {filtered.length === 0 && (
-          <div
-            style={{
-              padding: "20px 8px",
-              textAlign: "center",
-              color: "var(--text-tertiary)",
-              fontSize: 12,
-              fontFamily: "var(--font-sans)",
-            }}
-          >
-            Brak klientów "Nowy lead"
-          </div>
-        )}
-        {filtered.map((c) => {
-          const isSelected = selected?.id === c.id;
-          return (
-            <div
-              key={c.id}
-              onClick={() => onSelect(isSelected ? null : c)}
-              style={{
-                padding: "9px 10px",
-                borderRadius: 8,
-                marginBottom: 2,
-                cursor: "pointer",
-                background: isSelected ? "var(--accent-muted)" : "transparent",
-                border: isSelected ? "1px solid var(--accent-border)" : "1px solid transparent",
-              }}
-            >
+            {filtered.length === 0 && (
               <div
                 style={{
+                  padding: "20px 8px",
+                  textAlign: "center",
+                  color: "var(--text-tertiary)",
+                  fontSize: 12,
                   fontFamily: "var(--font-sans)",
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: isSelected ? "var(--accent)" : "var(--text-primary)",
-                  marginBottom: 2,
                 }}
               >
-                {c.kontakt || c.firma || "—"}
+                Brak klientów "Nowy lead"
               </div>
-              {c.firma && c.kontakt && c.firma !== c.kontakt && (
-                <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>{c.firma}</div>
-              )}
-              {c.telefon && (
+            )}
+            {filtered.map((c) => {
+              const isSelected = selected?.id === c.id;
+              return (
                 <div
+                  key={c.id}
+                  onClick={() => onSelect(isSelected ? null : c)}
                   style={{
-                    fontSize: 11,
-                    color: "var(--text-secondary)",
-                    marginTop: 2,
-                    fontFamily: "var(--font-sans)",
+                    padding: "9px 10px",
+                    borderRadius: 8,
+                    marginBottom: 2,
+                    cursor: "pointer",
+                    background: isSelected ? "var(--accent-muted)" : "transparent",
+                    border: isSelected ? "1px solid var(--accent-border)" : "1px solid transparent",
                   }}
                 >
-                  {formatPhone(c.telefon)}
-                </div>
-              )}
-              {c.email && (
-                <div
-                  style={{
-                    fontSize: 11,
-                    color: "var(--text-tertiary)",
-                    marginTop: 1,
-                    fontFamily: "var(--font-sans)",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                    maxWidth: 200,
-                  }}
-                >
-                  {c.email}
-                </div>
-              )}
-              {typeof c.liczbaProb === "number" && c.liczbaProb > 0 && (
-                <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 3 }}>
-                  {[1, 2, 3].map((n) => (
+                  <div
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: isSelected ? "var(--accent)" : "var(--text-primary)",
+                      marginBottom: 2,
+                    }}
+                  >
+                    {c.kontakt || c.firma || "—"}
+                  </div>
+                  {c.firma && c.kontakt && c.firma !== c.kontakt && (
+                    <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>{c.firma}</div>
+                  )}
+                  {c.telefon && (
                     <div
-                      key={n}
                       style={{
-                        width: 14,
-                        height: 14,
-                        borderRadius: "50%",
-                        border: `1.5px solid ${n <= c.liczbaProb ? "var(--warning)" : "var(--border)"}`,
-                        background: n <= c.liczbaProb ? "var(--warning)" : "transparent",
-                      }}
-                    />
-                  ))}
-                  {c.liczbaProb >= 3 && (
-                    <span
-                      style={{
-                        fontSize: 9,
-                        fontWeight: 700,
-                        color: "var(--error)",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.04em",
-                        marginLeft: 2,
+                        fontSize: 11,
+                        color: "var(--text-secondary)",
+                        marginTop: 2,
+                        fontFamily: "var(--font-sans)",
                       }}
                     >
-                      Wyślij SMS
-                    </span>
+                      {formatPhone(c.telefon)}
+                    </div>
+                  )}
+                  {c.email && (
+                    <div
+                      style={{
+                        fontSize: 11,
+                        color: "var(--text-tertiary)",
+                        marginTop: 1,
+                        fontFamily: "var(--font-sans)",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        maxWidth: 200,
+                      }}
+                    >
+                      {c.email}
+                    </div>
+                  )}
+                  {typeof c.liczbaProb === "number" && c.liczbaProb > 0 && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 3 }}>
+                      {[1, 2, 3].map((n) => (
+                        <div
+                          key={n}
+                          style={{
+                            width: 14,
+                            height: 14,
+                            borderRadius: "50%",
+                            border: `1.5px solid ${n <= c.liczbaProb ? "var(--warning)" : "var(--border)"}`,
+                            background: n <= c.liczbaProb ? "var(--warning)" : "transparent",
+                          }}
+                        />
+                      ))}
+                      {c.liczbaProb >= 3 && (
+                        <span
+                          style={{
+                            fontSize: 9,
+                            fontWeight: 700,
+                            color: "var(--error)",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.04em",
+                            marginLeft: 2,
+                          }}
+                        >
+                          Wyślij SMS
+                        </span>
+                      )}
+                    </div>
                   )}
                 </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+              );
+            })}
+          </div>
 
-      {selected && (
-        <div
-          style={{
-            padding: "10px 12px",
-            borderTop: "1px solid #E5E5EA",
-            flexShrink: 0,
-            background: "#F5F5F7",
-          }}
-        >
-          <button
-            onClick={() => onSelect(null)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 5,
-              background: "transparent",
-              border: "none",
-              cursor: "pointer",
-              color: "var(--text-tertiary)",
-              fontSize: 11,
-              fontFamily: "var(--font-sans)",
-            }}
-          >
-            <X size={11} />
-            Odznacz klienta
-          </button>
-        </div>
-      )}
+          {selected && (
+            <div
+              style={{
+                padding: "10px 12px",
+                borderTop: "1px solid #E5E5EA",
+                flexShrink: 0,
+                background: "#F5F5F7",
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
+              }}
+            >
+              <a
+                href={`/prezentacja.html?id=${encodeURIComponent(selected.id)}`}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 5,
+                  background: "var(--accent-muted)",
+                  border: "1px solid var(--accent-border)",
+                  borderRadius: 8,
+                  padding: "6px 8px",
+                  cursor: "pointer",
+                  color: "var(--accent)",
+                  fontSize: 11,
+                  fontWeight: 600,
+                  fontFamily: "var(--font-sans)",
+                  textDecoration: "none",
+                }}
+              >
+                <ExternalLink size={11} />
+                Otwórz prezentację
+              </a>
+              <button
+                onClick={() => onSelect(null)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 5,
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "var(--text-tertiary)",
+                  fontSize: 11,
+                  fontFamily: "var(--font-sans)",
+                }}
+              >
+                <X size={11} />
+                Odznacz klienta
+              </button>
+            </div>
+          )}
         </>
       )}
     </div>
