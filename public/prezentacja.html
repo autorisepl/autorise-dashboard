@@ -159,12 +159,19 @@
     .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--line-strong); cursor: pointer; pointer-events: all; transition: background .2s var(--ease), transform .2s var(--ease); }
     .dot.active { background: var(--blue); transform: scale(1.5); }
     #counter { position: fixed; bottom: 14px; right: 14px; font-size: 10px; font-weight: 600; color: var(--text-tertiary); z-index: 200; letter-spacing: .03em; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+    #gen-date { position: fixed; bottom: 14px; left: 14px; font-size: 9.5px; font-weight: 600; color: var(--text-tertiary); opacity: .55; z-index: 200; letter-spacing: .03em; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 
     /* ── Slide inner ── */
     .si { flex: 1; display: flex; flex-direction: column; padding: 48px 64px 32px; max-width: 1080px; margin: 0 auto; width: 100%; justify-content: flex-start; }
 
     /* ── Typography ── */
-    .tag { font-size: 11px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; color: var(--blue); margin-bottom: 8px; }
+    .tag {
+      display: inline-flex; align-items: center; align-self: flex-start;
+      font-size: 10.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--blue); margin-bottom: 14px;
+      padding: 5px 12px; border-radius: 100px;
+      background: var(--sky); border: 1px solid rgba(29,95,224,.18);
+    }
     .h1 { font-size: clamp(44px, 5vw, 60px); font-weight: 800; line-height: 1.06; letter-spacing: -.02em; margin-bottom: 10px; color: var(--navy); text-wrap: balance; }
     .h1.h1-hero { font-size: clamp(56px, 6.2vw, 84px); font-weight: 800; letter-spacing: -.03em; line-height: 1.02; }
     .h1.h1-hero-sm { font-size: clamp(36px, 4vw, 48px); font-weight: 800; letter-spacing: -.02em; line-height: 1.06; }
@@ -241,8 +248,12 @@
 
     /* ── Comparison table ── */
     .cmp-wrap { background: var(--bg); border-radius: 16px; border: 1px solid var(--line); box-shadow: 0 1px 2px rgba(11,31,58,.04), 0 10px 28px rgba(11,31,58,.05); overflow: hidden; margin-top: 20px; }
-    table.cmp { width: 100%; border-collapse: collapse; }
-    table.cmp th, table.cmp td { padding: 13px 18px; text-align: left; font-size: 14.5px; border-bottom: 1px solid var(--line); }
+    table.cmp { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    table.cmp col.c-label { width: 22%; }
+    table.cmp col.c-yes   { width: 39%; }
+    table.cmp col.c-no    { width: 39%; }
+    table.cmp th, table.cmp td { padding: 13px 16px; text-align: left; font-size: 14.5px; border-bottom: 1px solid var(--line); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    table.cmp td:first-child { white-space: normal; }
     table.cmp th { font-size: 11px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--text-tertiary); background: var(--bg-soft); }
     table.cmp th.hl { color: var(--blue); background: var(--sky); border-left: 1.5px solid rgba(29,95,224,.35); border-right: 1.5px solid rgba(29,95,224,.35); border-top: 1.5px solid rgba(29,95,224,.35); }
     table.cmp td:first-child { font-weight: 600; color: var(--text-secondary); }
@@ -326,7 +337,11 @@
     .check-dot svg { width: 13px; height: 13px; }
 
     /* ── Donut row ── */
-    .donut-row { display: flex; align-items: center; gap: 16px; margin-top: 0; flex-wrap: wrap; }
+    .donut-row {
+      display: flex; align-items: center; gap: 18px; margin-top: 16px; flex-wrap: wrap;
+      padding: 16px 20px; border-radius: 14px; background: var(--bg); border: 1px solid var(--line);
+      box-shadow: 0 1px 2px rgba(11,31,58,.04), 0 10px 28px rgba(11,31,58,.05);
+    }
 
     /* ── Hero number accent ── */
     .hero-saved { text-align: right; }
@@ -375,6 +390,7 @@
       .grid2 { gap: 6px; }
       .cmp-wrap { margin-top: 12px; }
       table.cmp th, table.cmp td { padding: 9px 12px; font-size: 13px; }
+      .donut-row { padding: 12px 14px; margin-top: 10px; gap: 12px; }
       .cmp-note { margin-top: 10px; }
       .check-list { margin-top: 6px !important; gap: 5px !important; }
       .check-item { font-size: 13.5px; }
@@ -604,6 +620,9 @@
 
       <div class="cmp-wrap ai" style="--i:2">
         <table class="cmp">
+          <colgroup>
+            <col class="c-label"><col class="c-yes"><col class="c-no">
+          </colgroup>
           <thead>
             <tr><th></th><th class="hl">Autorise</th><th>Typowe wdrożenie IT</th></tr>
           </thead>
@@ -819,7 +838,7 @@
                 </svg>
               </div>
               <div>
-                <div class="contact-sub">Kontakt ogólny</div>
+                <div class="contact-sub">Kontakt ogólny (support)</div>
                 <div class="contact-val">info@autorise.pl</div>
               </div>
             </div>
@@ -830,7 +849,7 @@
                 </svg>
               </div>
               <div>
-                <div class="contact-sub">Michał, bezpośrednio</div>
+                <div class="contact-sub">Michał, kontakt bezpośredni do Foundera</div>
                 <div class="contact-val">roth@autorise.pl</div>
               </div>
             </div>
@@ -841,7 +860,7 @@
                 </svg>
               </div>
               <div>
-                <div class="contact-sub">Strona</div>
+                <div class="contact-sub">Nasza strona główna</div>
                 <div class="contact-val">autorise.pl</div>
               </div>
             </div>
@@ -852,7 +871,7 @@
                 </svg>
               </div>
               <div>
-                <div class="contact-sub">Instagram</div>
+                <div class="contact-sub">Oficjalny Instagram</div>
                 <div class="contact-val">@autorise.pl</div>
               </div>
             </div>
@@ -872,6 +891,7 @@
   <div class="dot" data-i="6"></div>
 </div>
 <div id="counter">1 / 7</div>
+<div id="gen-date"></div>
 
 <!-- Arrows -->
 <button class="arr" id="btn-prev">
@@ -882,6 +902,16 @@
 </button>
 
 <script>
+// Data wygenerowania — dyskretny stempel w rogu, żeby dało się później sprawdzić
+// kiedy dana wersja prezentacji była pokazana klientowi.
+;(function initGenDate() {
+  const el = document.getElementById('gen-date')
+  if (!el) return
+  const d = new Date()
+  const pad = n => String(n).padStart(2, '0')
+  el.textContent = pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + '.' + d.getFullYear()
+})()
+
 const P = new URLSearchParams(location.search)
 const ID_PARAM = P.get('id')
 const V = {
