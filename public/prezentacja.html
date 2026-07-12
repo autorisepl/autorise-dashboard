@@ -10,9 +10,9 @@
   <link rel="preload" as="font" type="font/woff2" crossorigin
     href="https://fonts.gstatic.com/s/manrope/v20/xn7gYHE41ni1AdIRggmxSuXd.woff2">
   <link rel="preload" as="font" type="font/woff2" crossorigin
-    href="https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPx7cwhsk.woff2">
+    href="https://fonts.gstatic.com/s/robotomono/v31/L0x5DF4xlVMF-BfR8bXMIjhLq3-cXbKD.woff2">
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 
   <style>
     :root {
@@ -33,7 +33,7 @@
       --error: #C23B3B;
       --warning: #B9791E;
       --font: 'Manrope', sans-serif;
-      --font-mono: 'JetBrains Mono', monospace;
+      --font-mono: 'Roboto Mono', monospace;
       --ease: cubic-bezier(.22,1,.36,1);
     }
 
@@ -203,7 +203,7 @@
     .bar-fill { height: 100%; border-radius: 8px; transition: width .6s var(--ease); min-width: 6px; }
     .bar-val {
       flex-shrink: 0;
-      font-size: 14px; font-weight: 800; color: var(--text-primary);
+      font-size: 14px; font-weight: 700; color: var(--text-primary);
       font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap;
     }
     .bar-red   { background: var(--error); }
@@ -216,7 +216,7 @@
     .sb-blue  { background: rgba(29,95,224,0.05)!important;  border-color: rgba(29,95,224,0.2)!important; }
     .sb-green { background: rgba(27,138,90,0.05)!important;  border-color: rgba(27,138,90,0.2)!important; }
     .st-tag { font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 6px; }
-    .st-val { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: clamp(24px, 3vw, 36px); font-weight: 800; letter-spacing: -.01em; line-height: 1; color: var(--navy); }
+    .st-val { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: clamp(24px, 3vw, 36px); font-weight: 700; letter-spacing: -.01em; line-height: 1; color: var(--navy); }
     .st-val.red   { color: var(--error); }
     .st-val.blue  { color: var(--blue); }
     .st-val.green { color: var(--success); }
@@ -240,7 +240,7 @@
     /* ── Steps ── */
     .steps { display: flex; flex-direction: column; gap: 15px; }
     .step  { display: flex; align-items: flex-start; gap: 14px; }
-    .s-num { width: 34px; height: 34px; border-radius: 50%; background: var(--navy); display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 14px; font-weight: 800; color: var(--blue-light); flex-shrink: 0; }
+    .s-num { width: 34px; height: 34px; border-radius: 50%; background: var(--navy); display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 14px; font-weight: 700; color: var(--blue-light); flex-shrink: 0; }
     .s-title { font-size: 16px; font-weight: 700; margin-bottom: 3px; color: var(--navy); }
     .s-desc  { font-size: 14px; color: var(--text-secondary); line-height: 1.5; text-wrap: balance; }
     .s-effect { font-size: 13.5px; color: var(--text-tertiary); line-height: 1.45; margin-top: 5px; text-wrap: balance; }
@@ -270,14 +270,14 @@
     .price-cards { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 20px; align-items: stretch; }
     .price-card  { flex: 1; min-width: 200px; border-radius: 16px; padding: 24px 26px; background: var(--bg); border: 1px solid var(--line); box-shadow: 0 1px 2px rgba(11,31,58,.04), 0 10px 28px rgba(11,31,58,.05); }
     .pc-tag { font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 10px; color: var(--text-tertiary); }
-    .pc-val { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: clamp(32px, 4vw, 48px); font-weight: 800; letter-spacing: -.01em; line-height: 1; }
+    .pc-val { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: clamp(32px, 4vw, 48px); font-weight: 700; letter-spacing: -.01em; line-height: 1; }
     .pc-sub { font-size: 13px; color: var(--text-tertiary); margin-top: 6px; }
 
     /* ── ROI metrics row ── */
     .roi-row { display: flex; margin-top: 18px; background: var(--bg); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; box-shadow: 0 1px 2px rgba(11,31,58,.04), 0 10px 28px rgba(11,31,58,.05); }
     .roi-metric { flex: 1; padding: 20px 24px; display: flex; align-items: center; gap: 16px; }
     .roi-metric + .roi-metric { border-left: 1px solid var(--line); }
-    .roi-val { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: clamp(30px,4vw,44px); font-weight: 800; letter-spacing: -.01em; line-height: 1; color: var(--navy); flex-shrink: 0; }
+    .roi-val { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: clamp(30px,4vw,44px); font-weight: 700; letter-spacing: -.01em; line-height: 1; color: var(--navy); flex-shrink: 0; }
     .roi-label { font-size: 14px; font-weight: 500; color: var(--text-secondary); line-height: 1.45; }
     .roi-accent { display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; background: var(--navy); color: var(--success); flex-shrink: 0; }
     .roi-accent svg { width: 15px; height: 15px; }
@@ -288,7 +288,7 @@
     .guar-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px 6px 8px; border-radius: 100px; background: var(--sky); margin-bottom: 14px; }
     .guar-badge svg { width: 15px; height: 15px; color: var(--success); }
     .guar-badge span { font-size: 11.5px; font-weight: 700; color: var(--navy); }
-    .guar-pct   { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: clamp(80px, 11vw, 128px); font-weight: 800; color: var(--blue); letter-spacing: -.02em; line-height: 1; }
+    .guar-pct   { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: clamp(80px, 11vw, 128px); font-weight: 700; color: var(--blue); letter-spacing: -.02em; line-height: 1; }
     .guar-txt   { font-size: 21px; font-weight: 800; margin: 4px 0 6px; line-height: 1.15; color: var(--navy); }
     .guar-sub   { font-size: 15px; color: var(--text-secondary); line-height: 1.5; text-wrap: balance; }
     .guar-right { flex: 1; min-width: 260px; }
@@ -312,7 +312,7 @@
 
     /* ── Hero number accent ── */
     .hero-saved { text-align: right; }
-    .hero-saved-val { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: clamp(80px, 11vw, 128px); font-weight: 800; color: var(--success); letter-spacing: -.02em; line-height: 1; }
+    .hero-saved-val { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: clamp(80px, 11vw, 128px); font-weight: 700; color: var(--success); letter-spacing: -.02em; line-height: 1; }
     .hero-saved-label { font-size: 13px; font-weight: 600; color: var(--text-tertiary); margin-top: 4px; text-transform: uppercase; letter-spacing: .05em; }
 
     /* ── Two-col header ── */
@@ -467,7 +467,7 @@
           <circle cx="38" cy="38" r="28" fill="none" stroke="var(--line)" stroke-width="9"/>
           <circle cx="38" cy="38" r="28" fill="none" stroke="var(--blue)" stroke-width="9"
             stroke-dasharray="109 176" stroke-linecap="round" transform="rotate(-90 38 38)"/>
-          <text x="38" y="43" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="14" font-weight="800" fill="#0B1F3A">62%</text>
+          <text x="38" y="43" text-anchor="middle" font-family="Roboto Mono,monospace" font-size="14" font-weight="700" fill="#0B1F3A">62%</text>
         </svg>
         <div>
           <div style="font-size:15px;font-weight:700;color:var(--navy);">62% firm transportowych</div>
