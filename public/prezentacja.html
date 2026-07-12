@@ -14,6 +14,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.15.0/gsap.min.js"></script>
+
   <style>
     :root {
       --edit-h: 0px;
@@ -195,19 +197,35 @@
     .c-title { font-size: 15px; font-weight: 700; margin-bottom: 3px; color: var(--navy); }
     .c-desc  { font-size: 15px; line-height: 1.55; color: var(--text-secondary); text-wrap: balance; }
 
-    /* ── Bars ── */
-    .bars { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
-    .bar-row { display: flex; align-items: center; gap: 12px; }
-    .bar-lbl { width: 108px; font-size: 13px; font-weight: 600; color: var(--text-tertiary); flex-shrink: 0; }
-    .bar-track { flex: 1; min-width: 0; height: 44px; border-radius: 10px; background: var(--bg); overflow: hidden; border: 1px solid var(--line); }
-    .bar-fill { height: 100%; border-radius: 8px; transition: width .6s var(--ease); min-width: 6px; }
-    .bar-val {
-      flex-shrink: 0;
-      font-size: 14px; font-weight: 700; color: var(--text-primary);
-      font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap;
+    /* ── Vertical bar chart (Dziś vs Po wdrożeniu) ── */
+    .vbars { display: flex; align-items: flex-end; justify-content: center; gap: 28px; margin-bottom: 20px; padding: 8px 0 0; }
+    .vbar-col { display: flex; flex-direction: column; align-items: center; width: 150px; }
+    .vbar-num {
+      font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+      font-size: clamp(30px, 4vw, 42px); font-weight: 700; letter-spacing: -.01em; line-height: 1;
+      margin-bottom: 10px; white-space: nowrap;
     }
-    .bar-red   { background: var(--error); }
-    .bar-green { background: var(--success); }
+    .vbar-num.red   { color: var(--error); }
+    .vbar-num.green { color: var(--success); }
+    .vbar-unit { font-size: 13px; font-weight: 600; color: var(--text-tertiary); margin-left: 3px; font-family: var(--font); }
+    .vbar-track {
+      width: 100%; height: 200px; border-radius: 12px 12px 6px 6px;
+      background: var(--bg-soft); border: 1px solid var(--line);
+      display: flex; align-items: flex-end; overflow: hidden;
+    }
+    .vbar-fill { width: 100%; border-radius: 10px 10px 4px 4px; height: 0; min-height: 6px; }
+    .vbar-fill.red   { background: linear-gradient(180deg, #E0716C, var(--error)); }
+    .vbar-fill.green { background: linear-gradient(180deg, #4FBE8C, var(--success)); }
+    .vbar-lbl { margin-top: 10px; font-size: 13px; font-weight: 700; color: var(--navy); }
+    .vbar-diff {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 4px; padding-bottom: 44px; color: var(--blue);
+    }
+    .vbar-diff svg { width: 22px; height: 22px; }
+    .vbar-diff span {
+      font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+      font-size: 15px; font-weight: 700; white-space: nowrap;
+    }
 
     /* ── Stat boxes ── */
     .stat-boxes { display: flex; gap: 12px; flex-wrap: wrap; }
@@ -328,7 +346,7 @@
     @media (prefers-reduced-motion: reduce) {
       .slide, .slide.active { transform: none !important; transition: opacity .05s linear !important; }
       .ai, .ai.sp { animation: none !important; opacity: 1 !important; transform: none !important; }
-      .bar-fill, #progress-bar, .dot, .tl-track-fill { transition: none !important; }
+      #progress-bar, .dot, .tl-track-fill { transition: none !important; }
       #progress-bar::after { animation: none !important; }
     }
 
@@ -494,16 +512,22 @@
 
       <p class="sub ai" style="--i:2;margin-bottom:16px;">Zestawienie obciążenia spedytora przed i po wdrożeniu, na tych samych danych.</p>
 
-      <div class="bars ai" style="--i:3">
-        <div class="bar-row">
-          <div class="bar-lbl">Dziś</div>
-          <div class="bar-track"><div class="bar-fill bar-red" id="bar-dzis" style="width:70%"></div></div>
-          <div class="bar-val"><span class="val-roi">70</span>&nbsp;h / mies.</div>
+      <div class="vbars ai" style="--i:3">
+        <div class="vbar-col">
+          <div class="vbar-num red"><span class="val-roi">70</span><span class="vbar-unit">h/mc</span></div>
+          <div class="vbar-track"><div class="vbar-fill red" id="vbar-dzis"></div></div>
+          <div class="vbar-lbl">Dziś</div>
         </div>
-        <div class="bar-row">
-          <div class="bar-lbl">Po wdrożeniu</div>
-          <div class="bar-track"><div class="bar-fill bar-green" id="bar-po" style="width:10%"></div></div>
-          <div class="bar-val"><span class="val-po">10</span>&nbsp;h / mies.</div>
+        <div class="vbar-diff">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 5l0 14" /><path d="M18 13l-6 6l-6 -6" />
+          </svg>
+          <span id="vbar-diff-pct">–</span>
+        </div>
+        <div class="vbar-col">
+          <div class="vbar-num green"><span class="val-po">10</span><span class="vbar-unit">h/mc</span></div>
+          <div class="vbar-track"><div class="vbar-fill green" id="vbar-po"></div></div>
+          <div class="vbar-lbl">Po wdrożeniu</div>
         </div>
       </div>
 
@@ -925,9 +949,31 @@ function applyValues() {
   const vs = document.getElementById('val-saved')
   if (vs) vs.textContent = Math.max(roi - po, 0)
 
+  // Wysokości słupków liczone od razu, ale wpisywane jako data-target — realną animację
+  // narastania (GSAP, pierwsze wejście na slajd) uruchamia animateVbars() niżej. Na
+  // ewentualną ponowną zmianę wartości (tryb edycji) po pierwszym odtworzeniu — ustaw
+  // wysokość od razu bez animacji, żeby nie odtwarzać jej za każdym wpisaniem znaku.
   const mx = Math.max(roi, 20)
-  document.getElementById('bar-dzis').style.width = Math.round(roi / mx * 88) + '%'
-  document.getElementById('bar-po').style.width   = Math.max(Math.round(po  / mx * 88), 8) + '%'
+  const pctDzis = Math.round(roi / mx * 100)
+  const pctPo   = Math.max(Math.round(po / mx * 100), 4)
+  const vbDzis = document.getElementById('vbar-dzis')
+  const vbPo   = document.getElementById('vbar-po')
+  if (vbDzis) vbDzis.dataset.target = String(pctDzis)
+  if (vbPo)   vbPo.dataset.target   = String(pctPo)
+  if (typeof visitedSlides !== 'undefined' && visitedSlides.has(1)) {
+    if (vbDzis) vbDzis.style.height = pctDzis + '%'
+    if (vbPo)   vbPo.style.height   = pctPo + '%'
+  }
+
+  const diffEl = document.getElementById('vbar-diff-pct')
+  if (diffEl) {
+    if (roi > 0) {
+      const diffPct = Math.round((1 - po / roi) * 100)
+      diffEl.textContent = (diffPct >= 0 ? '-' : '+') + Math.abs(diffPct) + '%'
+    } else {
+      diffEl.textContent = '–'
+    }
+  }
 
   // Realne payback_miesiace/procent_kosztu (Etap 1) mają pierwszeństwo, gdy Notion je policzył
   // (czyli gdy "Cena wdrożenia" jest już ustalona). Tryb podglądu/URL-params (brak
@@ -976,6 +1022,32 @@ function triggerStagger(slideEl) {
   els.forEach(el => {
     el.classList.add('sp')
     el.addEventListener('animationend', () => { el.style.willChange = 'auto' }, { once: true })
+  })
+  if (slideEl.id === 's2') animateVbars(slideEl)
+}
+
+// Narastanie słupków słupkowego wykresu Dziś/Po wdrożeniu (slajd 2), GSAP, tylko przy
+// pierwszym wejściu na slajd — ten sam gate co triggerStagger. Wysokość docelowa czytana
+// z data-target ustawionego w applyValues() (aktualne wtedy gdy animacja startuje).
+function animateVbars(slideEl) {
+  const dzis = slideEl.querySelector('#vbar-dzis')
+  const po = slideEl.querySelector('#vbar-po')
+  if (!dzis || !po || typeof gsap === 'undefined') return
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const targets = [
+    { el: dzis, pct: Number.parseFloat(dzis.dataset.target || '0') },
+    { el: po, pct: Number.parseFloat(po.dataset.target || '0') },
+  ]
+  if (reduceMotion) {
+    targets.forEach(({ el, pct }) => { el.style.height = pct + '%' })
+    return
+  }
+  targets.forEach(({ el, pct }, i) => {
+    gsap.fromTo(
+      el,
+      { height: '0%' },
+      { height: pct + '%', duration: 1.1, delay: i * 0.15, ease: 'power3.out' },
+    )
   })
 }
 
