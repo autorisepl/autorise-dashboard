@@ -232,9 +232,10 @@
     table.cmp td.no  { color: var(--text-tertiary); font-weight: 400; }
     table.cmp tr:last-child td.yes { border-bottom: 1.5px solid rgba(29,95,224,.35); }
     table.cmp tr:last-child td { border-bottom: none; }
-    .cmp-note { display: flex; align-items: flex-start; gap: 8px; margin-top: 14px; }
-    .cmp-note svg { flex-shrink: 0; margin-top: 1px; width: 16px; height: 16px; color: var(--text-tertiary); }
-    .cmp-note span { font-size: 14px; line-height: 1.55; color: var(--text-tertiary); text-wrap: balance; }
+    .cmp-note, .inv-note { display: flex; align-items: flex-start; gap: 8px; margin-top: 14px; }
+    .cmp-note svg, .inv-note svg { flex-shrink: 0; margin-top: 1px; width: 16px; height: 16px; color: var(--text-tertiary); }
+    .cmp-note span, .inv-note span { font-size: 14px; line-height: 1.55; color: var(--text-tertiary); text-wrap: balance; }
+    .inv-note { margin-top: 22px; }
 
     /* ── Steps ── */
     .steps { display: flex; flex-direction: column; gap: 15px; }
@@ -672,7 +673,7 @@
   <div class="slide" id="s6">
     <div class="si">
       <div class="tag ai" style="--i:0">06 · Inwestycja</div>
-      <h1 class="h1 ai" style="--i:1">Ile kosztuje<br><span class="blue">nierobienie nic?</span></h1>
+      <h1 class="h1 ai" style="--i:1">Cena problemu<br><span class="blue">kontra cena rozwiązania.</span></h1>
 
       <div class="price-cards ai" style="--i:2">
         <div class="price-card">
@@ -687,8 +688,8 @@
         </div>
         <div class="price-card">
           <div class="pc-tag">Autorise kosztuje</div>
-          <div class="pc-val blue">15 000 PLN</div>
-          <div class="pc-sub">jednorazowo + 4 000 PLN / mies. wsparcie</div>
+          <div class="pc-val blue"><span class="val-cena-wdrozenia">Cena ustalana indywidualnie</span></div>
+          <div class="pc-sub val-cena-sub">w zależności od zakresu wdrożenia</div>
         </div>
       </div>
 
@@ -715,6 +716,13 @@
             <div class="roi-label">i inwestycja się w pełni zwraca</div>
           </div>
         </div>
+      </div>
+
+      <div class="inv-note ai" style="--i:4">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 9v4" /><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0" /><path d="M12 16h.01" />
+        </svg>
+        <span id="inv-note-text">W realnej ofercie te liczby liczone są indywidualnie z danych Waszej firmy zebranych podczas rozmowy kwalifikacyjnej, nie z uśrednionego cennika.</span>
       </div>
     </div>
   </div>
@@ -858,6 +866,12 @@ const V = {
   bol:  parseInt(P.get('bol')  || '96000') || 96000,
   tms:  P.get('tms')  || 'Trans.eu',
   gwar: parseInt(P.get('gwar') || '80')    || 80,
+  // Trzy pola bez odpowiednika w URL — dostępne wyłącznie z /api/notion/prezentacja-dane
+  // (Etap 1), null dopóki fetch (jeśli w ogóle nastąpi) nie nadpisze. applyValues()
+  // pokazuje czytelny fallback tekstowy zamiast "null", gdy zostają puste.
+  cenaWdrozenia:   null,
+  procentKosztu:   null,
+  paybackMiesiace: null,
 }
 const START = Math.min(Math.max((parseInt(P.get('start') || '1') || 1) - 1, 0), 6)
 
@@ -915,16 +929,38 @@ function applyValues() {
   document.getElementById('bar-dzis').style.width = Math.round(roi / mx * 88) + '%'
   document.getElementById('bar-po').style.width   = Math.max(Math.round(po  / mx * 88), 8) + '%'
 
-  const gain   = bol / 12 - 4000
-  const months = gain > 0 ? Math.ceil(15000 / gain) : '–'
+  // Realne payback_miesiace/procent_kosztu (Etap 1) mają pierwszeństwo, gdy Notion je policzył
+  // (czyli gdy "Cena wdrożenia" jest już ustalona). Tryb podglądu/URL-params (brak
+  // HAS_CLIENT_DATA) bez tego pokazuje starą heurystykę (15 000 PLN jako cena orientacyjna),
+  // tak jak działało to przed Etapem 5. Ale gdy dane klienta SĄ realne (fetch się powiódł),
+  // a cena_wdrożenia po prostu jeszcze nie jest ustalona w Notion — pokazujemy "–", nie
+  // fabrykujemy liczby z założonej ceny obok notatki twierdzącej że to realne dane klienta.
+  const gain            = bol / 12 - 4000
+  const monthsFallback  = !HAS_CLIENT_DATA && gain > 0 ? Math.ceil(15000 / gain) : '–'
+  const pctFallback     = !HAS_CLIENT_DATA && bol > 0  ? Math.round(15000 / bol * 100) : '–'
+  const months = V.paybackMiesiace != null ? V.paybackMiesiace : monthsFallback
+  const pct    = V.procentKosztu   != null ? V.procentKosztu   : pctFallback
   const vm = document.getElementById('val-months')
   const mi = document.getElementById('months-inv')
   if (vm) vm.textContent = months
   if (mi) mi.textContent = months
 
-  const pct = bol > 0 ? Math.round(15000 / bol * 100) : '–'
-  const pi  = document.getElementById('pct-inv')
+  const pi = document.getElementById('pct-inv')
   if (pi) pi.textContent = pct
+
+  document.querySelectorAll('.val-cena-wdrozenia').forEach(el => {
+    el.textContent = V.cenaWdrozenia != null ? fmt(V.cenaWdrozenia) + ' PLN' : 'Cena ustalana indywidualnie'
+  })
+  document.querySelectorAll('.val-cena-sub').forEach(el => {
+    el.textContent = V.cenaWdrozenia != null ? 'jednorazowo, wg zakresu wdrożenia' : 'w zależności od zakresu wdrożenia'
+  })
+
+  const invNote = document.getElementById('inv-note-text')
+  if (invNote) {
+    invNote.textContent = HAS_CLIENT_DATA
+      ? 'Te liczby liczone są z realnych danych Waszej firmy zebranych podczas rozmowy kwalifikacyjnej, nie z uśrednionego cennika.'
+      : 'W realnej ofercie te liczby liczone są indywidualnie z danych Waszej firmy zebranych podczas rozmowy kwalifikacyjnej, nie z uśrednionego cennika.'
+  }
 
   document.getElementById('ei-roi').value  = roi
   document.getElementById('ei-po').value   = po
@@ -1083,6 +1119,9 @@ if (ID_PARAM) {
         V.bol  = typeof data.bol  === 'number' ? data.bol  : V.bol
         V.tms  = data.tms || V.tms
         V.gwar = typeof data.gwar === 'number' ? data.gwar : V.gwar
+        V.cenaWdrozenia   = typeof data.cena_wdrozenia   === 'number' ? data.cena_wdrozenia   : null
+        V.procentKosztu   = typeof data.procent_kosztu   === 'number' ? data.procent_kosztu   : null
+        V.paybackMiesiace = typeof data.payback_miesiace === 'number' ? data.payback_miesiace : null
         FIRMA = data.firma || ''
         HAS_CLIENT_DATA = true
         if (!P.get('modul') && data.bol_kategoria) {
