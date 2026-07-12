@@ -566,7 +566,7 @@ export default function AgencjaPage() {
   const resetAllEverything = useCallback(async () => {
     if (
       !window.confirm(
-        "Wyczyścić WSZYSTKICH kontaktów naraz w arkuszu Kontakty ORAZ w całym Notion Pipeline (analizy agentów, notatki, status wraca do \"Nowy lead\")? Klienci ze statusem Kickoff/Wdrożenie/Retainer/Upsell/Zakończona współpraca zostaną pominięci. Tej operacji nie można cofnąć.",
+        'Wyczyścić WSZYSTKICH kontaktów naraz w arkuszu Kontakty ORAZ w całym Notion Pipeline (analizy agentów, notatki, status wraca do "Nowy lead")? Klienci ze statusem Kickoff/Wdrożenie/Retainer/Upsell/Zakończona współpraca zostaną pominięci. Tej operacji nie można cofnąć.',
       )
     )
       return;

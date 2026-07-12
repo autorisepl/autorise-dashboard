@@ -211,7 +211,8 @@ export async function POST(req: NextRequest) {
 
         if (phoneVal) {
           const normalized = normalizePhonePL(phoneVal);
-          if (!normalized) console.warn(`normalizePhonePL: nie udało się znormalizować "${phoneVal}"`);
+          if (!normalized)
+            console.warn(`normalizePhonePL: nie udało się znormalizować "${phoneVal}"`);
           props["Telefon"] = { phone_number: normalized ?? phoneVal };
         }
         if (notesWithEmail) props["Notatki"] = { rich_text: richText(notesWithEmail) };

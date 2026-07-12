@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { DashboardShell } from "@/components/layout/DashboardShell";
-import { resolveRole } from "@/lib/auth/resolveRole";
 import { RoleProvider } from "@/lib/auth/RoleContext";
+import { resolveRole } from "@/lib/auth/resolveRole";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = (await cookies()).get("autorise_session")?.value;

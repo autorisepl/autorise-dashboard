@@ -9,13 +9,7 @@ const RoleContext = createContext<Role | null>(null);
 // przez next/headers przed pierwszym renderem), nie dociągana asynchronicznie
 // po stronie klienta — eliminuje to okno w którym setter widzi pełną nawigację
 // admina zanim fetch do /api/auth/me zdąży wrócić.
-export function RoleProvider({
-  role,
-  children,
-}: {
-  role: Role | null;
-  children: React.ReactNode;
-}) {
+export function RoleProvider({ role, children }: { role: Role | null; children: React.ReactNode }) {
   return <RoleContext.Provider value={role}>{children}</RoleContext.Provider>;
 }
 

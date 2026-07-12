@@ -18,9 +18,7 @@ const ORPHAN_CANDIDATES = [
   "Data follow-up",
 ];
 
-function isEmptyPropertyValue(
-  prop: PageObjectResponse["properties"][string] | undefined,
-): boolean {
+function isEmptyPropertyValue(prop: PageObjectResponse["properties"][string] | undefined): boolean {
   if (!prop) return true;
   switch (prop.type) {
     case "title":
