@@ -109,6 +109,8 @@ Dokładny łańcuch skąd biorą się dane personalizacji, żeby to pytanie nie 
 
 Ten mechanizm (`URLSearchParams` → `V` → `applyValues()` → klasy `val-*` → tryb edycji) jest kontraktowy i nietykalny przy redesignach wizualnych — dwie kolejne sesje pełnego redesignu (najpierw paleta asfalt/bursztyn, potem navy/blue z Tabler Icons) zmieniały wyłącznie CSS i strukturę HTML wewnątrz slajdów, nigdy tej logiki. Redesign wizualny nie wymaga żadnej zmiany w `Agent3Card.tsx` ani w promptach Agenta 1/3 — parametry URL są stabilnym kontraktem, niezależnym od tego jak wygląda strona.
 
+**Drugi, równoległy tor personalizacji (bez AI)**: `?id=<notion_page_id>` zamiast pełnego zestawu parametrów URL. JS przy starcie fetchuje `GET /api/notion/prezentacja-dane?id=...` (endpoint w `PUBLIC_PATHS` w `proxy.ts` — musi być dostępny bez sesji, tak jak sama strona), pokazuje krótki loading state (`#loading-overlay`), potem woła `applyValues()` z odpowiedzią. Ten endpoint NIE wywołuje AI — liczy `po`/`payback_miesiace`/`procent_kosztu`/`bol_kategoria` deterministycznie z pól Pipeline (te same heurystyki co Agent 3, opisane komentarzami w `route.ts`). Brak `?id=`, `znaleziono:false`, albo błąd fetcha — stary mechanizm URL-params odpala się dokładnie jak wcześniej, oba tory współistnieją, `V`/`applyValues()`/tryb edycji są wspólne dla obu. `cena_wdrozenia`/`retainer` w Pipeline są polami wypełnianymi WYŁĄCZNIE ręcznie przez Michała (nigdy przez agenta) — dla wczesnych leadów zwykle puste, front-end pokazuje wtedy czytelny fallback tekstowy ("Cena ustalana indywidualnie", "–"), nigdy fabrykowaną liczbę.
+
 ## Security rules (ENFORCE)
 
 - Każde `messages.create()` → `metadata: { user_id: "autorise-agentN" }`
@@ -249,6 +251,7 @@ context/AUTORISE_PRIORYTETY_v1.md          — jedyne źródło prawdy o prioryt
 | 2026-07-01 | Sprint v2: tab persist, Pan fix, notepad, logo text, calendar fix, overdue days, responsive grids, MP3→Drive, agenci tabs, JSON parsing, transkrypcja cleanup, OAuth errors |
 | 2026-07-03 | MEGA PATCH scripts-v3 + Sesja 2 redesign etapowy: /kwalifikacja, /sprzedaz, /mapa, /brand-book jako nowe widoki; Roboto; nawigacja 4 grupy |
 | 2026-07-03 | Skrypt Kwalifikacyjny V4: 12 kroków, ICP wbudowane w diagnozę, kalkulator inline krok 2.6, Calendly, Fathom usunięty z kwalifikacji, jawne branch notes 2.1-2.8, fix ok_em/ok7 |
+| 2026-07-12 | prezentacja.html: drugi tor personalizacji przez `?id=` (bez AI) — nowy `GET /api/notion/prezentacja-dane`, fetch z loading state, wyróżnienie modułu wg `bol_kategoria`, oś czasu na slajdzie 5, realne dane inwestycji na slajdzie 6 z honest fallbackami. Stary tor URL-params nietknięty jako fallback |
 
 ## LOGI SESJI (OBOWIĄZKOWE)
 
