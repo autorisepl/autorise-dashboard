@@ -34,6 +34,20 @@ function extractNumber(prop: PageObjectResponse["properties"][string] | undefine
   return 0;
 }
 
+type BolKategoria = "dokumenty" | "tms" | "komunikacja" | "widocznosc" | null;
+
+// Proste dopasowanie słów kluczowych do treści "Ból główny" — brak jednoznacznego
+// trafienia (albo puste pole) zwraca null, front-end wtedy nie podświetla żadnego modułu.
+function determineBolKategoria(bolGlowny: string): BolKategoria {
+  const text = bolGlowny.toLowerCase();
+  if (!text) return null;
+  if (/faktur|cmr|dokument|pod\b|excel/.test(text)) return "dokumenty";
+  if (/tms|system|wpisywani[ae]|wpisuj/.test(text)) return "tms";
+  if (/sms|telefon|dzwoni|klient pyta|powiadomien/.test(text)) return "komunikacja";
+  if (/widoczno|status|nie wiadomo/.test(text)) return "widocznosc";
+  return null;
+}
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
@@ -83,6 +97,7 @@ export async function GET(req: Request) {
       procent_kosztu: procentKosztu,
       payback_miesiace: paybackMiesiace,
       bol_glowny: bolGlowny,
+      bol_kategoria: determineBolKategoria(bolGlowny),
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Błąd Notion";

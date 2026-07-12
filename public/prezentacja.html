@@ -186,7 +186,7 @@
     /* ── Cards ── */
     .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
     .card { position: relative; border-radius: 14px; padding: 9px 12px; background: var(--bg); border: 1px solid var(--line); box-shadow: 0 1px 2px rgba(11,31,58,.04), 0 10px 28px rgba(11,31,58,.05); }
-    .card.priority { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(29,95,224,.12), 0 1px 2px rgba(11,31,58,.04), 0 10px 28px rgba(11,31,58,.05); }
+    .card.priority { border-width: 2px; border-color: var(--blue); box-shadow: 0 1px 2px rgba(11,31,58,.04), 0 10px 28px rgba(11,31,58,.05); }
     .priority-tag {
       position: absolute; top: -9px; right: 12px;
       background: var(--blue); color: #fff; font-size: 9.5px; font-weight: 800;
@@ -823,16 +823,20 @@ function initDataBadge() {
 // Wyróżnienie modułu (slajd 3) dopasowanego do głównego bólu klienta. Zestaw 4 modułów
 // zostaje zawsze taki sam — wyróżniana jest tylko jedna karta wizualnie, żadna nie znika.
 // Wartość "modul" ustala Agent3Card.tsx (best-effort dopasowanie słów kluczowych z
-// modul_priorytet Agenta 3), tu tylko dosłowne dopasowanie do data-module, bez zgadywania.
+// modul_priorytet Agenta 3, stary AI-driven flow) — ma pierwszeństwo, gdy podana w URL.
+// MODUL_OVERRIDE to alternatywne źródło: bol_kategoria z /api/notion/prezentacja-dane
+// (?id=, nowy nie-AI flow), mapowane na te same nazwy data-module co Agent3Card.
+const BOL_KATEGORIA_TO_MODUL = { dokumenty: 'dokumenty', tms: 'tms', komunikacja: 'powiadomienia', widocznosc: 'dashboard' }
+let MODUL_OVERRIDE = null
 function initModulePriority() {
-  const modul = P.get('modul')
+  const modul = P.get('modul') || MODUL_OVERRIDE
   if (!modul) return
   const card = document.querySelector('#s3 .card[data-module="' + modul.replace(/[^a-z]/g, '') + '"]')
   if (!card) return
   card.classList.add('priority')
   const tag = document.createElement('div')
   tag.className = 'priority-tag'
-  tag.textContent = 'Twój priorytet'
+  tag.textContent = 'Twój główny problem'
   card.appendChild(tag)
 }
 
@@ -1024,6 +1028,9 @@ if (ID_PARAM) {
         V.gwar = typeof data.gwar === 'number' ? data.gwar : V.gwar
         FIRMA = data.firma || ''
         HAS_CLIENT_DATA = true
+        if (!P.get('modul') && data.bol_kategoria) {
+          MODUL_OVERRIDE = BOL_KATEGORIA_TO_MODUL[data.bol_kategoria] || null
+        }
       }
       // Gdy znaleziono:false albo błąd, V/FIRMA/HAS_CLIENT_DATA zostają przy wartościach
       // domyślnych/z URL — strona nie zostaje pusta ani zawieszona na ekranie ładowania.
