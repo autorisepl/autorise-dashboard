@@ -6,6 +6,8 @@ import {
   Check,
   CheckCircle2,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Copy,
   FileText,
   Lock,
@@ -1768,6 +1770,10 @@ function PrzypadkiSpecjalne() {
 
 // ── Left client sidebar ───────────────────────────────────────────────
 
+// Współdzielony klucz z odpowiednika w /sprzedaz — stan zwinięcia panelu ma być
+// jeden dla obu stron, nie osobny per strona.
+const CLIENT_SIDEBAR_COLLAPSE_KEY = "autorise_client_sidebar_collapsed";
+
 function ClientSidebar({
   clients,
   loading,
@@ -1782,6 +1788,19 @@ function ClientSidebar({
   onRefresh: () => void;
 }) {
   const [search, setSearch] = useState("");
+  const [collapsed, setCollapsed] = useState(false);
+
+  useEffect(() => {
+    setCollapsed(localStorage.getItem(CLIENT_SIDEBAR_COLLAPSE_KEY) === "true");
+  }, []);
+
+  const toggleCollapsed = () => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem(CLIENT_SIDEBAR_COLLAPSE_KEY, String(next));
+      return next;
+    });
+  };
 
   const filtered = clients
     .filter((c) => c.status === "Nowy lead")
@@ -1792,85 +1811,136 @@ function ClientSidebar({
   return (
     <div
       style={{
-        width: 240,
-        minWidth: 240,
+        width: collapsed ? 44 : 240,
+        minWidth: collapsed ? 44 : 240,
         height: "100%",
         borderRight: "1px solid #E5E5EA",
         display: "flex",
         flexDirection: "column",
         background: "#fff",
+        position: "relative",
+        transition: "width 240ms cubic-bezier(0.4, 0, 0.2, 1), min-width 240ms cubic-bezier(0.4, 0, 0.2, 1)",
+        overflow: "hidden",
       }}
     >
-      <div style={{ padding: "12px 12px 8px", borderBottom: "1px solid #E5E5EA", flexShrink: 0 }}>
+      <button
+        onClick={toggleCollapsed}
+        title={collapsed ? "Rozwiń panel klienta" : "Zwiń panel klienta"}
+        style={{
+          position: "absolute",
+          top: 12,
+          right: collapsed ? 6 : -12,
+          width: 24,
+          height: 24,
+          borderRadius: 8,
+          border: "1px solid #E5E5EA",
+          background: "#fff",
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "var(--text-tertiary)",
+          zIndex: 1,
+          transition: "right 240ms cubic-bezier(0.4, 0, 0.2, 1)",
+        }}
+      >
+        {collapsed ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
+      </button>
+
+      {collapsed ? (
         <div
           style={{
             display: "flex",
+            flexDirection: "column",
             alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: 8,
+            paddingTop: 48,
+            gap: 6,
           }}
         >
+          <Users size={14} color="var(--text-tertiary)" />
           <span
             style={{
               fontFamily: "var(--font-sans)",
               fontSize: 11,
               fontWeight: 700,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
               color: "var(--text-tertiary)",
             }}
           >
-            Nowy lead ({filtered.length})
+            {filtered.length}
           </span>
-          <button
-            onClick={onRefresh}
-            disabled={loading}
-            style={{
-              background: "transparent",
-              border: "none",
-              cursor: loading ? "not-allowed" : "pointer",
-              color: "var(--text-tertiary)",
-              padding: 4,
-              display: "flex",
-              alignItems: "center",
-            }}
-          >
-            <RefreshCw
-              size={12}
-              style={{ animation: loading ? "spin 1s linear infinite" : "none" }}
-            />
-          </button>
         </div>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            height: 32,
-            background: "#F5F5F7",
-            borderRadius: 8,
-            padding: "0 10px",
-          }}
-        >
-          <Search size={12} color="var(--text-tertiary)" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Szukaj klienta..."
-            style={{
-              flex: 1,
-              background: "transparent",
-              border: "none",
-              outline: "none",
-              fontFamily: "var(--font-sans)",
-              fontSize: 12,
-              color: "var(--text-primary)",
-            }}
-          />
-        </div>
-      </div>
+      ) : (
+        <>
+          <div style={{ padding: "12px 12px 8px", borderBottom: "1px solid #E5E5EA", flexShrink: 0 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 8,
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  color: "var(--text-tertiary)",
+                }}
+              >
+                Nowy lead ({filtered.length})
+              </span>
+              <button
+                onClick={onRefresh}
+                disabled={loading}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  cursor: loading ? "not-allowed" : "pointer",
+                  color: "var(--text-tertiary)",
+                  padding: 4,
+                  display: "flex",
+                  alignItems: "center",
+                }}
+              >
+                <RefreshCw
+                  size={12}
+                  style={{ animation: loading ? "spin 1s linear infinite" : "none" }}
+                />
+              </button>
+            </div>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                height: 32,
+                background: "#F5F5F7",
+                borderRadius: 8,
+                padding: "0 10px",
+              }}
+            >
+              <Search size={12} color="var(--text-tertiary)" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Szukaj klienta..."
+                style={{
+                  flex: 1,
+                  background: "transparent",
+                  border: "none",
+                  outline: "none",
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 12,
+                  color: "var(--text-primary)",
+                }}
+              />
+            </div>
+          </div>
 
-      <div style={{ flex: 1, overflowY: "auto", padding: "6px 8px" }}>
+          <div style={{ flex: 1, overflowY: "auto", padding: "6px 8px" }}>
         {filtered.length === 0 && (
           <div
             style={{
@@ -2003,6 +2073,8 @@ function ClientSidebar({
             Odznacz klienta
           </button>
         </div>
+      )}
+        </>
       )}
     </div>
   );
