@@ -74,7 +74,8 @@ function buildPrezentacjaUrl(output: Agent3Output): string {
   const p = new URLSearchParams();
   if (output.roi_dzis_h != null) p.set("roi", String(Math.round(output.roi_dzis_h)));
   if (output.roi_po_h != null) p.set("po", String(Math.round(output.roi_po_h)));
-  if (output.client_koszt_roczny != null) p.set("bol", String(Math.round(output.client_koszt_roczny)));
+  if (output.client_koszt_roczny != null)
+    p.set("bol", String(Math.round(output.client_koszt_roczny)));
   if (output.client_tms) p.set("tms", output.client_tms);
   if (output.client_firma) p.set("firma", output.client_firma);
   const modul = mapModulPriorytet(output.modul_priorytet);
