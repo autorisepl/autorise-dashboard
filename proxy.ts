@@ -2,7 +2,14 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { resolveRole } from "@/lib/auth/resolveRole";
 
-const PUBLIC_PATHS = ["/login", "/api/auth", "/prezentacja.html"];
+const PUBLIC_PATHS = [
+  "/login",
+  "/api/auth",
+  "/prezentacja.html",
+  // prezentacja.html jest publiczna (klient ogląda bez logowania) i fetchuje stąd swoje
+  // dane personalizacji — musi być dostępne bez sesji, tak jak sama strona.
+  "/api/notion/prezentacja-dane",
+];
 
 const SETTER_ALLOWED_PREFIXES = [
   "/kwalifikacja",
