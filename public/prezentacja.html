@@ -4,252 +4,290 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Autorise — Prezentacja</title>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="https://fonts.gstatic.com/s/manrope/v20/xn7gYHE41ni1AdIRggmxSuXd.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPx7cwhsk.woff2">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+
   <style>
     :root {
       --edit-h: 0px;
-      --bg: #EDEDE8;
-      --surface: #FFFFFF;
-      --asphalt: #1B1D22;
-      --text-primary: #1B1D22;
-      --text-secondary: #4A4D55;
-      --text-tertiary: #7A7D85;
-      --accent: #F5A623;
-      --accent-ink: #1B1D22;
-      --ledger-red: #C1443A;
-      --success: #2F7D5C;
-      --border: rgba(27,29,34,0.14);
-      --border-strong: rgba(27,29,34,0.24);
-      --error: #C1443A;
+      --navy: #0B1F3A;
+      --navy-deep: #071426;
+      --blue: #1D5FE0;
+      --blue-light: #4A82F0;
+      --sky: #EAF1FE;
+      --bg: #FFFFFF;
+      --bg-soft: #F7FAFF;
+      --line: #E4EAF4;
+      --line-strong: rgba(11,31,58,0.16);
+      --text-primary: #0B1F3A;
+      --text-secondary: #4B5A73;
+      --text-tertiary: #8894A8;
+      --success: #1B8A5A;
+      --error: #C23B3B;
       --warning: #B9791E;
       --font: 'Manrope', sans-serif;
       --font-mono: 'JetBrains Mono', monospace;
+      --ease: cubic-bezier(.22,1,.36,1);
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
       height: 100%; overflow: hidden;
-      font-family: var(--font); background: var(--bg); color: var(--text-primary);
+      font-family: var(--font); background: var(--bg-soft); color: var(--text-primary);
     }
 
     /* ── Progress ── */
     #progress {
       position: fixed; top: var(--edit-h); left: 0; right: 0; height: 3px;
-      background: var(--border); z-index: 300; transition: top .28s;
+      background: var(--line); z-index: 300; transition: top .28s;
     }
     #progress-bar {
       height: 100%; background-color: transparent;
-      background-image: repeating-linear-gradient(90deg, var(--accent) 0 8px, transparent 8px 14px);
-      transition: width .32s cubic-bezier(.4,0,.2,1);
+      background-image: repeating-linear-gradient(90deg, var(--blue) 0 8px, transparent 8px 14px);
+      transition: width .32s var(--ease);
     }
 
     /* ── Edit toggle ── */
     #edit-toggle {
       position: fixed; top: 10px; right: 14px; z-index: 500;
-      width: 32px; height: 32px; border-radius: 6px;
-      background: var(--surface); border: 1px solid var(--border-strong);
+      width: 34px; height: 34px; border-radius: 9px;
+      background: var(--bg); border: 1px solid var(--line-strong);
+      box-shadow: 0 2px 8px rgba(11,31,58,0.08);
       cursor: pointer; display: flex; align-items: center; justify-content: center;
       transition: background .15s, border-color .15s, top .28s; color: var(--text-secondary);
     }
-    #edit-toggle.on { background: var(--accent); border-color: var(--accent); top: 64px; color: var(--accent-ink); }
+    #edit-toggle.on { background: var(--blue); border-color: var(--blue); top: 64px; color: #fff; }
 
     /* ── Edit bar ── */
     #edit-bar {
       position: fixed; top: 0; left: 0; right: 0; height: 56px;
-      background: var(--surface);
-      border-bottom: 1px solid var(--border-strong);
+      background: var(--bg);
+      border-bottom: 1px solid var(--line-strong);
       display: none; align-items: center; gap: 14px; padding: 0 16px;
       z-index: 400; overflow-x: auto;
+      box-shadow: 0 2px 12px rgba(11,31,58,0.06);
     }
     #edit-bar.visible { display: flex; }
     #edit-slide-info { font-size: 10px; font-weight: 700; color: var(--text-tertiary); letter-spacing: .06em; white-space: nowrap; flex-shrink: 0; text-transform: uppercase; }
     .ei { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
     .ei label { font-size: 9px; color: var(--text-tertiary); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
-    .ei input { height: 26px; padding: 0 8px; border-radius: 6px; border: 1px solid var(--border-strong); background: var(--bg); color: var(--text-primary); font-family: var(--font); font-size: 12px; font-weight: 600; width: 72px; outline: none; }
+    .ei input { height: 26px; padding: 0 8px; border-radius: 6px; border: 1px solid var(--line-strong); background: var(--bg-soft); color: var(--text-primary); font-family: var(--font); font-size: 12px; font-weight: 600; width: 72px; outline: none; }
     .ei input.wide { width: 110px; }
-    .ei input:focus { border-color: var(--accent); }
-    .ei-sep { width: 1px; height: 24px; background: var(--border-strong); flex-shrink: 0; }
-    #edit-exit { height: 26px; padding: 0 10px; border-radius: 6px; background: transparent; border: 1px solid var(--border-strong); color: var(--text-tertiary); font-family: var(--font); font-size: 10px; font-weight: 700; cursor: pointer; letter-spacing: .05em; white-space: nowrap; flex-shrink: 0; }
-    #edit-exit:hover { background: var(--border); }
+    .ei input:focus { border-color: var(--blue); }
+    .ei-sep { width: 1px; height: 24px; background: var(--line-strong); flex-shrink: 0; }
+    #edit-exit { height: 26px; padding: 0 10px; border-radius: 6px; background: transparent; border: 1px solid var(--line-strong); color: var(--text-tertiary); font-family: var(--font); font-size: 10px; font-weight: 700; cursor: pointer; letter-spacing: .05em; white-space: nowrap; flex-shrink: 0; }
+    #edit-exit:hover { background: var(--sky); }
 
     /* ── Slides ── */
     #slides-wrap { position: fixed; top: var(--edit-h); left: 0; right: 0; bottom: 0; overflow: hidden; transition: top .28s; }
     .slide {
       position: absolute; inset: 0; opacity: 0; transform: translateX(28px);
-      transition: opacity .3s ease, transform .3s ease;
-      pointer-events: none; display: flex; flex-direction: column; background: var(--bg);
+      transition: opacity .34s var(--ease), transform .34s var(--ease);
+      pointer-events: none; display: flex; flex-direction: column; background: var(--bg-soft);
     }
     .slide.active { opacity: 1; transform: translateX(0); pointer-events: all; }
 
     /* ── Arrows ── */
     .arr {
       position: fixed; top: 50%; transform: translateY(-50%);
-      width: 36px; height: 36px; border-radius: 50%;
-      background: var(--surface); border: 1px solid var(--border-strong);
+      width: 38px; height: 38px; border-radius: 50%;
+      background: var(--bg); border: 1px solid var(--line-strong);
+      box-shadow: 0 2px 10px rgba(11,31,58,0.08);
       cursor: pointer; display: flex; align-items: center; justify-content: center;
       z-index: 200; color: var(--text-tertiary);
       transition: color .12s, background .12s, border-color .12s, opacity .2s; user-select: none;
     }
-    .arr:hover { background: var(--asphalt); border-color: var(--asphalt); color: var(--accent); }
-    #btn-prev { left: 10px; }
-    #btn-next { right: 10px; }
+    .arr:hover { background: var(--blue); border-color: var(--blue); color: #fff; }
+    #btn-prev { left: 12px; }
+    #btn-next { right: 12px; }
 
     /* ── Nav ── */
     #nav { position: fixed; bottom: 0; left: 0; right: 0; height: 44px; display: flex; align-items: center; justify-content: center; gap: 7px; z-index: 200; pointer-events: none; }
-    .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--border-strong); cursor: pointer; pointer-events: all; transition: background .2s, transform .2s; }
-    .dot.active { background: var(--accent); transform: scale(1.5); }
+    .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--line-strong); cursor: pointer; pointer-events: all; transition: background .2s var(--ease), transform .2s var(--ease); }
+    .dot.active { background: var(--blue); transform: scale(1.5); }
     #counter { position: fixed; bottom: 14px; right: 14px; font-size: 10px; font-weight: 600; color: var(--text-tertiary); z-index: 200; letter-spacing: .03em; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 
     /* ── Slide inner ── */
-    .si { flex: 1; display: flex; flex-direction: column; padding: 24px 64px 44px; max-width: 1020px; margin: 0 auto; width: 100%; justify-content: center; }
-
-    /* ── Stamp (dokument znacznik) ── */
-    .stamp {
-      position: relative; width: 44px; height: 44px; transform: rotate(-4deg);
-      border: 1.5px solid var(--asphalt); background: var(--surface);
-      display: flex; align-items: center; justify-content: center;
-      margin-bottom: 6px;
-    }
-    .stamp-num {
-      font-family: var(--font-mono); font-size: 17px; font-weight: 800;
-      color: var(--asphalt); font-variant-numeric: tabular-nums;
-    }
-    .stamp::after {
-      content: ''; position: absolute; left: 7px; right: 7px; bottom: 7px;
-      height: 1px; background: var(--asphalt); opacity: .5;
-    }
+    .si { flex: 1; display: flex; flex-direction: column; padding: 24px 64px 32px; max-width: 1080px; margin: 0 auto; width: 100%; justify-content: center; }
 
     /* ── Typography ── */
-    .tag { font-size: 10px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 8px; }
-    .h1 { font-size: clamp(40px, 5.4vw, 68px); font-weight: 900; line-height: 1.06; letter-spacing: -.03em; margin-bottom: 14px; }
-    .sub { font-size: 16px; font-weight: 500; line-height: 1.52; color: var(--text-secondary); margin-bottom: 16px; }
-    .blue  { color: var(--accent); }
+    .tag { font-size: 11px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; color: var(--blue); margin-bottom: 8px; }
+    .h1 { font-size: clamp(44px, 5vw, 60px); font-weight: 800; line-height: 1.06; letter-spacing: -.02em; margin-bottom: 10px; color: var(--navy); }
+    .h1.h1-hero { font-size: clamp(56px, 6.2vw, 84px); font-weight: 800; letter-spacing: -.03em; line-height: 1.02; }
+    .h1.h1-hero-sm { font-size: clamp(36px, 4vw, 48px); font-weight: 800; letter-spacing: -.02em; line-height: 1.06; }
+    .sub { font-size: clamp(16px, 1.6vw, 19px); font-weight: 500; line-height: 1.5; color: var(--text-secondary); margin-bottom: 10px; }
+    .blue  { color: var(--blue); }
     .red   { color: var(--error); }
     .green { color: var(--success); }
 
     /* ── Icon box ── */
     .c-icon {
-      width: 40px; height: 40px; border-radius: 4px; flex-shrink: 0;
+      width: 48px; height: 48px; border-radius: 12px; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
-      background: var(--asphalt); margin-bottom: 10px;
-      color: var(--accent);
+      background: var(--navy); margin-bottom: 8px;
+      color: var(--blue-light);
     }
+    .c-icon svg { width: 22px; height: 22px; }
     .c-icon.ic-red    { color: var(--error); }
-    .c-icon.ic-warn   { color: var(--accent); }
+    .c-icon.ic-warn   { color: var(--warning); }
     .c-icon.ic-green  { color: var(--success); }
-    .c-icon.ic-purple { color: var(--surface); }
 
     /* ── Cards ── */
-    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .card { border-radius: 6px; padding: 11px 15px; background: var(--surface); border: 1px solid var(--border); border-bottom: 2px solid var(--border-strong); }
-    .c-title { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
-    .c-desc  { font-size: 13px; line-height: 1.42; color: var(--text-secondary); }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .card { border-radius: 14px; padding: 11px 14px; background: var(--bg); border: 1px solid var(--line); box-shadow: 0 1px 2px rgba(11,31,58,.04), 0 10px 28px rgba(11,31,58,.05); }
+    .c-title { font-size: 15px; font-weight: 700; margin-bottom: 3px; color: var(--navy); }
+    .c-desc  { font-size: 15px; line-height: 1.55; color: var(--text-secondary); }
 
     /* ── Bars ── */
-    .bars { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+    .bars { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
     .bar-row { display: flex; align-items: center; gap: 12px; }
-    .bar-lbl { width: 108px; font-size: 12px; font-weight: 600; color: var(--text-tertiary); flex-shrink: 0; }
-    .bar-track { flex: 1; height: 40px; border-radius: 6px; background: var(--surface); overflow: hidden; border: 1px solid var(--border); }
-    .bar-fill { height: 100%; border-radius: 4px; display: flex; align-items: center; padding: 0 14px; font-size: 13.5px; font-weight: 800; color: var(--surface); font-family: var(--font-mono); font-variant-numeric: tabular-nums; transition: width .7s cubic-bezier(.4,0,.2,1); white-space: nowrap; }
+    .bar-lbl { width: 108px; font-size: 13px; font-weight: 600; color: var(--text-tertiary); flex-shrink: 0; }
+    .bar-track { flex: 1; height: 44px; border-radius: 10px; background: var(--bg); overflow: hidden; border: 1px solid var(--line); }
+    .bar-fill { height: 100%; border-radius: 8px; display: flex; align-items: center; padding: 0 16px; font-size: 14px; font-weight: 800; color: #fff; font-family: var(--font-mono); font-variant-numeric: tabular-nums; transition: width .6s var(--ease); white-space: nowrap; }
     .bar-red   { background: var(--error); }
     .bar-green { background: var(--success); }
 
     /* ── Stat boxes ── */
-    .stat-boxes { display: flex; gap: 10px; flex-wrap: wrap; }
-    .stat-box { flex: 1; min-width: 140px; border-radius: 6px; padding: 14px 16px; background: var(--surface); border: 1px solid var(--border); border-bottom: 2px solid var(--border-strong); }
-    .sb-red   { background: rgba(193,68,58,0.06)!important;   border-color: rgba(193,68,58,0.22)!important; }
-    .sb-blue  { background: rgba(245,166,35,0.07)!important;  border-color: rgba(245,166,35,0.26)!important; }
-    .sb-green { background: rgba(47,125,92,0.06)!important;   border-color: rgba(47,125,92,0.22)!important; }
-    .st-tag { font-size: 9.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 5px; }
-    .st-val { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: clamp(20px, 2.6vw, 30px); font-weight: 800; letter-spacing: -.01em; line-height: 1; color: var(--text-primary); }
+    .stat-boxes { display: flex; gap: 12px; flex-wrap: wrap; }
+    .stat-box { flex: 1; min-width: 150px; border-radius: 14px; padding: 16px 18px; background: var(--bg); border: 1px solid var(--line); box-shadow: 0 1px 2px rgba(11,31,58,.04), 0 8px 22px rgba(11,31,58,.05); }
+    .sb-red   { background: rgba(194,59,59,0.05)!important;  border-color: rgba(194,59,59,0.2)!important; }
+    .sb-blue  { background: rgba(29,95,224,0.05)!important;  border-color: rgba(29,95,224,0.2)!important; }
+    .sb-green { background: rgba(27,138,90,0.05)!important;  border-color: rgba(27,138,90,0.2)!important; }
+    .st-tag { font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 6px; }
+    .st-val { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: clamp(24px, 3vw, 36px); font-weight: 800; letter-spacing: -.01em; line-height: 1; color: var(--navy); }
     .st-val.red   { color: var(--error); }
-    .st-val.blue  { color: var(--accent); }
+    .st-val.blue  { color: var(--blue); }
     .st-val.green { color: var(--success); }
 
     /* ── Comparison table ── */
-    .cmp-wrap { background: var(--surface); border-radius: 6px; border: 1px solid var(--border); border-bottom: 2px solid var(--border-strong); overflow: hidden; margin-top: 18px; }
+    .cmp-wrap { background: var(--bg); border-radius: 16px; border: 1px solid var(--line); box-shadow: 0 1px 2px rgba(11,31,58,.04), 0 10px 28px rgba(11,31,58,.05); overflow: hidden; margin-top: 20px; }
     table.cmp { width: 100%; border-collapse: collapse; }
-    table.cmp th, table.cmp td { padding: 11px 16px; text-align: left; font-size: 13px; border-bottom: 1px solid var(--border); }
-    table.cmp th { font-size: 10.5px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--text-tertiary); background: var(--bg); }
-    table.cmp th.hl { color: var(--accent); }
+    table.cmp th, table.cmp td { padding: 13px 18px; text-align: left; font-size: 14.5px; border-bottom: 1px solid var(--line); }
+    table.cmp th { font-size: 11px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--text-tertiary); background: var(--bg-soft); }
+    table.cmp th.hl { color: var(--blue); }
     table.cmp td:first-child { font-weight: 600; color: var(--text-secondary); }
     table.cmp td.yes { color: var(--success); font-weight: 700; }
     table.cmp td.no  { color: var(--text-tertiary); }
     table.cmp tr:last-child td { border-bottom: none; }
+    .cmp-note { display: flex; align-items: flex-start; gap: 8px; margin-top: 14px; }
+    .cmp-note svg { flex-shrink: 0; margin-top: 1px; width: 16px; height: 16px; color: var(--text-tertiary); }
+    .cmp-note span { font-size: 14px; line-height: 1.55; color: var(--text-tertiary); }
 
     /* ── Steps ── */
-    .steps { display: flex; flex-direction: column; gap: 13px; }
-    .step  { display: flex; align-items: flex-start; gap: 13px; }
-    .s-num { width: 32px; height: 32px; border-radius: 50%; background: var(--asphalt); display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 14px; font-weight: 800; color: var(--accent); flex-shrink: 0; }
-    .s-title { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
-    .s-desc  { font-size: 12.5px; color: var(--text-secondary); line-height: 1.48; }
+    .steps { display: flex; flex-direction: column; gap: 15px; }
+    .step  { display: flex; align-items: flex-start; gap: 14px; }
+    .s-num { width: 34px; height: 34px; border-radius: 50%; background: var(--navy); display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 14px; font-weight: 800; color: var(--blue-light); flex-shrink: 0; }
+    .s-title { font-size: 15px; font-weight: 700; margin-bottom: 3px; color: var(--navy); }
+    .s-desc  { font-size: 14px; color: var(--text-secondary); line-height: 1.5; }
 
     /* ── Timeline ── */
-    .timeline { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-top: 20px; }
-    .tl-week { font-size: 9.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 5px; }
-    .tl-bar  { height: 6px; border-radius: 3px; }
-    .tl-lbl  { font-size: 11px; color: var(--text-secondary); margin-top: 5px; font-weight: 600; }
+    .timeline { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-top: 22px; }
+    .tl-week { font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 6px; }
+    .tl-bar  { height: 7px; border-radius: 4px; }
+    .tl-lbl  { font-size: 12px; color: var(--text-secondary); margin-top: 6px; font-weight: 600; }
 
     /* ── Price cards ── */
-    .price-cards { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 18px; align-items: stretch; }
-    .price-card  { flex: 1; min-width: 180px; border-radius: 6px; padding: 20px 22px; background: var(--surface); }
-    .price-card.cost   { border: 1px solid var(--border); border-bottom: 2px solid rgba(193,68,58,0.4); }
-    .price-card.invest { border: 1px solid var(--border); border-bottom: 2px solid rgba(245,166,35,0.5); }
-    .pc-tag { font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 8px; color: var(--text-tertiary); }
-    .pc-val { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: clamp(28px, 3.8vw, 46px); font-weight: 800; letter-spacing: -.01em; line-height: 1; }
-    .pc-sub { font-size: 12px; color: var(--text-tertiary); margin-top: 5px; }
+    .price-cards { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 20px; align-items: stretch; }
+    .price-card  { flex: 1; min-width: 200px; border-radius: 16px; padding: 24px 26px; background: var(--bg); border: 1px solid var(--line); box-shadow: 0 1px 2px rgba(11,31,58,.04), 0 10px 28px rgba(11,31,58,.05); }
+    .pc-tag { font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 10px; color: var(--text-tertiary); }
+    .pc-val { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: clamp(32px, 4vw, 48px); font-weight: 800; letter-spacing: -.01em; line-height: 1; }
+    .pc-sub { font-size: 13px; color: var(--text-tertiary); margin-top: 6px; }
 
     /* ── ROI metrics row ── */
-    .roi-row { display: flex; margin-top: 16px; background: var(--surface); border: 1px solid var(--border); border-bottom: 2px solid var(--border-strong); border-radius: 6px; overflow: hidden; }
-    .roi-metric { flex: 1; padding: 18px 22px; display: flex; align-items: center; gap: 14px; }
-    .roi-metric + .roi-metric { border-left: 1px solid var(--border); }
-    .roi-val { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: clamp(34px,4.5vw,52px); font-weight: 800; letter-spacing: -.01em; line-height: 1; color: var(--text-primary); flex-shrink: 0; }
-    .roi-label { font-size: 13px; font-weight: 500; color: var(--text-secondary); line-height: 1.45; }
-    .roi-accent { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; background: var(--asphalt); color: var(--success); flex-shrink: 0; }
+    .roi-row { display: flex; margin-top: 18px; background: var(--bg); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; box-shadow: 0 1px 2px rgba(11,31,58,.04), 0 10px 28px rgba(11,31,58,.05); }
+    .roi-metric { flex: 1; padding: 20px 24px; display: flex; align-items: center; gap: 16px; }
+    .roi-metric + .roi-metric { border-left: 1px solid var(--line); }
+    .roi-val { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: clamp(30px,4vw,44px); font-weight: 800; letter-spacing: -.01em; line-height: 1; color: var(--navy); flex-shrink: 0; }
+    .roi-label { font-size: 14px; font-weight: 500; color: var(--text-secondary); line-height: 1.45; }
+    .roi-accent { display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; background: var(--navy); color: var(--success); flex-shrink: 0; }
+    .roi-accent svg { width: 15px; height: 15px; }
 
     /* ── Guarantee ── */
-    .guar-row   { display: flex; gap: 36px; flex-wrap: wrap; align-items: flex-start; }
-    .guar-left  { flex: 1; min-width: 220px; }
-    .guar-pct   { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: clamp(64px, 10vw, 112px); font-weight: 800; color: var(--accent); letter-spacing: -.02em; line-height: 1; }
-    .guar-txt   { font-size: 22px; font-weight: 800; margin: 6px 0 8px; line-height: 1.2; }
-    .guar-sub   { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
-    .guar-right { flex: 1; min-width: 240px; }
+    .guar-row   { display: flex; gap: 40px; flex-wrap: wrap; align-items: flex-start; }
+    .guar-left  { flex: 1; min-width: 240px; }
+    .guar-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px 6px 8px; border-radius: 100px; background: var(--sky); margin-bottom: 14px; }
+    .guar-badge svg { width: 15px; height: 15px; color: var(--success); }
+    .guar-badge span { font-size: 11.5px; font-weight: 700; color: var(--navy); }
+    .guar-pct   { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: clamp(80px, 11vw, 128px); font-weight: 800; color: var(--blue); letter-spacing: -.02em; line-height: 1; }
+    .guar-txt   { font-size: 21px; font-weight: 800; margin: 4px 0 6px; line-height: 1.15; color: var(--navy); }
+    .guar-sub   { font-size: 15px; color: var(--text-secondary); line-height: 1.5; }
+    .guar-right { flex: 1; min-width: 260px; }
 
     /* ── Contact ── */
-    .contact-box { margin-top: 16px; padding: 13px 16px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 6px; }
-    .contact-sub   { font-size: 9.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 3px; }
-    .contact-email { font-size: 14px; font-weight: 700; color: var(--accent-ink); }
+    .contact-box { margin-top: 14px; padding: 14px 16px; background: var(--bg); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 1px 2px rgba(11,31,58,.04), 0 10px 28px rgba(11,31,58,.05); display: flex; flex-direction: column; gap: 9px; }
+    .contact-row { display: flex; align-items: center; gap: 10px; }
+    .contact-ic { width: 30px; height: 30px; border-radius: 8px; background: var(--sky); color: var(--blue); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .contact-ic svg { width: 16px; height: 16px; }
+    .contact-sub   { font-size: 10px; font-weight: 700; letter-spacing: .04em; color: var(--text-tertiary); }
+    .contact-val { font-size: 15px; font-weight: 700; color: var(--navy); }
 
     /* ── Check list ── */
-    .check-list { display: flex; flex-direction: column; gap: 9px; margin-top: 16px; }
-    .check-item { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 500; color: var(--text-secondary); }
-    .check-dot  { width: 22px; height: 22px; border-radius: 50%; background: var(--surface); border: 1px solid var(--success); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--success); }
+    .check-list { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
+    .check-item { display: flex; align-items: center; gap: 10px; font-size: 14.5px; font-weight: 500; color: var(--text-secondary); }
+    .check-dot  { width: 24px; height: 24px; border-radius: 50%; background: var(--sky); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--success); }
+    .check-dot svg { width: 13px; height: 13px; }
 
     /* ── Donut row ── */
-    .donut-row { display: flex; align-items: center; gap: 16px; margin-top: 4px; flex-wrap: wrap; }
+    .donut-row { display: flex; align-items: center; gap: 16px; margin-top: 0; flex-wrap: wrap; }
 
     /* ── Hero number accent ── */
     .hero-saved { text-align: right; }
-    .hero-saved-val { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: clamp(52px, 8vw, 96px); font-weight: 800; color: var(--success); letter-spacing: -.02em; line-height: 1; }
-    .hero-saved-label { font-size: 12px; font-weight: 600; color: var(--text-tertiary); margin-top: 2px; text-transform: uppercase; letter-spacing: .05em; }
+    .hero-saved-val { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: clamp(80px, 11vw, 128px); font-weight: 800; color: var(--success); letter-spacing: -.02em; line-height: 1; }
+    .hero-saved-label { font-size: 13px; font-weight: 600; color: var(--text-tertiary); margin-top: 4px; text-transform: uppercase; letter-spacing: .05em; }
 
     /* ── Two-col header ── */
-    .header-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 6px; }
+    .header-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 8px; }
     .header-row .h1 { margin-bottom: 0; }
 
     /* ── Stagger animation ── */
     .ai { opacity: 0; }
-    .ai.sp { animation: fadeUp .65s cubic-bezier(.16,1,.3,1) both; animation-delay: calc(var(--i,0) * 85ms); }
+    .ai.sp { animation: fadeUp .48s cubic-bezier(.16,1,.3,1) both; animation-delay: calc(var(--i,0) * 60ms); will-change: opacity, transform; }
     @keyframes fadeUp { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:none; } }
+
+    /* ── Reduced motion ── */
+    @media (prefers-reduced-motion: reduce) {
+      .slide, .slide.active { transform: none !important; transition: opacity .05s linear !important; }
+      .ai, .ai.sp { animation: none !important; opacity: 1 !important; transform: none !important; }
+      .bar-fill, #progress-bar, .dot { transition: none !important; }
+    }
 
     /* ── Mobile (klient ogląda z telefonu) ── */
     @media (max-width: 480px) {
-      .si { padding: 20px 20px 32px; }
+      .si { padding: 22px 18px 26px; }
       .header-row { flex-direction: column; align-items: flex-start; gap: 8px; }
       .hero-saved { text-align: left; }
-      .stamp { width: 38px; height: 38px; margin-bottom: 8px; }
-      .stamp-num { font-size: 14px; }
+      .h1.h1-hero { font-size: clamp(36px, 10vw, 48px); margin-bottom: 10px; }
+      .h1.h1-hero-sm { font-size: clamp(26px, 7vw, 32px); margin-bottom: 4px !important; }
+      .h1 { font-size: clamp(26px, 7vw, 34px); margin-bottom: 8px; }
+      .guar-pct, .hero-saved-val { font-size: clamp(44px, 14vw, 60px); }
+      .guar-txt { font-size: 18px; margin: 2px 0 4px; }
+      .guar-sub { font-size: 14px; }
+      .sub { font-size: 15px; margin-bottom: 10px; }
+      .tag { margin-bottom: 6px; }
+      .c-icon { width: 40px; height: 40px; border-radius: 10px; margin-bottom: 6px; }
+      .c-icon svg { width: 19px; height: 19px; }
+      .card { padding: 12px 14px; }
+      .c-title { font-size: 14px; margin-bottom: 2px; }
+      .grid2 { gap: 8px; }
+      .cmp-wrap { margin-top: 12px; }
+      table.cmp th, table.cmp td { padding: 9px 12px; font-size: 13px; }
+      .cmp-note { margin-top: 10px; }
+      .check-list { margin-top: 6px !important; gap: 5px !important; }
+      .check-item { font-size: 13.5px; }
+      .check-dot { width: 20px; height: 20px; }
+      .guar-right { margin-top: 4px; }
+      .contact-box { margin-top: 8px; padding: 10px 12px; gap: 6px; }
+      .guar-right { margin-top: 2px !important; }
+      .steps-next { gap: 7px !important; }
+      .contact-ic { width: 26px; height: 26px; }
+      .contact-val { font-size: 14px; }
     }
   </style>
 </head>
@@ -257,9 +295,10 @@
 
 <!-- Edit toggle -->
 <button id="edit-toggle" title="Tryb edycji (E)">
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" />
+    <path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415" />
+    <path d="M16 5l3 3" />
   </svg>
 </button>
 
@@ -289,39 +328,33 @@
   <!-- 1: PROBLEM -->
   <div class="slide" id="s1">
     <div class="si">
-      <div class="stamp"><span class="stamp-num">01</span></div>
       <div class="tag ai" style="--i:0">01 · Problem</div>
-      <h1 class="h1 ai" style="--i:1">Transport ręczny<br><span class="blue">kosztuje więcej,<br>niż myślisz.</span></h1>
+      <h1 class="h1 h1-hero ai" style="--i:1">Transport ręczny<br><span class="blue">kosztuje więcej,<br>niż myślisz.</span></h1>
       <p class="sub ai" style="--i:2">Każdy spedytor codziennie traci czas na zadania, które może wykonać automat.</p>
 
       <div class="grid2 ai" style="--i:3">
         <div class="card">
           <div class="c-icon ic-warn">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M12 7v5l3 3" />
             </svg>
           </div>
           <div class="c-title">Manualne wpisywanie</div>
-          <p class="c-desc"><strong class="val-roi" style="color:var(--text-primary)">–</strong> h na spedytora miesięcznie przepada na ręczne wprowadzanie danych do systemu</p>
+          <p class="c-desc"><strong class="val-roi" style="color:var(--navy)">–</strong> h na spedytora miesięcznie przepada na ręczne wprowadzanie danych do systemu</p>
         </div>
         <div class="card">
           <div class="c-icon ic-red">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14 2 14 8 20 8"/>
-              <line x1="16" y1="13" x2="8" y2="13"/>
-              <line x1="16" y1="17" x2="8" y2="17"/>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2" /><path d="M9 7l1 0" /><path d="M9 13l6 0" /><path d="M13 17l2 0" />
             </svg>
           </div>
           <div class="c-title">Opóźnione faktury</div>
-          <p class="c-desc"><strong class="val-bol" style="color:var(--text-primary)">–</strong> PLN rocznie zablokowane przez błędy i opóźnienia fakturowania</p>
+          <p class="c-desc"><strong class="val-bol" style="color:var(--navy)">–</strong> PLN rocznie zablokowane przez błędy i opóźnienia fakturowania</p>
         </div>
         <div class="card">
           <div class="c-icon ic-red">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="8" x2="12" y2="12"/>
-              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 9v4" /><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0" /><path d="M12 16h.01" />
             </svg>
           </div>
           <div class="c-title">Błędy ludzkie</div>
@@ -329,9 +362,8 @@
         </div>
         <div class="card">
           <div class="c-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-              <circle cx="12" cy="12" r="3"/>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" /><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />
             </svg>
           </div>
           <div class="c-title">Brak widoczności</div>
@@ -340,15 +372,15 @@
       </div>
 
       <div class="donut-row ai" style="--i:5">
-        <svg width="72" height="72" viewBox="0 0 76 76">
-          <circle cx="38" cy="38" r="28" fill="none" stroke="rgba(27,29,34,0.12)" stroke-width="9"/>
-          <circle cx="38" cy="38" r="28" fill="none" stroke="var(--accent)" stroke-width="9"
+        <svg width="76" height="76" viewBox="0 0 76 76">
+          <circle cx="38" cy="38" r="28" fill="none" stroke="var(--line)" stroke-width="9"/>
+          <circle cx="38" cy="38" r="28" fill="none" stroke="var(--blue)" stroke-width="9"
             stroke-dasharray="109 176" stroke-linecap="round" transform="rotate(-90 38 38)"/>
-          <text x="38" y="43" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="14" font-weight="800" fill="#1B1D22">62%</text>
+          <text x="38" y="43" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="14" font-weight="800" fill="#0B1F3A">62%</text>
         </svg>
         <div>
-          <div style="font-size:14px;font-weight:700;">62% firm transportowych</div>
-          <div style="font-size:13px;color:var(--text-secondary);line-height:1.5;margin-top:3px;">
+          <div style="font-size:15px;font-weight:700;color:var(--navy);">62% firm transportowych</div>
+          <div style="font-size:14px;color:var(--text-secondary);line-height:1.5;margin-top:3px;">
             traci ponad <strong class="val-bol" style="color:var(--error)">–</strong> PLN rocznie<br>przez nieefektywność operacyjną
           </div>
         </div>
@@ -359,18 +391,17 @@
   <!-- 2: EFEKT ROI -->
   <div class="slide" id="s2">
     <div class="si">
-      <div class="stamp"><span class="stamp-num">02</span></div>
       <div class="tag ai" style="--i:0">02 · Efekt wdrożenia</div>
 
       <div class="header-row ai" style="--i:1">
-        <h1 class="h1">Ile czasu <span class="blue">oszczędzasz</span><br>po wdrożeniu?</h1>
+        <h1 class="h1 h1-hero">Ile czasu <span class="blue">oszczędzasz</span><br>po wdrożeniu?</h1>
         <div class="hero-saved">
           <div class="hero-saved-val"><span id="val-saved">60</span>h</div>
           <div class="hero-saved-label">oszczędność / mies.</div>
         </div>
       </div>
 
-      <p class="sub ai" style="--i:2;margin-bottom:14px;">Porównanie obciążenia spedytora przed i po automatyzacji procesów operacyjnych.</p>
+      <p class="sub ai" style="--i:2;margin-bottom:16px;">Zestawienie obciążenia spedytora przed i po wdrożeniu, na tych samych danych.</p>
 
       <div class="bars ai" style="--i:3">
         <div class="bar-row">
@@ -403,7 +434,6 @@
   <!-- 3: SYSTEM -->
   <div class="slide" id="s3">
     <div class="si">
-      <div class="stamp"><span class="stamp-num">03</span></div>
       <div class="tag ai" style="--i:0">03 · System</div>
       <h1 class="h1 ai" style="--i:1">Moduły dobrane<br><span class="blue">do Twojej firmy.</span></h1>
       <p class="sub ai" style="--i:2">Nie wdrażamy wszystkiego. Dobieramy to, co eliminuje Twój konkretny problem w ciągu 4 tygodni.</p>
@@ -411,9 +441,8 @@
       <div class="grid2 ai" style="--i:3">
         <div class="card">
           <div class="c-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
-              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 17a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M15 17a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M5 17h-2v-11a1 1 0 0 1 1 -1h9v12m-4 0h6m4 0h2v-6h-8m0 -5h5l3 5" />
             </svg>
           </div>
           <div class="c-title">Automatyzacja TMS</div>
@@ -421,10 +450,8 @@
         </div>
         <div class="card">
           <div class="c-icon ic-warn">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="6 3 6 21 12 18 18 21 18 3"/>
-              <line x1="6" y1="8" x2="18" y2="8"/>
-              <line x1="6" y1="12" x2="14" y2="12"/>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12h14" /><path d="M3 7v-2a2 2 0 0 1 2 -2h2" /><path d="M3 17v2a2 2 0 0 0 2 2h2" /><path d="M17 3h2a2 2 0 0 1 2 2v2" /><path d="M17 21h2a2 2 0 0 0 2 -2v-2" />
             </svg>
           </div>
           <div class="c-title">Dokumenty i pliki: CMR, POD, faktury, Excel</div>
@@ -432,20 +459,17 @@
         </div>
         <div class="card">
           <div class="c-icon ic-green">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6" /><path d="M9 17v1a3 3 0 0 0 6 0v-1" />
             </svg>
           </div>
           <div class="c-title">Powiadomienia automatyczne</div>
           <p class="c-desc">Kierowcy i klienci informowani na każdym etapie. Bez telefonów, bez SMS ręcznie.</p>
         </div>
         <div class="card">
-          <div class="c-icon ic-purple">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="18" y1="20" x2="18" y2="10"/>
-              <line x1="12" y1="20" x2="12" y2="4"/>
-              <line x1="6" y1="20" x2="6" y2="14"/>
+          <div class="c-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 3v18h18" /><path d="M7 9a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M17 7a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M12 15a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M10.16 10.62l2.34 2.88" /><path d="M15.088 13.328l2.837 -4.586" />
             </svg>
           </div>
           <div class="c-title">Dashboard zarządczy</div>
@@ -458,7 +482,6 @@
   <!-- 4: DLACZEGO MY -->
   <div class="slide" id="s4">
     <div class="si">
-      <div class="stamp"><span class="stamp-num">04</span></div>
       <div class="tag ai" style="--i:0">04 · Dlaczego Autorise?</div>
       <h1 class="h1 ai" style="--i:1">Nie ERP.<br><span class="blue">Dedykowany automat<br>dla transportu.</span></h1>
 
@@ -477,17 +500,23 @@
           </tbody>
         </table>
       </div>
+
+      <div class="cmp-note ai" style="--i:3">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 9v4" /><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0" /><path d="M12 16h.01" />
+        </svg>
+        <span>Ten model działa najlepiej przy stałym wolumenie zleceń i biurze z co najmniej dwoma spedytorami. Przy mniejszej skali klasyczny system może się sprawdzić lepiej.</span>
+      </div>
     </div>
   </div>
 
   <!-- 5: PROCES -->
   <div class="slide" id="s5">
     <div class="si">
-      <div class="stamp"><span class="stamp-num">05</span></div>
       <div class="tag ai" style="--i:0">05 · Proces</div>
       <h1 class="h1 ai" style="--i:1">Od decyzji do live<br><span class="blue">w 4 tygodnie.</span></h1>
 
-      <div class="steps ai" style="--i:2;margin-top:14px;">
+      <div class="steps ai" style="--i:2;margin-top:16px;">
         <div class="step">
           <div class="s-num">1</div>
           <div>
@@ -514,17 +543,17 @@
       <div class="timeline ai" style="--i:4">
         <div>
           <div class="tl-week">Tydzień 1</div>
-          <div class="tl-bar" style="background:var(--accent)"></div>
+          <div class="tl-bar" style="background:var(--blue)"></div>
           <div class="tl-lbl">Discovery</div>
         </div>
         <div>
           <div class="tl-week">Tydzień 2</div>
-          <div class="tl-bar" style="background:var(--accent)"></div>
+          <div class="tl-bar" style="background:var(--blue)"></div>
           <div class="tl-lbl">Integracja</div>
         </div>
         <div>
           <div class="tl-week">Tydzień 3</div>
-          <div class="tl-bar" style="background:var(--asphalt)"></div>
+          <div class="tl-bar" style="background:var(--navy)"></div>
           <div class="tl-lbl">Testy</div>
         </div>
         <div>
@@ -539,22 +568,21 @@
   <!-- 6: INWESTYCJA -->
   <div class="slide" id="s6">
     <div class="si">
-      <div class="stamp"><span class="stamp-num">06</span></div>
       <div class="tag ai" style="--i:0">06 · Inwestycja</div>
       <h1 class="h1 ai" style="--i:1">Ile kosztuje<br><span class="blue">nierobienie nic?</span></h1>
 
       <div class="price-cards ai" style="--i:2">
-        <div class="price-card cost">
+        <div class="price-card">
           <div class="pc-tag">Problem kosztuje Was</div>
           <div class="pc-val red"><span class="val-bol-k">–</span> PLN</div>
           <div class="pc-sub">rocznie, każdego roku</div>
         </div>
         <div style="display:flex;align-items:center;padding:0 4px;flex-shrink:0;">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12l14 0" /><path d="M13 18l6 -6" /><path d="M13 6l6 6" />
           </svg>
         </div>
-        <div class="price-card invest">
+        <div class="price-card">
           <div class="pc-tag">Autorise kosztuje</div>
           <div class="pc-val blue">15 000 PLN</div>
           <div class="pc-sub">jednorazowo + 4 000 PLN / mies. wsparcie</div>
@@ -564,8 +592,8 @@
       <div class="roi-row ai" style="--i:3">
         <div class="roi-metric">
           <div class="roi-accent">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="20 6 9 17 4 12"/>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12l5 5l10 -10" />
             </svg>
           </div>
           <div>
@@ -575,8 +603,8 @@
         </div>
         <div class="roi-metric">
           <div class="roi-accent">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="20 6 9 17 4 12"/>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12l5 5l10 -10" />
             </svg>
           </div>
           <div>
@@ -591,31 +619,31 @@
   <!-- 7: GWARANCJA + CTA -->
   <div class="slide" id="s7">
     <div class="si">
-      <div class="stamp"><span class="stamp-num">07</span></div>
       <div class="tag ai" style="--i:0">07 · Gwarancja i następny krok</div>
 
       <div class="guar-row">
         <div class="guar-left ai" style="--i:1">
+          <h1 class="h1 h1-hero-sm" style="margin-bottom:6px;">Podpisujecie umowę.<br><span class="blue">Ryzyko bierzemy na siebie.</span></h1>
           <div class="guar-pct"><span class="val-gwar">80</span>h</div>
           <div class="guar-txt">zaoszczędzonych<br>miesięcznie</div>
           <div class="guar-sub">Gwarantujemy na umowie lub oddajemy 100% pieniędzy. Zero ryzyka po Waszej stronie.</div>
 
-          <div class="check-list">
+          <div class="check-list" style="margin-top:12px;gap:8px;">
             <div class="check-item">
               <div class="check-dot">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5l10 -10" /></svg>
               </div>
               Weryfikacja po 30 dniach na realnych zleceniach
             </div>
             <div class="check-item">
               <div class="check-dot">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5l10 -10" /></svg>
               </div>
               Zwrot 100% jeśli cel nieosiągnięty
             </div>
             <div class="check-item">
               <div class="check-dot">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5l10 -10" /></svg>
               </div>
               Warunki gwarancji zapisane w umowie
             </div>
@@ -623,34 +651,76 @@
         </div>
 
         <div class="guar-right ai" style="--i:2">
-          <div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:14px;">Co dalej?</div>
-          <div class="steps" style="gap:11px;">
+          <div style="font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:12px;">Co dalej?</div>
+          <div class="steps steps-next" style="gap:10px;">
             <div class="step">
-              <div class="s-num" style="width:28px;height:28px;font-size:12px;">1</div>
+              <div class="s-num" style="width:30px;height:30px;font-size:13px;">1</div>
               <div>
-                <div class="s-title" style="font-size:14px;">Umowa, dziś</div>
-                <p class="s-desc" style="font-size:12.5px;">Podpisujemy warunki i ustalamy harmonogram wdrożenia</p>
+                <div class="s-title" style="font-size:15px;">Umowa, dziś</div>
+                <p class="s-desc" style="font-size:13.5px;">Podpisujemy warunki i ustalamy harmonogram wdrożenia</p>
               </div>
             </div>
             <div class="step">
-              <div class="s-num" style="width:28px;height:28px;font-size:12px;">2</div>
+              <div class="s-num" style="width:30px;height:30px;font-size:13px;">2</div>
               <div>
-                <div class="s-title" style="font-size:14px;">Kick-off, w tym tygodniu</div>
-                <p class="s-desc" style="font-size:12.5px;">30 minut z Waszym teamem, ustalamy dostępy i harmonogram</p>
+                <div class="s-title" style="font-size:15px;">Kick-off, w tym tygodniu</div>
+                <p class="s-desc" style="font-size:13.5px;">30 minut z Waszym teamem, ustalamy dostępy i harmonogram</p>
               </div>
             </div>
             <div class="step">
-              <div class="s-num" style="width:28px;height:28px;font-size:12px;">3</div>
+              <div class="s-num" style="width:30px;height:30px;font-size:13px;">3</div>
               <div>
-                <div class="s-title" style="font-size:14px;">Live, za 4 tygodnie</div>
-                <p class="s-desc" style="font-size:12.5px;">System działa, spedytorzy oszczędzają czas od pierwszego dnia</p>
+                <div class="s-title" style="font-size:15px;">Live, za 4 tygodnie</div>
+                <p class="s-desc" style="font-size:13.5px;">System działa, spedytorzy oszczędzają czas od pierwszego dnia</p>
               </div>
             </div>
           </div>
 
           <div class="contact-box">
-            <div class="contact-sub">Kontakt</div>
-            <div class="contact-email">info.autorise@gmail.com</div>
+            <div class="contact-row">
+              <div class="contact-ic">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-10" /><path d="M3 7l9 6l9 -6" />
+                </svg>
+              </div>
+              <div>
+                <div class="contact-sub">Kontakt ogólny</div>
+                <div class="contact-val">info@autorise.pl</div>
+              </div>
+            </div>
+            <div class="contact-row">
+              <div class="contact-ic">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-10" /><path d="M3 7l9 6l9 -6" />
+                </svg>
+              </div>
+              <div>
+                <div class="contact-sub">Michał, bezpośrednio</div>
+                <div class="contact-val">roth@autorise.pl</div>
+              </div>
+            </div>
+            <div class="contact-row">
+              <div class="contact-ic">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M3.6 9h16.8" /><path d="M3.6 15h16.8" /><path d="M11.5 3a17 17 0 0 0 0 18" /><path d="M12.5 3a17 17 0 0 1 0 18" />
+                </svg>
+              </div>
+              <div>
+                <div class="contact-sub">Strona</div>
+                <div class="contact-val">autorise.pl</div>
+              </div>
+            </div>
+            <div class="contact-row">
+              <div class="contact-ic">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 8a4 4 0 0 1 4 -4h8a4 4 0 0 1 4 4v8a4 4 0 0 1 -4 4h-8a4 4 0 0 1 -4 -4l0 -8" /><path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /><path d="M16.5 7.5v.01" />
+                </svg>
+              </div>
+              <div>
+                <div class="contact-sub">Instagram</div>
+                <div class="contact-val">@autorise.pl</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -670,10 +740,10 @@
 
 <!-- Arrows -->
 <button class="arr" id="btn-prev">
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6l6 6" /></svg>
 </button>
 <button class="arr" id="btn-next">
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6l-6 6" /></svg>
 </button>
 
 <script>
@@ -687,7 +757,7 @@ const V = {
 }
 const START = Math.min(Math.max((parseInt(P.get('start') || '1') || 1) - 1, 0), 6)
 
-function fmt(n) { return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') }
+function fmt(n) { return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') }
 
 function applyValues() {
   const { roi, po, bol, tms, gwar } = V
@@ -728,6 +798,7 @@ function triggerStagger(slideEl) {
     el.classList.remove('sp')
     void el.offsetWidth
     el.classList.add('sp')
+    el.addEventListener('animationend', () => { el.style.willChange = 'auto' }, { once: true })
   })
 }
 
@@ -740,18 +811,18 @@ function goTo(idx, dir) {
   if (idx === cur || idx < 0 || idx >= TOTAL) return
   const out = slides[cur], inn = slides[idx]
 
-  out.style.transition = 'opacity .28s ease, transform .28s ease'
+  out.style.transition = 'opacity .34s cubic-bezier(.22,1,.36,1), transform .34s cubic-bezier(.22,1,.36,1)'
   out.style.opacity = '0'
   out.style.transform = dir > 0 ? 'translateX(-28px)' : 'translateX(28px)'
 
   inn.style.cssText = 'transition:none;opacity:0;transform:' + (dir > 0 ? 'translateX(28px)' : 'translateX(-28px)')
   inn.classList.add('active')
   inn.offsetHeight
-  inn.style.transition = 'opacity .3s ease, transform .3s ease'
+  inn.style.transition = 'opacity .34s cubic-bezier(.22,1,.36,1), transform .34s cubic-bezier(.22,1,.36,1)'
   inn.style.opacity = '1'
   inn.style.transform = 'translateX(0)'
 
-  setTimeout(() => triggerStagger(inn), 80)
+  setTimeout(() => triggerStagger(inn), 340)
   setTimeout(() => { out.classList.remove('active'); out.style.cssText = ''; inn.style.cssText = '' }, 340)
 
   cur = idx
