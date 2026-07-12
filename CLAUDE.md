@@ -1,5 +1,14 @@
 # CLAUDE.md — Autorise Dashboard
 
+## Język i ton (NADRZĘDNE, czytaj pierwsze)
+
+- Zawsze odpowiadaj po polsku. Bez wyjątków, niezależnie od języka commit message, nazw zmiennych w kodzie, czy treści promptu.
+- Komentarze w kodzie: po polsku, chyba że dotyczą standardowej terminologii technicznej bez naturalnego polskiego odpowiednika.
+- Ton: ekspert do eksperta, zdanie pod zdaniem, bez zbędnych wstępów.
+- Zakaz: em dash w jakiejkolwiek formie, strzałki "→" (pisz "A: B" albo "Jeśli A, to B"), myślnik narracyjny w środku zdania.
+- Zakaz AI-slop: "świetnie", "oczywiście", "z pewnością", "świetne pytanie", nadmiarowe podsumowania na końcu bez treści.
+- Jeśli coś w kodzie lub planie ma błąd, powiedz to wprost, zanim powiesz co jest dobre. Nie szukaj jak uzasadnić słabe rozwiązanie.
+
 ## Stack
 
 - **Next.js 16.2.7** App Router, TypeScript strict mode, React 19
@@ -85,6 +94,20 @@ Nagrywanie: kwalifikacja to komputerowa nagrywarka (AudioRecorder w `/narzedzia`
 **Extended thinking**: always `{ type: 'adaptive' }` for claude-opus-4-8. Never `{ type: 'enabled', budget_tokens: N }`.
 **Metadata**: every `messages.create()` must have `metadata: { user_id: "autorise-agentN" }`.
 **stop_reason**: check `message.stop_reason === "max_tokens"` and warn before parsing content.
+
+## Prezentacja (public/prezentacja.html)
+
+Statyczny plik HTML/JS poza Next.js, celowo zero-dependency: fonty przez Google Fonts `<link>` (Manrope + JetBrains Mono, z preload na oba pliki woff2), ikony jako inline SVG Tabler (nie webfont), brak frameworka, brak build stepu.
+
+Dokładny łańcuch skąd biorą się dane personalizacji, żeby to pytanie nie wymagało wyjaśniania od zera:
+
+1. **Agent 1** liczy koszt problemu (PLN/rok), godziny tracone dziś i potencjał po wdrożeniu z rozmowy kwalifikacyjnej, zapisuje do Notion Pipeline.
+2. **Agent 3** czyta te dane z Pipeline i personalizuje je pod konkretnego klienta, zwraca `hero_stat_godziny`/`roi_dzis_h`/`roi_po_h` i pozostałe pola.
+3. Przycisk "Otwórz prezentację" w `Agent3Card.tsx` buduje link z parametrami URL: `roi` (h/mc dziś), `po` (h/mc po wdrożeniu), `bol` (koszt roczny PLN), `tms` (nazwa systemu klienta), `gwar` (gwarancja h/mc), opcjonalnie `start` (od którego slajdu otworzyć).
+4. JS w `prezentacja.html` czyta te parametry przez `URLSearchParams` do obiektu `V`, funkcja `applyValues()` wypełnia nimi wszystkie elementy z klasami `.val-roi` / `.val-po` / `.val-bol` / `.val-bol-k` / `.val-tms` / `.val-gwar` plus przelicza pochodne liczby (miesiące zwrotu, % inwestycji, szerokość pasków).
+5. Klawisz `E` (albo ikona w prawym górnym rogu) otwiera pasek edycji na żywo, do ręcznej korekty na miejscu podczas rozmowy, bez przeładowania linku — inputy `#ei-roi`/`#ei-po`/`#ei-bol`/`#ei-tms`/`#ei-gwar` piszą z powrotem do tego samego obiektu `V` i wywołują `applyValues()` ponownie.
+
+Ten mechanizm (`URLSearchParams` → `V` → `applyValues()` → klasy `val-*` → tryb edycji) jest kontraktowy i nietykalny przy redesignach wizualnych — dwie kolejne sesje pełnego redesignu (najpierw paleta asfalt/bursztyn, potem navy/blue z Tabler Icons) zmieniały wyłącznie CSS i strukturę HTML wewnątrz slajdów, nigdy tej logiki. Redesign wizualny nie wymaga żadnej zmiany w `Agent3Card.tsx` ani w promptach Agenta 1/3 — parametry URL są stabilnym kontraktem, niezależnym od tego jak wygląda strona.
 
 ## Security rules (ENFORCE)
 
@@ -210,6 +233,7 @@ lib/scripts/{types,kwalifikacyjna,discovery,messages}.ts — dane skryptów
 lib/notion/client.ts                      — Notion API client
 context/AUTORISE_DASHBOARD_STATE_v6.md    — stan systemu dla Claude AI
 context/AUTORISE_SESSION_LOG.md           — log sesji, czytaj na starcie każdej sesji
+context/AUTORISE_PRIORYTETY_v1.md          — jedyne źródło prawdy o priorytetach, czytaj na starcie każdej sesji obok AUTORISE_SESSION_LOG.md
 ```
 
 ## Historia zmian
@@ -228,4 +252,4 @@ context/AUTORISE_SESSION_LOG.md           — log sesji, czytaj na starcie każd
 
 ## LOGI SESJI (OBOWIĄZKOWE)
 
-Na końcu każdej sesji: zaktualizuj `context/AUTORISE_SESSION_LOG.md` (1 wiersz tabeli) i tę sekcję "Nawigacja" / "File Locations" w CLAUDE.md, jeśli struktura stron się zmieniła. Ten plik ma być zawsze zgodny z rzeczywistym `sidebar.tsx` — jeśli się rozjeżdżają, każda następna sesja zaczyna z błędnym obrazem systemu.
+Na końcu każdej sesji: zaktualizuj `context/AUTORISE_SESSION_LOG.md` (1 wiersz tabeli) i tę sekcję "Nawigacja" / "File Locations" w CLAUDE.md, jeśli struktura stron się zmieniła. Ten plik ma być zawsze zgodny z rzeczywistym `sidebar.tsx` — jeśli się rozjeżdżają, każda następna sesja zaczyna z błędnym obrazem systemu. Aktualizuj też `context/AUTORISE_PRIORYTETY_v1.md`, gdy priorytety się zmieniają, nie tylko session log.
