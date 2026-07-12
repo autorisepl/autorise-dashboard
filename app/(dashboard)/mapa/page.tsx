@@ -714,7 +714,8 @@ const FUNNEL_NODES: FunnelNode[] = [
     nr: "01",
     title: "Nowy lead",
     tone: "neutral",
-    agent: "Agent 0: rejestracja i wzbogacenie danych (KRS, MF), zanim setter wykona pierwszy telefon.",
+    agent:
+      "Agent 0: rejestracja i wzbogacenie danych (KRS, MF), zanim setter wykona pierwszy telefon.",
     entry: "Lead pojawił się z jednego ze źródeł i został zapisany w Pipeline.",
     exit: "Setter dzwoni pierwszy raz według skryptu kwalifikacyjnego: status zmienia się na Kwalifikacja.",
     statusKey: "Nowy lead",
@@ -727,7 +728,8 @@ const FUNNEL_NODES: FunnelNode[] = [
     isBranch: true,
     agent:
       "Agent 1, kwalifikacja telefoniczna (Sonnet 4.6): ocenia ICP na żywo podczas rozmowy i zapisuje wynik wprost do Pipeline.",
-    entry: "Setter przeprowadził rozmowę według skryptu kwalifikacyjnego (Opening, Diagnoza, Spotkanie).",
+    entry:
+      "Setter przeprowadził rozmowę według skryptu kwalifikacyjnego (Opening, Diagnoza, Spotkanie).",
     exit: "Agent 1 klasyfikuje rozmowę na jedną z trzech gałęzi.",
     statusKey: "Kwalifikacja",
     branches: [
@@ -772,8 +774,7 @@ const FUNNEL_NODES: FunnelNode[] = [
     agent:
       "Agent 4, analiza Discovery Call (Sonnet 4.6): czyta transkrypt i klasyfikuje wynik w polu Wynik Discovery (TAK / NIE / W TRAKCIE).",
     entry: "Spotkanie Discovery Call się odbyło i transkrypt jest dostępny do analizy.",
-    exit:
-      "TAK: Finalizacja. NIE: Niekwalifikowany. W TRAKCIE: klient zostaje w Discovery umówione do czasu decyzji.",
+    exit: "TAK: Finalizacja. NIE: Niekwalifikowany. W TRAKCIE: klient zostaje w Discovery umówione do czasu decyzji.",
     branches: [
       {
         label: "Finalizacja",
@@ -794,7 +795,8 @@ const FUNNEL_NODES: FunnelNode[] = [
     nr: "05",
     title: "Finalizacja",
     tone: "neutral",
-    agent: "Ręcznie: rozmowa finalizacyjna, obsługa obiekcji cenowych, przygotowanie i podpisanie umowy.",
+    agent:
+      "Ręcznie: rozmowa finalizacyjna, obsługa obiekcji cenowych, przygotowanie i podpisanie umowy.",
     entry: "Agent 4 ocenił wynik Discovery Call jako TAK.",
     exit: "Umowa podpisana albo przedpłata potwierdzona: status zmienia się na Kickoff.",
     statusKey: "Finalizacja",
@@ -804,7 +806,8 @@ const FUNNEL_NODES: FunnelNode[] = [
     nr: "06",
     title: "Kickoff",
     tone: "neutral",
-    agent: "Ręcznie: onboarding, konfiguracja dostępów, ustalenie harmonogramu wdrożenia z klientem.",
+    agent:
+      "Ręcznie: onboarding, konfiguracja dostępów, ustalenie harmonogramu wdrożenia z klientem.",
     entry: "Umowa podpisana albo przedpłata potwierdzona.",
     exit: "Start czterotygodniowego procesu wdrożenia.",
     statusKey: "Kickoff",
@@ -835,8 +838,7 @@ const FUNNEL_NODES: FunnelNode[] = [
     tone: "neutral",
     agent: "Porównanie godzin zaoszczędzonych miesięcznie z progiem gwarancji (minimum 80h/mc).",
     entry: "System działa na produkcji od co najmniej 30 dni na realnych zleceniach.",
-    exit:
-      "Próg spełniony: Retainer. Próg niespełniony: renegocjacja zakresu albo przedłużenie wdrożenia, obsługiwane ręcznie.",
+    exit: "Próg spełniony: Retainer. Próg niespełniony: renegocjacja zakresu albo przedłużenie wdrożenia, obsługiwane ręcznie.",
   },
   {
     id: "retainer",
@@ -872,15 +874,18 @@ const FUNNEL_NODES: FunnelNode[] = [
     entry: "Retainer albo Upsell kończy się z dowolnego powodu.",
     exit: "Węzeł końcowy dla aktywnej współpracy, ale nie ślepy koniec dla relacji.",
     statusKey: "Zakończona współpraca",
-    endNote: "Jeśli klient wraca po jakimś czasie: proces startuje ponownie od Kwalifikacja, jako re-engagement.",
+    endNote:
+      "Jeśli klient wraca po jakimś czasie: proces startuje ponownie od Kwalifikacja, jako re-engagement.",
   },
   {
     id: "niekwalifikowany",
     nr: "N1",
     title: "Niekwalifikowany",
     tone: "negative",
-    agent: "Wynik decyzji Agenta 1 (kwalifikacja telefoniczna) albo Agenta 4 (analiza Discovery Call).",
-    entry: "ICP nie pasuje, brak decydenta, brak bólu albo jawna odmowa w dowolnym momencie procesu.",
+    agent:
+      "Wynik decyzji Agenta 1 (kwalifikacja telefoniczna) albo Agenta 4 (analiza Discovery Call).",
+    entry:
+      "ICP nie pasuje, brak decydenta, brak bólu albo jawna odmowa w dowolnym momencie procesu.",
     exit: "Karta zostaje w Pipeline. Uczciwy wynik, nie porażka: może wrócić przez re-engagement, jeśli sytuacja klienta się zmieni.",
     statusKey: "Niekwalifikowany",
     returnItems: [{ label: "Poza ICP: re-engagement" }],
@@ -890,7 +895,8 @@ const FUNNEL_NODES: FunnelNode[] = [
     nr: "N2",
     title: "Nieaktywny (follow up)",
     tone: "accent",
-    agent: "Agent 1: wyraźne 'nie teraz' z konkretnym, udokumentowanym powodem, nigdy ogólnikowe odłożenie.",
+    agent:
+      "Agent 1: wyraźne 'nie teraz' z konkretnym, udokumentowanym powodem, nigdy ogólnikowe odłożenie.",
     entry:
       "Klient spełnia ICP, ale ma udokumentowany powód: urlop dłuższy niż dwa tygodnie, aktualnie wdraża inny TMS, budżet dostępny dopiero za X miesięcy, brak bólu po dwóch próbach kontaktu.",
     exit: "Agent ustala datę re-engagement (plus 30 dni, jeśli klient jej nie podał) i wraca do Kwalifikacja z jednym z pięciu typów follow-up.",
@@ -1160,7 +1166,11 @@ function NodeDetail({ node, count }: { node: FunnelNode; count: number | null })
           </div>
           {node.subtitle && (
             <div
-              style={{ fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--text-tertiary)" }}
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 11,
+                color: "var(--text-tertiary)",
+              }}
             >
               {node.subtitle}
             </div>
@@ -1248,7 +1258,12 @@ function NodeDetail({ node, count }: { node: FunnelNode; count: number | null })
 
       {node.returnItems && (
         <div
-          style={{ marginTop: 14, padding: "10px 12px", border: `1px dashed ${color}`, borderRadius: 6 }}
+          style={{
+            marginTop: 14,
+            padding: "10px 12px",
+            border: `1px dashed ${color}`,
+            borderRadius: 6,
+          }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
             <RotateCcw size={12} color={color} />
@@ -1284,7 +1299,13 @@ function NodeDetail({ node, count }: { node: FunnelNode; count: number | null })
           }}
         >
           <RotateCcw size={14} color={color} style={{ flexShrink: 0, marginTop: 1 }} />
-          <span style={{ fontFamily: "var(--font-sans)", fontSize: 11.5, color: "var(--text-secondary)" }}>
+          <span
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 11.5,
+              color: "var(--text-secondary)",
+            }}
+          >
             {node.loopNote}
           </span>
         </div>
@@ -1301,8 +1322,18 @@ function NodeDetail({ node, count }: { node: FunnelNode; count: number | null })
             gap: 8,
           }}
         >
-          <RotateCcw size={14} color="var(--text-tertiary)" style={{ flexShrink: 0, marginTop: 1 }} />
-          <span style={{ fontFamily: "var(--font-sans)", fontSize: 11.5, color: "var(--text-secondary)" }}>
+          <RotateCcw
+            size={14}
+            color="var(--text-tertiary)"
+            style={{ flexShrink: 0, marginTop: 1 }}
+          />
+          <span
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 11.5,
+              color: "var(--text-secondary)",
+            }}
+          >
             {node.endNote}
           </span>
         </div>
@@ -1364,7 +1395,10 @@ function LejekView({ clients }: { clients: PipelineClientDetailed[] }) {
   const selectedCount = selectedNode.statusKey ? (statusCounts[selectedNode.statusKey] ?? 0) : null;
 
   return (
-    <div style={{ flex: 1, display: "flex", minHeight: 0, overflow: "hidden" }} className="lejek-root">
+    <div
+      style={{ flex: 1, display: "flex", minHeight: 0, overflow: "hidden" }}
+      className="lejek-root"
+    >
       <style>{`
         @media (max-width: 900px) {
           .lejek-root { flex-direction: column !important; overflow-y: auto !important; }
@@ -1373,8 +1407,19 @@ function LejekView({ clients }: { clients: PipelineClientDetailed[] }) {
         }
       `}</style>
 
-      <div className="lejek-spine" style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "24px 24px 56px" }}>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", maxWidth: 620, margin: "0 auto" }}>
+      <div
+        className="lejek-spine"
+        style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "24px 24px 56px" }}
+      >
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            maxWidth: 620,
+            margin: "0 auto",
+          }}
+        >
           <p
             style={{
               fontFamily: "var(--font-sans)",
@@ -1386,8 +1431,8 @@ function LejekView({ clients }: { clients: PipelineClientDetailed[] }) {
               lineHeight: 1.5,
             }}
           >
-            Kliknij dowolny węzeł, żeby zobaczyć mechanizm, warunki przejścia i liczbę kart Pipeline dziś w tym
-            statusie.
+            Kliknij dowolny węzeł, żeby zobaczyć mechanizm, warunki przejścia i liczbę kart Pipeline
+            dziś w tym statusie.
           </p>
 
           {renderCard("source")}
@@ -1395,8 +1440,13 @@ function LejekView({ clients }: { clients: PipelineClientDetailed[] }) {
           {renderCard("nowy-lead")}
           <Connector />
           {renderCard("kwalifikacja")}
-          <BranchPillRow branches={nodeById("kwalifikacja").branches ?? []} onSelect={setSelectedNodeId} />
-          <div style={{ display: "flex", gap: 10, marginTop: 10, marginLeft: 44, flexWrap: "wrap" }}>
+          <BranchPillRow
+            branches={nodeById("kwalifikacja").branches ?? []}
+            onSelect={setSelectedNodeId}
+          />
+          <div
+            style={{ display: "flex", gap: 10, marginTop: 10, marginLeft: 44, flexWrap: "wrap" }}
+          >
             {renderCard("nieaktywny", true)}
             {renderCard("niekwalifikowany", true)}
           </div>
