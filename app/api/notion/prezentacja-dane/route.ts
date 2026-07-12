@@ -12,6 +12,10 @@ const GWARANCJA_H_MC = 80;
 // wartości "Dziś" (patrz AGENT3_SYSTEM_PROMPT). Ten endpoint nie wywołuje AI, więc
 // replikuje tę samą heurystykę deterministycznie, na środku podanego zakresu (12.5%).
 const PO_WDROZENIU_FRACTION = 0.125;
+// "Godziny wpisywania / spedytor" to godziny DZIENNIE NA JEDNĄ OSOBĘ, nie h/mc całego
+// biura — ten sam wzór co koszt_problemu.wzor_obliczenia Agenta 1 (patrz prompts.ts):
+// godziny dziennie × liczba spedytorów × dni robocze/mc.
+const DNI_ROBOCZE_MC = 21;
 
 function extractText(prop: PageObjectResponse["properties"][string] | undefined): string {
   if (!prop) return "";
@@ -63,14 +67,28 @@ export async function GET(req: Request) {
     const firma = extractText(props["Firma"]);
     const kosztMiesiecznie = extractNumber(props["Koszt problemu PLN/mc"]);
     const kosztRoczny = extractNumber(props["Koszt roczny PLN/rok"]);
-    // "Godziny wpisywania / spedytor" to najbliższe istniejące pole liczbowe godzin
-    // manualnej pracy — ten sam wzorzec co PipelineClientDetailed.godzinyWpisywania
-    // w app/api/notion/pipeline/route.ts, używane tu jako źródło "roi" (h/mc dziś).
-    const roi = extractNumber(props["Godziny wpisywania / spedytor"]);
+    const godzinyDziennie = extractNumber(props["Godziny wpisywania / spedytor"]);
+    const spedytorzy = extractNumber(props["Spedytorzy"]);
     const tms = extractText(props["TMS"]);
     const cenaWdrozenia = extractNumber(props["Cena wdrożenia"]);
     const retainer = extractNumber(props["Retainer PLN/mc"]);
     const bolGlowny = extractText(props["Ból główny"]);
+
+    // roi = h/mc CAŁEGO biura, nie surowa wartość dzienna na osobę (patrz stała
+    // DNI_ROBOCZE_MC wyżej). Brak "Spedytorzy" w Notion nie może cicho wyzerować
+    // wyniku przez mnożenie przez 0 — fallback na samą wartość dzienną z jawnym
+    // ostrzeżeniem, żeby niepełne dane było widać, nie zgadywać w ciemno.
+    let roi: number;
+    let ostrzezenie: string | null = null;
+    if (spedytorzy > 0) {
+      roi = Math.round(godzinyDziennie * spedytorzy * DNI_ROBOCZE_MC);
+    } else {
+      roi = Math.round(godzinyDziennie);
+      if (godzinyDziennie > 0) {
+        ostrzezenie =
+          'Brak liczby spedytorów w polu "Spedytorzy" w Notion — roi to surowa wartość dzienna na jedną osobę, nie h/mc całego biura. Uzupełnij "Spedytorzy" w Pipeline dla poprawnego przeliczenia.';
+      }
+    }
 
     const po = roi > 0 ? Math.max(Math.round(roi * PO_WDROZENIU_FRACTION), 0) : 0;
 
@@ -98,6 +116,7 @@ export async function GET(req: Request) {
       payback_miesiace: paybackMiesiace,
       bol_glowny: bolGlowny,
       bol_kategoria: determineBolKategoria(bolGlowny),
+      ostrzezenie,
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Błąd Notion";
