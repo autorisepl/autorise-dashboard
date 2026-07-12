@@ -78,6 +78,27 @@ export async function POST(req: Request) {
       }
     }
 
+    // Firma/TMS/koszt_roczny nie są generowane przez Agenta 3 — już istnieją w JSON-ie
+    // Agenta 1 przekazanym jako wejście. Dołączone tu jako pass-through, żeby
+    // buildPrezentacjaUrl w Agent3Card.tsx mógł zbudować link do prezentacja.html
+    // z parametrami firma/tms/bol, zamiast te pola zawsze zostawały domyślne.
+    if (agent1_json) {
+      try {
+        const a1 = JSON.parse(agent1_json) as {
+          firma?: string;
+          tms?: string;
+          koszt_problemu?: { koszt_roczny?: number | null };
+        };
+        if (a1.firma) output.client_firma = a1.firma;
+        if (a1.tms) output.client_tms = a1.tms;
+        if (a1.koszt_problemu?.koszt_roczny != null) {
+          output.client_koszt_roczny = a1.koszt_problemu.koszt_roczny;
+        }
+      } catch {
+        // agent1_json bywa surowym transkryptem w trybie transcript-only, nie JSON-em — pomiń bez błędu
+      }
+    }
+
     return NextResponse.json({
       success: true,
       agent: 3,

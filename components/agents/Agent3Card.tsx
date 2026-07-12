@@ -13,6 +13,11 @@ export interface Agent3Output {
   harmonogram_uwaga?: string | null;
   kontekst_roi_cena?: string | null;
   uwagi_agenta?: string | null;
+  // Pass-through z JSON-a Agenta 1 (nie generowane przez Agenta 3 samo w sobie),
+  // dołączane server-side w app/api/agents/agent3/route.ts.
+  client_firma?: string | null;
+  client_tms?: string | null;
+  client_koszt_roczny?: number | null;
 }
 
 function Label({ children }: { children: React.ReactNode }) {
@@ -42,13 +47,38 @@ function formatHours(val: number | null | undefined): string {
   return val % 1 === 0 ? `${val}h` : `${val.toFixed(1)}h`;
 }
 
-// prezentacja.html czyta parametry URL "roi"/"po" (nie hero_stat_godziny/roi_dzis_h/roi_po_h
-// jak zwraca Agent 3) — bez tego mapowania spersonalizowane dane Agenta 3 nigdy realnie
-// nie trafiały do prezentacji pokazywanej klientowi.
+// modul_priorytet z Agenta 3 jest wolnym tekstem (prompt nie wymusza enuma), więc to
+// dopasowanie jest best-effort i celowo konserwatywne — jeśli żadne słowo kluczowe nie
+// pasuje jednoznacznie, zwraca null i prezentacja.html nie wyróżnia żadnego modułu (nigdy
+// nie zgaduje na siłę z niepowiązanego pola, np. samej kwoty kosztu problemu).
+// PROPOZYCJA dla Michała: gdyby prompt Agenta 3 (lib/agents/prompts.ts) zwracał
+// modul_priorytet jako zamknięty enum ("tms" | "dokumenty" | "powiadomienia" | "dashboard")
+// zamiast wolnego tekstu, to dopasowanie byłoby w 100% pewne zamiast best-effort.
+function mapModulPriorytet(text: string | null | undefined): string | null {
+  if (!text) return null;
+  const t = text.toLowerCase();
+  if (t.includes("tms") || t.includes("automatyzacj")) return "tms";
+  if (t.includes("dokument") || t.includes("faktur") || t.includes("cmr") || t.includes("pod "))
+    return "dokumenty";
+  if (t.includes("powiadom") || t.includes("notyfikacj")) return "powiadomienia";
+  if (t.includes("dashboard") || t.includes("zarządcz") || t.includes("zarzadcz"))
+    return "dashboard";
+  return null;
+}
+
+// prezentacja.html czyta parametry URL "roi"/"po"/"bol"/"tms"/"firma"/"modul" (nie
+// hero_stat_godziny/roi_dzis_h/roi_po_h jak zwraca Agent 3, i nie client_firma/client_tms/
+// client_koszt_roczny jak dochodzą pass-through z Agenta 1) — bez tego mapowania
+// spersonalizowane dane nigdy realnie nie trafiały do prezentacji pokazywanej klientowi.
 function buildPrezentacjaUrl(output: Agent3Output): string {
   const p = new URLSearchParams();
   if (output.roi_dzis_h != null) p.set("roi", String(Math.round(output.roi_dzis_h)));
   if (output.roi_po_h != null) p.set("po", String(Math.round(output.roi_po_h)));
+  if (output.client_koszt_roczny != null) p.set("bol", String(Math.round(output.client_koszt_roczny)));
+  if (output.client_tms) p.set("tms", output.client_tms);
+  if (output.client_firma) p.set("firma", output.client_firma);
+  const modul = mapModulPriorytet(output.modul_priorytet);
+  if (modul) p.set("modul", modul);
   const qs = p.toString();
   return `/prezentacja.html${qs ? `?${qs}` : ""}`;
 }

@@ -43,16 +43,40 @@
       font-family: var(--font); background: var(--bg-soft); color: var(--text-primary);
     }
 
-    /* ── Progress ── */
+    /* ── Progress (element sygnaturowy) ── */
     #progress {
-      position: fixed; top: var(--edit-h); left: 0; right: 0; height: 3px;
+      position: fixed; top: var(--edit-h); left: 0; right: 0; height: 6px;
       background: var(--line); z-index: 300; transition: top .28s;
+      overflow: visible;
     }
     #progress-bar {
-      height: 100%; background-color: transparent;
-      background-image: repeating-linear-gradient(90deg, var(--blue) 0 8px, transparent 8px 14px);
+      position: relative; height: 100%; background: var(--blue);
+      box-shadow: 0 0 14px rgba(29,95,224,.55), 0 0 4px rgba(29,95,224,.8);
       transition: width .32s var(--ease);
     }
+    #progress-bar::after {
+      content: ''; position: absolute; top: 50%; right: -1px;
+      width: 0; height: 0; transform: translateY(-50%);
+      border-top: 7px solid transparent; border-bottom: 7px solid transparent;
+      border-left: 9px solid var(--blue);
+      filter: drop-shadow(0 0 3px rgba(29,95,224,.6));
+      animation: progressGlow 1.6s ease-in-out infinite;
+    }
+    @keyframes progressGlow {
+      0%, 100% { filter: drop-shadow(0 0 3px rgba(29,95,224,.6)); }
+      50%      { filter: drop-shadow(0 0 7px rgba(29,95,224,.95)); }
+    }
+
+    /* ── Data badge (podgląd vs dane klienta) ── */
+    #data-badge {
+      position: fixed; top: calc(var(--edit-h) + 14px); left: 14px; z-index: 250;
+      padding: 5px 11px; border-radius: 100px;
+      font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+      background: var(--bg); border: 1px solid var(--line-strong); color: var(--text-tertiary);
+      transition: top .28s, color .15s, border-color .15s, background .15s;
+      pointer-events: none; white-space: nowrap;
+    }
+    #data-badge.client { color: var(--blue); border-color: rgba(29,95,224,.3); background: var(--sky); }
 
     /* ── Edit toggle ── */
     #edit-toggle {
@@ -91,6 +115,7 @@
       position: absolute; inset: 0; opacity: 0; transform: translateX(28px);
       transition: opacity .34s var(--ease), transform .34s var(--ease);
       pointer-events: none; display: flex; flex-direction: column; background: var(--bg-soft);
+      will-change: opacity, transform;
     }
     .slide.active { opacity: 1; transform: translateX(0); pointer-events: all; }
 
@@ -115,14 +140,14 @@
     #counter { position: fixed; bottom: 14px; right: 14px; font-size: 10px; font-weight: 600; color: var(--text-tertiary); z-index: 200; letter-spacing: .03em; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 
     /* ── Slide inner ── */
-    .si { flex: 1; display: flex; flex-direction: column; padding: 24px 64px 32px; max-width: 1080px; margin: 0 auto; width: 100%; justify-content: center; }
+    .si { flex: 1; display: flex; flex-direction: column; padding: 48px 64px 32px; max-width: 1080px; margin: 0 auto; width: 100%; justify-content: flex-start; }
 
     /* ── Typography ── */
     .tag { font-size: 11px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; color: var(--blue); margin-bottom: 8px; }
-    .h1 { font-size: clamp(44px, 5vw, 60px); font-weight: 800; line-height: 1.06; letter-spacing: -.02em; margin-bottom: 10px; color: var(--navy); }
+    .h1 { font-size: clamp(44px, 5vw, 60px); font-weight: 800; line-height: 1.06; letter-spacing: -.02em; margin-bottom: 10px; color: var(--navy); text-wrap: balance; }
     .h1.h1-hero { font-size: clamp(56px, 6.2vw, 84px); font-weight: 800; letter-spacing: -.03em; line-height: 1.02; }
     .h1.h1-hero-sm { font-size: clamp(36px, 4vw, 48px); font-weight: 800; letter-spacing: -.02em; line-height: 1.06; }
-    .sub { font-size: clamp(16px, 1.6vw, 19px); font-weight: 500; line-height: 1.5; color: var(--text-secondary); margin-bottom: 10px; }
+    .sub { font-size: clamp(16px, 1.6vw, 19px); font-weight: 500; line-height: 1.5; color: var(--text-secondary); margin-bottom: 10px; text-wrap: balance; }
     .blue  { color: var(--blue); }
     .red   { color: var(--error); }
     .green { color: var(--success); }
@@ -131,7 +156,7 @@
     .c-icon {
       width: 48px; height: 48px; border-radius: 12px; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
-      background: var(--navy); margin-bottom: 8px;
+      background: var(--navy); margin-bottom: 6px;
       color: var(--blue-light);
     }
     .c-icon svg { width: 22px; height: 22px; }
@@ -141,9 +166,15 @@
 
     /* ── Cards ── */
     .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-    .card { border-radius: 14px; padding: 11px 14px; background: var(--bg); border: 1px solid var(--line); box-shadow: 0 1px 2px rgba(11,31,58,.04), 0 10px 28px rgba(11,31,58,.05); }
+    .card { position: relative; border-radius: 14px; padding: 9px 12px; background: var(--bg); border: 1px solid var(--line); box-shadow: 0 1px 2px rgba(11,31,58,.04), 0 10px 28px rgba(11,31,58,.05); }
+    .card.priority { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(29,95,224,.12), 0 1px 2px rgba(11,31,58,.04), 0 10px 28px rgba(11,31,58,.05); }
+    .priority-tag {
+      position: absolute; top: -9px; right: 12px;
+      background: var(--blue); color: #fff; font-size: 9.5px; font-weight: 800;
+      letter-spacing: .04em; text-transform: uppercase; padding: 3px 8px; border-radius: 100px;
+    }
     .c-title { font-size: 15px; font-weight: 700; margin-bottom: 3px; color: var(--navy); }
-    .c-desc  { font-size: 15px; line-height: 1.55; color: var(--text-secondary); }
+    .c-desc  { font-size: 15px; line-height: 1.55; color: var(--text-secondary); text-wrap: balance; }
 
     /* ── Bars ── */
     .bars { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
@@ -171,27 +202,24 @@
     table.cmp { width: 100%; border-collapse: collapse; }
     table.cmp th, table.cmp td { padding: 13px 18px; text-align: left; font-size: 14.5px; border-bottom: 1px solid var(--line); }
     table.cmp th { font-size: 11px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--text-tertiary); background: var(--bg-soft); }
-    table.cmp th.hl { color: var(--blue); }
+    table.cmp th.hl { color: var(--blue); background: var(--sky); border-left: 1.5px solid rgba(29,95,224,.35); border-right: 1.5px solid rgba(29,95,224,.35); border-top: 1.5px solid rgba(29,95,224,.35); }
     table.cmp td:first-child { font-weight: 600; color: var(--text-secondary); }
-    table.cmp td.yes { color: var(--success); font-weight: 700; }
-    table.cmp td.no  { color: var(--text-tertiary); }
+    table.cmp td.yes { color: var(--success); font-weight: 800; background: var(--sky); border-left: 1.5px solid rgba(29,95,224,.35); border-right: 1.5px solid rgba(29,95,224,.35); }
+    table.cmp td.no  { color: var(--text-tertiary); font-weight: 400; }
+    table.cmp tr:last-child td.yes { border-bottom: 1.5px solid rgba(29,95,224,.35); }
     table.cmp tr:last-child td { border-bottom: none; }
     .cmp-note { display: flex; align-items: flex-start; gap: 8px; margin-top: 14px; }
     .cmp-note svg { flex-shrink: 0; margin-top: 1px; width: 16px; height: 16px; color: var(--text-tertiary); }
-    .cmp-note span { font-size: 14px; line-height: 1.55; color: var(--text-tertiary); }
+    .cmp-note span { font-size: 14px; line-height: 1.55; color: var(--text-tertiary); text-wrap: balance; }
 
     /* ── Steps ── */
     .steps { display: flex; flex-direction: column; gap: 15px; }
     .step  { display: flex; align-items: flex-start; gap: 14px; }
     .s-num { width: 34px; height: 34px; border-radius: 50%; background: var(--navy); display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 14px; font-weight: 800; color: var(--blue-light); flex-shrink: 0; }
-    .s-title { font-size: 15px; font-weight: 700; margin-bottom: 3px; color: var(--navy); }
-    .s-desc  { font-size: 14px; color: var(--text-secondary); line-height: 1.5; }
-
-    /* ── Timeline ── */
-    .timeline { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-top: 22px; }
-    .tl-week { font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 6px; }
-    .tl-bar  { height: 7px; border-radius: 4px; }
-    .tl-lbl  { font-size: 12px; color: var(--text-secondary); margin-top: 6px; font-weight: 600; }
+    .s-title { font-size: 16px; font-weight: 700; margin-bottom: 3px; color: var(--navy); }
+    .s-desc  { font-size: 14px; color: var(--text-secondary); line-height: 1.5; text-wrap: balance; }
+    .s-effect { font-size: 13.5px; color: var(--text-tertiary); line-height: 1.45; margin-top: 5px; text-wrap: balance; }
+    .s-effect b { color: var(--blue); font-weight: 700; }
 
     /* ── Price cards ── */
     .price-cards { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 20px; align-items: stretch; }
@@ -217,7 +245,7 @@
     .guar-badge span { font-size: 11.5px; font-weight: 700; color: var(--navy); }
     .guar-pct   { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: clamp(80px, 11vw, 128px); font-weight: 800; color: var(--blue); letter-spacing: -.02em; line-height: 1; }
     .guar-txt   { font-size: 21px; font-weight: 800; margin: 4px 0 6px; line-height: 1.15; color: var(--navy); }
-    .guar-sub   { font-size: 15px; color: var(--text-secondary); line-height: 1.5; }
+    .guar-sub   { font-size: 15px; color: var(--text-secondary); line-height: 1.5; text-wrap: balance; }
     .guar-right { flex: 1; min-width: 260px; }
 
     /* ── Contact ── */
@@ -256,11 +284,17 @@
       .slide, .slide.active { transform: none !important; transition: opacity .05s linear !important; }
       .ai, .ai.sp { animation: none !important; opacity: 1 !important; transform: none !important; }
       .bar-fill, #progress-bar, .dot { transition: none !important; }
+      #progress-bar::after { animation: none !important; }
+    }
+
+    /* ── Short viewports (laptop windows, landscape tablets) ── */
+    @media (max-height: 760px) and (min-width: 481px) {
+      .si { padding-top: 30px; }
     }
 
     /* ── Mobile (klient ogląda z telefonu) ── */
     @media (max-width: 480px) {
-      .si { padding: 22px 18px 26px; }
+      .si { padding: 42px 18px 26px; }
       .header-row { flex-direction: column; align-items: flex-start; gap: 8px; }
       .hero-saved { text-align: left; }
       .h1.h1-hero { font-size: clamp(36px, 10vw, 48px); margin-bottom: 10px; }
@@ -273,9 +307,9 @@
       .tag { margin-bottom: 6px; }
       .c-icon { width: 40px; height: 40px; border-radius: 10px; margin-bottom: 6px; }
       .c-icon svg { width: 19px; height: 19px; }
-      .card { padding: 12px 14px; }
+      .card { padding: 10px 12px; }
       .c-title { font-size: 14px; margin-bottom: 2px; }
-      .grid2 { gap: 8px; }
+      .grid2 { gap: 6px; }
       .cmp-wrap { margin-top: 12px; }
       table.cmp th, table.cmp td { padding: 9px 12px; font-size: 13px; }
       .cmp-note { margin-top: 10px; }
@@ -283,7 +317,7 @@
       .check-item { font-size: 13.5px; }
       .check-dot { width: 20px; height: 20px; }
       .guar-right { margin-top: 4px; }
-      .contact-box { margin-top: 8px; padding: 10px 12px; gap: 6px; }
+      .contact-box { margin-top: 6px; padding: 8px 12px; gap: 5px; }
       .guar-right { margin-top: 2px !important; }
       .steps-next { gap: 7px !important; }
       .contact-ic { width: 26px; height: 26px; }
@@ -292,6 +326,9 @@
   </style>
 </head>
 <body>
+
+<!-- Data badge: podgląd vs dane klienta -->
+<div id="data-badge"></div>
 
 <!-- Edit toggle -->
 <button id="edit-toggle" title="Tryb edycji (E)">
@@ -439,7 +476,7 @@
       <p class="sub ai" style="--i:2">Nie wdrażamy wszystkiego. Dobieramy to, co eliminuje Twój konkretny problem w ciągu 4 tygodni.</p>
 
       <div class="grid2 ai" style="--i:3">
-        <div class="card">
+        <div class="card" data-module="tms">
           <div class="c-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
               <path d="M5 17a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M15 17a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M5 17h-2v-11a1 1 0 0 1 1 -1h9v12m-4 0h6m4 0h2v-6h-8m0 -5h5l3 5" />
@@ -448,7 +485,7 @@
           <div class="c-title">Automatyzacja TMS</div>
           <p class="c-desc">Zlecenia trafiają do <strong class="val-tms">Trans.eu</strong> bez klikania. Zero ręcznego wpisywania, zero pomyłek.</p>
         </div>
-        <div class="card">
+        <div class="card" data-module="dokumenty">
           <div class="c-icon ic-warn">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
               <path d="M5 12h14" /><path d="M3 7v-2a2 2 0 0 1 2 -2h2" /><path d="M3 17v2a2 2 0 0 0 2 2h2" /><path d="M17 3h2a2 2 0 0 1 2 2v2" /><path d="M17 21h2a2 2 0 0 0 2 -2v-2" />
@@ -457,7 +494,7 @@
           <div class="c-title">Dokumenty i pliki: CMR, POD, faktury, Excel</div>
           <p class="c-desc">CMR przywieziony przez kierowcę, POD z dostawy, faktura w PDF, dane z arkusza Excel — system odczytuje i przypisuje automatycznie. Bez przepisywania.</p>
         </div>
-        <div class="card">
+        <div class="card" data-module="powiadomienia">
           <div class="c-icon ic-green">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
               <path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6" /><path d="M9 17v1a3 3 0 0 0 6 0v-1" />
@@ -466,7 +503,7 @@
           <div class="c-title">Powiadomienia automatyczne</div>
           <p class="c-desc">Kierowcy i klienci informowani na każdym etapie. Bez telefonów, bez SMS ręcznie.</p>
         </div>
-        <div class="card">
+        <div class="card" data-module="dashboard">
           <div class="c-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
               <path d="M3 3v18h18" /><path d="M7 9a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M17 7a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M12 15a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M10.16 10.62l2.34 2.88" /><path d="M15.088 13.328l2.837 -4.586" />
@@ -522,6 +559,7 @@
           <div>
             <div class="s-title">Discovery (tydzień 1)</div>
             <p class="s-desc">Mapujemy procesy: gdzie czas ucieka, co można zautomatyzować natychmiast, od czego zacząć.</p>
+            <p class="s-effect"><b>Efekt:</b> lista priorytetowych automatyzacji z szacowanym czasem wdrożenia każdej.</p>
           </div>
         </div>
         <div class="step">
@@ -529,6 +567,7 @@
           <div>
             <div class="s-title">Integracja (tydzień 2-3)</div>
             <p class="s-desc">Podłączamy system do <span class="val-tms">Trans.eu</span> i procesów wewnętrznych firmy, testy na realnych danych.</p>
+            <p class="s-effect"><b>Efekt:</b> pierwsze realne zlecenie przechodzi przez system testowo.</p>
           </div>
         </div>
         <div class="step">
@@ -536,30 +575,8 @@
           <div>
             <div class="s-title">Wdrożenie i szkolenie (tydzień 4)</div>
             <p class="s-desc">System live, zespół przeszkolony, pierwsze zlecenia przechodzą przez system automatycznie.</p>
+            <p class="s-effect"><b>Efekt:</b> pełny zespół pracuje w nowym systemie, stare metody wyłączone.</p>
           </div>
-        </div>
-      </div>
-
-      <div class="timeline ai" style="--i:4">
-        <div>
-          <div class="tl-week">Tydzień 1</div>
-          <div class="tl-bar" style="background:var(--blue)"></div>
-          <div class="tl-lbl">Discovery</div>
-        </div>
-        <div>
-          <div class="tl-week">Tydzień 2</div>
-          <div class="tl-bar" style="background:var(--blue)"></div>
-          <div class="tl-lbl">Integracja</div>
-        </div>
-        <div>
-          <div class="tl-week">Tydzień 3</div>
-          <div class="tl-bar" style="background:var(--navy)"></div>
-          <div class="tl-lbl">Testy</div>
-        </div>
-        <div>
-          <div class="tl-week">Tydzień 4</div>
-          <div class="tl-bar" style="background:var(--success)"></div>
-          <div class="tl-lbl">Live</div>
         </div>
       </div>
     </div>
@@ -757,6 +774,36 @@ const V = {
 }
 const START = Math.min(Math.max((parseInt(P.get('start') || '1') || 1) - 1, 0), 6)
 
+// Data badge: distinguishes a generic demo link from a link personalized for a real client.
+const FIRMA = P.get('firma') || ''
+const HAS_CLIENT_DATA = ['roi', 'po', 'bol', 'tms', 'gwar'].some(k => P.has(k))
+;(function initDataBadge() {
+  const badge = document.getElementById('data-badge')
+  if (!badge) return
+  if (HAS_CLIENT_DATA) {
+    badge.textContent = 'Dane: ' + (FIRMA || V.tms)
+    badge.classList.add('client')
+  } else {
+    badge.textContent = 'Podgląd — dane przykładowe'
+  }
+})()
+
+// Wyróżnienie modułu (slajd 3) dopasowanego do głównego bólu klienta. Zestaw 4 modułów
+// zostaje zawsze taki sam — wyróżniana jest tylko jedna karta wizualnie, żadna nie znika.
+// Wartość "modul" ustala Agent3Card.tsx (best-effort dopasowanie słów kluczowych z
+// modul_priorytet Agenta 3), tu tylko dosłowne dopasowanie do data-module, bez zgadywania.
+;(function initModulePriority() {
+  const modul = P.get('modul')
+  if (!modul) return
+  const card = document.querySelector('#s3 .card[data-module="' + modul.replace(/[^a-z]/g, '') + '"]')
+  if (!card) return
+  card.classList.add('priority')
+  const tag = document.createElement('div')
+  tag.className = 'priority-tag'
+  tag.textContent = 'Twój priorytet'
+  card.appendChild(tag)
+})()
+
 function fmt(n) { return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') }
 
 function applyValues() {
@@ -794,9 +841,10 @@ function applyValues() {
 }
 
 function triggerStagger(slideEl) {
-  slideEl.querySelectorAll('.ai').forEach(el => {
-    el.classList.remove('sp')
-    void el.offsetWidth
+  const els = slideEl.querySelectorAll('.ai')
+  els.forEach(el => el.classList.remove('sp'))
+  void slideEl.offsetWidth
+  els.forEach(el => {
     el.classList.add('sp')
     el.addEventListener('animationend', () => { el.style.willChange = 'auto' }, { once: true })
   })
@@ -806,6 +854,8 @@ const TOTAL  = 7
 const slides = document.querySelectorAll('.slide')
 const dots   = document.querySelectorAll('.dot')
 let cur = 0
+
+const visitedSlides = new Set()
 
 function goTo(idx, dir) {
   if (idx === cur || idx < 0 || idx >= TOTAL) return
@@ -822,7 +872,15 @@ function goTo(idx, dir) {
   inn.style.opacity = '1'
   inn.style.transform = 'translateX(0)'
 
-  setTimeout(() => triggerStagger(inn), 340)
+  // Stagger reveal plays once per slide, on first visit only. Re-triggering it on a
+  // repeat visit would remove+re-add the .sp class on already-visible elements, snapping
+  // their opacity from 1 to 0 for the length of the stagger delay before fading back in —
+  // a visible flash-to-blank. Confirmed by sampling computed opacity every ~9ms across a
+  // repeat visit: opacity held at 1, then hard-dropped to 0 for ~176ms, then eased back in.
+  if (!visitedSlides.has(idx)) {
+    setTimeout(() => triggerStagger(inn), 340)
+    visitedSlides.add(idx)
+  }
   setTimeout(() => { out.classList.remove('active'); out.style.cssText = ''; inn.style.cssText = '' }, 340)
 
   cur = idx
@@ -897,6 +955,7 @@ slides[START].style.cssText = ''
 slides[START].classList.add('active')
 cur = START
 updateNav()
+visitedSlides.add(START)
 setTimeout(() => triggerStagger(slides[START]), 100)
 
 document.getElementById('nav').style.display     = 'none'
