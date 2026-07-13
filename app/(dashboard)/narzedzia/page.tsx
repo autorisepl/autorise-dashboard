@@ -458,7 +458,11 @@ export default function NarzedziaPage() {
           res = await fetch("/api/tools/transcribe", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ driveFileId, fileName: effectiveName, mimeType: effectiveMimeType }),
+            body: JSON.stringify({
+              driveFileId,
+              fileName: effectiveName,
+              mimeType: effectiveMimeType,
+            }),
           });
         } else if (item.file) {
           const fileBuffer = await item.file.arrayBuffer();
