@@ -7,6 +7,7 @@ import {
   MessageSquare,
   MinusCircle,
   Quote,
+  Sparkles,
   XCircle,
 } from "lucide-react";
 
@@ -34,16 +35,21 @@ export interface Agent4Output {
   uwagi_agenta?: string | null;
 }
 
-function Label({ children }: { children: React.ReactNode }) {
+// Te same tokeny co reszta dashboardu (var(--accent) #0a84ff, var(--font-sans) Roboto) —
+// Agent1-3Card wciąż używają starszej, hardcodowanej palety (#1a56ff, var(--font-mono) na
+// etykietach), to osobny dług wizualny poza zakresem tego patcha (Etap 5 dotyczy wyłącznie
+// panelu Agenta 4). Wartości SUCCESS/ERROR/WARNING pokrywają się z app/globals.css, więc
+// zamiana na zmienne CSS nie zmienia żadnego koloru, tylko źródło prawdy.
+function Label({ children, color }: { children: React.ReactNode; color?: string }) {
   return (
     <div
       style={{
-        fontFamily: "var(--font-mono)",
-        fontSize: 9,
+        fontFamily: "var(--font-sans)",
+        fontSize: 10,
         fontWeight: 700,
-        letterSpacing: "0.14em",
+        letterSpacing: "0.08em",
         textTransform: "uppercase" as const,
-        color: "#1a56ff",
+        color: color ?? "var(--accent)",
         marginBottom: 10,
       }}
     >
@@ -65,32 +71,77 @@ function triValue(val: boolean | string | null | undefined): "yes" | "no" | "unk
   return "unknown";
 }
 
-function TechCheck({ label, value }: { label: string; value: "yes" | "no" | "unknown" }) {
-  const icon =
-    value === "yes" ? (
-      <CheckCircle2 size={13} color="#34c759" />
-    ) : value === "no" ? (
-      <XCircle size={13} color="#ff3b30" />
-    ) : (
-      <MinusCircle size={13} color="var(--text-tertiary)" />
-    );
-  const color = value === "yes" ? "#34c759" : value === "no" ? "#ff3b30" : "var(--text-tertiary)";
+interface FeedbackItem {
+  text: string;
+}
+
+function FeedbackColumn({
+  label,
+  color,
+  icon,
+  items,
+  emptyText,
+}: {
+  label: string;
+  color: string;
+  icon: React.ReactNode;
+  items: FeedbackItem[];
+  emptyText: string;
+}) {
   return (
     <div
-      style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, flex: 1 }}
+      style={{
+        flex: 1,
+        minWidth: 220,
+        padding: "14px 16px",
+        borderRadius: "var(--radius-sm, 8px)",
+        background: `${color}0f`,
+        border: `1px solid ${color}30`,
+      }}
     >
-      {icon}
-      <span
-        style={{
-          fontFamily: "var(--font-system)",
-          fontSize: 11,
-          color,
-          textAlign: "center",
-          lineHeight: 1.3,
-        }}
-      >
-        {label}
-      </span>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+        {icon}
+        <span
+          style={{
+            fontFamily: "var(--font-sans)",
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: "0.08em",
+            textTransform: "uppercase" as const,
+            color,
+          }}
+        >
+          {label}
+        </span>
+      </div>
+      {items.length === 0 ? (
+        <div
+          style={{
+            fontFamily: "var(--font-sans)",
+            fontSize: 12,
+            color: "var(--text-tertiary)",
+            fontStyle: "italic",
+          }}
+        >
+          {emptyText}
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+          {items.map((item, i) => (
+            <div
+              key={i}
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 13,
+                color: "var(--text-secondary)",
+                lineHeight: 1.5,
+              }}
+            >
+              {item.text}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -100,7 +151,7 @@ export function Agent4Card({ output }: { output: Agent4Output }) {
   const isWin = wynik === "TAK";
   const isLoss = wynik === "NIE";
 
-  const verdictColor = isWin ? "#34c759" : isLoss ? "#ff3b30" : "#ff9500";
+  const verdictColor = isWin ? "var(--success)" : isLoss ? "var(--error)" : "var(--warning)";
   const verdictBg = isWin
     ? "rgba(52,199,89,0.09)"
     : isLoss
@@ -116,13 +167,56 @@ export function Agent4Card({ output }: { output: Agent4Output }) {
   const objekcje = output.obiekcje ?? [];
   const noweObjekcje = output.nowe_objekcje_do_bazy ?? output.nowe_obiekcje_do_bazy ?? [];
 
+  // Wyprowadzone z istniejących pól (tri-state checki + obiekcje) — czysto prezentacyjne
+  // grupowanie w stylu "mocne strony / do poprawy" z Agenta 1, bez zmiany danych z Agenta 4.
+  const poszlyDobrze: FeedbackItem[] = [];
+  const doPoprawy: FeedbackItem[] = [];
+
+  if (triValue(output.cisza_zachowana) === "yes") {
+    poszlyDobrze.push({ text: "Cisza po podaniu ceny została zachowana (min. 20 sekund)." });
+  } else if (triValue(output.cisza_zachowana) === "no") {
+    doPoprawy.push({ text: "Cisza po cenie nie została zachowana — Michał przerwał za wcześnie." });
+  }
+
+  if (triValue(output.parafraza_uzywana) === "yes") {
+    poszlyDobrze.push({ text: "Parafraza używana konsekwentnie po odpowiedziach klienta." });
+  } else if (triValue(output.parafraza_uzywana) === "no") {
+    doPoprawy.push({ text: "Brak parafrazy po odpowiedziach klienta w Information Gathering." });
+  }
+
+  if (triValue(output.pitch_odnosil_sie_do_poprzednich_prob) === "yes") {
+    poszlyDobrze.push({ text: "Pitch nawiązywał wprost do poprzednich prób klienta." });
+  } else if (triValue(output.pitch_odnosil_sie_do_poprzednich_prob) === "no") {
+    doPoprawy.push({
+      text: "Pitch nie nawiązał do poprzednich prób klienta — brakujący fundament.",
+    });
+  }
+
+  for (const obj of objekcje) {
+    const z = (obj.zbita ?? "").toUpperCase();
+    const quote = obj.tresc_cytat ? `„${obj.tresc_cytat.slice(0, 90)}"` : "obiekcja";
+    if (z === "TAK" || z === "ZBITA") {
+      poszlyDobrze.push({ text: `Obiekcja zbita: ${quote}` });
+    } else if (z === "NIE" || z === "NIEZBITA") {
+      doPoprawy.push({
+        text: obj.rekomendacja ? `${quote} — ${obj.rekomendacja}` : `Obiekcja niezbita: ${quote}`,
+      });
+    }
+  }
+
+  if (output.krok_najslabszy) {
+    doPoprawy.push({ text: `Krok najsłabszy: ${output.krok_najslabszy}` });
+  }
+
+  const hasFeedback = poszlyDobrze.length > 0 || doPoprawy.length > 0;
+
   return (
     <div
       style={{
         background: "var(--bg-elevated)",
         height: "100%",
         overflow: "auto",
-        fontFamily: "var(--font-system)",
+        fontFamily: "var(--font-sans)",
         color: "var(--text-primary)",
       }}
     >
@@ -130,7 +224,7 @@ export function Agent4Card({ output }: { output: Agent4Output }) {
       <div
         style={{
           padding: "20px 24px 18px",
-          background: "linear-gradient(160deg, rgba(26,86,255,0.09) 0%, transparent 50%)",
+          background: "linear-gradient(160deg, rgba(10,132,255,0.09) 0%, transparent 50%)",
           borderBottom: "1px solid var(--border)",
         }}
       >
@@ -142,17 +236,17 @@ export function Agent4Card({ output }: { output: Agent4Output }) {
             padding: "5px 14px",
             background: verdictBg,
             border: `1px solid ${verdictBorder}`,
-            borderRadius: 6,
+            borderRadius: "var(--radius-xs, 6px)",
             marginBottom: 14,
           }}
         >
           <span
             style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: 10,
+              fontFamily: "var(--font-sans)",
+              fontSize: 11,
               fontWeight: 800,
               color: verdictColor,
-              letterSpacing: "0.12em",
+              letterSpacing: "0.1em",
             }}
           >
             WYNIK — {verdictLabel}
@@ -163,11 +257,11 @@ export function Agent4Card({ output }: { output: Agent4Output }) {
           <div>
             <div
               style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: 54,
+                fontFamily: "var(--font-sans)",
+                fontSize: 48,
                 fontWeight: 800,
                 lineHeight: 1,
-                letterSpacing: "-0.04em",
+                letterSpacing: "-0.03em",
                 color: verdictColor,
               }}
             >
@@ -182,18 +276,18 @@ export function Agent4Card({ output }: { output: Agent4Output }) {
             <div style={{ marginBottom: 6 }}>
               <div
                 style={{
-                  fontFamily: "var(--font-mono)",
+                  fontFamily: "var(--font-sans)",
                   fontSize: 22,
                   fontWeight: 700,
                   color: "var(--text-primary)",
-                  letterSpacing: "-0.02em",
+                  letterSpacing: "-0.01em",
                 }}
               >
                 {output.kwota_potwierdzona.toLocaleString("pl")} PLN
               </div>
               <div
                 style={{
-                  fontFamily: "var(--font-system)",
+                  fontFamily: "var(--font-sans)",
                   fontSize: 11,
                   color: "var(--text-secondary)",
                   marginTop: 2,
@@ -213,7 +307,8 @@ export function Agent4Card({ output }: { output: Agent4Output }) {
               gap: 6,
               marginTop: 10,
               fontSize: 13,
-              color: "#34c759",
+              color: "var(--success-text)",
+              fontFamily: "var(--font-sans)",
             }}
           >
             <Calendar size={12} />
@@ -223,54 +318,45 @@ export function Agent4Card({ output }: { output: Agent4Output }) {
       </div>
 
       <div style={{ padding: "20px 24px" }}>
-        {/* Techniki */}
-        {(output.cisza_zachowana != null ||
-          output.parafraza_uzywana != null ||
-          output.pitch_odnosil_sie_do_poprzednich_prob != null ||
-          output.krok_najslabszy) && (
+        {/* Jak poszła rozmowa — mocne strony / do poprawy, w stylu Agenta 1 */}
+        {hasFeedback && (
           <>
-            <Label>Analiza techniki sprzedaży</Label>
-            <div style={{ display: "flex", gap: 8, marginBottom: output.krok_najslabszy ? 14 : 0 }}>
-              <TechCheck label="Cisza zachowana" value={triValue(output.cisza_zachowana)} />
-              <TechCheck label="Parafraza" value={triValue(output.parafraza_uzywana)} />
-              <TechCheck
-                label="Nawiązał do prób"
-                value={triValue(output.pitch_odnosil_sie_do_poprzednich_prob)}
-              />
-            </div>
-            {output.krok_najslabszy && (
-              <div
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                marginBottom: 14,
+              }}
+            >
+              <Sparkles size={13} color="var(--accent)" />
+              <span
                 style={{
-                  display: "flex",
-                  gap: 10,
-                  alignItems: "flex-start",
-                  padding: "10px 14px",
-                  background: "rgba(255,149,0,0.09)",
-                  border: "1px solid rgba(255,149,0,0.22)",
-                  borderRadius: 8,
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: "var(--text-primary)",
                 }}
               >
-                <AlertTriangle size={13} color="#ff9500" style={{ marginTop: 1, flexShrink: 0 }} />
-                <div>
-                  <div
-                    style={{
-                      fontFamily: "var(--font-mono)",
-                      fontSize: 9,
-                      fontWeight: 700,
-                      letterSpacing: "0.1em",
-                      textTransform: "uppercase",
-                      color: "#ff9500",
-                      marginBottom: 4,
-                    }}
-                  >
-                    Krok najsłabszy
-                  </div>
-                  <div style={{ fontSize: 13, color: "#ff9500", lineHeight: 1.55 }}>
-                    {output.krok_najslabszy}
-                  </div>
-                </div>
-              </div>
-            )}
+                Jak poszła rozmowa
+              </span>
+            </div>
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 4 }}>
+              <FeedbackColumn
+                label="Zadziałało"
+                color="var(--success-text)"
+                icon={<CheckCircle2 size={13} color="var(--success)" />}
+                items={poszlyDobrze}
+                emptyText="Brak jednoznacznie pozytywnych sygnałów w tej rozmowie."
+              />
+              <FeedbackColumn
+                label="Do poprawy"
+                color="#c26a00"
+                icon={<AlertTriangle size={13} color="var(--warning)" />}
+                items={doPoprawy}
+                emptyText="Brak zidentyfikowanych braków — rozmowa zgodna ze skryptem."
+              />
+            </div>
             <Divider />
           </>
         )}
@@ -290,7 +376,7 @@ export function Agent4Card({ output }: { output: Agent4Output }) {
                     style={{
                       background: "var(--bg-card)",
                       border: "1px solid var(--border)",
-                      borderRadius: 10,
+                      borderRadius: "var(--radius-md, 10px)",
                       overflow: "hidden",
                     }}
                   >
@@ -310,6 +396,7 @@ export function Agent4Card({ output }: { output: Agent4Output }) {
                         />
                         <span
                           style={{
+                            fontFamily: "var(--font-sans)",
                             fontSize: 14,
                             color: "var(--text-secondary)",
                             fontStyle: "italic",
@@ -324,12 +411,13 @@ export function Agent4Card({ output }: { output: Agent4Output }) {
                               marginLeft: "auto",
                               flexShrink: 0,
                               padding: "2px 8px",
-                              background: "rgba(26,86,255,0.10)",
-                              border: "1px solid rgba(26,86,255,0.22)",
+                              background: "rgba(10,132,255,0.10)",
+                              border: "1px solid rgba(10,132,255,0.22)",
                               borderRadius: 5,
-                              fontFamily: "var(--font-mono)",
+                              fontFamily: "var(--font-sans)",
                               fontSize: 10,
-                              color: "#1a56ff",
+                              fontWeight: 600,
+                              color: "var(--accent)",
                             }}
                           >
                             Krok {obj.krok}
@@ -351,6 +439,7 @@ export function Agent4Card({ output }: { output: Agent4Output }) {
                           />
                           <span
                             style={{
+                              fontFamily: "var(--font-sans)",
                               fontSize: 13,
                               color: "var(--text-secondary)",
                               lineHeight: 1.55,
@@ -367,9 +456,10 @@ export function Agent4Card({ output }: { output: Agent4Output }) {
                               display: "inline-flex",
                               alignItems: "center",
                               gap: 4,
+                              fontFamily: "var(--font-sans)",
                               fontSize: 11,
                               fontWeight: 600,
-                              color: isZbita ? "#34c759" : "#ff3b30",
+                              color: isZbita ? "var(--success-text)" : "var(--error)",
                             }}
                           >
                             {isZbita ? <CheckCircle2 size={11} /> : <XCircle size={11} />}
@@ -379,6 +469,7 @@ export function Agent4Card({ output }: { output: Agent4Output }) {
                         {obj.rekomendacja && (
                           <span
                             style={{
+                              fontFamily: "var(--font-sans)",
                               fontSize: 11,
                               color: "var(--text-tertiary)",
                               fontStyle: "italic",
@@ -405,9 +496,10 @@ export function Agent4Card({ output }: { output: Agent4Output }) {
             <div
               style={{
                 padding: "14px 18px 14px 20px",
-                borderLeft: "3px solid rgba(26,86,255,0.4)",
-                background: "rgba(26,86,255,0.10)",
-                borderRadius: "0 10px 10px 0",
+                borderLeft: "3px solid rgba(10,132,255,0.4)",
+                background: "rgba(10,132,255,0.08)",
+                borderRadius: "0 var(--radius-md, 10px) var(--radius-md, 10px) 0",
+                fontFamily: "var(--font-sans)",
                 fontSize: 14,
                 color: "var(--text-secondary)",
                 fontStyle: "italic",
@@ -428,9 +520,10 @@ export function Agent4Card({ output }: { output: Agent4Output }) {
               <div
                 style={{
                   padding: "12px 16px",
-                  background: "rgba(26,86,255,0.10)",
-                  border: "1px solid rgba(26,86,255,0.22)",
-                  borderRadius: 10,
+                  background: "rgba(10,132,255,0.08)",
+                  border: "1px solid rgba(10,132,255,0.22)",
+                  borderRadius: "var(--radius-md, 10px)",
+                  fontFamily: "var(--font-sans)",
                   fontSize: 14,
                   fontWeight: 500,
                   color: "var(--text-primary)",
@@ -448,6 +541,7 @@ export function Agent4Card({ output }: { output: Agent4Output }) {
                     display: "flex",
                     alignItems: "center",
                     gap: 6,
+                    fontFamily: "var(--font-sans)",
                     fontSize: 12,
                     color: "var(--text-secondary)",
                   }}
@@ -465,13 +559,14 @@ export function Agent4Card({ output }: { output: Agent4Output }) {
                     display: "flex",
                     alignItems: "center",
                     gap: 6,
+                    fontFamily: "var(--font-sans)",
                     fontSize: 12,
                     color: "var(--text-secondary)",
                   }}
                 >
                   <Calendar size={11} />
                   Re-engagement:{" "}
-                  <strong style={{ color: "#ff9500" }}>{output.data_reengagement}</strong>
+                  <strong style={{ color: "var(--warning)" }}>{output.data_reengagement}</strong>
                 </div>
               )}
             </div>
@@ -482,7 +577,7 @@ export function Agent4Card({ output }: { output: Agent4Output }) {
         {/* Nowe objekcje do bazy */}
         {noweObjekcje.length > 0 && noweObjekcje.some(Boolean) && (
           <>
-            <Label>Nowe objekcje — do dodania do bazy</Label>
+            <Label color="var(--warning)">Nowe objekcje — do dodania do bazy</Label>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {noweObjekcje.filter(Boolean).map((o, i) => (
                 <div
@@ -492,8 +587,9 @@ export function Agent4Card({ output }: { output: Agent4Output }) {
                     background: "rgba(255,149,0,0.09)",
                     border: "1px solid rgba(255,149,0,0.22)",
                     borderRadius: 7,
+                    fontFamily: "var(--font-sans)",
                     fontSize: 13,
-                    color: "#ff9500",
+                    color: "var(--warning)",
                     lineHeight: 1.5,
                   }}
                 >
@@ -510,7 +606,13 @@ export function Agent4Card({ output }: { output: Agent4Output }) {
           <>
             <Label>Obserwacje agenta</Label>
             <p
-              style={{ fontSize: 13, lineHeight: 1.75, color: "var(--text-secondary)", margin: 0 }}
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 13,
+                lineHeight: 1.75,
+                color: "var(--text-secondary)",
+                margin: 0,
+              }}
             >
               {output.uwagi_agenta}
             </p>
