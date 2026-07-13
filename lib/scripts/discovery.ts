@@ -499,9 +499,13 @@ export const STEPS_D: Step[] = [
     tag: "MÓWISZ",
     lines: [
       {
+        t: "note",
+        text: "PRZED wypowiedzeniem ceny, ustal na żywo (nie zakładaj uniwersalnej liczby): (a) konkretny termin zebrania dostępów w dniach — wpisz go w mini-formularzu obok kalkulatora, trafi do Notion i Załącznika nr 1; (b) potwierdź że {FORMA} rozumie mechanizm 18000/15000 — cena spada tylko przy obu warunkach naraz: płatność w 14 dni ORAZ dostępy w ustalonym terminie.",
+      },
+      {
         t: "say",
         text: [
-          "Inwestycja to 15 000 zł jednorazowo lub dwie raty po 7 500 zł.",
+          "Inwestycja to 18 000 zł netto, cena regularna, jednorazowo.",
           "Plus 4 000 zł miesięcznie opieki.",
           "Gwarancja: jeśli w 30 dni nie odzyska {FORMA} 80 godzin — zwrot 100% bez pytań.",
         ],
@@ -511,6 +515,11 @@ export const STEPS_D: Step[] = [
       {
         t: "note",
         text: "Jeśli klient nie odezwie się sam po 6-8 sekundach: 'Jak to {FORMA} widzi?' To jedyna dopuszczalna interwencja w tej ciszy, nic więcej.",
+      },
+      {
+        t: "say",
+        text: "Cena regularna to 18 tysięcy netto. Jeśli podpiszemy dziś i dostaniemy dostępy w ustalonym terminie, cena spada do 15 tysięcy — to nie kara za spóźnienie, to nagroda za sprawny start razem.",
+        cel: "Gotowa fraza do wypowiedzenia po ciszy, jeśli {FORMA} pyta o rabat albo zwleka — mechanizm rabatu za terminowość, §5 ust. 1 umowy",
       },
     ],
   },
@@ -585,7 +594,7 @@ export const OBJECTIONS_D: Objection[] = [
     stage: "cena",
     label: "Zastanowienie: kwestia finansowa",
     script:
-      "To częste, rozumiem. Mamy opcję rat, dwa razy 7500 zł zamiast 15000 zł jednorazowo. Zmienia to sytuację?",
+      "To częste, rozumiem. Mamy opcję rat, dwa razy 9000 zł zamiast 18000 zł jednorazowo — rata nie kwalifikuje się do rabatu za terminowość, bo ten wymaga pełnej płatności w 14 dni. Zmienia to sytuację?",
   },
   {
     id: "od1_partner",
@@ -636,7 +645,7 @@ export const OBJECTIONS_D: Objection[] = [
     stage: "cena",
     label: "Za drogo: kwestia logistyki płatności",
     script:
-      "Rozumiem, to nie jest mała kwota jednorazowo. Mamy raty: dwa razy 7500 zł. Retainer zostaje 4000 zł miesięcznie. Ułatwia to decyzję?",
+      "Rozumiem, to nie jest mała kwota jednorazowo. Mamy raty: dwa razy 9000 zł (cena regularna 18000, rata nie kwalifikuje się do rabatu za terminowość). Retainer zostaje 4000 zł miesięcznie. Ułatwia to decyzję?",
   },
   {
     id: "od3_wartosc",
@@ -726,7 +735,15 @@ export const OBJECTIONS_D: Objection[] = [
     stage: "cena",
     label: "Mogę płacić w ratach?",
     script:
-      "Tak, mamy opcję 2 × 7 500 zł zamiast 15 000 zł jednorazowo. Retainer zostaje 4 000 zł/mc. Przy ratach wdrożenie startuje po pierwszej wpłacie. Pasuje Panu?",
+      "Tak, mamy opcję 2 × 9 000 zł zamiast 18 000 zł jednorazowo — to cena regularna, rata nie kwalifikuje się do rabatu za terminowość (ten wymaga pełnej płatności w 14 dni). Retainer zostaje 4 000 zł/mc. Przy ratach wdrożenie startuje po pierwszej wpłacie. Pasuje Panu?",
+  },
+  {
+    id: "od12",
+    stage: "closing",
+    label: "Chcę móc zrezygnować z retainera w każdej chwili",
+    script:
+      "Rozumiem, że chce Pan wiedzieć na czym stoi, zanim podpiszemy. To proste: retainer to 12 miesięcy, bo tyle czasu potrzeba żeby system naprawdę wszedł w krew firmy i przynosił efekt, nie na to żeby Pana związać. Jeśli coś nie działa po naszej stronie, naprawiamy to, taki jest sens gwarancji. Jeśli zdecyduje się Pan zakończyć wcześniej bez naszej winy, rozliczamy pozostałe miesiące jednorazowo, żeby obie strony miały jasność od pierwszego dnia, nie żeby to było karą. Wolę powiedzieć to teraz wprost, niż żeby to było niespodzianką za pół roku.",
+    note: "Do wypowiedzenia proaktywnie przy pierwszej wzmiance o retainerze, albo w odpowiedzi na wprost zadane pytanie o rezygnację. Podstawa: SZKIC_UMOWA_AUTORISE.md §5 ust. 7 (rozliczenie pozostałych miesięcy przy wcześniejszej rezygnacji bez winy Wykonawcy).",
   },
 ];
 

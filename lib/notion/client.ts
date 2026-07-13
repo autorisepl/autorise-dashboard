@@ -788,6 +788,10 @@ export async function migrateNotionSchema(): Promise<{ added: string[]; errors: 
         // Fields filled MANUALLY by Michał in Notion UI — never written by agents
         "Cena wdrożenia": { number: {} },
         "Retainer PLN/mc": { number: {} },
+        // Ustalane na żywo podczas rozmowy zamykającej, mini-formularz w /sprzedaz
+        // (krok "cena"), do Załącznika nr 1 umowy — SZKIC_UMOWA_AUTORISE.md §2 ust. 1.
+        "Warunki umowy — dni dostępów": { number: {} },
+        "Warunki umowy — uwagi": { rich_text: {} },
         "Gotowość zakupowa": {
           select: {
             options: [
@@ -824,6 +828,8 @@ export async function migrateNotionSchema(): Promise<{ added: string[]; errors: 
       "Ocena ICP",
       "Cena wdrożenia",
       "Retainer PLN/mc",
+      "Warunki umowy — dni dostępów",
+      "Warunki umowy — uwagi",
       "Gotowość zakupowa",
       "Pilność",
     ]);
@@ -1132,6 +1138,86 @@ export async function fillDefaultPricingForCards(
 
     try {
       await notion.pages.update({ page_id: card.id, properties: props });
+      updated.push(card.name);
+    } catch (err) {
+      errors.push(`${card.name}: ${err instanceof Error ? err.message : "Błąd zapisu"}`);
+    }
+  }
+
+  return { updated, errors };
+}
+
+// Cena regularna po zmianie mechanizmu 2026-07-13 (SZKIC_UMOWA_AUTORISE.md §5 ust. 1):
+// 18 000 PLN, rabat za terminowość -3 000 PLN (do 15 000 PLN) przy płatności w 14 dni ORAZ
+// dostępach w ustalonym terminie. Migracja z poprzedniej sesji (fillDefaultPricingForCards
+// wyżej, stała DOMYSLNA_CENA_WDROZENIA=15000 sprzed tej zmiany) zapisała 15000 jako
+// SAMODZIELNĄ cenę w kartach z pustym polem — pod nowym mechanizmem te karty powinny
+// pokazywać DWIE ceny (18000 przekreślona + 15000 wyróżniona), co wymaga pustego pola
+// (fallback w prezentacja-dane/route.ts), nie zapisanej liczby. Ta migracja odwraca
+// TYLKO karty z wartością dokładnie 15000 — realna, świadomie inna cena niestandardowa
+// (np. 22000 dla dużej floty) zostaje nietknięta, bo nie pasuje do exact match.
+const STARA_CENA_DOMYSLNA = 15000;
+
+export interface PipelineCardOldDefaultPrice {
+  id: string;
+  name: string;
+}
+
+export async function findPipelineCardsWithOldDefaultPrice(): Promise<
+  PipelineCardOldDefaultPrice[]
+> {
+  const results: PipelineCardOldDefaultPrice[] = [];
+  let cursor: string | undefined;
+
+  do {
+    const response = (await notion.dataSources.query({
+      data_source_id: PIPELINE_DATA_SOURCE_ID,
+      page_size: 100,
+      start_cursor: cursor,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any)) as { results: PageObjectResponse[]; has_more: boolean; next_cursor: string | null };
+
+    for (const page of response.results) {
+      if (page.object !== "page") continue;
+      const firma = page.properties["Firma"];
+      const cena = page.properties["Cena wdrożenia"];
+      if (cena?.type === "number" && cena.number === STARA_CENA_DOMYSLNA) {
+        results.push({
+          id: page.id,
+          name:
+            firma?.type === "title"
+              ? firma.title.map((t) => t.plain_text).join("") || "Bez nazwy"
+              : "Bez nazwy",
+        });
+      }
+    }
+
+    cursor = response.has_more ? (response.next_cursor ?? undefined) : undefined;
+  } while (cursor);
+
+  return results;
+}
+
+export interface ReconcilePricingResult {
+  updated: string[];
+  errors: string[];
+}
+
+// Czyści "Cena wdrożenia" (ustawia na pusty number) TYLKO dla kart przekazanych ze
+// świeżego findPipelineCardsWithOldDefaultPrice, tuż przed wywołaniem — bez ponownego
+// sprawdzania stanu, żeby uniknąć wyścigu z ręczną edycją w Notion między preview a apply.
+export async function clearOldDefaultPriceForCards(
+  cards: PipelineCardOldDefaultPrice[],
+): Promise<ReconcilePricingResult> {
+  const updated: string[] = [];
+  const errors: string[] = [];
+
+  for (const card of cards) {
+    try {
+      await notion.pages.update({
+        page_id: card.id,
+        properties: { "Cena wdrożenia": { number: null } },
+      });
       updated.push(card.name);
     } catch (err) {
       errors.push(`${card.name}: ${err instanceof Error ? err.message : "Błąd zapisu"}`);

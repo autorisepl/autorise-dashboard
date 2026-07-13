@@ -813,6 +813,18 @@ const FUNNEL_NODES: FunnelNode[] = [
     statusKey: "Kickoff",
   },
   {
+    id: "zebranie-dostepow",
+    nr: "06b",
+    title: "Zebranie dostępów",
+    tone: "neutral",
+    agent:
+      "Ręcznie: Wykonawca potwierdza pisemnie (e-mail/uzgodniony kanał) otrzymanie kompletu dostępów ustalonych w Załączniku nr 1 (TMS, poczta, system księgowy/KSeF, kontakty operacyjne).",
+    entry: "Kickoff zakończony, harmonogram ustalony.",
+    exit: "Komplet dostępów potwierdzony pisemnie: start 4-tygodniowego wdrożenia i 30-dniowego okna weryfikacji gwarancji.",
+    endNote:
+      "30-dniowy zegar weryfikacji gwarancji startuje stąd, nie od podpisania umowy. Termin ustalany indywidualnie z klientem podczas rozmowy zamykającej (Załącznik nr 1 umowy), nie jest sztywną liczbą dni dla wszystkich. Dostarczenie dostępów po terminie przesuwa start okna weryfikacji proporcjonalnie o czas opóźnienia (SZKIC_UMOWA_AUTORISE.md §2 ust. 2) i jest jednym z dwóch warunków rabatu za terminowość (§5 ust. 1, mechanizm 18000/15000 PLN).",
+  },
+  {
     id: "wdrozenie",
     nr: "07",
     title: "Wdrożenie",
@@ -820,7 +832,7 @@ const FUNNEL_NODES: FunnelNode[] = [
     tone: "neutral",
     agent:
       "Zespół wdrożeniowy: Discovery procesów, integracja z TMS, testy na realnych danych, uruchomienie live.",
-    entry: "Kickoff zakończony, dostępy skonfigurowane.",
+    entry: "Komplet dostępów potwierdzony pisemnie (Zebranie dostępów).",
     exit: "System działa na produkcji: zaczyna się 30-dniowe okno weryfikacji gwarancji.",
     statusKey: "Wdrożenie",
     subSteps: [
@@ -1462,6 +1474,8 @@ function LejekView({ clients }: { clients: PipelineClientDetailed[] }) {
           {renderCard("finalizacja")}
           <Connector />
           {renderCard("kickoff")}
+          <Connector />
+          {renderCard("zebranie-dostepow")}
           <Connector />
           {renderCard("wdrozenie")}
           <Connector />

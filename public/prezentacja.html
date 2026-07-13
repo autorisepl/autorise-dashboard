@@ -340,6 +340,9 @@
     .pc-tag { font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 10px; color: var(--text-tertiary); }
     .pc-val { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: clamp(32px, 4vw, 48px); font-weight: 700; letter-spacing: -.01em; line-height: 1; }
     .pc-sub { font-size: 13px; color: var(--text-tertiary); margin-top: 6px; }
+    .pc-price-row { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+    .pc-val-regular { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: clamp(16px, 1.6vw, 20px); font-weight: 600; color: var(--text-tertiary); text-decoration: line-through; text-decoration-thickness: 1.5px; }
+    .pc-discount-note { font-size: 12px; color: var(--blue); font-weight: 600; margin-top: 4px; }
 
     /* ── ROI metrics row ── */
     .roi-row { display: flex; margin-top: 18px; background: var(--bg); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; box-shadow: 0 1px 2px rgba(11,31,58,.04), 0 10px 28px rgba(11,31,58,.05); }
@@ -738,8 +741,12 @@
         </div>
         <div class="price-card">
           <div class="pc-tag">Autorise kosztuje</div>
-          <div class="pc-val blue"><span class="val-cena-wdrozenia">Cena ustalana indywidualnie</span></div>
+          <div class="pc-price-row">
+            <span class="pc-val-regular val-cena-regular" style="display:none;"></span>
+            <div class="pc-val blue"><span class="val-cena-wdrozenia">Cena ustalana indywidualnie</span></div>
+          </div>
           <div class="pc-sub val-cena-sub">w zależności od zakresu wdrożenia</div>
+          <div class="pc-discount-note val-cena-discount-note" style="display:none;">przy terminowej płatności i dostępach</div>
         </div>
       </div>
 
@@ -917,6 +924,7 @@ const V = {
   // (Etap 1), null dopóki fetch (jeśli w ogóle nastąpi) nie nadpisze. applyValues()
   // pokazuje czytelny fallback tekstowy zamiast "null", gdy zostają puste.
   cenaWdrozenia:   null,
+  cenaZRabatem:    null,
   procentKosztu:   null,
   paybackMiesiace: null,
 }
@@ -998,12 +1006,13 @@ function applyValues() {
     }
   }
 
-  // Realne payback_miesiace/procent_kosztu (Etap 1) mają pierwszeństwo, gdy Notion je policzył
-  // (czyli gdy "Cena wdrożenia" jest już ustalona). Tryb podglądu/URL-params (brak
-  // HAS_CLIENT_DATA) bez tego pokazuje starą heurystykę (15 000 PLN jako cena orientacyjna),
-  // tak jak działało to przed Etapem 5. Ale gdy dane klienta SĄ realne (fetch się powiódł),
-  // a cena_wdrożenia po prostu jeszcze nie jest ustalona w Notion — pokazujemy "–", nie
-  // fabrykujemy liczby z założonej ceny obok notatki twierdzącej że to realne dane klienta.
+  // Realne payback_miesiace/procent_kosztu (endpoint) mają pierwszeństwo, gdy Notion ma
+  // "Koszt problemu PLN/mc" wypełnione. Tryb podglądu/URL-params (brak HAS_CLIENT_DATA) bez
+  // tego pokazuje starą heurystykę opartą o cenę z rabatem (15 000 PLN, mechanizm §5 ust. 1
+  // umowy) jako orientacyjną. Gdy dane klienta SĄ realne (fetch się powiódł), ale koszt
+  // problemu nie jest jeszcze policzony w Notion — pokazujemy "–", nie fabrykujemy liczby
+  // obok notatki twierdzącej że to realne dane klienta. "Cena wdrożenia" sama w sobie zawsze
+  // ma wartość (fallback 18000/15000 w endpoincie), więc ten guard dotyczy tylko ROI/payback.
   const gain            = bol / 12 - 4000
   const monthsFallback  = !HAS_CLIENT_DATA && gain > 0 ? Math.ceil(15000 / gain) : '–'
   const pctFallback     = !HAS_CLIENT_DATA && bol > 0  ? Math.round(15000 / bol * 100) : '–'
@@ -1017,11 +1026,29 @@ function applyValues() {
   const pi = document.getElementById('pct-inv')
   if (pi) pi.textContent = pct
 
+  // Dwie ceny (regularna przekreślona + wyróżniona z rabatem) gdy cenaZRabatem jest znane
+  // (pole "Cena wdrożenia" puste w Notion — standardowa oferta, mechanizm §5 ust. 1 umowy).
+  // Wartość ręcznie wpisana w Notion = jedna wynegocjowana cena, cenaZRabatem wtedy null,
+  // pokazujemy tylko cenaWdrozenia bez przekreślenia, dokładnie jak dotychczas.
   document.querySelectorAll('.val-cena-wdrozenia').forEach(el => {
-    el.textContent = V.cenaWdrozenia != null ? fmt(V.cenaWdrozenia) + ' PLN' : 'Cena ustalana indywidualnie'
+    const cenaGlowna = V.cenaZRabatem != null ? V.cenaZRabatem : V.cenaWdrozenia
+    el.textContent = cenaGlowna != null ? fmt(cenaGlowna) + ' PLN' : 'Cena ustalana indywidualnie'
+  })
+  document.querySelectorAll('.val-cena-regular').forEach(el => {
+    if (V.cenaZRabatem != null && V.cenaWdrozenia != null) {
+      el.textContent = fmt(V.cenaWdrozenia) + ' PLN'
+      el.style.display = ''
+    } else {
+      el.style.display = 'none'
+    }
+  })
+  document.querySelectorAll('.val-cena-discount-note').forEach(el => {
+    el.style.display = V.cenaZRabatem != null ? '' : 'none'
   })
   document.querySelectorAll('.val-cena-sub').forEach(el => {
-    el.textContent = V.cenaWdrozenia != null ? 'jednorazowo, wg zakresu wdrożenia' : 'w zależności od zakresu wdrożenia'
+    el.textContent = V.cenaZRabatem != null
+      ? 'jednorazowo'
+      : V.cenaWdrozenia != null ? 'jednorazowo, wg zakresu wdrożenia' : 'w zależności od zakresu wdrożenia'
   })
 
   const invNote = document.getElementById('inv-note-text')
@@ -1265,6 +1292,7 @@ if (ID_PARAM) {
         V.tms  = data.tms || V.tms
         V.gwar = typeof data.gwar === 'number' ? data.gwar : V.gwar
         V.cenaWdrozenia   = typeof data.cena_wdrozenia   === 'number' ? data.cena_wdrozenia   : null
+        V.cenaZRabatem    = typeof data.cena_z_rabatem   === 'number' ? data.cena_z_rabatem   : null
         V.procentKosztu   = typeof data.procent_kosztu   === 'number' ? data.procent_kosztu   : null
         V.paybackMiesiace = typeof data.payback_miesiace === 'number' ? data.payback_miesiace : null
         FIRMA = data.firma || ''

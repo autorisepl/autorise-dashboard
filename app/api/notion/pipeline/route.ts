@@ -34,6 +34,8 @@ export interface PipelineClientDetailed {
   tms: string;
   kosztRoczny: number;
   cytatyKlienta: string;
+  warunkiDniDostepow: number;
+  warunkiUwagi: string;
 }
 
 function extractText(prop: PageObjectResponse["properties"][string] | undefined): string {
@@ -102,6 +104,8 @@ export async function GET() {
           tms: extractText(props["TMS"]),
           kosztRoczny: extractNumber(props["Koszt roczny PLN/rok"]),
           cytatyKlienta: extractText(props["Cytaty klienta"]),
+          warunkiDniDostepow: extractNumber(props["Warunki umowy — dni dostępów"]),
+          warunkiUwagi: extractText(props["Warunki umowy — uwagi"]),
         };
       })
       .filter((c: PipelineClientDetailed) => c.firma !== "Bez nazwy");

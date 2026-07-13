@@ -27,6 +27,7 @@ import { ProgressBar, SectionLabelSmall, StepCard } from "@/components/dalsze-kr
 import { KalkulatorRoi } from "@/components/kalkulator/KalkulatorRoi";
 import { DecisionDiagram } from "@/components/scripts/DecisionDiagram";
 import { NextStepArrow } from "@/components/scripts/NextStepArrow";
+import { WarunkiUmowyForm } from "@/components/sprzedaz/WarunkiUmowyForm";
 import { formatPhone } from "@/lib/format/phone";
 import { DISCOVERY_STATUSES, OBJECTIONS_D, STEPS_D } from "@/lib/scripts/discovery";
 import { fillBrief, parseCytatyKlienta } from "@/lib/scripts/fillBrief";
@@ -2095,6 +2096,18 @@ export default function SprzedazPage() {
             <KalkulatorRoi
               embedded
               initialClientName={selected?.kontakt || selected?.firma || ""}
+            />
+          </Card>
+
+          <Card title="Warunki umowy" collapsible defaultOpen={false}>
+            <WarunkiUmowyForm
+              client={selected}
+              onSaved={(patch) => {
+                setSelected((prev) => (prev ? { ...prev, ...patch } : prev));
+                setClients((prev) =>
+                  prev.map((c) => (c.id === selected?.id ? { ...c, ...patch } : c)),
+                );
+              }}
             />
           </Card>
 

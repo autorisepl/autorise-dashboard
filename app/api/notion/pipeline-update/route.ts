@@ -21,6 +21,8 @@ const bodySchema = z.object({
   kontakt: z.string().optional(),
   telefon: z.string().optional(),
   notatki: z.string().optional(),
+  dniDostepow: z.number().nullable().optional(),
+  uwagiWarunki: z.string().nullable().optional(),
 });
 
 function richText(text: string) {
@@ -88,6 +90,14 @@ export async function PATCH(req: Request) {
     }
     if (d.notatki !== undefined) {
       properties["Notatki"] = { rich_text: richText(d.notatki) };
+    }
+    if (d.dniDostepow !== undefined) {
+      properties["Warunki umowy — dni dostępów"] = { number: d.dniDostepow };
+    }
+    if (d.uwagiWarunki !== undefined) {
+      properties["Warunki umowy — uwagi"] = {
+        rich_text: d.uwagiWarunki ? richText(d.uwagiWarunki) : [],
+      };
     }
 
     if (Object.keys(properties).length === 0) {
