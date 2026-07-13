@@ -8,14 +8,26 @@ interface ModuleFlagMapping {
 // liczby klientowi (krok 2j) mowic konkretnie co oferujemy i dlaczego, na podstawie tego
 // co klient faktycznie powiedzial na zywo, nie ogolnikowo.
 const MODULE_FLAG_MAP: ModuleFlagMapping[] = [
-  { flag: "zlecenia", module: "Email Parser", stepIds: ["diagnoza_dokumenty_zlecenie"] },
-  { flag: "cmr", module: "Document OCR", stepIds: ["diagnoza_dokumenty_cmr"] },
+  {
+    flag: "zlecenia",
+    module: "Automatyczne wczytywanie zleceń z maila",
+    stepIds: ["diagnoza_dokumenty_zlecenie"],
+  },
+  {
+    flag: "cmr",
+    module: "Skan i odczyt dokumentów transportowych (CMR, potwierdzenia dostawy)",
+    stepIds: ["diagnoza_dokumenty_cmr"],
+  },
   {
     flag: "faktury_recznie",
-    module: "Document OCR + Payment Monitor",
+    module: "Odczyt faktur i pilnowanie terminów płatności",
     stepIds: ["diagnoza_dokumenty_faktura", "diagnoza_dokumenty_faktura_platnosci"],
   },
-  { flag: "komunikacja", module: "WhatsApp Alerts", stepIds: ["diagnoza_dokumenty_status"] },
+  {
+    flag: "komunikacja",
+    module: "Status zleceń na WhatsApp bez dzwonienia do spedytora",
+    stepIds: ["diagnoza_dokumenty_status"],
+  },
 ];
 
 export interface RecommendedModule {

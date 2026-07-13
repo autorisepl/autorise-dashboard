@@ -4,11 +4,22 @@ export interface ScriptLine {
   t: ScriptLineType;
   text: string | string[];
   cel?: string;
+  // Wersja tej linii dla settera, gdy oryginalna treść zakłada że mówi Michał
+  // (Founder) osobiście — np. "prowadzę wdrożenie osobiście". Jeśli brak,
+  // linia renderuje się identycznie dla obu ról.
+  textSetter?: string | string[];
+  // Note renderowany jako klikalny przycisk skaczący do obiekcji zamiast
+  // czystego tekstu instrukcji (patrz obiekcja M365 w diagnoza_tms).
+  linkObjectionId?: string;
 }
 
 export interface DecisionOption {
   trigger: string;
   action?: string;
+  // Gotowa fraza do wypowiedzenia klientowi PO wybraniu tej opcji — odrębna
+  // od `action`, które jest instrukcją techniczną dla settera (np. "zaznacz
+  // w kalkulatorze"), nie treścią do powiedzenia na głos.
+  sayAfter?: string;
   goToStepId?: string;
   openObjectionId?: string;
   tone?: "neutral" | "positive" | "warning";
@@ -29,6 +40,10 @@ export interface Step {
   lines: ScriptLine[];
   hasCalculator?: boolean;
   hasModuleRecommendation?: boolean;
+  // Ten krok ma własne, wbudowane pole liczbowe zasilające kalkulator na
+  // bieżąco, w momencie zbierania tej konkretnej informacji od klienta —
+  // zamiast osobnego, oderwanego kalkulatora dalej w skrypcie (punkt 9).
+  captureField?: "osoby" | "stawka";
   decision?: Decision;
   nextStepId?: string;
 }
@@ -44,6 +59,17 @@ export interface Objection {
   followup?: string;
   stage: "opening" | "icp" | "diagnoza" | "kalkulator" | "pitch" | "cena" | "closing" | "wszedzie";
   decision?: Decision;
+}
+
+// Jedna grupa roli w kalkulatorze (np. "Spedytorzy", "Księgowość") — każda ma
+// własną liczbę osób, godzin dziennie i stawkę, liczone osobno i sumowane
+// razem w podsumowaniu (patrz punkt 18: różne role mają różne stawki/godziny).
+export interface CalculatorGroup {
+  id: string;
+  label: string;
+  osoby: number;
+  godziny: number;
+  stawka: number;
 }
 
 export interface IcpRule {

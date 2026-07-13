@@ -38,10 +38,6 @@ export const STEPS_K: Step[] = [
         cel: "Uzasadnienie prośby o czas wbudowane w samo zdanie, nie osobna adnotacja — klient wie po co te 2 minuty, zanim zdąży pomyśleć że to sprzedaż",
       },
       { t: "client", text: "[odpowiedź]" },
-      {
-        t: "note",
-        text: "Jeśli klient nie odbiera w ogóle (dzwonisz, nikt nie podnosi): to nie jest ten ekran. Po 3 próbach przejdź do zakładki Wiadomości i wyślij SMS z szablonu 'Brak odbioru po 3 próbach'.",
-      },
     ],
     decision: {
       question: "Co odpowiedział klient?",
@@ -177,6 +173,7 @@ export const STEPS_K: Step[] = [
     nr: "2a",
     label: "ICP: FLOTA I BIURO",
     tag: "PYTASZ",
+    captureField: "osoby",
     lines: [
       {
         t: "say",
@@ -252,13 +249,14 @@ export const STEPS_K: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Czy korzystacie z TMS-u, czyli programu do zarządzania flotą i zleceniami, na przykład coś w rodzaju Trans.eu, TIMOCOM, Sky-Pol, WEB-TRANS albo podobnego systemu?",
+        text: "Jakiego systemu używacie do zarządzania zleceniami i flotą? Trans.eu, Timocom, coś własnego?",
         cel: "Ustalić punkt odniesienia — co już mają, żeby wiedzieć czego NIE trzeba zastępować",
       },
       { t: "client", text: "[odpowiedź]" },
       {
         t: "note",
-        text: "Jeśli klient wspomni Microsoft 365, Power Automate, Power Apps lub podobne narzędzie ogólnobiurowe jako 'już mam to ogarnięte': przejdź do obiekcji 'konkurencja_m365' w prawym panelu zamiast kontynuować standardową diagnozę, zanim ustalisz co realnie robi ta konfiguracja.",
+        text: "Klient wspomniał Microsoft 365 / Power Automate / Power Apps jako 'już mam to ogarnięte'.",
+        linkObjectionId: "konkurencja_m365",
       },
     ],
     decision: {
@@ -297,18 +295,20 @@ export const STEPS_K: Step[] = [
       },
     ],
     decision: {
-      question: "Potwierdzone przez klienta?",
+      question: "Jak zlecenie trafia do Was i co się z nim dzieje dalej?",
       options: [
         {
-          trigger: "Tak, robi to ręcznie (mail/PDF/zdjęcie)",
-          action: "Zaznacz w kalkulatorze",
+          trigger: "Ktoś ręcznie przepisuje z maila/PDF-a/zdjęcia",
+          action: "Zaznacz w kalkulatorze (zlecenia)",
+          sayAfter: "Rozumiem, czyli ktoś musi to za każdym razem ręcznie przepisać do systemu.",
           goToStepId: "diagnoza_dokumenty_cmr",
           tone: "positive",
           calculatorFlag: "zlecenia",
         },
         {
-          trigger: "Nie, to już zautomatyzowane inaczej",
+          trigger: "To już wpada do systemu automatycznie",
           action: "Nie zaznaczaj, kontynuuj",
+          sayAfter: "To dobrze, ten etap już macie ogarnięty.",
           goToStepId: "diagnoza_dokumenty_cmr",
           tone: "neutral",
         },
@@ -331,7 +331,7 @@ export const STEPS_K: Step[] = [
       },
       {
         t: "say",
-        text: "Ten sam dokument, po dostarczeniu towaru, podpisuje odbiorca jako potwierdzenie że wszystko dotarło w porządku. U większości firm to jest ten sam papier, ale jeśli u Pana to jest osobny formularz, na przykład od dużej sieci handlowej, proszę mi o tym powiedzieć.",
+        text: "A potwierdzenie dostawy, czyli podpis odbiorcy że towar dotarł w porządku — to ten sam dokument co CMR, czy osobny formularz, na przykład od dużej sieci handlowej?",
         cel: "Sprawdzić czy klient rozróżnia CMR i osobne potwierdzenie dostawy — u większości nie, ale trafiają się wyjątki",
       },
       {
@@ -340,18 +340,20 @@ export const STEPS_K: Step[] = [
       },
     ],
     decision: {
-      question: "Potwierdzone przez klienta?",
+      question: "Jak CMR i potwierdzenie dostawy wracają do biura?",
       options: [
         {
-          trigger: "Tak, ręczne przepisywanie CMR/potwierdzeń",
-          action: "Zaznacz w kalkulatorze",
+          trigger: "Papier lub zdjęcie, ktoś ręcznie przepisuje",
+          action: "Zaznacz w kalkulatorze (CMR/POD)",
+          sayAfter: "Czyli to kolejny etap gdzie ktoś ręcznie przepisuje dane z papieru.",
           goToStepId: "diagnoza_dokumenty_faktura",
           tone: "positive",
           calculatorFlag: "cmr",
         },
         {
-          trigger: "Nie, to już zautomatyzowane inaczej",
+          trigger: "Elektronicznie, już zautomatyzowane",
           action: "Nie zaznaczaj, kontynuuj",
+          sayAfter: "Dobrze, to macie już rozwiązane.",
           goToStepId: "diagnoza_dokumenty_faktura",
           tone: "neutral",
         },
@@ -372,11 +374,12 @@ export const STEPS_K: Step[] = [
       { t: "client", text: "[odpowiedź]" },
     ],
     decision: {
-      question: "Kto obsługuje faktury?",
+      question: "Kto sprawdza i wpisuje faktury do księgowości?",
       options: [
         {
           trigger: "Jedna osoba ręcznie wpisuje",
-          action:
+          action: "Dopytaj o liczbę faktur miesięcznie",
+          sayAfter:
             "Ile mniej więcej faktur miesięcznie to jest, licząc te które wystawiacie i te które dostajecie?",
           goToStepId: "diagnoza_dokumenty_faktura_platnosci",
           tone: "positive",
@@ -384,7 +387,7 @@ export const STEPS_K: Step[] = [
         },
         {
           trigger: "Zewnętrzne biuro rachunkowe",
-          action: "Pokaż jak pogłębić ten wątek",
+          action: "Pogłęb wątek dostarczania dokumentów",
           openObjectionId: "zewnetrzne_biuro_ksiegowe",
           tone: "neutral",
         },
@@ -404,11 +407,12 @@ export const STEPS_K: Step[] = [
       },
     ],
     decision: {
-      question: "Czy ktoś systematycznie pilnuje płatności?",
+      question: "Czy ktoś systematycznie pilnuje które faktury są opłacone?",
       options: [
         {
           trigger: "Nie, sprawdzają od czasu do czasu",
           action: "Zaznacz w kalkulatorze (faktury)",
+          sayAfter: "Czyli to też chwilę zajmuje zanim ktoś to sprawdzi ręcznie w banku.",
           goToStepId: "diagnoza_dokumenty_status",
           tone: "positive",
           calculatorFlag: "faktury_recznie",
@@ -416,6 +420,7 @@ export const STEPS_K: Step[] = [
         {
           trigger: "Tak, ktoś to systematycznie robi",
           action: "Nie zaznaczaj",
+          sayAfter: "Dobrze, to macie pod kontrolą.",
           goToStepId: "diagnoza_dokumenty_status",
           tone: "neutral",
         },
@@ -430,27 +435,25 @@ export const STEPS_K: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Piąta rzecz, ostatnia: jak Pan sam, jako właściciel, sprawdza dziś status konkretnego zlecenia, czy trzeba zadzwonić do spedytora, czy widać to w systemie?",
+        text: "Piąta rzecz, ostatnia: jak Pan sam, jako właściciel, sprawdza dziś status konkretnego zlecenia — trzeba zadzwonić do spedytora, czy widać to w systemie?",
         cel: "Sprawdzić czy właściciel ma widoczność operacyjną bez dzwonienia — kandydat na alerty i widoczność statusu na WhatsApp",
-      },
-      {
-        t: "note",
-        text: "To jest pytanie o alerty i widoczność statusu na WhatsApp oraz o widoczność operacyjną. Jeśli właściciel musi dzwonić lub pytać osobiście żeby wiedzieć co się dzieje, to jest osobny, ważny ból, niezależny od dokumentów, zanotuj osobno.",
       },
     ],
     decision: {
-      question: "Czy właściciel ma widoczność bez dzwonienia?",
+      question: "Czy właściciel widzi status zlecenia bez dzwonienia do spedytora?",
       options: [
         {
-          trigger: "Nie, musi dzwonić do spedytora",
+          trigger: "Nie, musi dzwonić lub pytać",
           action: "Zaznacz w kalkulatorze (komunikacja)",
+          sayAfter: "To osobny, ważny problem, niezależny od dokumentów.",
           goToStepId: "diagnoza_podsumowanie_dokumentow",
           tone: "positive",
           calculatorFlag: "komunikacja",
         },
         {
-          trigger: "Tak, ma to na bieżąco",
+          trigger: "Tak, widzi na bieżąco w systemie",
           action: "Nie zaznaczaj",
+          sayAfter: "Dobrze, ten obszar macie ogarnięty.",
           goToStepId: "diagnoza_podsumowanie_dokumentow",
           tone: "neutral",
         },
@@ -468,7 +471,39 @@ export const STEPS_K: Step[] = [
         text: "To jest checkpoint, nie pytanie do klienta. Spójrz na pasek kalkulatora nad skryptem — powinny tam świecić się checkboxy za każdą rzecz którą klient przed chwilą potwierdził jako ręczną (zlecenia, dokumenty, płatności, widoczność). Jeśli czegoś brakuje mimo że klient to powiedział, zaznacz ręcznie teraz, zanim przejdziesz do podania mu liczby — to od tych zaznaczeń zależy dokładność kwoty którą za chwilę usłyszy.",
       },
     ],
-    nextStepId: "diagnoza_kalkulator",
+    nextStepId: "diagnoza_stawka",
+  },
+  {
+    id: "diagnoza_stawka",
+    nr: "2h2",
+    label: "STAWKA GODZINOWA W BIURZE",
+    tag: "PYTASZ",
+    captureField: "stawka",
+    lines: [
+      {
+        t: "say",
+        text: "Orientacyjnie, ile kosztuje Pana godzina pracy osoby w biurze, razem ze wszystkimi narzutami?",
+        cel: "Zebrać realną stawkę zamiast domyślnego szacunku — dokładniejsza liczba dla klienta",
+      },
+      { t: "client", text: "[odpowiedź lub niechęć do podania]" },
+    ],
+    decision: {
+      question: "Czy klient podał stawkę?",
+      options: [
+        {
+          trigger: "Podał konkretną kwotę",
+          action: "Wpisz do kalkulatora, przejdź dalej",
+          goToStepId: "diagnoza_kalkulator",
+          tone: "positive",
+        },
+        {
+          trigger: "Nie chce podawać dokładnej kwoty",
+          action: "Pokaż jak zaproponować szacunek",
+          openObjectionId: "stawka_niechec",
+          tone: "warning",
+        },
+      ],
+    },
   },
   {
     id: "diagnoza_kalkulator",
@@ -596,7 +631,7 @@ export const STEPS_K: Step[] = [
         t: "say",
         text: [
           "Rozumiem. W takim razie prawdopodobnie nie jesteśmy teraz dla siebie.",
-          "Mogę zadzwonić za kilka miesięcy gdy się coś zmieni — czy to ma sens?",
+          "Odezwę się do Pana za około 3 miesiące, gdyby coś się zmieniło — dobrze?",
         ],
       },
       {
@@ -626,6 +661,8 @@ export const STEPS_K: Step[] = [
       {
         t: "say",
         text: "Jeszcze jedno — całe wdrożenie, od tego spotkania aż po uruchomienie systemu u Pana w firmie, prowadzę osobiście, nie przekazuję tego nikomu innemu. Będzie Pan miał jeden kontakt przez cały proces, nie różnych ludzi na różnych etapach.",
+        textSetter:
+          "Jeszcze jedno — całe wdrożenie, od tego spotkania aż po uruchomienie systemu u Pana w firmie, prowadzi osobiście założyciel Autorise, Michał, nie przekazuje tego nikomu innemu. Będzie Pan miał jeden kontakt przez cały proces, nie różnych ludzi na różnych etapach.",
         cel: "Budować autorytet i ciągłość — klient rozmawia z decydentem i wykonawcą w jednej osobie, nie trafia do korporacyjnego przekazywania sprawy między działami",
       },
       {
@@ -692,7 +729,7 @@ export const OBJECTIONS_K: Objection[] = [
     label: "Nie mam teraz czasu (pierwsze NIE)",
     stage: "opening",
     script:
-      "Rozumiem. Wie Pan co, biura spedycji z którymi pracuję tracą kilkadziesiąt godzin miesięcznie na ręczne przepisywanie i pilnowanie dokumentów, liczone konkretnie dla każdej firmy, nie uśredniane. Jeśli to brzmi znajomo, te dwie minuty teraz mogą zmienić kilka tysięcy złotych miesięcznie. Ma Pan je?",
+      "Rozumiem. Biura spedycji z którymi pracuję tracą miesięcznie kilkadziesiąt godzin na ręczne przepisywanie dokumentów, to zwykle kilka tysięcy złotych. Te dwie minuty mogą to zmienić. Ma Pan je?",
   },
   {
     id: "ok2",
@@ -706,7 +743,7 @@ export const OBJECTIONS_K: Objection[] = [
     label: "Mam już program do zarządzania",
     stage: "opening",
     script:
-      "No to Pan nie jest sam, większość firm z którymi pracuję ma TMS. My nie zastępujemy systemu, tylko zdejmujemy z biura ręczną robotę wokół niego: wpisywanie zleceń, przepisywanie CMR i potwierdzeń dostawy, pilnowanie faktur i płatności, informowanie o statusie bez dzwonienia do spedytora. Mam kilka pytań jak to dziś wygląda u Pana mimo TMS-u, dobrze?",
+      "To dobrze, większość naszych klientów ma TMS. My nie zastępujemy systemu, zdejmujemy z biura ręczną robotę wokół niego. Mam kilka pytań jak to dziś wygląda u Pana, dobrze?",
     note: "Po 'tak': przejdź do 2 Otwarcie diagnozy.",
   },
   {
@@ -753,8 +790,8 @@ export const OBJECTIONS_K: Objection[] = [
     label: "Poniżej progu ICP — 1 osoba w biurze, brak planu zatrudnienia",
     stage: "icp",
     script:
-      "Dziękuję za szczerość. Szczerze mówiąc, przy tej wielkości biura pewnie jeszcze nie poczułby Pan realnej różnicy, a wolę powiedzieć to wprost niż namawiać na coś co się nie zwróci. Mogę zapisać kontakt i wrócić gdy zespół się powiększy?",
-    note: "Status: Niekwalifikowany. Jeśli zgoda na kontakt: dodaj datę re-engagement +90 dni w Pipeline. To jest koniec rozmowy, nie wracaj do diagnozy. Ton ma być ciepły, nie odprawiający — to nie jest kara za małą firmę, to szczera ocena dopasowania.",
+      "Dziękuję za szczerość. Przy tej wielkości biura pewnie nie poczułby Pan jeszcze realnej różnicy, więc szczerze: nie namawiam na coś co się nie zwróci. Mogę zapisać kontakt i wrócić za jakieś 3 miesiące, jak zespół się powiększy, dobrze?",
+    note: "Status: Niekwalifikowany. Jeśli zgoda: data re-engagement +90 dni w Pipeline. Koniec rozmowy, nie wracaj do diagnozy.",
   },
   {
     id: "icp_nie_decydent",
@@ -769,29 +806,29 @@ export const OBJECTIONS_K: Objection[] = [
     label: "Faktury: zewnętrzne biuro rachunkowe",
     stage: "diagnoza",
     script:
-      "Jasne, biuro rachunkowe zajmuje się rozliczeniami. A kto u Was przygotowuje i wysyła im dane, faktury, potwierdzenia dostaw? To zwykle ta sama osoba co reszta administracji, zgadza się?",
-    note: "Cel: nawet z zewnętrzną księgowością, ktoś wewnątrz firmy zbiera i wysyła dokumenty ręcznie. To wciąż ból do zmapowania. Po tej wymianie wróć do skryptu i przejdź do kroku 2f2 (Pilnowanie płatności).",
+      "Jasne, biuro rachunkowe zajmuje się rozliczeniami. A kto u Was przygotowuje i wysyła im dokumenty, faktury, potwierdzenia dostaw? To zwykle ta sama osoba co reszta administracji, zgadza się?",
+    note: "Nawet z zewnętrzną księgowością ktoś wewnątrz firmy zbiera i wysyła dokumenty ręcznie — to wciąż ból do zmapowania w kalkulatorze (faktury).",
   },
   {
     id: "konkurencja_m365",
     label: "Ma wszystko w Microsoft 365 / Power Automate",
     stage: "diagnoza",
     script:
-      "To brzmi jak solidna konfiguracja. Powiem co zwykle sprawdzam w takich przypadkach: ten flow faktycznie czyta dane z dokumentu, numer rejestracyjny, trasę, kwotę z faktury, czy tylko przenosi sam plik do folderu i ktoś nadal musi go otworzyć i przepisać?",
+      "To brzmi jak solidna konfiguracja. Sprawdzam zwykle jedną rzecz: czy to faktycznie odczytuje dane z dokumentu i wypełnia je automatycznie, czy tylko przenosi plik do folderu, a ktoś nadal musi go otworzyć i przepisać ręcznie?",
     followup:
-      "A co się dzieje gdy dokument wygląda inaczej, na przykład nowy klient przysyła w innym układzie? Flow to ogarnia sam, czy wtedy ktoś ręcznie interweniuje? I kto to utrzymuje jak coś się zepsuje po aktualizacji Microsoftu?",
-    note: "Cel: nie podważaj że M365 coś robi, dopytaj konkretnie o rozpoznawanie danych (nie tylko przenoszenie plików), obsługę wyjątków, i utrzymanie. W praktyce większość konfiguracji Power Automate przenosi pliki, nie wyciąga z nich danych specyficznych dla transportu, i nikt ich nie utrzymuje poza jedną osobą która to kiedyś skonfigurowała. Jeśli klient faktycznie ma zaawansowaną integrację z prawdziwym OCR i utrzymaniem — to rzadkość, ale uczciwie przyznaj że w takim przypadku może już nie być miejsca na nas, nie naciskaj wbrew faktom.",
+      "A co się dzieje gdy dokument wygląda inaczej niż zwykle? Flow ogarnia to sam, czy ktoś wtedy ręcznie interweniuje? I kto to utrzymuje, jak coś się zepsuje po aktualizacji?",
+    note: "Większość konfiguracji Power Automate przenosi pliki, nie wyciąga z nich danych, i utrzymuje ją jedna osoba która to kiedyś skonfigurowała. Jeśli klient ma faktycznie zaawansowaną integrację z realnym OCR i utrzymaniem, przyznaj to uczciwie, nie naciskaj wbrew faktom.",
   },
   {
     id: "czas_milczy",
     label: "Milczy po pytaniu co zrobiłby z czasem",
     stage: "kalkulator",
     script:
-      "Jasne, nie chodzi o redukcję etatów. Chodzi na przykład o więcej zleceń przy tej samej ekipie, mniej błędów w dokumentach, szybszą obsługę klientów, mniej nadgodzin dla zespołu. Który z tych kierunków jest dla Pana teraz ważny?",
+      "To może być na przykład więcej zleceń przy tej samej ekipie, mniej błędów w dokumentach, szybsza obsługa klientów, mniej nadgodzin dla zespołu. Który z tych kierunków jest dla Pana teraz ważny?",
   },
   {
     id: "czas_obronny",
-    label: "Reaguje obronnie — 'i tak nie zwolnię pracowników'",
+    label: "Obawia się zwolnień pracowników",
     stage: "kalkulator",
     script:
       "Jasne, nie chodzi o zwalnianie nikogo. Chodzi o to, żeby ten sam zespół miał więcej przestrzeni na klientów zamiast tonąć w papierach. Ma to dla Pana znaczenie?",
@@ -802,6 +839,22 @@ export const OBJECTIONS_K: Objection[] = [
     stage: "kalkulator",
     script: "Do ceny zaraz dojdziemy, chcę tylko dokończyć ten wątek.",
     note: "Jeśli mimo to nalega: nie walcz, przejdź dalej normalnie, zanotuj w Pipeline że pytanie o korzyść czasu nie zostało w pełni odpowiedziane.",
+  },
+  {
+    id: "stawka_niechec",
+    label: "Nie chce podać dokładnej stawki godzinowej",
+    stage: "kalkulator",
+    script:
+      "Rozumiem, to szczegół księgowy. Wystarczy orientacyjnie: to bliżej 40, 55, czy 70 złotych za godzinę z narzutami?",
+    note: "Wpisz podaną wartość orientacyjną do kalkulatora, nie zostawiaj pustego pola.",
+  },
+  {
+    id: "spedytorzy_dorazni",
+    label: "Spedytorzy nie są zatrudnieni na stałe",
+    stage: "diagnoza",
+    script:
+      "Rozumiem, czyli pracują doraźnie, na wezwanie. A gdy jest dużo zleceń naraz, ile osób realnie wtedy przy tym siedzi i ile godzin to zajmuje?",
+    note: "ICP i kalkulator liczą się tak samo — pytaj o realną liczbę osób i godzin w szczycie, niezależnie od formy zatrudnienia. Forma zatrudnienia nie zmienia kwalifikacji, liczy się faktyczny czas pracy nad dokumentami.",
   },
 ];
 
