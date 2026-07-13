@@ -15,8 +15,12 @@ import {
   MessageSquare,
   Phone,
   PhoneCall,
+  PhoneMissed,
+  Plus,
   RefreshCw,
   Search,
+  Trash2,
+  Undo2,
   Users,
   X,
 } from "lucide-react";
@@ -26,6 +30,7 @@ import type { PipelineClientDetailed } from "@/app/api/notion/pipeline/route";
 import { ProgressBar, SectionLabelSmall, StepCard } from "@/components/dalsze-kroki/DalszeKrokiUI";
 import { DecisionDiagram } from "@/components/scripts/DecisionDiagram";
 import { NextStepArrow } from "@/components/scripts/NextStepArrow";
+import { useRole } from "@/lib/auth/RoleContext";
 import { formatPhone } from "@/lib/format/phone";
 import { useFormaGrzecznosciowa } from "@/lib/scripts/formaGrzecznosciowa";
 import {
@@ -36,7 +41,7 @@ import {
 } from "@/lib/scripts/kwalifikacyjna";
 import { GROUP_COLORS, MESSAGES_DATA } from "@/lib/scripts/messages";
 import { getRecommendedModules } from "@/lib/scripts/moduleRecommendation";
-import type { DecisionOption, Objection, ScriptLine } from "@/lib/scripts/types";
+import type { CalculatorGroup, DecisionOption, Objection, ScriptLine } from "@/lib/scripts/types";
 import { objectionColor } from "@/lib/scripts/types";
 
 // ── Helpers ──────────────────────────────────────────────────────────
@@ -222,16 +227,7 @@ function RecommendedModulesPanel({
   const modules = getRecommendedModules(calculatorFlags, selectedOptions);
   if (modules.length === 0) return null;
   return (
-    <div
-      style={{
-        marginTop: 8,
-        marginBottom: 8,
-        padding: 14,
-        borderRadius: 12,
-        background: "rgba(52,199,89,0.05)",
-        border: "1px solid rgba(52,199,89,0.18)",
-      }}
-    >
+    <div style={{ marginTop: 8, marginBottom: 8 }}>
       <div
         style={{
           fontFamily: "var(--font-sans)",
@@ -245,14 +241,25 @@ function RecommendedModulesPanel({
       >
         Co możemy mu zaoferować, na podstawie tej rozmowy
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {modules.map((m) => (
-          <div key={m.module} style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          <div
+            key={m.module}
+            style={{
+              padding: "12px 14px",
+              borderRadius: 12,
+              background: "rgba(52,199,89,0.05)",
+              border: "1px solid rgba(52,199,89,0.18)",
+              display: "flex",
+              flexDirection: "column",
+              gap: 3,
+            }}
+          >
             <span
               style={{
                 fontFamily: "var(--font-sans)",
-                fontSize: 13,
-                fontWeight: 600,
+                fontSize: 14,
+                fontWeight: 700,
                 color: "var(--text-primary)",
               }}
             >
@@ -263,6 +270,8 @@ function RecommendedModulesPanel({
                 fontFamily: "var(--font-sans)",
                 fontSize: 12,
                 color: "var(--text-secondary)",
+                lineHeight: 1.5,
+                fontStyle: "italic",
               }}
             >
               {m.reason}
@@ -284,24 +293,133 @@ const PRACA_TYPES = [
   { id: "inne", label: "Inne — do doprecyzowania ręcznie" },
 ] as const;
 
+let groupIdCounter = 0;
+function newGroupId(): string {
+  groupIdCounter += 1;
+  return `grp_${Date.now()}_${groupIdCounter}`;
+}
+
+function GroupRow({
+  group,
+  onChange,
+  onRemove,
+  removable,
+}: {
+  group: CalculatorGroup;
+  onChange: (patch: Partial<CalculatorGroup>) => void;
+  onRemove: () => void;
+  removable: boolean;
+}) {
+  const fieldStyle: React.CSSProperties = {
+    height: 36,
+    borderRadius: 8,
+    border: "1px solid #E5E5EA",
+    padding: "0 10px",
+    fontFamily: "var(--font-sans)",
+    fontSize: 13,
+    fontWeight: 600,
+    color: "var(--text-primary)",
+    background: "#F5F5F7",
+    outline: "none",
+    width: "100%",
+  };
+  const labelStyle: React.CSSProperties = {
+    fontFamily: "var(--font-sans)",
+    fontSize: 10,
+    fontWeight: 600,
+    color: "var(--text-tertiary)",
+    textTransform: "uppercase",
+    letterSpacing: "0.07em",
+  };
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "flex-end",
+        gap: 8,
+        padding: "8px",
+        borderRadius: 8,
+        background: "#FAFAFA",
+        border: "1px solid #EFEFEF",
+      }}
+    >
+      <label style={{ flex: 1.4, display: "flex", flexDirection: "column", gap: 4 }}>
+        <span style={labelStyle}>Rola</span>
+        <input
+          value={group.label}
+          onChange={(e) => onChange({ label: e.target.value })}
+          style={fieldStyle}
+        />
+      </label>
+      <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
+        <span style={labelStyle}>Osoby</span>
+        <input
+          type="number"
+          min={1}
+          max={50}
+          value={group.osoby}
+          onChange={(e) => onChange({ osoby: Math.max(1, Number(e.target.value) || 1) })}
+          style={fieldStyle}
+        />
+      </label>
+      <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
+        <span style={labelStyle}>Godz/dzień</span>
+        <input
+          type="number"
+          min={0.5}
+          max={12}
+          step={0.5}
+          value={group.godziny}
+          onChange={(e) => onChange({ godziny: Math.max(0.5, Number(e.target.value) || 0.5) })}
+          style={fieldStyle}
+        />
+      </label>
+      <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
+        <span style={labelStyle}>Stawka zł/h</span>
+        <input
+          type="number"
+          min={20}
+          max={200}
+          value={group.stawka}
+          onChange={(e) => onChange({ stawka: Math.max(20, Number(e.target.value) || 50) })}
+          style={fieldStyle}
+        />
+      </label>
+      {removable && (
+        <button
+          onClick={onRemove}
+          title="Usuń grupę"
+          style={{
+            height: 36,
+            width: 34,
+            borderRadius: 8,
+            border: "1px solid #E5E5EA",
+            background: "#fff",
+            color: "var(--error)",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
+        >
+          <Trash2 size={13} />
+        </button>
+      )}
+    </div>
+  );
+}
+
 function ScriptKalkulator({
   clientName,
   autoFlags,
-  osoby,
-  godziny,
-  stawka,
-  onOsobyChange,
-  onGodzinyChange,
-  onStawkaChange,
+  groups,
+  onGroupsChange,
 }: {
   clientName: string;
   autoFlags: Record<string, boolean>;
-  osoby: number;
-  godziny: number;
-  stawka: number;
-  onOsobyChange: (n: number) => void;
-  onGodzinyChange: (n: number) => void;
-  onStawkaChange: (n: number) => void;
+  groups: CalculatorGroup[];
+  onGroupsChange: (groups: CalculatorGroup[]) => void;
 }) {
   const [manualSelected, setManualSelected] = useState<Set<string>>(
     new Set(["zlecenia", "cmr", "faktury_recznie"]),
@@ -321,15 +439,31 @@ function ScriptKalkulator({
     });
   };
 
-  const miesiecznieH = osoby * godziny * 22;
-  const miesieczniePLN = miesiecznieH * stawka;
+  const updateGroup = (id: string, patch: Partial<CalculatorGroup>) => {
+    onGroupsChange(groups.map((g) => (g.id === id ? { ...g, ...patch } : g)));
+  };
+  const addGroup = () => {
+    onGroupsChange([
+      ...groups,
+      { id: newGroupId(), label: "Nowa rola", osoby: 1, godziny: 2, stawka: 50 },
+    ]);
+  };
+  const removeGroup = (id: string) => {
+    onGroupsChange(groups.filter((g) => g.id !== id));
+  };
+
+  const miesiecznieH = groups.reduce((sum, g) => sum + g.osoby * g.godziny * 22, 0);
+  const miesieczniePLN = groups.reduce((sum, g) => sum + g.osoby * g.godziny * 22 * g.stawka, 0);
   const rocznie = miesieczniePLN * 12;
   const gwarancjaH = Math.round(miesiecznieH * 0.8);
 
   const fmt = (n: number) =>
     n.toLocaleString("pl-PL", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
-  const wynikZdanie = `Przy ${osoby} ${osoby === 1 ? "osobie" : "osobach"} i ${godziny} ${godziny === 1 ? "godzinie" : "godzinach"} dziennie — to ${fmt(miesiecznieH)} godzin miesięcznie, czyli ${fmt(miesieczniePLN)} zł kosztu pracy. Rocznie ${fmt(rocznie)} zł.`;
+  const wynikZdanie =
+    groups.length === 1
+      ? `Przy ${groups[0].osoby} ${groups[0].osoby === 1 ? "osobie" : "osobach"} i ${groups[0].godziny} ${groups[0].godziny === 1 ? "godzinie" : "godzinach"} dziennie — to ${fmt(miesiecznieH)} godzin miesięcznie, czyli ${fmt(miesieczniePLN)} zł kosztu pracy. Rocznie ${fmt(rocznie)} zł.`
+      : `Łącznie dla ${groups.length} ról w firmie — to ${fmt(miesiecznieH)} godzin miesięcznie, czyli ${fmt(miesieczniePLN)} zł kosztu pracy. Rocznie ${fmt(rocznie)} zł.`;
 
   return (
     <div
@@ -376,111 +510,38 @@ function ScriptKalkulator({
       </div>
 
       <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 12 }}>
-        {/* Inputs */}
-        <div style={{ display: "flex", gap: 12 }}>
-          <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
-            <span
-              style={{
-                fontFamily: "var(--font-sans)",
-                fontSize: 10,
-                fontWeight: 600,
-                color: "var(--text-tertiary)",
-                textTransform: "uppercase",
-                letterSpacing: "0.07em",
-              }}
-            >
-              Osoby w biurze
-            </span>
-            <input
-              type="number"
-              min={1}
-              max={50}
-              value={osoby}
-              onChange={(e) => onOsobyChange(Math.max(1, Number(e.target.value) || 1))}
-              style={{
-                height: 36,
-                borderRadius: 8,
-                border: "1px solid #E5E5EA",
-                padding: "0 10px",
-                fontFamily: "var(--font-sans)",
-                fontSize: 14,
-                fontWeight: 600,
-                color: "var(--text-primary)",
-                background: "#F5F5F7",
-                outline: "none",
-                width: "100%",
-              }}
+        {/* Grupy ról — każda ma własną liczbę osób, godzin i stawkę */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {groups.map((g) => (
+            <GroupRow
+              key={g.id}
+              group={g}
+              onChange={(patch) => updateGroup(g.id, patch)}
+              onRemove={() => removeGroup(g.id)}
+              removable={groups.length > 1}
             />
-          </label>
-          <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
-            <span
-              style={{
-                fontFamily: "var(--font-sans)",
-                fontSize: 10,
-                fontWeight: 600,
-                color: "var(--text-tertiary)",
-                textTransform: "uppercase",
-                letterSpacing: "0.07em",
-              }}
-            >
-              Godziny dziennie
-            </span>
-            <input
-              type="number"
-              min={0.5}
-              max={12}
-              step={0.5}
-              value={godziny}
-              onChange={(e) => onGodzinyChange(Math.max(0.5, Number(e.target.value) || 0.5))}
-              style={{
-                height: 36,
-                borderRadius: 8,
-                border: "1px solid #E5E5EA",
-                padding: "0 10px",
-                fontFamily: "var(--font-sans)",
-                fontSize: 14,
-                fontWeight: 600,
-                color: "var(--text-primary)",
-                background: "#F5F5F7",
-                outline: "none",
-                width: "100%",
-              }}
-            />
-          </label>
-          <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
-            <span
-              style={{
-                fontFamily: "var(--font-sans)",
-                fontSize: 10,
-                fontWeight: 600,
-                color: "var(--text-tertiary)",
-                textTransform: "uppercase",
-                letterSpacing: "0.07em",
-              }}
-            >
-              Stawka godzinowa
-            </span>
-            <input
-              type="number"
-              min={20}
-              max={200}
-              value={stawka}
-              onChange={(e) => onStawkaChange(Math.max(20, Number(e.target.value) || 55))}
-              style={{
-                height: 36,
-                borderRadius: 8,
-                border: "1px solid #E5E5EA",
-                padding: "0 10px",
-                fontFamily: "var(--font-sans)",
-                fontSize: 14,
-                fontWeight: 600,
-                color: "var(--text-primary)",
-                background: "#F5F5F7",
-                outline: "none",
-                width: "100%",
-              }}
-            />
-          </label>
+          ))}
+          <button
+            onClick={addGroup}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 6,
+              padding: "7px 10px",
+              borderRadius: 8,
+              border: "1px dashed #C7C7CC",
+              background: "transparent",
+              color: "var(--accent)",
+              fontFamily: "var(--font-sans)",
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            <Plus size={13} />
+            Dodaj grupę (np. inna rola, inna stawka)
+          </button>
         </div>
         <div
           style={{
@@ -488,11 +549,10 @@ function ScriptKalkulator({
             fontSize: 10,
             color: "var(--text-tertiary)",
             fontStyle: "italic",
-            marginTop: 4,
           }}
         >
-          Stawka szacunkowa na podstawie typowego kosztu pracy spedytora w Polsce z narzutami.
-          Dostosuj jeśli klient poda inną wartość.
+          Stawka domyślna 50 zł/h to szacunek kosztu pracy z narzutami — dostosuj dla każdej roli
+          jeśli klient poda inną wartość.
         </div>
 
         {/* Typy pracy */}
@@ -601,7 +661,7 @@ function ScriptKalkulator({
                   color: "var(--text-tertiary)",
                 }}
               >
-                {fmt(miesiecznieH)} h × {stawka} zł/h
+                {fmt(miesiecznieH)} h łącznie
               </div>
             </div>
             <div>
@@ -669,6 +729,121 @@ function ScriptKalkulator({
   );
 }
 
+// ── Banner: brak odbioru — widoczny zanim setter zacznie opener ───────
+
+function BrakOdbioruBanner({ onOpenSms }: { onOpenSms: () => void }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        padding: "10px 14px",
+        marginBottom: 12,
+        borderRadius: 10,
+        background: "var(--warning-bg)",
+        border: "1px solid var(--warning)",
+      }}
+    >
+      <PhoneMissed size={16} color="var(--warning)" strokeWidth={2} />
+      <div style={{ flex: 1 }}>
+        <span
+          style={{
+            fontFamily: "var(--font-sans)",
+            fontSize: 12,
+            fontWeight: 700,
+            color: "var(--text-primary)",
+          }}
+        >
+          Brak odbioru?
+        </span>{" "}
+        <span
+          style={{ fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--text-secondary)" }}
+        >
+          Po 3 próbach wyślij SMS z gotowego szablonu.
+        </span>
+      </div>
+      <button
+        onClick={onOpenSms}
+        style={{
+          height: 28,
+          padding: "0 12px",
+          borderRadius: 7,
+          border: "1px solid var(--warning)",
+          background: "#fff",
+          color: "var(--warning)",
+          fontFamily: "var(--font-sans)",
+          fontSize: 11,
+          fontWeight: 700,
+          cursor: "pointer",
+          flexShrink: 0,
+        }}
+      >
+        Otwórz SMS
+      </button>
+    </div>
+  );
+}
+
+// ── Pole wpisywane na bieżąco podczas zbierania konkretnej informacji ──
+
+function InlineCaptureInput({
+  label,
+  value,
+  min,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  onChange: (n: number) => void;
+}) {
+  return (
+    <label
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        padding: "8px 12px",
+        borderRadius: 8,
+        background: "rgba(10,132,255,0.05)",
+        border: "1px solid rgba(10,132,255,0.18)",
+        width: "fit-content",
+      }}
+    >
+      <span
+        style={{
+          fontFamily: "var(--font-sans)",
+          fontSize: 12,
+          fontWeight: 600,
+          color: "var(--accent)",
+        }}
+      >
+        {label}
+      </span>
+      <input
+        type="number"
+        min={min}
+        value={value}
+        onChange={(e) => onChange(Math.max(min, Number(e.target.value) || min))}
+        style={{
+          height: 36,
+          width: 70,
+          borderRadius: 8,
+          border: "1px solid #E5E5EA",
+          padding: "0 8px",
+          fontFamily: "var(--font-sans)",
+          fontSize: 14,
+          fontWeight: 700,
+          color: "var(--text-primary)",
+          background: "#fff",
+          outline: "none",
+        }}
+      />
+    </label>
+  );
+}
+
 // ── Script step ───────────────────────────────────────────────────────
 
 function ScriptStep({
@@ -679,7 +854,9 @@ function ScriptStep({
   copiedId,
   onJump,
   onDecisionSelect,
+  onJumpToObjection,
   selectedTrigger,
+  role,
   children,
 }: {
   step: (typeof STEPS_K)[0];
@@ -689,7 +866,9 @@ function ScriptStep({
   copiedId: string | null;
   onJump: (stepId: string) => void;
   onDecisionSelect: (stepId: string, option: DecisionOption) => void;
+  onJumpToObjection: (objectionId: string) => void;
   selectedTrigger?: string;
+  role: "admin" | "setter" | null;
   children?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(true);
@@ -833,21 +1012,27 @@ function ScriptStep({
                 )}
               </div>
               <div style={{ flex: 1 }}>
-                {(Array.isArray(line.text) ? line.text : [line.text]).map((paragraph, pi) => (
-                  <p
-                    key={pi}
-                    style={{
-                      margin: pi === 0 ? 0 : "6px 0 0 0",
-                      fontFamily: "var(--font-sans)",
-                      fontSize: 13,
-                      lineHeight: 1.55,
-                      color: LINE_COLOR[line.t],
-                      textWrap: "pretty" as React.CSSProperties["textWrap"],
-                    }}
-                  >
-                    {fill(paragraph)}
-                  </p>
-                ))}
+                {(() => {
+                  const displayText =
+                    role === "setter" && line.textSetter ? line.textSetter : line.text;
+                  return (Array.isArray(displayText) ? displayText : [displayText]).map(
+                    (paragraph, pi) => (
+                      <p
+                        key={pi}
+                        style={{
+                          margin: pi === 0 ? 0 : "6px 0 0 0",
+                          fontFamily: "var(--font-sans)",
+                          fontSize: 13,
+                          lineHeight: 1.55,
+                          color: LINE_COLOR[line.t],
+                          textWrap: "pretty" as React.CSSProperties["textWrap"],
+                        }}
+                      >
+                        {fill(paragraph)}
+                      </p>
+                    ),
+                  );
+                })()}
                 {line.t === "say" && line.cel && (
                   <div
                     style={{
@@ -862,6 +1047,28 @@ function ScriptStep({
                   >
                     Cel: {line.cel}
                   </div>
+                )}
+                {line.t === "note" && line.linkObjectionId && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onJumpToObjection(line.linkObjectionId!);
+                    }}
+                    style={{
+                      marginTop: 6,
+                      padding: "5px 10px",
+                      borderRadius: 6,
+                      border: "1px solid var(--warning)",
+                      background: "#fff",
+                      color: "var(--warning)",
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Otwórz obiekcję
+                  </button>
                 )}
               </div>
               {line.t === "say" && (
@@ -1744,23 +1951,53 @@ function PrzypadkiSpecjalne() {
             />
           </div>
           {openId === c.id && (
-            <div style={{ padding: "8px 12px 12px" }}>
-              <ol style={{ margin: 0, paddingLeft: 18 }}>
-                {c.content.map((line, i) => (
-                  <li
-                    key={i}
+            <div style={{ padding: "10px 12px 14px", display: "flex", flexDirection: "column" }}>
+              {c.content.map((line, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "stretch", gap: 10 }}>
+                  <div
                     style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: 20,
+                        height: 20,
+                        borderRadius: "50%",
+                        background: "var(--accent)",
+                        color: "#fff",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontFamily: "var(--font-sans)",
+                        fontSize: 10,
+                        fontWeight: 700,
+                        flexShrink: 0,
+                      }}
+                    >
+                      {i + 1}
+                    </span>
+                    {i < c.content.length - 1 && (
+                      <div style={{ width: 1, flex: 1, background: "#E5E5EA", minHeight: 10 }} />
+                    )}
+                  </div>
+                  <p
+                    style={{
+                      margin: 0,
+                      paddingBottom: 12,
                       fontFamily: "var(--font-sans)",
                       fontSize: 13,
                       color: "var(--text-secondary)",
                       lineHeight: 1.6,
-                      marginBottom: 4,
                     }}
                   >
                     {line}
-                  </li>
-                ))}
-              </ol>
+                  </p>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -2231,12 +2468,21 @@ export default function KwalifikacjaPage() {
   const [calculatorFlags, setCalculatorFlags] = useState<Record<string, boolean>>({});
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const [openObjectionId, setOpenObjectionId] = useState<string | null>(null);
-  const [calcOsoby, setCalcOsoby] = useState(2);
-  const [calcGodziny, setCalcGodziny] = useState(3);
-  const [calcStawka, setCalcStawka] = useState(55); // NOWE
+  const [calcGroups, setCalcGroups] = useState<CalculatorGroup[]>([
+    { id: "grp_default", label: "Biuro / spedycja", osoby: 2, godziny: 3, stawka: 50 },
+  ]);
   const [sprzedawcaImie, setSprzedawcaImie] = useState("Michał");
   const [smsForceOpen, setSmsForceOpen] = useState(false);
   const [tallyFlash, setTallyFlash] = useState<"dial" | "rozmowa" | "sms" | null>(null);
+  const [tallyUndo, setTallyUndo] = useState<"dial" | "rozmowa" | "sms" | null>(null);
+  const role = useRole();
+
+  const totalGodzinyH = calcGroups.reduce((sum, g) => sum + g.osoby * g.godziny * 22, 0);
+  const totalPln = calcGroups.reduce((sum, g) => sum + g.osoby * g.godziny * 22 * g.stawka, 0);
+
+  const updateFirstGroup = (patch: Partial<CalculatorGroup>) => {
+    setCalcGroups((prev) => prev.map((g, i) => (i === 0 ? { ...g, ...patch } : g)));
+  };
 
   const fetchClients = useCallback(async () => {
     setLoading(true);
@@ -2273,8 +2519,9 @@ export default function KwalifikacjaPage() {
   useEffect(() => {
     setCalculatorFlags({});
     setSelectedOptions({});
-    setCalcOsoby(2);
-    setCalcGodziny(3);
+    setCalcGroups([
+      { id: "grp_default", label: "Biuro / spedycja", osoby: 2, godziny: 3, stawka: 50 },
+    ]);
     setOpenObjectionId(null);
     setSmsForceOpen(false);
   }, [selected?.id]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -2303,8 +2550,8 @@ export default function KwalifikacjaPage() {
     if (vocative.trim()) out = out.replace(/\{IMIĘ\}/g, vocative.trim());
     if (sprzedawcaImie.trim()) out = out.replace(/\{IMIĘ_SPRZEDAWCY\}/g, sprzedawcaImie.trim());
 
-    const wynikGodziny = calcOsoby * calcGodziny * 22;
-    const wynikPln = wynikGodziny * calcStawka; // Zmienione z 50
+    const wynikGodziny = totalGodzinyH;
+    const wynikPln = totalPln;
     out = out.replace(/\[WYNIK Z KALKULATORA\]/g, String(wynikGodziny));
     out = out.replace(/\[WARTOŚĆ PLN\]/g, `${fmtPln(wynikPln)} zł`);
     out = out.replace(/\[WYNIK × 0\.8\]/g, String(Math.round(wynikGodziny * 0.8)));
@@ -2319,16 +2566,27 @@ export default function KwalifikacjaPage() {
     });
   };
 
-  const tally = useCallback((type: "dial" | "rozmowa" | "sms") => {
-    setTallyFlash(type);
-    setTimeout(() => setTallyFlash((prev) => (prev === type ? null : prev)), 900);
-    void fetch("/api/stats/tally", {
+  const postTally = (type: "dial" | "rozmowa" | "sms", delta: 1 | -1) =>
+    fetch("/api/stats/tally", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type }),
+      body: JSON.stringify({ type, delta }),
     }).catch(() => {
       /* licznik jest pomocniczy — brak sieci nie blokuje pracy */
     });
+
+  const tally = useCallback((type: "dial" | "rozmowa" | "sms") => {
+    setTallyFlash(type);
+    setTallyUndo(type);
+    setTimeout(() => setTallyFlash((prev) => (prev === type ? null : prev)), 1800);
+    setTimeout(() => setTallyUndo((prev) => (prev === type ? null : prev)), 5000);
+    void postTally(type, 1);
+  }, []);
+
+  const undoTally = useCallback((type: "dial" | "rozmowa" | "sms") => {
+    setTallyUndo(null);
+    setTallyFlash(null);
+    void postTally(type, -1);
   }, []);
 
   const jumpToStep = useCallback((stepId: string) => {
@@ -2478,6 +2736,30 @@ export default function KwalifikacjaPage() {
             {tallyFlash === "rozmowa" ? <Check size={11} /> : <PhoneCall size={11} />}
             Rozmowa
           </button>
+          {tallyUndo && (
+            <button
+              onClick={() => undoTally(tallyUndo)}
+              style={{
+                height: 28,
+                padding: "0 10px",
+                borderRadius: 7,
+                border: "1px solid var(--warning)",
+                background: "var(--warning-bg)",
+                color: "var(--warning)",
+                fontSize: 11,
+                fontWeight: 700,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 5,
+                fontFamily: "var(--font-sans)",
+              }}
+              title="Cofnij ostatnie zliczenie (5 sekund)"
+            >
+              <Undo2 size={11} />
+              Cofnij
+            </button>
+          )}
         </div>
         <div style={{ height: 20, width: 1, background: "#E5E5EA", marginLeft: 4 }} />
         <span
@@ -2627,6 +2909,7 @@ export default function KwalifikacjaPage() {
         {/* Main: script + roi + dalsze kroki */}
         <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px", background: "#F5F5F7" }}>
           <Card title="Skrypt kwalifikacyjny">
+            <BrakOdbioruBanner onOpenSms={() => jumpToSmsTemplate("m1")} />
             <CalculatorFlagsBar flags={calculatorFlags} />
             {STEPS_K.map((step, index) => (
               <ScriptStep
@@ -2638,18 +2921,32 @@ export default function KwalifikacjaPage() {
                 copiedId={copiedId}
                 onJump={jumpToStep}
                 onDecisionSelect={handleDecisionSelect}
+                onJumpToObjection={jumpToObjection}
                 selectedTrigger={selectedOptions[step.id]}
+                role={role}
               >
+                {step.captureField === "osoby" && (
+                  <InlineCaptureInput
+                    label="Osoby w biurze (zasila kalkulator)"
+                    value={calcGroups[0].osoby}
+                    min={1}
+                    onChange={(n) => updateFirstGroup({ osoby: n })}
+                  />
+                )}
+                {step.captureField === "stawka" && (
+                  <InlineCaptureInput
+                    label="Stawka godzinowa zł/h (zasila kalkulator)"
+                    value={calcGroups[0].stawka}
+                    min={20}
+                    onChange={(n) => updateFirstGroup({ stawka: n })}
+                  />
+                )}
                 {step.hasCalculator && (
                   <ScriptKalkulator
                     clientName={selected?.kontakt || selected?.firma || ""}
                     autoFlags={calculatorFlags}
-                    osoby={calcOsoby}
-                    godziny={calcGodziny}
-                    stawka={calcStawka}
-                    onOsobyChange={setCalcOsoby}
-                    onGodzinyChange={setCalcGodziny}
-                    onStawkaChange={setCalcStawka}
+                    groups={calcGroups}
+                    onGroupsChange={setCalcGroups}
                   />
                 )}
                 {step.hasModuleRecommendation && (

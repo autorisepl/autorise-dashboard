@@ -141,6 +141,24 @@ export function DecisionDiagram({ decision, onSelect, selectedTrigger }: Decisio
                   Kalkulator
                 </span>
               )}
+              {isSelected && opt.sayAfter && (
+                <div
+                  style={{
+                    marginTop: 4,
+                    padding: "8px 10px",
+                    borderRadius: 8,
+                    background: "rgba(255,255,255,0.75)",
+                    border: `1px solid ${accent}`,
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 12,
+                    lineHeight: 1.5,
+                    color: "var(--text-primary)",
+                  }}
+                >
+                  <span style={{ fontWeight: 700, color: accent }}>Powiedz: </span>
+                  {opt.sayAfter}
+                </div>
+              )}
             </button>
           );
         })}
