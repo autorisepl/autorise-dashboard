@@ -1,38 +1,56 @@
-# Autorise, priorytety i zasady pracy (v2, aktualizacja po sesji 2026-07-11/12)
+# Autorise, priorytety i zasady pracy (v1, aktualizacja 2026-07-13)
 
-Ten plik jest jedynym źródłem prawdy o priorytetach. Zastępuje rozproszone pomysły z promptów.
-Aktualizowany na końcu każdej sesji. Podpięty w CLAUDE.md.
+Jedyne źródło prawdy o priorytetach. Podpięty w CLAUDE.md. Aktualizuj na końcu każdej sesji, nie twórz nowego pliku.
 
-## Zrobione i zweryfikowane w tej sesji
+## Skorygowane ustalenia (błędne wcześniej, poprawione po sprawdzeniu kodu)
 
-Migracja Notion (Cytaty klienta, Pitch Recipe + 41 innych pól) — potwierdzona niezależnym odczytem schematu, naprawiona po znalezieniu że oryginalny kod używał złej metody SDK (databases.update zamiast dataSources.update dla bazy z wieloma data source'ami).
+Cena i retainer JUŻ są zdefiniowane w lib/agents/prompts.ts, używane w Agent 1/2/5: 15 000 PLN netto wdrożenie + 4 000 PLN/mc retainer (min. 12 mc). Gwarancja: min. 80h/mc zaoszczędzonych, weryfikacja po 30 dniach, 100% zwrotu przy spełnieniu warunków (dostęp do systemów w 5 dni od startu, kickoff, responsywność WhatsApp 48h). To nie wymaga nowej decyzji biznesowej, wymaga tylko spójnego użycia tych już istniejących liczb wszędzie (prezentacja, Notion, umowa).
 
-Reset-lead endpoint (/api/notion/reset-lead) — czyści kartę jednocześnie w Notion Pipeline i Google Sheets jednym przyciskiem, z zabezpieczeniem blokującym reset klientów w statusach Kickoff/Wdrożenie/Retainer/Upsell/Zakończona współpraca.
+Proces sprzedażowy (kwalifikacja→sprzedaż) już jest zgodny z regułą Agency Leaders (2 kroki, poniżej 30k jednorazowo). "Discovery Call" w kodzie to nazwa drugiej rozmowy (/sprzedaz), nie trzecie spotkanie. Nic w skryptach nie wymaga scalania.
 
-Naprawiony flash panelu admina przy logowaniu jako setter.
+## PILNE — do zrobienia jako pierwsze po resecie limitu
 
-Ujednolicony format telefonu (+48 XXX XXX XXX) przy każdym zapisie do Notion, plus jednorazowy backfill istniejących kart.
+1. Session log: dopisać wpis o rundzie roi-fix/GSAP/Iconify/copy kontaktowa/data prezentacji (wykonana 2026-07-13, deploy poszedł, log nigdy nie uzupełniony).
+2. Slajd 4 prezentacji: tabela porównawcza nadal ucina tekst ("WebFleet + nieznany system wewnętrzny (p...") mimo wcześniejszej próby naprawy — poprzednia poprawka szerokości nie zadziałała w pełni, wymaga realnej weryfikacji zrzutem po zmianie.
+3. Fallback ceny w prezentacji: gdy "Cena wdrożenia" puste w Notion, pokazuj 15 000 PLN (cena standardowa) zamiast "Cena ustalana indywidualnie" — ten tekst zostaje wyłącznie dla przypadków faktycznie wykraczających poza 4 standardowe moduły.
+4. Jednorazowe wypełnienie pola "Cena wdrożenia" = 15 000 i "Retainer PLN/mc" = 4 000 dla istniejących kart Pipeline gdzie puste (żeby prezentacja i statystyki liczyły poprawnie od razu, nie tylko dla nowych leadów od teraz).
 
-Posprzątany schemat Notion: usunięte 4 martwe, zdublowane pola (Wynik Discovery 1, Followup typ, Followup data, Data follow-up), powstałe przez błąd kodowania w starej migracji. Jedno piąte (mojibake "Liczba pr█b kontaktu") skasowane ręcznie przez Michała.
+## Priorytet: umowa i warunki gwarancji
 
-Pierwszy udany live test Agenta 1 na realnym transkrypcie (Arek Burkowski): liczby sensowne (39 375 PLN/mc, 472 500 PLN/rok), ICP poprawnie ocenione, agent sam złapał rozbieżność między tym co sprzedawca powiedział głosem klientowi (55 tys.) a poprawnym przeliczeniem (39 375 PLN) — do skorygowania na Discovery.
+Napisać pełne warunki umowy Autorise wzorem załączonego wzorca Agency Leaders (Umowa_systemu_AI_konkurencji.pdf): okres rozliczeniowy liczony od zakończenia warsztatów wdrożeniowych/zebrania dostępów (nie od podpisania), obowiązki klienta jako warunek gwarancji (dostęp w 5 dni, odpowiedź WhatsApp 48h — już zdefiniowane w prompts.ts, przenieść do formalnego dokumentu), siła wyższa, poufność 2 lata, płatność z góry w terminie 3 dni od faktury. Zastrzeżenie: brak dostępu do wyspecjalizowanego skilla prawnego, to szkic do realnej konsultacji prawnej przed użyciem, nie gotowy dokument.
 
-Naprawiony bug języka Claude Code: CLAUDE.md nie miał żadnej reguły języka/tonu (nie awaria harnessu, brak treści). Dodana reguła na górze pliku.
+Po ustaleniu: dodać krok "zebranie dostępów" do mapy procesów (/mapa) między Kickoff a Wdrożenie, z jasnym warunkiem że 30-dniowy zegar gwarancji startuje stąd, nie od podpisania.
 
-Zakładka /statystyki: automatyczne metryki z Notion Pipeline (nowe leady, discovery, show rate, sprzedaże) + ręczne liczniki dzienne (Dials, Rozmowy, SMS) w osobnej bazie Notion, zweryfikowane działające.
+## Priorytet: aktualizacja plików kontekstowych
 
-Przegląd ekosystemu skilli Claude Code: 238 → docelowo kilkanaście. Zostają: frontend-design, taste-skill (design-taste-frontend), security-review, security-scan. Usunięty cały gsd-* (konkurencyjny system zarządzania projektem, duplikujący ten plik), cały duplikat designerski (impeccable, redesign-skill, brand, design, slides, ui-styling, ui-ux-pro-max), 8 skilli logistycznych dobrej jakości ale złego kontekstu (carrier-relationship-management, customs-trade-compliance, inventory-demand-planning, logistics-exception-management, returns-reverse-logistics, production-scheduling, quality-nonconformance, energy-procurement) — możliwe przyszłe zastosowanie w promptach Agenta 2/3, do rozważenia osobno.
+CLAUDE.md i AUTORISE_DASHBOARD_STATE_v6.md wymagają przeglądu i aktualizacji po całej tej sesji (redesign prezentacji x5 rund, architektura fetch-po-ID, konsolidacja /mapa, nowe endpointy, GSAP/Iconify, korekta cena/retainer) — dużo zmieniło się i nie wszystko jest odzwierciedlone w dokumentacji na poziomie eksperckim.
 
-Posprzątany root workspace'u: usunięty martwy, sprzeczny katalog context/ w głównym folderze (osobny od żywego autorise-dashboard/context/), usunięta osierocona strona /narzedzia/kalkulator, zainicjowany git w autorise-mcp-server.
+## Priorytet: drobne, bezpieczne funkcje (kolejność wg wartości)
 
-## Priorytet 4, w tle, bez pilności (aktualny)
+1. Przycisk "Kopiuj link do prezentacji" w Pipeline, obok istniejącego "Otwórz prezentację".
+2. Wskaźnik trybu (Founder / Setter) widoczny w panelu bocznym.
+3. Panel "ostatni deploy Vercel" (data, godzina, status) nad panelem pogody w sidebar — wymaga integracji z Vercel API/MCP.
 
-Pełny redesign prezentacji skillem taste-skill. Rozbudowa mapy procesów sprzedażowych (/mapa).
+## Priorytet: panel pogody, rozszerzenia (przemyślane, nie budowane od razu)
+
+Poziom pyłków/ciśnienia i wpływ na samopoczucie, kalendarz świąt i sezonowości branżowej (koniec roku podatkowego, urlopy), pora dnia z oceną czy to dobry moment na telefon, jakość powietrza per województwo (nie per miejscowość — zbyt duża granulacja, nieefektywna). Wymaga osobnego zaplanowania designu, nie doklejania do istniejącej kropki.
+
+## Priorytet: nowa zakładka "Ustawienia strefy roboczej"
+
+Pod Profilem, wizualizacja CLAUDE.md w czasie rzeczywistym (żeby Michał widział dokładnie co Claude Code wie), plus panel pogody/deploy z powyższych punktów, plus checklist zaplanowanego redesignu/aktualizacji menu.
+
+## Priorytet: redesign menu i wydajność
+
+Nowa struktura nawigacji (grupy: Organizacyjne / Rozmowy z klientami / Proces od A do Z), usunięcie zakładki "Pliki". Wydajność menu i całego dashboardu — po ustabilizowaniu treści, przed finalnym redesignem wizualnym całej aplikacji (mobile responsywność też wtedy).
+
+## Narzędzia ocenione i odłożone (nie teraz, ewentualnie osobny czat po zakończeniu budowy)
+
+GSAP i Iconify — wdrożone, aktywnie używane w prezentacji. Reszta z ostatniej listy (bklit-ui, kokonutui, animmasterlib, vengenceui, skiper-ui, shadcn/ui) — nieocenione szczegółowo na wyraźną prośbę Michała, żeby nie rozpraszać się teraz. Wcześniej odłożone: motion.dev/react-spring/magicui/ui.lumen (pytanie architektoniczne React vs vanilla HTML dla prezentacji), shadergradient (odrzucone, zbyt ciężkie), haikei.app (niski priorytet estetyczny).
 
 ## Zasada oceny narzędzi (bez zmian)
 
-Narzędzie zostaje tylko jeśli: pasuje do realnego stacku (Next.js, TypeScript, Notion, Google, Vercel), wiadomo dokładnie kiedy się odpala, zastępuje pracę robioną w kółko, oszczędza więcej niż kosztuje kontekstu. Jeśli nie umiesz nazwać kiedy się odpala, to jest śmieć, domyślnie kasuj.
+Narzędzie zostaje tylko jeśli: pasuje do realnego stacku, wiadomo dokładnie kiedy się odpala, zastępuje pracę robioną w kółko, oszczędza więcej niż kosztuje kontekstu.
 
 ## Rytm aktualizacji
 
-Koniec każdej sesji: dopisz wiersz do AUTORISE_SESSION_LOG.md. Zmiana priorytetów: aktualizuj ten plik, nie twórz nowego. Nowe narzędzie kusi: przepuść przez zasadę oceny wyżej zanim zainstalujesz.
+Koniec każdej sesji: dopisz wiersz do AUTORISE_SESSION_LOG.md, bez wyjątków, nawet przy presji czasu/limitu. Zmiana priorytetów: aktualizuj ten plik, nie twórz nowego.
