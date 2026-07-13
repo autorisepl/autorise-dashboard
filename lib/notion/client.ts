@@ -605,6 +605,90 @@ export async function saveAgent3Output(pageId: string, personalizacjaJson: strin
   });
 }
 
+// --- Agent Kwalifikacja (scalony Agent 1+2+3) ---
+
+export interface KwalifikacjaMergedOutput {
+  kwalifikacja: Record<string, unknown>;
+  brief_discovery: Record<string, unknown>;
+  prezentacja: Record<string, unknown>;
+}
+
+// Jeden spójny zapis zamiast trzech osobnych wywołań (Agent 1/2/3). Celowo NIE duplikuje
+// logiki zapisu pól Notion — woła dokładnie te same funkcje (upsertClientInPipeline,
+// saveAgent2Output, saveAgent3Output) które od lat zapisują te same nazwy property, żeby
+// końcowy stan Pipeline po jednym wywołaniu scalonego agenta był identyczny z tym co dziś
+// powstaje po trzech osobnych. Historia operacji (child pages) też odtworzona 1:1 —
+// dwa wpisy "Agent 01"/"Agent 02" jak dotychczas (Agent 3 nigdy nie zapisywał historii,
+// więc trzeciego wpisu tu też nie ma).
+export async function saveKwalifikacjaMergedOutput(
+  pageId: string | undefined,
+  output: KwalifikacjaMergedOutput,
+  notionClientStatus: string,
+): Promise<{ pageId: string; errors: string[] }> {
+  const errors: string[] = [];
+
+  // Krok 1 — karta klienta w Pipeline: identyczna funkcja i identyczne property co Agent 1.
+  const savedPageId = await upsertClientInPipeline(pageId, output.kwalifikacja);
+
+  const o1 = output.kwalifikacja as {
+    icp?: { kwalifikacja?: string | null } | null;
+    bol_glowny_cytat?: string | null;
+  };
+  const historySummary1 = [
+    `Status: ${notionClientStatus}`,
+    o1.icp?.kwalifikacja ? `ICP: ${o1.icp.kwalifikacja}` : null,
+    o1.bol_glowny_cytat ? `Ból: ${String(o1.bol_glowny_cytat).slice(0, 120)}` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  saveOperationHistory(
+    savedPageId,
+    "Agent Kwalifikacja — Część A (kwalifikacja)",
+    historySummary1,
+    JSON.stringify(output.kwalifikacja, null, 2),
+  ).catch(() => {});
+
+  // Krok 2 — Pre-Discovery Brief: identyczna funkcja i identyczne property co Agent 2.
+  const brief = output.brief_discovery as {
+    pre_discovery_brief?: Record<string, unknown>;
+    plan_discovery?: string;
+    pitch_recipe?: string;
+  };
+  if (brief.pre_discovery_brief && brief.plan_discovery) {
+    try {
+      await saveAgent2Output(
+        savedPageId,
+        brief.pre_discovery_brief,
+        brief.plan_discovery,
+        brief.pitch_recipe,
+      );
+      const briefFields = brief.pre_discovery_brief as { hipoteza_bol_glowny?: string };
+      const historySummary2 = briefFields.hipoteza_bol_glowny
+        ? `Hipoteza bólu: ${briefFields.hipoteza_bol_glowny.slice(0, 150)}`
+        : "Pre-Discovery Brief gotowy";
+      saveOperationHistory(
+        savedPageId,
+        "Agent Kwalifikacja — Część B (brief discovery)",
+        historySummary2,
+        JSON.stringify(output.brief_discovery, null, 2),
+      ).catch(() => {});
+    } catch (err) {
+      errors.push(`brief_discovery: ${err instanceof Error ? err.message : "błąd zapisu"}`);
+    }
+  } else {
+    errors.push("brief_discovery: brak pre_discovery_brief lub plan_discovery w wyniku agenta");
+  }
+
+  // Krok 3 — Personalizacja prezentacji: identyczna funkcja i identyczne property co Agent 3.
+  try {
+    await saveAgent3Output(savedPageId, JSON.stringify(output.prezentacja, null, 2));
+  } catch (err) {
+    errors.push(`prezentacja: ${err instanceof Error ? err.message : "błąd zapisu"}`);
+  }
+
+  return { pageId: savedPageId, errors };
+}
+
 // --- Agent 4: Analiza Discovery Call ---
 
 export async function updateDiscoveryAnalysis(
