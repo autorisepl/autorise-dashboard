@@ -1056,3 +1056,85 @@ export async function getDailyStatsRangeTotals(
 
   return totals;
 }
+
+// Cena standardowa z lib/agents/prompts.ts (Agent 1/2/5): 15 000 PLN netto wdrożenie
+// + 4 000 PLN/mc retainer. "Cena wdrożenia"/"Retainer PLN/mc" są polami wypełnianymi
+// WYŁĄCZNIE ręcznie przez Michała — jednorazowa migracja uzupełnia tylko puste karty,
+// nigdy nie nadpisuje wartości już wpisanej (mogła być świadomie ustawiona inaczej).
+const DOMYSLNA_CENA_WDROZENIA = 15000;
+const DOMYSLNY_RETAINER = 4000;
+
+export interface PipelineCardMissingPricing {
+  id: string;
+  name: string;
+  cenaWdrozeniaPusta: boolean;
+  retainerPusta: boolean;
+}
+
+export async function findPipelineCardsMissingPricing(): Promise<PipelineCardMissingPricing[]> {
+  const results: PipelineCardMissingPricing[] = [];
+  let cursor: string | undefined;
+
+  do {
+    const response = (await notion.dataSources.query({
+      data_source_id: PIPELINE_DATA_SOURCE_ID,
+      page_size: 100,
+      start_cursor: cursor,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any)) as { results: PageObjectResponse[]; has_more: boolean; next_cursor: string | null };
+
+    for (const page of response.results) {
+      if (page.object !== "page") continue;
+      const firma = page.properties["Firma"];
+      const cena = page.properties["Cena wdrożenia"];
+      const retainer = page.properties["Retainer PLN/mc"];
+      const cenaWdrozeniaPusta = cena?.type === "number" && !cena.number;
+      const retainerPusta = retainer?.type === "number" && !retainer.number;
+      if (cenaWdrozeniaPusta || retainerPusta) {
+        results.push({
+          id: page.id,
+          name:
+            firma?.type === "title" ? firma.title.map((t) => t.plain_text).join("") || "Bez nazwy" : "Bez nazwy",
+          cenaWdrozeniaPusta,
+          retainerPusta,
+        });
+      }
+    }
+
+    cursor = response.has_more ? (response.next_cursor ?? undefined) : undefined;
+  } while (cursor);
+
+  return results;
+}
+
+export interface FillDefaultPricingResult {
+  updated: string[];
+  errors: string[];
+}
+
+// Wypełnia TYLKO pola faktycznie puste (potwierdzone przez findPipelineCardsMissingPricing
+// tuż przed wywołaniem) — nie ma tu ponownego sprawdzania stanu, więc karty muszą pochodzić
+// ze świeżego preview, żeby uniknąć wyścigu z ręczną edycją w Notion między preview a apply.
+export async function fillDefaultPricingForCards(
+  cards: PipelineCardMissingPricing[],
+): Promise<FillDefaultPricingResult> {
+  const updated: string[] = [];
+  const errors: string[] = [];
+
+  for (const card of cards) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const props: Record<string, any> = {};
+    if (card.cenaWdrozeniaPusta) props["Cena wdrożenia"] = { number: DOMYSLNA_CENA_WDROZENIA };
+    if (card.retainerPusta) props["Retainer PLN/mc"] = { number: DOMYSLNY_RETAINER };
+    if (Object.keys(props).length === 0) continue;
+
+    try {
+      await notion.pages.update({ page_id: card.id, properties: props });
+      updated.push(card.name);
+    } catch (err) {
+      errors.push(`${card.name}: ${err instanceof Error ? err.message : "Błąd zapisu"}`);
+    }
+  }
+
+  return { updated, errors };
+}
