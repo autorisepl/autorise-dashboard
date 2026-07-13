@@ -84,9 +84,10 @@ Nagrywanie: kwalifikacja to komputerowa nagrywarka (AudioRecorder w `/narzedzia`
 | ID | Model | Thinking | Notes |
 |---|---|---|---|
 | agent0 | claude-sonnet-4-6 | no | KRS + MF API enrichment (hidden in UI) |
-| agent1 | claude-sonnet-4-6 | no | ICP qualification → Notion Pipeline. Trzy statusy wyjściowe: Kwalifikacja / Niekwalifikowany / Nieaktywny (follow up) z obowiązkową data_re_engagement |
-| agent2 | claude-opus-4-8 | **adaptive** | Pre-discovery brief + pitch_recipe (moduły + pitch sentence + cytat + liczba) |
-| agent3 | claude-opus-4-8 | no | Presentation personalization |
+| **agentKwalifikacja** | claude-opus-4-8 | **adaptive** | Od 2026-07-13: scalony Agent 1+2+3 w jednym wywołaniu (`app/api/agents/kwalifikacja/route.ts`, `KWALIFIKACJA_MERGED_SYSTEM_PROMPT`). Zwraca `{kwalifikacja, brief_discovery, prezentacja}` — dokładnie te same kształty co dawne agent1/2/3 output. Jedyna zakładka "01 Kwalifikacja" w `/agenci`, zapisuje do Notion identycznymi funkcjami co stare agenty (`saveKwalifikacjaMergedOutput`). Trzy statusy wyjściowe kwalifikacji jak dawniej: Kwalifikacja / Niekwalifikowany / Nieaktywny (follow up) z obowiązkową data_re_engagement. **Znany, celowy brak zakresu**: tryb weryfikacja/uzupełnienie i auto-wczytywanie historii NIE są dostępne w nowym agencie |
+| ~~agent1~~ | claude-sonnet-4-6 | no | Zastąpiony przez agentKwalifikacja w UI. Kod route'a zostaje jako fallback (tryb weryfikacja/uzupełnienie), nieosiągalny z żadnej zakładki |
+| ~~agent2~~ | claude-opus-4-8 | adaptive | Zastąpiony przez agentKwalifikacja w UI. Kod route'a zostaje jako fallback |
+| ~~agent3~~ | claude-opus-4-8 | no | Zastąpiony przez agentKwalifikacja w UI. Kod route'a zostaje jako fallback |
 | agent4 | claude-sonnet-4-6 | no | Discovery call analysis |
 | agent5 | claude-opus-4-8 | **adaptive** | Agency Leaders training |
 | agent6 | claude-opus-4-8 | no | Tool/library evaluation |
@@ -222,7 +223,9 @@ app/(dashboard)/kontrola/page.tsx         — Kontrola (v6 redesign)
 app/(dashboard)/harmonogram/page.tsx      — Calendar + Google Tasks
 app/(dashboard)/zadania/page.tsx          — Google Tasks (4 listy)
 app/(dashboard)/agencja/page.tsx          — Nasza karta + Sheets sync
-app/api/agents/agent[0-6]/route.ts        — agent API routes
+app/api/agents/agent[0-6]/route.ts        — agent API routes (agent1/2/3 fallback, nieużywane z UI od 2026-07-13)
+app/api/agents/kwalifikacja/route.ts      — scalony Agent 1+2+3, jedyny wywoływany z /agenci "01 Kwalifikacja"
+components/agents/AgentKwalifikacjaCard.tsx — renderuje wynik agentKwalifikacja (składa Agent1/2/3Card)
 app/api/health/route.ts                   — health check (Anthropic/Notion/Google/Groq/MCP)
 app/api/env-check/route.ts                — env vars check
 app/api/claude-config/route.ts            — Claude Code agents/skills (filtered)
@@ -254,6 +257,7 @@ context/AUTORISE_PRIORYTETY_v1.md          — jedyne źródło prawdy o prioryt
 | 2026-07-12 | prezentacja.html: drugi tor personalizacji przez `?id=` (bez AI) — nowy `GET /api/notion/prezentacja-dane`, fetch z loading state, wyróżnienie modułu wg `bol_kategoria`, oś czasu na slajdzie 5, realne dane inwestycji na slajdzie 6 z honest fallbackami. Stary tor URL-params nietknięty jako fallback |
 | 2026-07-12 | 4 fixy: wyblakłe karty slajd 2 (stagger timing), font JetBrains→Roboto Mono (max waga 700), zwijany ClientSidebar w /kwalifikacja+/sprzedaz (współdzielony localStorage klucz), przycisk "Otwórz prezentację" w Pipeline+ClientSidebar dla dowolnego klienta |
 | 2026-07-13 | Duży patch /kwalifikacja (22 punkty, pkt 20 odłożony za zgodą Michała): banner "Brak odbioru", obiekcja M365 klikalna (linkObjectionId), DecisionOption.sayAfter (fraza do powiedzenia oddzielona od action), kalkulator ROI wielogrupowy (CalculatorGroup[], role z osobnymi stawkami), captureField inline (osoby/stawka wpisywane w treści kroku), textSetter dla trybu Founder/Setter, karty modułów w języku klienta, licznik dials/rozmowy/sms z cofnięciem (delta w Notion). Szczegóły: context/AUTORISE_SESSION_LOG.md |
+| 2026-07-13 | Scalenie Agent 1+2+3 → agentKwalifikacja (etapowo, z obowiązkową weryfikacją na 2 realnych transkryptach przed podłączeniem UI). 3 regresje znalezione i naprawione w Etapie 3 (icp boolean vs "TAK", meet_data/meet_godzina sklejone, aktywne_szukanie_ok błędny). Stare agent1/2/3 route'y + karty zostają jako nieusuwany fallback. Redesign wizualny Agent4Card (tokeny var(--accent)/var(--font-sans) zamiast starej hardcodowanej palety). PILNE do zrobienia po doładowaniu Anthropic API: retest Arka na finalnej wersji prompta — patrz context/AUTORISE_PRIORYTETY_v1.md. Szczegóły: context/AUTORISE_SESSION_LOG.md |
 
 ## LOGI SESJI (OBOWIĄZKOWE)
 
