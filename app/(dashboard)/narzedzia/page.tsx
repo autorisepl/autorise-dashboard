@@ -22,7 +22,10 @@ import { ClientFileCard } from "@/components/transcripts/ClientFileCard";
 import { Button } from "@/components/ui/Button";
 import { Panel } from "@/components/ui/Panel";
 import { SectionLabel } from "@/components/ui/SectionLabel";
+import { fmtMb, MAX_FILE_BYTES, RAW_UPLOAD_MAX_BYTES } from "@/lib/transcripts/audioLimits";
+import { uploadFileToDriveResumable } from "@/lib/transcripts/driveResumableUpload";
 import { hasMatchingTranscript } from "@/lib/transcripts/parse";
+import { validateAudioFile } from "@/lib/transcripts/validateAudio";
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -61,7 +64,13 @@ interface DriveAudioFile {
 
 interface QueueItem {
   id: string;
-  file: File;
+  name: string;
+  size: number;
+  mimeType: string;
+  /** Bajty leżą w przeglądarce (lokalny plik) — brak dla pozycji z driveFileId. */
+  file?: File;
+  /** Plik już jest na Dysku (wybrany z listy albo wysłany resumable uploadem) — transkrypcja dostaje referencję, nie bajty. */
+  driveFileId?: string;
   status: QueueStatus;
   result?: TranscriptResult;
   error?: string;
@@ -118,6 +127,24 @@ function statusMsg(info: ChunkProgress, elapsed: number): string {
   return "Finalizuję transkrypt...";
 }
 
+// Mapuje kod HTTP na czytelny komunikat po polsku — używane jako fallback,
+// gdy serwer nie zwrócił własnego pola `error` w body odpowiedzi.
+function friendlyHttpError(status: number): string {
+  if (status === 413) {
+    return `Nagranie jest za duże (limit: ${fmtMb(RAW_UPLOAD_MAX_BYTES)} dla bezpośredniego wysyłania). Spróbuj ponownie — duże pliki powinny automatycznie iść przez Dysk.`;
+  }
+  if (status === 401) {
+    return "Brak autoryzacji Google. Połącz konto w ustawieniach profilu.";
+  }
+  if (status === 408 || status === 504) {
+    return "Transkrypcja trwa zbyt długo albo połączenie się urwało. Spróbuj ponownie za chwilę.";
+  }
+  if (status === 502 || status === 503) {
+    return "Usługa transkrypcji jest chwilowo niedostępna (błąd zewnętrznego dostawcy, nie Autorise). Spróbuj ponownie za chwilę.";
+  }
+  return `Błąd serwera (${status}). Spróbuj ponownie.`;
+}
+
 const LANG_MAP: Record<string, string> = {
   pl: "Polski",
   en: "Angielski",
@@ -159,6 +186,7 @@ export default function NarzedziaPage() {
     partialTexts: [],
   });
   const [elapsed, setElapsed] = useState(0);
+  const [uploadPct, setUploadPct] = useState<number | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"timestamps" | "clean">("timestamps");
@@ -169,7 +197,6 @@ export default function NarzedziaPage() {
   const [driveFiles, setDriveFiles] = useState<DriveAudioFile[]>([]);
   const [driveTxtNames, setDriveTxtNames] = useState<string[]>([]);
   const [driveLoading, setDriveLoading] = useState(false);
-  const [driveDownloadingId, setDriveDownloadingId] = useState<string | null>(null);
   const [driveError, setDriveError] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -193,11 +220,27 @@ export default function NarzedziaPage() {
   useEffect(() => () => stopTimer(), []);
 
   const addFiles = (files: FileList | File[]) => {
-    const newItems: QueueItem[] = Array.from(files).map((file) => ({
-      id: `${Date.now()}-${Math.random()}`,
-      file,
-      status: "pending",
-    }));
+    const newItems: QueueItem[] = Array.from(files).map((file) => {
+      const id = `${Date.now()}-${Math.random()}`;
+      if (file.size > MAX_FILE_BYTES) {
+        return {
+          id,
+          name: file.name,
+          size: file.size,
+          mimeType: file.type,
+          status: "error",
+          error: `Plik jest za duży (${fmtMb(file.size)}, limit: ${fmtMb(MAX_FILE_BYTES)}). Skompresuj nagranie albo podziel rozmowę na krótsze fragmenty.`,
+        };
+      }
+      return {
+        id,
+        name: file.name,
+        size: file.size,
+        mimeType: file.type,
+        file,
+        status: "pending",
+      };
+    });
     setQueue((prev) => {
       const updated = [...prev, ...newItems];
       if (!selectedId && updated.length > 0) setSelectedId(updated[updated.length - 1].id);
@@ -265,39 +308,29 @@ export default function NarzedziaPage() {
     (f) => !hasMatchingTranscript(f.name, driveTxtNames),
   ).length;
 
+  // Plik już leży na Dysku — bez pobierania go do przeglądarki i ponownego
+  // wysyłania (to właśnie dublowało transfer i biło w limit body Vercela dla
+  // większych nagrań). Kolejka dostaje samą referencję driveFileId, backend
+  // pobiera bajty bezpośrednio z Dysku.
   const pickDriveFile = useCallback(
-    async (f: DriveAudioFile) => {
-      setDriveDownloadingId(f.id);
-      setDriveError(null);
-      try {
-        const res = await fetch(`/api/google/drive/audio/${f.id}`);
-        if (!res.ok) {
-          let msg = `Błąd pobierania (${res.status}).`;
-          try {
-            const body = (await res.json()) as { error?: string };
-            if (body.error) msg = body.error;
-          } catch {
-            /* binary/empty body */
-          }
-          setDriveError(msg);
-          return;
-        }
-        const blob = await res.blob();
-        if (blob.size === 0) {
-          setDriveError("Pobrany plik jest pusty — sprawdź nagranie na Dysku.");
-          return;
-        }
-        const type =
-          blob.type && !blob.type.includes("json") ? blob.type : f.mimeType || "audio/mpeg";
-        const file = new File([blob], f.name, { type });
-        addFiles([file]);
-        setDrivePickerOpen(false);
-      } catch (err) {
-        setDriveError(err instanceof Error ? err.message : "Błąd pobierania z Dysku.");
-      } finally {
-        setDriveDownloadingId(null);
-      }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
+    (f: DriveAudioFile) => {
+      const id = `${Date.now()}-${Math.random()}`;
+      setQueue((prev) => {
+        const updated: QueueItem[] = [
+          ...prev,
+          {
+            id,
+            name: f.name,
+            size: f.size,
+            mimeType: f.mimeType || "audio/mpeg",
+            driveFileId: f.id,
+            status: "pending",
+          },
+        ];
+        if (!selectedId) setSelectedId(id);
+        return updated;
+      });
+      setDrivePickerOpen(false);
     },
     [selectedId],
   );
@@ -361,62 +394,101 @@ export default function NarzedziaPage() {
     async (item: QueueItem) => {
       setActiveId(item.id);
       setProgress({ total: 1, done: 0, processedDuration: 0, partialTexts: [] });
+      setUploadPct(null);
       setSelectedId(item.id);
       startTimer();
 
       setQueue((prev) => prev.map((q) => (q.id === item.id ? { ...q, status: "processing" } : q)));
 
-      let fileBuffer: ArrayBuffer;
-      try {
-        fileBuffer = await item.file.arrayBuffer();
-      } catch {
+      const fail = (error: string) => {
         stopTimer();
         setQueue((prev) =>
-          prev.map((q) =>
-            q.id === item.id
-              ? { ...q, status: "error", error: "Nie udało się odczytać pliku z dysku." }
-              : q,
-          ),
+          prev.map((q) => (q.id === item.id ? { ...q, status: "error", error } : q)),
         );
         setActiveId(null);
-        return;
+      };
+
+      // Walidacja rzeczywistego formatu pliku (magic bytes) PRZED wysyłką —
+      // tylko dla plików lokalnych, pliki już na Dysku zostały tam wgrane
+      // wcześniej i przeszły tę samą walidację przy dodaniu. Gdy rzeczywista
+      // zawartość nie zgadza się z rozszerzeniem (np. WebM zapisany jako
+      // .mp3 — znany wcześniej przypadek), samo-naprawiamy nazwę/MIME
+      // zamiast blokować działające nagranie.
+      let effectiveName = item.name;
+      let effectiveMimeType = item.mimeType;
+      if (item.file) {
+        const validation = await validateAudioFile(item.file);
+        if (!validation.ok) {
+          fail(validation.error ?? "Plik nie przeszedł walidacji.");
+          return;
+        }
+        if (validation.correctedExt) {
+          effectiveName = `${item.name.replace(/\.[^.]+$/, "")}.${validation.correctedExt}`;
+          effectiveMimeType = validation.correctedMimeType ?? item.mimeType;
+        }
+      }
+
+      let driveFileId = item.driveFileId ?? null;
+
+      // Duży plik lokalny: najpierw resumable upload bezpośrednio do Google
+      // Drive z przeglądarki (omija limit body ~4.5 MB Route Handlerów na
+      // Vercelu), dopiero potem transkrypcja dostaje samą referencję.
+      if (!driveFileId && item.file && item.size > RAW_UPLOAD_MAX_BYTES) {
+        try {
+          driveFileId = await uploadFileToDriveResumable(
+            item.file,
+            (pct) => setUploadPct(pct),
+            effectiveName,
+            effectiveMimeType,
+          );
+        } catch (err) {
+          fail(
+            err instanceof Error
+              ? `Nie udało się wysłać pliku na Dysk: ${err.message}`
+              : "Nie udało się wysłać pliku na Dysk.",
+          );
+          return;
+        }
+        setUploadPct(null);
       }
 
       let res: Response;
       try {
-        res = await fetch("/api/tools/transcribe", {
-          method: "POST",
-          headers: {
-            "Content-Type": item.file.type || "audio/mpeg",
-            "X-File-Name": encodeURIComponent(item.file.name),
-            "X-File-Mime": item.file.type || "audio/mpeg",
-          },
-          body: fileBuffer,
-        });
+        if (driveFileId) {
+          res = await fetch("/api/tools/transcribe", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ driveFileId, fileName: effectiveName, mimeType: effectiveMimeType }),
+          });
+        } else if (item.file) {
+          const fileBuffer = await item.file.arrayBuffer();
+          res = await fetch("/api/tools/transcribe", {
+            method: "POST",
+            headers: {
+              "Content-Type": effectiveMimeType || "audio/mpeg",
+              "X-File-Name": encodeURIComponent(effectiveName),
+              "X-File-Mime": effectiveMimeType || "audio/mpeg",
+            },
+            body: fileBuffer,
+          });
+        } else {
+          fail("Brak danych pliku do transkrypcji.");
+          return;
+        }
       } catch {
-        stopTimer();
-        setQueue((prev) =>
-          prev.map((q) =>
-            q.id === item.id ? { ...q, status: "error", error: "Błąd połączenia z serwerem." } : q,
-          ),
-        );
-        setActiveId(null);
+        fail("Błąd połączenia z serwerem. Sprawdź internet i spróbuj ponownie.");
         return;
       }
 
       if (!res.ok) {
-        stopTimer();
-        let errMsg = `Błąd serwera (${res.status}).`;
+        let errMsg = friendlyHttpError(res.status);
         try {
           const errBody = (await res.json()) as { error?: string };
           if (errBody.error) errMsg = errBody.error;
         } catch {
           /* body not JSON */
         }
-        setQueue((prev) =>
-          prev.map((q) => (q.id === item.id ? { ...q, status: "error", error: errMsg } : q)),
-        );
-        setActiveId(null);
+        fail(errMsg);
         return;
       }
 
@@ -462,7 +534,7 @@ export default function NarzedziaPage() {
               q.id === item.id ? { ...q, status: "done", result, elapsed: currentElapsed } : q,
             ),
           );
-          void uploadToDrive(result.transcript, item.file.name, item.id);
+          void uploadToDrive(result.transcript, item.name, item.id);
         } else if (event.type === "error") {
           stopTimer();
           setQueue((prev) =>
@@ -545,7 +617,7 @@ export default function NarzedziaPage() {
 
   const downloadItem = (item: QueueItem) => {
     if (!item.result) return;
-    const base = item.file.name.replace(/\.[^.]+$/, "") || "transkrypt";
+    const base = item.name.replace(/\.[^.]+$/, "") || "transkrypt";
     const text =
       viewMode === "timestamps" ? timestampText(item.result.segments) : item.result.transcript;
     const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
@@ -565,7 +637,7 @@ export default function NarzedziaPage() {
     const zip = new JSZip();
     for (const item of done) {
       if (!item.result) continue;
-      const base = item.file.name.replace(/\.[^.]+$/, "");
+      const base = item.name.replace(/\.[^.]+$/, "");
       const text = timestampText(item.result.segments);
       zip.file(`${base}.txt`, text);
     }
@@ -672,10 +744,10 @@ export default function NarzedziaPage() {
                           whiteSpace: "nowrap",
                         }}
                       >
-                        {item.file.name}
+                        {item.name}
                       </div>
                       <div style={{ fontSize: 10, color: "var(--text-tertiary)", marginTop: 1 }}>
-                        {bytesLabel(item.file.size)}
+                        {bytesLabel(item.size)}
                         {item.status === "processing" && activeId === item.id && (
                           <span> · {fmtElapsed(elapsed)}</span>
                         )}
@@ -787,7 +859,7 @@ export default function NarzedziaPage() {
                   txtNames={driveTxtNames}
                   loading={driveLoading}
                   error={driveError}
-                  downloadingId={driveDownloadingId}
+                  downloadingId={null}
                   onPick={pickDriveFile}
                   onClose={() => setDrivePickerOpen(false)}
                   onRefresh={() => void loadDriveFiles()}
@@ -854,7 +926,7 @@ export default function NarzedziaPage() {
         >
           <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
             {selectedItem
-              ? selectedItem.file.name
+              ? selectedItem.name
               : queue.length === 0
                 ? "Brak plików w kolejce"
                 : "Wybierz plik z kolejki"}
@@ -1064,7 +1136,9 @@ export default function NarzedziaPage() {
                             marginBottom: 3,
                           }}
                         >
-                          {statusMsg(progress, elapsed)}
+                          {uploadPct !== null
+                            ? `Wysyłam na Dysk: ${uploadPct}%`
+                            : statusMsg(progress, elapsed)}
                         </div>
                         <div
                           style={{
@@ -1076,8 +1150,8 @@ export default function NarzedziaPage() {
                           }}
                         >
                           <FileAudio size={10} />
-                          <span>{selectedItem.file.name}</span>
-                          <span>· {bytesLabel(selectedItem.file.size)}</span>
+                          <span>{selectedItem.name}</span>
+                          <span>· {bytesLabel(selectedItem.size)}</span>
                         </div>
                       </div>
                       <div
@@ -1103,7 +1177,17 @@ export default function NarzedziaPage() {
                         marginBottom: 8,
                       }}
                     >
-                      {progress.total > 1 ? (
+                      {uploadPct !== null ? (
+                        <div
+                          style={{
+                            height: "100%",
+                            borderRadius: 2,
+                            background: "var(--accent)",
+                            width: `${uploadPct}%`,
+                            transition: "width 0.2s ease",
+                          }}
+                        />
+                      ) : progress.total > 1 ? (
                         <div
                           style={{
                             height: "100%",
@@ -1405,10 +1489,10 @@ export default function NarzedziaPage() {
                         marginBottom: 4,
                       }}
                     >
-                      {selectedItem.file.name}
+                      {selectedItem.name}
                     </div>
                     <div style={{ fontSize: 12, color: "var(--text-tertiary)" }}>
-                      Oczekuje na transkrypcję · {bytesLabel(selectedItem.file.size)}
+                      Oczekuje na transkrypcję · {bytesLabel(selectedItem.size)}
                     </div>
                   </div>
                 </div>

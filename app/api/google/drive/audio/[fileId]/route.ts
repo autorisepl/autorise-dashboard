@@ -1,15 +1,12 @@
-import type { Readable } from "node:stream";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { getDriveClient, getRefreshToken } from "@/lib/google/auth";
+import { getRefreshToken } from "@/lib/google/auth";
+import { downloadDriveAudio } from "@/lib/google/driveAudio";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 // Pobiera plik audio z Google Drive jako binarny strumień (do transkrypcji).
-// Używa responseType: "stream" + Buffer.concat — to JEDYNY pewny sposób na
-// nienaruszone bajty binarne z googleapis (arraybuffer bywa dekodowany jako
-// string i psuje MP3, przez co Groq zwraca 500).
 export async function GET(_req: Request, { params }: { params: Promise<{ fileId: string }> }) {
   const { fileId } = await params;
 
@@ -29,22 +26,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ fileId:
   }
 
   try {
-    const drive = getDriveClient(refreshToken);
-
-    const meta = await drive.files.get({ fileId, fields: "name,mimeType,size" });
-    const name = meta.data.name ?? "audio.mp3";
-    const mimeType = meta.data.mimeType ?? "audio/mpeg";
-
-    const res = await drive.files.get({ fileId, alt: "media" }, { responseType: "stream" });
-
-    const stream = res.data as unknown as Readable;
-    const chunks: Buffer[] = [];
-    await new Promise<void>((resolve, reject) => {
-      stream.on("data", (c: Buffer) => chunks.push(Buffer.from(c)));
-      stream.on("end", () => resolve());
-      stream.on("error", (err: Error) => reject(err));
-    });
-    const bytes = Buffer.concat(chunks);
+    const { bytes, name, mimeType } = await downloadDriveAudio(refreshToken, fileId);
 
     if (bytes.length === 0) {
       return NextResponse.json(
@@ -53,7 +35,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ fileId:
       );
     }
 
-    return new Response(bytes, {
+    return new Response(new Uint8Array(bytes), {
       headers: {
         "Content-Type": mimeType,
         "Content-Disposition": `inline; filename="${encodeURIComponent(name)}"`,

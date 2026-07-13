@@ -1,8 +1,9 @@
 "use client";
 
-import { ChevronDown, Download, Mic, Square, Trash2 } from "lucide-react";
+import { ChevronDown, Download, Info, Mic, Square, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { approxMinutesForBytes, fmtMb, MAX_FILE_BYTES } from "@/lib/transcripts/audioLimits";
 
 type RecorderState = "idle" | "recording" | "preview";
 
@@ -266,6 +267,29 @@ export function AudioRecorder() {
               color: "var(--text-tertiary)",
             }}
           />
+        </div>
+      )}
+
+      {state === "idle" && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "6px 10px",
+            marginBottom: 10,
+            borderRadius: 8,
+            background: "var(--bg)",
+            border: "1px solid var(--border)",
+            fontSize: 11,
+            color: "var(--text-tertiary)",
+          }}
+        >
+          <Info size={11} style={{ flexShrink: 0 }} />
+          <span>
+            Format: WebM/Opus · Limit pliku: {fmtMb(MAX_FILE_BYTES)} · maks. ~
+            {approxMinutesForBytes(MAX_FILE_BYTES)} min nagrania
+          </span>
         </div>
       )}
 

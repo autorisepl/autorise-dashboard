@@ -1,3 +1,7 @@
+import { cookies } from "next/headers";
+import { getRefreshToken } from "@/lib/google/auth";
+import { downloadDriveAudio } from "@/lib/google/driveAudio";
+
 export const maxDuration = 300;
 export const dynamic = "force-dynamic";
 
@@ -89,38 +93,98 @@ export async function POST(req: Request) {
     return Response.json({ error: "Brak konfiguracji GROQ_API_KEY na serwerze." }, { status: 500 });
   }
 
-  // Read file name and MIME type from custom headers (avoids multipart parsing limits)
-  const rawName = req.headers.get("x-file-name") ?? "audio.mp3";
+  const contentType = req.headers.get("content-type") ?? "";
+  const isDriveRef = contentType.startsWith("application/json");
+
   let fileName: string;
-  try {
-    fileName = decodeURIComponent(rawName);
-  } catch {
-    fileName = rawName;
-  }
-
-  const ext = fileName.split(".").pop()?.toLowerCase() ?? "";
-  if (!ALLOWED_EXTS.has(ext)) {
-    return Response.json(
-      { error: `Format .${ext} nie jest obsługiwany. Użyj: mp3, m4a, wav, flac, ogg.` },
-      { status: 400 },
-    );
-  }
-
-  const mimeType =
-    req.headers.get("x-file-mime") ??
-    req.headers.get("content-type")?.split(";")[0] ??
-    "audio/mpeg";
-
+  let mimeType: string;
   let bytes: Uint8Array;
-  try {
-    const buffer = await req.arrayBuffer();
-    if (buffer.byteLength === 0) {
-      return Response.json({ error: "Brak pliku audio (plik pusty)." }, { status: 400 });
+  let ext: string;
+
+  if (isDriveRef) {
+    // Plik trafił na Dysk przez resumable upload (duże nagrania, żeby ominąć
+    // limit body Vercela) — dostajemy tylko referencję i pobieramy bajty
+    // po stronie serwera.
+    let body: { driveFileId?: string; fileName?: string };
+    try {
+      body = (await req.json()) as typeof body;
+    } catch {
+      return Response.json({ error: "Nieprawidłowe żądanie." }, { status: 400 });
     }
-    bytes = new Uint8Array(buffer);
-  } catch (err) {
-    const detail = err instanceof Error ? err.message : "nieznany błąd";
-    return Response.json({ error: `Nie udało się odczytać pliku: ${detail}` }, { status: 400 });
+    if (!body.driveFileId) {
+      return Response.json({ error: "Brak identyfikatora pliku na Dysku." }, { status: 400 });
+    }
+
+    const cookieStore = await cookies();
+    const refreshToken = getRefreshToken({
+      get: (name) => {
+        const val = cookieStore.get(name);
+        return val ? { value: val.value } : undefined;
+      },
+    });
+    if (!refreshToken) {
+      return Response.json(
+        { error: "Brak autoryzacji Google. Połącz konto w ustawieniach profilu." },
+        { status: 401 },
+      );
+    }
+
+    try {
+      const drive = await downloadDriveAudio(refreshToken, body.driveFileId);
+      fileName = body.fileName ?? drive.name;
+      mimeType = drive.mimeType;
+      bytes = new Uint8Array(drive.bytes.buffer, drive.bytes.byteOffset, drive.bytes.byteLength);
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : "nieznany błąd";
+      return Response.json(
+        { error: `Nie udało się pobrać pliku z Dysku: ${detail}` },
+        { status: 502 },
+      );
+    }
+
+    if (bytes.length === 0) {
+      return Response.json({ error: "Plik z Dysku jest pusty." }, { status: 400 });
+    }
+
+    ext = fileName.split(".").pop()?.toLowerCase() ?? "";
+    if (!ALLOWED_EXTS.has(ext)) {
+      return Response.json(
+        { error: `Format .${ext} nie jest obsługiwany. Użyj: mp3, m4a, wav, flac, ogg.` },
+        { status: 400 },
+      );
+    }
+  } else {
+    // Read file name and MIME type from custom headers (avoids multipart parsing limits)
+    const rawName = req.headers.get("x-file-name") ?? "audio.mp3";
+    try {
+      fileName = decodeURIComponent(rawName);
+    } catch {
+      fileName = rawName;
+    }
+
+    ext = fileName.split(".").pop()?.toLowerCase() ?? "";
+    if (!ALLOWED_EXTS.has(ext)) {
+      return Response.json(
+        { error: `Format .${ext} nie jest obsługiwany. Użyj: mp3, m4a, wav, flac, ogg.` },
+        { status: 400 },
+      );
+    }
+
+    mimeType =
+      req.headers.get("x-file-mime") ??
+      req.headers.get("content-type")?.split(";")[0] ??
+      "audio/mpeg";
+
+    try {
+      const buffer = await req.arrayBuffer();
+      if (buffer.byteLength === 0) {
+        return Response.json({ error: "Brak pliku audio (plik pusty)." }, { status: 400 });
+      }
+      bytes = new Uint8Array(buffer);
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : "nieznany błąd";
+      return Response.json({ error: `Nie udało się odczytać pliku: ${detail}` }, { status: 400 });
+    }
   }
 
   const chunkCount = Math.ceil(bytes.length / CHUNK_BYTES);
