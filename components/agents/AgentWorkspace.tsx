@@ -33,6 +33,7 @@ import {
   AGENT4_SYSTEM_PROMPT,
   AGENT5_SYSTEM_PROMPT,
   AGENT6_SYSTEM_PROMPT,
+  KWALIFIKACJA_MERGED_SYSTEM_PROMPT,
 } from "@/lib/agents/prompts";
 import type { PipelineClient } from "@/lib/notion/client";
 import { parseClientFileName } from "@/lib/transcripts/parse";
@@ -44,10 +45,23 @@ import type { Agent3Output } from "./Agent3Card";
 import { Agent3Card } from "./Agent3Card";
 import type { Agent4Output } from "./Agent4Card";
 import { Agent4Card } from "./Agent4Card";
+import type { KwalifikacjaMergedOutput } from "./AgentKwalifikacjaCard";
+import { AgentKwalifikacjaCard } from "./AgentKwalifikacjaCard";
 
 // ── Types ───────────────────────────────────────────────────────────
 
-export type AgentId = "agent1" | "agent2" | "agent3" | "agent4" | "agent5" | "agent6";
+// "agentKwalifikacja" to scalony Agent 1+2+3 (Etap 1-4 patcha z 2026-07-13) — wywołuje
+// app/api/agents/kwalifikacja/route.ts. "agent1"/"agent2"/"agent3" zostają w unii typu i w
+// CONFIGS jako nieużywany fallback (brak zakładki w page.tsx), nie kasować przed
+// potwierdzeniem przez Michała kilku kolejnych realnych rozmów na nowym agencie.
+export type AgentId =
+  | "agent1"
+  | "agent2"
+  | "agent3"
+  | "agent4"
+  | "agent5"
+  | "agent6"
+  | "agentKwalifikacja";
 export type AgentStatus = "idle" | "running" | "done" | "error";
 
 export type CardWriteStatus = "idle" | "saving" | "saved" | "error";
@@ -292,6 +306,47 @@ const CONFIGS: Record<AgentId, AgentConfig> = {
       { label: "Generowanie raportu" },
     ],
     systemPrompt: AGENT6_SYSTEM_PROMPT,
+  },
+  agentKwalifikacja: {
+    num: "01",
+    name: "Agent Kwalifikacja",
+    when: "Po rozmowie kwalifikacyjnej",
+    db: "Notion Pipeline",
+    dbFields: [
+      "Flota",
+      "Spedytorzy",
+      "TMS",
+      "Ból główny",
+      "Koszt problemu",
+      "Ocena ICP",
+      "Status",
+      "Hipoteza ból główny",
+      "Przewidywane obiekcje",
+      "Pitch Recipe",
+      "Cytaty klienta",
+      "Personalizacja prezentacji",
+    ],
+    inputs: [
+      {
+        field: "transcript",
+        label: "Transkrypt rozmowy kwalifikacyjnej",
+        placeholder: "Wklej transkrypt rozmowy kwalifikacyjnej.",
+      },
+    ],
+    showClientSelector: true,
+    writesNotion: true,
+    hasThinking: true,
+    requiresDriveFiles: true,
+    cardStage: "kwalifikacja",
+    clientFilter: ["Nowy lead", "Kwalifikacja"],
+    roadmapSteps: [
+      { label: "Oczekiwanie na transkrypt" },
+      { label: "Część A: kwalifikacja i ocena ICP" },
+      { label: "Część B: brief do Discovery Call" },
+      { label: "Część C: dane do personalizacji prezentacji" },
+      { label: "Zapis do Notion Pipeline" },
+    ],
+    systemPrompt: KWALIFIKACJA_MERGED_SYSTEM_PROMPT,
   },
 };
 
@@ -1452,6 +1507,9 @@ function OutputPanel({
         {agentId === "agent2" && <Agent2Card output={state.output as Agent2Output} />}
         {agentId === "agent3" && <Agent3Card output={state.output as Agent3Output} />}
         {agentId === "agent4" && <Agent4Card output={state.output as Agent4Output} />}
+        {agentId === "agentKwalifikacja" && (
+          <AgentKwalifikacjaCard output={state.output as KwalifikacjaMergedOutput} />
+        )}
         {(agentId === "agent5" || agentId === "agent6") && (
           <Panel style={{ padding: 16 }}>
             <pre

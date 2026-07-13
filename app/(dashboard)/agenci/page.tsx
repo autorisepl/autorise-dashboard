@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, FileText, Mic, Monitor, Phone, Search } from "lucide-react";
+import { BookOpen, Mic, Phone, Search } from "lucide-react";
 import { type ReactNode, Suspense, useCallback, useEffect, useState } from "react";
 import type { HealthResponse } from "@/app/api/health/route";
 import type { AgentId, AgentState, CardStage } from "@/components/agents/AgentWorkspace";
@@ -11,8 +11,19 @@ import type { PipelineClient } from "@/lib/notion/client";
 
 // ── Constants ──────────────────────────────────────────────────────
 
-const AGENT_IDS: AgentId[] = ["agent1", "agent2", "agent3", "agent4", "agent5", "agent6"];
-const SETTER_VISIBLE_AGENT_TABS: AgentId[] = ["agent1", "agent2", "agent3", "agent4"];
+// agent1/agent2/agent3 zostają w AGENT_IDS (stan/typy nadal istnieją) ale bez zakładki w
+// TABS poniżej — scalony agentKwalifikacja zastąpił je w UI (Etap 4 patcha z 2026-07-13).
+// Kod starych agentów nie jest kasowany, to świadomy fallback.
+const AGENT_IDS: AgentId[] = [
+  "agent1",
+  "agent2",
+  "agent3",
+  "agent4",
+  "agent5",
+  "agent6",
+  "agentKwalifikacja",
+];
+const SETTER_VISIBLE_AGENT_TABS: AgentId[] = ["agentKwalifikacja", "agent4"];
 
 const INITIAL_STATE: AgentState = {
   transcript: "",
@@ -88,9 +99,7 @@ function makeInitialStates(): Record<AgentId, AgentState> {
 type TabConfig = { id: AgentId; label: string; icon: ReactNode };
 
 const TABS: TabConfig[] = [
-  { id: "agent1", label: "01 Kwalifikacja", icon: <Phone size={13} /> },
-  { id: "agent2", label: "02 Brief", icon: <FileText size={13} /> },
-  { id: "agent3", label: "03 Personalizacja", icon: <Monitor size={13} /> },
+  { id: "agentKwalifikacja", label: "01 Kwalifikacja", icon: <Phone size={13} /> },
   { id: "agent4", label: "04 Analiza Discovery", icon: <Mic size={13} /> },
   { id: "agent5", label: "05 Training", icon: <BookOpen size={13} /> },
   { id: "agent6", label: "06 Ewaluacja", icon: <Search size={13} /> },
@@ -144,13 +153,13 @@ function AgenciPageInner() {
     role === "setter" ? TABS.filter((t) => SETTER_VISIBLE_AGENT_TABS.includes(t.id)) : TABS;
 
   const [activeAgent, setActiveAgent] = useState<AgentId>(() => {
-    if (typeof window === "undefined") return "agent1";
-    return (localStorage.getItem("agenci_active_tab") as AgentId) ?? "agent1";
+    if (typeof window === "undefined") return "agentKwalifikacja";
+    return (localStorage.getItem("agenci_active_tab") as AgentId) ?? "agentKwalifikacja";
   });
 
   useEffect(() => {
     if (role === "setter" && !SETTER_VISIBLE_AGENT_TABS.includes(activeAgent)) {
-      setActiveAgent("agent1");
+      setActiveAgent("agentKwalifikacja");
     }
   }, [role, activeAgent]);
 
@@ -330,7 +339,7 @@ function AgenciPageInner() {
 
     try {
       const selectedClientId = selectedClientIds[activeAgent];
-      const payload: Record<string, string | undefined> = {
+      const payload: Record<string, string | boolean | undefined> = {
         notion_page_id: selectedClientId || undefined,
       };
 
@@ -351,7 +360,15 @@ function AgenciPageInner() {
         payload.transcript = state.transcript;
       }
 
-      const res = await fetch(`/api/agents/${activeAgent}`, {
+      // Agent Kwalifikacja (scalony Agent 1+2+3) zapisuje do Notion automatycznie,
+      // tak jak stary Agent 1 — save_to_notion domyślnie false w route.ts służyło
+      // wyłącznie do bezpiecznych testów porównawczych z Etapu 3, nie do UI.
+      if (activeAgent === "agentKwalifikacja") {
+        payload.save_to_notion = true;
+      }
+
+      const endpointPath = activeAgent === "agentKwalifikacja" ? "kwalifikacja" : activeAgent;
+      const res = await fetch(`/api/agents/${endpointPath}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -367,7 +384,11 @@ function AgenciPageInner() {
           notionError: data.notion_error ?? null,
           elapsed,
         });
-        if (activeAgent === "agent1" && data.notion_page_id && !selectedClientId) {
+        if (
+          (activeAgent === "agent1" || activeAgent === "agentKwalifikacja") &&
+          data.notion_page_id &&
+          !selectedClientId
+        ) {
           const newClient: PipelineClient = {
             id: data.notion_page_id,
             name: data.notion_client_name ?? "Nowy klient",
@@ -394,7 +415,13 @@ function AgenciPageInner() {
         if (stage) {
           const clientName = (state.attachedClientName || data.notion_client_name || "").trim();
           if (clientName) {
-            void writeCard(activeAgent, stage, clientName, state.attachedMp3Link, data.output);
+            // Karta "Kontakty" (Sheets) czyta pola płaskie (icp/bol_glowny_cytat/nastepny_krok)
+            // — dla scalonego agenta to sekcja "kwalifikacja" wyniku, nie cały nested obiekt.
+            const cardOutput =
+              activeAgent === "agentKwalifikacja"
+                ? ((data.output as { kwalifikacja?: unknown })?.kwalifikacja ?? {})
+                : data.output;
+            void writeCard(activeAgent, stage, clientName, state.attachedMp3Link, cardOutput);
           }
         }
       } else {
