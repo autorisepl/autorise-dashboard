@@ -995,7 +995,7 @@ async function findDailyStatsRow(dateISO: string): Promise<PageObjectResponse | 
   return response.results.find((p): p is PageObjectResponse => p.object === "page") ?? null;
 }
 
-export async function incrementDailyStat(type: DailyStatType): Promise<void> {
+export async function incrementDailyStat(type: DailyStatType, delta = 1): Promise<void> {
   const dateISO = todayISO();
   const field = DAILY_STAT_FIELD[type];
   const existing = await findDailyStatsRow(dateISO);
@@ -1005,17 +1005,19 @@ export async function incrementDailyStat(type: DailyStatType): Promise<void> {
     const current = currentProp?.type === "number" ? (currentProp.number ?? 0) : 0;
     await notion.pages.update({
       page_id: existing.id,
-      properties: { [field]: { number: current + 1 } },
+      properties: { [field]: { number: Math.max(0, current + delta) } },
     });
     return;
   }
+
+  if (delta <= 0) return;
 
   await notion.pages.create({
     parent: { database_id: DAILY_STATS_DB_ID },
     properties: {
       Nazwa: { title: richText(dateISO) },
       Data: { date: { start: dateISO } },
-      [field]: { number: 1 },
+      [field]: { number: delta },
     },
   });
 }

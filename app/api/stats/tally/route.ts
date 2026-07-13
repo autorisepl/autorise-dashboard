@@ -9,6 +9,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => ({}));
     const type = body?.type;
+    const delta = body?.delta === -1 ? -1 : 1;
 
     if (typeof type !== "string" || !VALID_TYPES.includes(type as DailyStatType)) {
       return NextResponse.json(
@@ -17,7 +18,7 @@ export async function POST(request: Request) {
       );
     }
 
-    await incrementDailyStat(type as DailyStatType);
+    await incrementDailyStat(type as DailyStatType, delta);
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json(
