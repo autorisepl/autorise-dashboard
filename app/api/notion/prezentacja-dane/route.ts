@@ -16,6 +16,12 @@ const PO_WDROZENIU_FRACTION = 0.125;
 // biura — ten sam wzór co koszt_problemu.wzor_obliczenia Agenta 1 (patrz prompts.ts):
 // godziny dziennie × liczba spedytorów × dni robocze/mc.
 const DNI_ROBOCZE_MC = 21;
+// Cena standardowa, zdefiniowana w lib/agents/prompts.ts (Agent 1/2/5): 15 000 PLN netto
+// wdrożenie + 4 000 PLN/mc retainer. Pola Notion "Cena wdrożenia"/"Retainer PLN/mc" są
+// wypełniane ręcznie przez Michała — puste pole oznacza standardową ofertę, nie brak
+// ceny, więc fallback na te stałe zamiast null/"ustalana indywidualnie".
+const DOMYSLNA_CENA_WDROZENIA = 15000;
+const DOMYSLNY_RETAINER = 4000;
 
 function extractText(prop: PageObjectResponse["properties"][string] | undefined): string {
   if (!prop) return "";
@@ -92,13 +98,18 @@ export async function GET(req: Request) {
 
     const po = roi > 0 ? Math.max(Math.round(roi * PO_WDROZENIU_FRACTION), 0) : 0;
 
-    const cenaWdrozeniaPusta = cenaWdrozenia <= 0;
+    // Pole puste w Notion (<=0) = standardowa oferta, nie brak ceny — fallback na stałe
+    // z prompts.ts. Wartość faktycznie wpisana ręcznie (np. większe, niestandardowe
+    // wdrożenie) zawsze ma pierwszeństwo, fallback dotyczy wyłącznie pustego pola.
+    const cenaWdrozeniaEfektywna = cenaWdrozenia > 0 ? cenaWdrozenia : DOMYSLNA_CENA_WDROZENIA;
+    const retainerEfektywny = retainer > 0 ? retainer : DOMYSLNY_RETAINER;
+
     let procentKosztu: number | null = null;
     let paybackMiesiace: number | null = null;
-    if (kosztMiesiecznie > 0 && !cenaWdrozeniaPusta) {
-      paybackMiesiace = Math.round(cenaWdrozenia / kosztMiesiecznie);
+    if (kosztMiesiecznie > 0) {
+      paybackMiesiace = Math.round(cenaWdrozeniaEfektywna / kosztMiesiecznie);
       if (kosztRoczny > 0) {
-        procentKosztu = Math.round((cenaWdrozenia / kosztRoczny) * 100);
+        procentKosztu = Math.round((cenaWdrozeniaEfektywna / kosztRoczny) * 100);
       }
     }
 
@@ -110,8 +121,8 @@ export async function GET(req: Request) {
       bol: kosztRoczny,
       tms,
       gwar: GWARANCJA_H_MC,
-      cena_wdrozenia: cenaWdrozeniaPusta ? null : cenaWdrozenia,
-      retainer: retainer > 0 ? retainer : null,
+      cena_wdrozenia: cenaWdrozeniaEfektywna,
+      retainer: retainerEfektywny,
       procent_kosztu: procentKosztu,
       payback_miesiace: paybackMiesiace,
       bol_glowny: bolGlowny,
