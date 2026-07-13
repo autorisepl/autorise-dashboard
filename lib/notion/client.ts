@@ -1094,7 +1094,9 @@ export async function findPipelineCardsMissingPricing(): Promise<PipelineCardMis
         results.push({
           id: page.id,
           name:
-            firma?.type === "title" ? firma.title.map((t) => t.plain_text).join("") || "Bez nazwy" : "Bez nazwy",
+            firma?.type === "title"
+              ? firma.title.map((t) => t.plain_text).join("") || "Bez nazwy"
+              : "Bez nazwy",
           cenaWdrozeniaPusta,
           retainerPusta,
         });
