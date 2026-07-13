@@ -8,12 +8,12 @@ Cena i retainer JUŻ są zdefiniowane w lib/agents/prompts.ts, używane w Agent 
 
 Proces sprzedażowy (kwalifikacja→sprzedaż) już jest zgodny z regułą Agency Leaders (2 kroki, poniżej 30k jednorazowo). "Discovery Call" w kodzie to nazwa drugiej rozmowy (/sprzedaz), nie trzecie spotkanie. Nic w skryptach nie wymaga scalania.
 
-## PILNE — do zrobienia jako pierwsze po resecie limitu
+## PILNE — zamknięte 2026-07-13
 
-1. Session log: dopisać wpis o rundzie roi-fix/GSAP/Iconify/copy kontaktowa/data prezentacji (wykonana 2026-07-13, deploy poszedł, log nigdy nie uzupełniony).
-2. Slajd 4 prezentacji: tabela porównawcza nadal ucina tekst ("WebFleet + nieznany system wewnętrzny (p...") mimo wcześniejszej próby naprawy — poprzednia poprawka szerokości nie zadziałała w pełni, wymaga realnej weryfikacji zrzutem po zmianie.
-3. Fallback ceny w prezentacji: gdy "Cena wdrożenia" puste w Notion, pokazuj 15 000 PLN (cena standardowa) zamiast "Cena ustalana indywidualnie" — ten tekst zostaje wyłącznie dla przypadków faktycznie wykraczających poza 4 standardowe moduły.
-4. Jednorazowe wypełnienie pola "Cena wdrożenia" = 15 000 i "Retainer PLN/mc" = 4 000 dla istniejących kart Pipeline gdzie puste (żeby prezentacja i statystyki liczyły poprawnie od razu, nie tylko dla nowych leadów od teraz).
+1. ✓ Session log uzupełniony o rundę roi-fix/GSAP/Iconify/copy kontaktowa/data prezentacji.
+2. ✓ Slajd 4: tabela porównawcza — usunięto `white-space:nowrap`+ellipsis na `td`, tekst teraz zawija się (zweryfikowane zrzutem na przykładzie "WebFleet + nieznany system wewnętrzny..." na 1280px i mobile 375px, zero przycięcia).
+3. ✓ Fallback ceny w `/api/notion/prezentacja-dane`: puste "Cena wdrożenia"/"Retainer PLN/mc" zwracają teraz 15000/4000 zamiast null, `procent_kosztu`/`payback_miesiace` liczone z tego samego defaultu. Wartość ręcznie wpisana w Notion ma zawsze pierwszeństwo.
+4. ✓ Jednorazowa migracja (endpoint `/api/tools/fill-default-pricing`, GET podgląd + POST zapis, wzorem `migrate-schema`): 34 karty Pipeline miały puste oba pola, zero miało już wpisaną wartość — zapisano 15000/4000 po potwierdzeniu listy.
 
 ## Priorytet: umowa i warunki gwarancji
 
