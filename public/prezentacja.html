@@ -15,6 +15,43 @@
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.15.0/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.15.0/CustomEase.min.js"></script>
+
+  <!-- Iconify web component — ikony zarejestrowane LOKALNIE niżej (addCollection), zero
+       fetchy do api.iconify.design w czasie rzeczywistym. Dane ikon pobrane raz z
+       autorytatywnego źródła Iconify (tabler set), nie ręcznie kopiowane/aproksymowane. -->
+  <script src="https://cdn.jsdelivr.net/npm/iconify-icon@3.0.2/dist/iconify-icon.min.js"></script>
+  <script>
+    customElements.whenDefined('iconify-icon').then(function () {
+      customElements.get('iconify-icon').addCollection({
+        prefix: 'tabler',
+        width: 24,
+        height: 24,
+        icons: {
+          'clock': { body: '<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0-18 0"/><path d="M12 7v5l3 3"/></g>' },
+          'file-invoice': { body: '<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2M9 7h1m-1 6h6m-2 4h2"/></g>' },
+          'alert-triangle': { body: '<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m-1.637-9.409L2.257 17.125a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636-2.87L13.637 3.59a1.914 1.914 0 0 0-3.274 0M12 16h.01"/>' },
+          'eye': { body: '<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0-4 0"/><path d="M21 12q-3.6 6-9 6t-9-6q3.6-6 9-6t9 6"/></g>' },
+          'truck': { body: '<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M5 17a2 2 0 1 0 4 0a2 2 0 1 0-4 0m10 0a2 2 0 1 0 4 0a2 2 0 1 0-4 0"/><path d="M5 17H3V6a1 1 0 0 1 1-1h9v12m-4 0h6m4 0h2v-6h-8m0-5h5l3 5"/></g>' },
+          'scan': { body: '<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M3 7V5a2 2 0 0 1 2-2h2M3 17v2a2 2 0 0 0 2 2h2M17 3h2a2 2 0 0 1 2 2v2m-4 14h2a2 2 0 0 0 2-2v-2"/>' },
+          'bell': { body: '<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3H4a4 4 0 0 0 2-3v-3a7 7 0 0 1 4-6M9 17v1a3 3 0 0 0 6 0v-1"/>' },
+          'chart-dots-3': { body: '<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7a2 2 0 1 0 4 0a2 2 0 1 0-4 0m11 8a2 2 0 1 0 4 0a2 2 0 1 0-4 0m1-9a3 3 0 1 0 6 0a3 3 0 1 0-6 0M3 18a3 3 0 1 0 6 0a3 3 0 1 0-6 0m6-1l5-1.5m-7.5-7l7.81 5.37M7 7l8-1"/>' },
+          'edit': { body: '<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M7 7H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2v-1"/><path d="M20.385 6.585a2.1 2.1 0 0 0-2.97-2.97L9 12v3h3zM16 5l3 3"/></g>' },
+          'chevron-left': { body: '<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 6l-6 6l6 6"/>' },
+          'chevron-right': { body: '<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 6l6 6l-6 6"/>' },
+          'check': { body: '<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 12l5 5L20 7"/>' },
+          'mail': { body: '<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="m3 7l9 6l9-6"/></g>' },
+          'world': { body: '<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0-18 0m.6-3h16.8M3.6 15h16.8"/><path d="M11.5 3a17 17 0 0 0 0 18m1-18a17 17 0 0 1 0 18"/></g>' },
+          'brand-instagram': { body: '<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M4 8a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v8a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/><path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0-6 0m7.5-4.5v.01"/></g>' },
+          'search': { body: '<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10a7 7 0 1 0 14 0a7 7 0 1 0-14 0m18 11l-6-6"/>' },
+          'plug-connected': { body: '<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m7 12l5 5l-1.5 1.5a3.536 3.536 0 1 1-5-5zm10 0l-5-5l1.5-1.5a3.536 3.536 0 1 1 5 5zM3 21l2.5-2.5m13-13L21 3m-11 8l-2 2m5 1l-2 2"/>' },
+          'rocket': { body: '<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M4 13a8 8 0 0 1 7 7a6 6 0 0 0 3-5a9 9 0 0 0 6-8a3 3 0 0 0-3-3a9 9 0 0 0-8 6a6 6 0 0 0-5 3"/><path d="M7 14a6 6 0 0 0-3 6a6 6 0 0 0 6-3m4-8a1 1 0 1 0 2 0a1 1 0 1 0-2 0"/></g>' },
+          'arrow-down': { body: '<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14m6-6l-6 6m-6-6l6 6"/>' },
+          'arrow-right': { body: '<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14m-6 6l6-6m-6-6l6 6"/>' },
+        },
+      })
+    })
+  </script>
 
   <style>
     :root {
@@ -134,10 +171,12 @@
     #slides-wrap { position: fixed; top: var(--edit-h); left: 0; right: 0; bottom: 0; overflow: hidden; transition: top .28s; }
     .slide {
       position: absolute; inset: 0; opacity: 0; transform: translateX(28px);
-      transition: opacity .34s var(--ease), transform .34s var(--ease);
       pointer-events: none; display: flex; flex-direction: column; background: var(--bg-soft);
       will-change: opacity, transform;
     }
+    /* Przejście opacity/transform prowadzone przez GSAP (goTo()) w inline style —
+       ta reguła to WYŁĄCZNIE fallback na wypadek gdyby GSAP z CDN się nie załadował. */
+    .slide.css-fallback-transition { transition: opacity .34s cubic-bezier(.22,1,.36,1), transform .34s cubic-bezier(.22,1,.36,1); }
     .slide.active { opacity: 1; transform: translateX(0); pointer-events: all; }
 
     /* ── Arrows ── */
@@ -187,7 +226,7 @@
       background: var(--sky); margin-bottom: 6px;
       color: var(--blue);
     }
-    .c-icon svg { width: 22px; height: 22px; }
+    .c-icon iconify-icon { width: 22px; height: 22px; }
     .c-icon.ic-red    { background: rgba(194,59,59,.1);  color: var(--error); }
     .c-icon.ic-warn   { background: rgba(185,121,30,.12); color: var(--warning); }
     .c-icon.ic-green  { background: rgba(27,138,90,.1);  color: var(--success); }
@@ -228,7 +267,7 @@
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       gap: 4px; padding-bottom: 44px; color: var(--blue);
     }
-    .vbar-diff svg { width: 22px; height: 22px; }
+    .vbar-diff iconify-icon { width: 22px; height: 22px; }
     .vbar-diff span {
       font-family: var(--font-mono); font-variant-numeric: tabular-nums;
       font-size: 15px; font-weight: 700; white-space: nowrap;
@@ -262,7 +301,7 @@
     table.cmp tr:last-child td.yes { border-bottom: 1.5px solid rgba(29,95,224,.35); }
     table.cmp tr:last-child td { border-bottom: none; }
     .cmp-note, .inv-note { display: flex; align-items: flex-start; gap: 8px; margin-top: 14px; }
-    .cmp-note svg, .inv-note svg { flex-shrink: 0; margin-top: 1px; width: 16px; height: 16px; color: var(--text-tertiary); }
+    .cmp-note iconify-icon, .inv-note iconify-icon { flex-shrink: 0; margin-top: 1px; width: 16px; height: 16px; color: var(--text-tertiary); }
     .cmp-note span, .inv-note span { font-size: 14px; line-height: 1.55; color: var(--text-tertiary); text-wrap: balance; }
     .inv-note { margin-top: 22px; }
 
@@ -291,7 +330,7 @@
       display: flex; align-items: center; justify-content: center; margin-bottom: 9px;
       box-shadow: 0 0 0 4px var(--bg-soft);
     }
-    .tl-dot svg { width: 16px; height: 16px; }
+    .tl-dot iconify-icon { width: 16px; height: 16px; }
     .tl-week { font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 2px; }
     .tl-label { font-size: 13px; font-weight: 700; color: var(--navy); }
 
@@ -309,7 +348,7 @@
     .roi-val { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: clamp(30px,4vw,44px); font-weight: 700; letter-spacing: -.01em; line-height: 1; color: var(--navy); flex-shrink: 0; }
     .roi-label { font-size: 14px; font-weight: 500; color: var(--text-secondary); line-height: 1.45; }
     .roi-accent { display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; background: var(--navy); color: var(--success); flex-shrink: 0; }
-    .roi-accent svg { width: 15px; height: 15px; }
+    .roi-accent iconify-icon { width: 15px; height: 15px; }
 
     /* ── Guarantee ── */
     .guar-row   { display: flex; gap: 40px; flex-wrap: wrap; align-items: flex-start; }
@@ -326,7 +365,7 @@
     .contact-box { margin-top: 14px; padding: 14px 16px; background: var(--bg); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 1px 2px rgba(11,31,58,.04), 0 10px 28px rgba(11,31,58,.05); display: flex; flex-direction: column; gap: 9px; }
     .contact-row { display: flex; align-items: center; gap: 10px; }
     .contact-ic { width: 30px; height: 30px; border-radius: 8px; background: var(--sky); color: var(--blue); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .contact-ic svg { width: 16px; height: 16px; }
+    .contact-ic iconify-icon { width: 16px; height: 16px; }
     .contact-sub   { font-size: 10px; font-weight: 700; letter-spacing: .04em; color: var(--text-tertiary); }
     .contact-val { font-size: 15px; font-weight: 700; color: var(--navy); }
 
@@ -334,7 +373,7 @@
     .check-list { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
     .check-item { display: flex; align-items: center; gap: 10px; font-size: 14.5px; font-weight: 500; color: var(--text-secondary); }
     .check-dot  { width: 24px; height: 24px; border-radius: 50%; background: var(--sky); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--success); }
-    .check-dot svg { width: 13px; height: 13px; }
+    .check-dot iconify-icon { width: 13px; height: 13px; }
 
     /* ── Donut row ── */
     .donut-row {
@@ -384,7 +423,7 @@
       .sub { font-size: 15px; margin-bottom: 10px; }
       .tag { margin-bottom: 6px; }
       .c-icon { width: 40px; height: 40px; border-radius: 10px; margin-bottom: 6px; }
-      .c-icon svg { width: 19px; height: 19px; }
+      .c-icon iconify-icon { width: 19px; height: 19px; }
       .card { padding: 10px 12px; }
       .c-title { font-size: 14px; margin-bottom: 2px; }
       .grid2 { gap: 6px; }
@@ -404,7 +443,7 @@
       .tl { margin-top: 18px; padding: 0 2px; }
       .tl-track { top: 13px; left: 8%; right: 8%; }
       .tl-dot { width: 26px; height: 26px; margin-bottom: 6px; }
-      .tl-dot svg { width: 12px; height: 12px; }
+      .tl-dot iconify-icon { width: 12px; height: 12px; }
       .tl-week { font-size: 8.5px; }
       .tl-label { font-size: 10.5px; }
     }
@@ -420,11 +459,7 @@
 
 <!-- Edit toggle -->
 <button id="edit-toggle" title="Tryb edycji (E)">
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" />
-    <path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415" />
-    <path d="M16 5l3 3" />
-  </svg>
+  <iconify-icon icon="tabler:edit" width="15" height="15"></iconify-icon>
 </button>
 
 <!-- Edit bar -->
@@ -460,36 +495,28 @@
       <div class="grid2 ai" style="--i:3">
         <div class="card">
           <div class="c-icon ic-warn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M12 7v5l3 3" />
-            </svg>
+            <iconify-icon icon="tabler:clock"></iconify-icon>
           </div>
           <div class="c-title">Manualne wpisywanie</div>
           <p class="c-desc"><strong class="val-roi" style="color:var(--navy)">–</strong> h na spedytora miesięcznie przepada na ręczne wprowadzanie danych do systemu</p>
         </div>
         <div class="card">
           <div class="c-icon ic-red">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2" /><path d="M9 7l1 0" /><path d="M9 13l6 0" /><path d="M13 17l2 0" />
-            </svg>
+            <iconify-icon icon="tabler:file-invoice"></iconify-icon>
           </div>
           <div class="c-title">Opóźnione faktury</div>
           <p class="c-desc"><strong class="val-bol" style="color:var(--navy)">–</strong> PLN rocznie zablokowane przez błędy i opóźnienia fakturowania</p>
         </div>
         <div class="card">
           <div class="c-icon ic-red">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 9v4" /><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0" /><path d="M12 16h.01" />
-            </svg>
+            <iconify-icon icon="tabler:alert-triangle"></iconify-icon>
           </div>
           <div class="c-title">Błędy ludzkie</div>
           <p class="c-desc">Każdy ręczny wpis to ryzyko. Literówka, zły numer, brakująca pozycja na fakturze.</p>
         </div>
         <div class="card">
           <div class="c-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" /><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />
-            </svg>
+            <iconify-icon icon="tabler:eye"></iconify-icon>
           </div>
           <div class="c-title">Brak widoczności</div>
           <p class="c-desc">Nie wiadomo co się dzieje z ładunkami, dopóki klient sam nie zadzwoni i nie zapyta.</p>
@@ -535,9 +562,7 @@
           <div class="vbar-lbl">Dziś</div>
         </div>
         <div class="vbar-diff">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 5l0 14" /><path d="M18 13l-6 6l-6 -6" />
-          </svg>
+          <iconify-icon icon="tabler:arrow-down"></iconify-icon>
           <span id="vbar-diff-pct">–</span>
         </div>
         <div class="vbar-col">
@@ -574,36 +599,28 @@
       <div class="grid2 ai" style="--i:3">
         <div class="card" data-module="tms">
           <div class="c-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M5 17a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M15 17a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M5 17h-2v-11a1 1 0 0 1 1 -1h9v12m-4 0h6m4 0h2v-6h-8m0 -5h5l3 5" />
-            </svg>
+            <iconify-icon icon="tabler:truck"></iconify-icon>
           </div>
           <div class="c-title">Automatyzacja TMS</div>
           <p class="c-desc">Zlecenia trafiają do <strong class="val-tms">Trans.eu</strong> bez klikania. Zero ręcznego wpisywania, zero pomyłek.</p>
         </div>
         <div class="card" data-module="dokumenty">
           <div class="c-icon ic-warn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M5 12h14" /><path d="M3 7v-2a2 2 0 0 1 2 -2h2" /><path d="M3 17v2a2 2 0 0 0 2 2h2" /><path d="M17 3h2a2 2 0 0 1 2 2v2" /><path d="M17 21h2a2 2 0 0 0 2 -2v-2" />
-            </svg>
+            <iconify-icon icon="tabler:scan"></iconify-icon>
           </div>
           <div class="c-title">Dokumenty i pliki: CMR, POD, faktury, Excel</div>
           <p class="c-desc">CMR przywieziony przez kierowcę, POD z dostawy, faktura w PDF, dane z arkusza Excel — system odczytuje i przypisuje automatycznie. Bez przepisywania.</p>
         </div>
         <div class="card" data-module="powiadomienia">
           <div class="c-icon ic-green">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6" /><path d="M9 17v1a3 3 0 0 0 6 0v-1" />
-            </svg>
+            <iconify-icon icon="tabler:bell"></iconify-icon>
           </div>
           <div class="c-title">Powiadomienia automatyczne</div>
           <p class="c-desc">Kierowcy i klienci informowani na każdym etapie. Bez telefonów, bez SMS ręcznie.</p>
         </div>
         <div class="card" data-module="dashboard">
           <div class="c-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M3 3v18h18" /><path d="M7 9a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M17 7a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M12 15a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M10.16 10.62l2.34 2.88" /><path d="M15.088 13.328l2.837 -4.586" />
-            </svg>
+            <iconify-icon icon="tabler:chart-dots-3"></iconify-icon>
           </div>
           <div class="c-title">Dashboard zarządczy</div>
           <p class="c-desc">Widoczność całej firmy w czasie rzeczywistym. Bez chaotycznych telefonów do spedytorów.</p>
@@ -638,9 +655,7 @@
       </div>
 
       <div class="cmp-note ai" style="--i:3">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 9v4" /><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0" /><path d="M12 16h.01" />
-        </svg>
+        <iconify-icon icon="tabler:alert-triangle"></iconify-icon>
         <span>Ten model działa najlepiej przy stałym wolumenie zleceń i biurze z co najmniej dwoma spedytorami. Przy mniejszej skali klasyczny system może się sprawdzić lepiej.</span>
       </div>
     </div>
@@ -683,27 +698,21 @@
         <div class="tl-track"><div class="tl-track-fill"></div></div>
         <div class="tl-point">
           <div class="tl-dot">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" /><path d="M21 21l-6 -6" />
-            </svg>
+            <iconify-icon icon="tabler:search"></iconify-icon>
           </div>
           <div class="tl-week">Tydzień 1</div>
           <div class="tl-label">Discovery</div>
         </div>
         <div class="tl-point">
           <div class="tl-dot">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M7 12l5 5l-1.5 1.5a3.536 3.536 0 1 1 -5 -5l1.5 -1.5z" /><path d="M17 12l-5 -5l1.5 -1.5a3.536 3.536 0 1 1 5 5l-1.5 1.5z" /><path d="M3 21l2.5 -2.5" /><path d="M18.5 5.5l2.5 -2.5" /><path d="M10 11l-2 2" /><path d="M13 14l-2 2" />
-            </svg>
+            <iconify-icon icon="tabler:plug-connected"></iconify-icon>
           </div>
           <div class="tl-week">Tydzień 2-3</div>
           <div class="tl-label">Integracja</div>
         </div>
         <div class="tl-point">
           <div class="tl-dot">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 13a8 8 0 0 1 7 7a6 6 0 0 0 3 -5a9 9 0 0 0 6 -8a3 3 0 0 0 -3 -3a9 9 0 0 0 -8 6a6 6 0 0 0 -5 3" /><path d="M7 14a6 6 0 0 0 -3 6a6 6 0 0 0 6 -3" /><path d="M15 9m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
-            </svg>
+            <iconify-icon icon="tabler:rocket"></iconify-icon>
           </div>
           <div class="tl-week">Tydzień 4</div>
           <div class="tl-label">Live</div>
@@ -724,10 +733,8 @@
           <div class="pc-val red"><span class="val-bol-k">–</span> PLN</div>
           <div class="pc-sub">rocznie, każdego roku</div>
         </div>
-        <div style="display:flex;align-items:center;padding:0 4px;flex-shrink:0;">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M5 12l14 0" /><path d="M13 18l6 -6" /><path d="M13 6l6 6" />
-          </svg>
+        <div style="display:flex;align-items:center;padding:0 4px;flex-shrink:0;color:var(--text-tertiary);">
+          <iconify-icon icon="tabler:arrow-right" width="20" height="20"></iconify-icon>
         </div>
         <div class="price-card">
           <div class="pc-tag">Autorise kosztuje</div>
@@ -739,9 +746,7 @@
       <div class="roi-row ai" style="--i:3">
         <div class="roi-metric">
           <div class="roi-accent">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M5 12l5 5l10 -10" />
-            </svg>
+            <iconify-icon icon="tabler:check"></iconify-icon>
           </div>
           <div>
             <div class="roi-val"><span id="pct-inv">–</span>%</div>
@@ -750,9 +755,7 @@
         </div>
         <div class="roi-metric">
           <div class="roi-accent">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M5 12l5 5l10 -10" />
-            </svg>
+            <iconify-icon icon="tabler:check"></iconify-icon>
           </div>
           <div>
             <div class="roi-val"><span id="months-inv">–</span> mies.</div>
@@ -762,9 +765,7 @@
       </div>
 
       <div class="inv-note ai" style="--i:4">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 9v4" /><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0" /><path d="M12 16h.01" />
-        </svg>
+        <iconify-icon icon="tabler:alert-triangle" width="16" height="16"></iconify-icon>
         <span id="inv-note-text">W realnej ofercie te liczby liczone są indywidualnie z danych Waszej firmy zebranych podczas rozmowy kwalifikacyjnej, nie z uśrednionego cennika.</span>
       </div>
     </div>
@@ -785,19 +786,19 @@
           <div class="check-list" style="margin-top:12px;gap:8px;">
             <div class="check-item">
               <div class="check-dot">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5l10 -10" /></svg>
+                <iconify-icon icon="tabler:check"></iconify-icon>
               </div>
               Weryfikacja po 30 dniach na realnych zleceniach
             </div>
             <div class="check-item">
               <div class="check-dot">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5l10 -10" /></svg>
+                <iconify-icon icon="tabler:check"></iconify-icon>
               </div>
               Zwrot 100% jeśli cel nieosiągnięty
             </div>
             <div class="check-item">
               <div class="check-dot">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5l10 -10" /></svg>
+                <iconify-icon icon="tabler:check"></iconify-icon>
               </div>
               Warunki gwarancji zapisane w umowie
             </div>
@@ -833,9 +834,7 @@
           <div class="contact-box">
             <div class="contact-row">
               <div class="contact-ic">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-10" /><path d="M3 7l9 6l9 -6" />
-                </svg>
+                <iconify-icon icon="tabler:mail"></iconify-icon>
               </div>
               <div>
                 <div class="contact-sub">Kontakt ogólny (support)</div>
@@ -844,9 +843,7 @@
             </div>
             <div class="contact-row">
               <div class="contact-ic">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-10" /><path d="M3 7l9 6l9 -6" />
-                </svg>
+                <iconify-icon icon="tabler:mail"></iconify-icon>
               </div>
               <div>
                 <div class="contact-sub">Michał, kontakt bezpośredni do Foundera</div>
@@ -855,9 +852,7 @@
             </div>
             <div class="contact-row">
               <div class="contact-ic">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M3.6 9h16.8" /><path d="M3.6 15h16.8" /><path d="M11.5 3a17 17 0 0 0 0 18" /><path d="M12.5 3a17 17 0 0 1 0 18" />
-                </svg>
+                <iconify-icon icon="tabler:world"></iconify-icon>
               </div>
               <div>
                 <div class="contact-sub">Nasza strona główna</div>
@@ -866,9 +861,7 @@
             </div>
             <div class="contact-row">
               <div class="contact-ic">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M4 8a4 4 0 0 1 4 -4h8a4 4 0 0 1 4 4v8a4 4 0 0 1 -4 4h-8a4 4 0 0 1 -4 -4l0 -8" /><path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /><path d="M16.5 7.5v.01" />
-                </svg>
+                <iconify-icon icon="tabler:brand-instagram"></iconify-icon>
               </div>
               <div>
                 <div class="contact-sub">Oficjalny Instagram</div>
@@ -895,10 +888,10 @@
 
 <!-- Arrows -->
 <button class="arr" id="btn-prev">
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6l6 6" /></svg>
+  <iconify-icon icon="tabler:chevron-left" width="16" height="16"></iconify-icon>
 </button>
 <button class="arr" id="btn-next">
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6l-6 6" /></svg>
+  <iconify-icon icon="tabler:chevron-right" width="16" height="16"></iconify-icon>
 </button>
 
 <script>
@@ -1045,30 +1038,62 @@ function applyValues() {
   document.getElementById('ei-gwar').value = gwar
 }
 
-function triggerStagger(slideEl) {
-  const els = slideEl.querySelectorAll('.ai')
-  els.forEach(el => el.classList.remove('sp'))
-  void slideEl.offsetWidth
-  els.forEach(el => {
-    el.classList.add('sp')
-    el.addEventListener('animationend', () => { el.style.willChange = 'auto' }, { once: true })
+// Silnik animacji: GSAP + CustomEase (z tymi samymi krzywymi co poprzednio w czystym CSS,
+// przepisanymi jeden do jednego: cubic-bezier(.22,1,.36,1) dla przejść slajdów,
+// cubic-bezier(.16,1,.3,1) dla stagger reveal) — efekt wizualny końcowy identyczny,
+// zmienia się tylko silnik wykonujący. gsapReady=false (CDN padł) → pełny fallback na
+// stary, wcześniej zweryfikowany mechanizm CSS-transition + @keyframes fadeUp + setTimeout,
+// zero regresji jeśli GSAP z jakiegoś powodu się nie załaduje na żywej prezentacji u klienta.
+const gsapReady = typeof gsap !== 'undefined' && typeof CustomEase !== 'undefined'
+let slideEase = null
+let staggerEase = null
+let REDUCE_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+if (gsapReady) {
+  gsap.registerPlugin(CustomEase)
+  slideEase = CustomEase.create('slideEase', '0.22, 1, 0.36, 1')
+  staggerEase = CustomEase.create('staggerEase', '0.16, 1, 0.3, 1')
+  // gsap.matchMedia (zgodnie z instrukcją) zamiast jednorazowego odczytu — reaguje też na
+  // zmianę ustawienia systemowego w trakcie sesji, nie tylko na stan przy starcie strony.
+  gsap.matchMedia().add('(prefers-reduced-motion: reduce)', () => {
+    REDUCE_MOTION = true
+    return () => { REDUCE_MOTION = false }
   })
+}
+
+function triggerStagger(slideEl) {
+  const els = [...slideEl.querySelectorAll('.ai')]
+  if (!gsapReady) {
+    // Fallback: stary mechanizm CSS (@keyframes fadeUp), nietknięty.
+    els.forEach(el => el.classList.remove('sp'))
+    void slideEl.offsetWidth
+    els.forEach(el => {
+      el.classList.add('sp')
+      el.addEventListener('animationend', () => { el.style.willChange = 'auto' }, { once: true })
+    })
+  } else if (REDUCE_MOTION) {
+    gsap.set(els, { opacity: 1, y: 0 })
+  } else {
+    gsap.set(els, { opacity: 0, y: 18 })
+    els.forEach(el => {
+      const i = Number.parseFloat(getComputedStyle(el).getPropertyValue('--i')) || 0
+      gsap.to(el, { opacity: 1, y: 0, duration: 0.4, delay: i * 0.045, ease: staggerEase })
+    })
+  }
   if (slideEl.id === 's2') animateVbars(slideEl)
 }
 
-// Narastanie słupków słupkowego wykresu Dziś/Po wdrożeniu (slajd 2), GSAP, tylko przy
+// Narastanie słupków słupkowego wykresu Dziś/Po wdrożeniu (slajd 2), tylko przy
 // pierwszym wejściu na slajd — ten sam gate co triggerStagger. Wysokość docelowa czytana
 // z data-target ustawionego w applyValues() (aktualne wtedy gdy animacja startuje).
 function animateVbars(slideEl) {
   const dzis = slideEl.querySelector('#vbar-dzis')
   const po = slideEl.querySelector('#vbar-po')
-  if (!dzis || !po || typeof gsap === 'undefined') return
-  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  if (!dzis || !po) return
   const targets = [
     { el: dzis, pct: Number.parseFloat(dzis.dataset.target || '0') },
     { el: po, pct: Number.parseFloat(po.dataset.target || '0') },
   ]
-  if (reduceMotion) {
+  if (!gsapReady || REDUCE_MOTION) {
     targets.forEach(({ el, pct }) => { el.style.height = pct + '%' })
     return
   }
@@ -1092,27 +1117,45 @@ function goTo(idx, dir) {
   if (idx === cur || idx < 0 || idx >= TOTAL) return
   const out = slides[cur], inn = slides[idx]
 
-  out.style.transition = 'opacity .34s cubic-bezier(.22,1,.36,1), transform .34s cubic-bezier(.22,1,.36,1)'
-  out.style.opacity = '0'
-  out.style.transform = dir > 0 ? 'translateX(-28px)' : 'translateX(28px)'
-
-  inn.style.cssText = 'transition:none;opacity:0;transform:' + (dir > 0 ? 'translateX(28px)' : 'translateX(-28px)')
-  inn.classList.add('active')
-  inn.offsetHeight
-  inn.style.transition = 'opacity .34s cubic-bezier(.22,1,.36,1), transform .34s cubic-bezier(.22,1,.36,1)'
-  inn.style.opacity = '1'
-  inn.style.transform = 'translateX(0)'
-
-  // Stagger reveal plays once per slide, on first visit only. Re-triggering it on a
-  // repeat visit would remove+re-add the .sp class on already-visible elements, snapping
-  // their opacity from 1 to 0 for the length of the stagger delay before fading back in —
-  // a visible flash-to-blank. Confirmed by sampling computed opacity every ~9ms across a
-  // repeat visit: opacity held at 1, then hard-dropped to 0 for ~176ms, then eased back in.
-  if (!visitedSlides.has(idx)) {
-    setTimeout(() => triggerStagger(inn), 340)
-    visitedSlides.add(idx)
+  if (!gsapReady) {
+    // Fallback: stary mechanizm CSS-transition, nietknięty, identyczny jak przed migracją.
+    out.classList.add('css-fallback-transition')
+    inn.classList.add('css-fallback-transition')
+    out.style.opacity = '0'
+    out.style.transform = dir > 0 ? 'translateX(-28px)' : 'translateX(28px)'
+    inn.style.cssText = 'transition:none;opacity:0;transform:' + (dir > 0 ? 'translateX(28px)' : 'translateX(-28px)')
+    inn.classList.add('active')
+    inn.offsetHeight
+    inn.style.transition = 'opacity .34s cubic-bezier(.22,1,.36,1), transform .34s cubic-bezier(.22,1,.36,1)'
+    inn.style.opacity = '1'
+    inn.style.transform = 'translateX(0)'
+    if (!visitedSlides.has(idx)) { setTimeout(() => triggerStagger(inn), 340); visitedSlides.add(idx) }
+    setTimeout(() => { out.classList.remove('active'); out.style.cssText = ''; inn.style.cssText = '' }, 340)
+  } else if (REDUCE_MOTION) {
+    inn.classList.add('active')
+    gsap.set(inn, { opacity: 1, x: 0 })
+    out.classList.remove('active')
+    gsap.set([out, inn], { clearProps: 'opacity,transform' })
+    if (!visitedSlides.has(idx)) { triggerStagger(inn); visitedSlides.add(idx) }
+  } else {
+    // Ten sam dwuetapowy taniec co poprzednio (out fade+slide out, inn fade+slide in,
+    // 340ms zanim stagger reveal ruszy) — teraz jako gsap.to() zamiast CSS transition +
+    // ręcznego stylowania, timing i kierunek przesunięcia identyczne co wcześniej.
+    inn.classList.add('active')
+    gsap.set(inn, { opacity: 0, x: dir > 0 ? 28 : -28 })
+    gsap.to(out, { opacity: 0, x: dir > 0 ? -28 : 28, duration: 0.34, ease: slideEase })
+    gsap.to(inn, {
+      opacity: 1, x: 0, duration: 0.34, ease: slideEase,
+      onComplete: () => {
+        out.classList.remove('active')
+        gsap.set([out, inn], { clearProps: 'opacity,transform' })
+      },
+    })
+    if (!visitedSlides.has(idx)) {
+      setTimeout(() => triggerStagger(inn), 340)
+      visitedSlides.add(idx)
+    }
   }
-  setTimeout(() => { out.classList.remove('active'); out.style.cssText = ''; inn.style.cssText = '' }, 340)
 
   cur = idx
   updateNav()
