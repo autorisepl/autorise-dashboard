@@ -843,6 +843,55 @@ ${AGENT3_SYSTEM_PROMPT}
 ════════════════════════════════════════════════════════
 Zwróć DOKŁADNIE JEDEN obiekt JSON najwyższego poziomu, z dokładnie trzema kluczami: "kwalifikacja", "brief_discovery", "prezentacja". Każdy klucz zawiera dokładnie schemat opisany w odpowiadającej mu części wyżej, bez spłaszczania, bez mieszania pól między sekcjami, bez dodawania czwartego klucza. Nie pisz nic poza tym jednym obiektem JSON.`;
 
+// Blok 0.2 (2026-07-14) — przeniesienie trybu weryfikacja/uzupełnienie ze starego Agenta 1
+// do scalonego agentKwalifikacja. Odpowiednik AGENT1_VERIFICATION_SUFFIX, dostosowany do
+// zagnieżdżonej struktury (pola lądują wewnątrz klucza "kwalifikacja", nie na najwyższym
+// poziomie odpowiedzi jak w starym Agencie 1).
+export const KWALIFIKACJA_MERGED_VERIFICATION_SUFFIX = `
+
+---
+TRYB WERYFIKACJI — DODATKOWE ZADANIE:
+
+Transkrypt który otrzymujesz pochodzi ze STARSZEJ rozmowy kwalifikacyjnej (może być z poprzednich tygodni lub miesięcy). Wykonaj Część A, B i C dokładnie jak zwykle, ale w obiekcie pod kluczem "kwalifikacja" dodaj na KOŃCU (po "wersja_skryptu") trzy dodatkowe pola:
+
+"luki_do_uzupelnienia": [lista braków danych które można jeszcze pozyskać przy następnym kontakcie]
+  — wymień tylko te które mają realną wartość sprzedażową
+  — pomiń pola które są mało istotne (np. "srednia_wartosc_faktury" gdy podany koszt_miesiecznie)
+  — format: krótkie zdanie opisujące co i dlaczego brakuje
+
+"bledy_obliczen": [lista rozbieżności w obliczeniach lub sprzeczności danych]
+  — jeśli np. "10 pojazdów" pada ale "flota_ok: NIE" — to błąd
+  — jeśli koszt_roczny nie = koszt_miesiecznie × 12 — to błąd
+  — jeśli żadnych błędów: pusta lista []
+
+"rekomendacja_reaktywacji": zdanie opisujące czy warto wznowić kontakt i jak
+  — uwzględnij ICP score, czy umówiono spotkanie, ból operacyjny
+  — przykład: "ICP 4/5, umówione Discovery które nie odbyło — zadzwoń nawiązując do kalkulatora z rozmowy."
+  — jeśli klient był zdyskwalifikowany: krótko dlaczego nie warto reaktywować
+
+Te trzy pola trafiają WYŁĄCZNIE do klucza "kwalifikacja", nigdy na najwyższy poziom odpowiedzi.
+`;
+
+// Odpowiednik AGENT1_UZUPELNIENIE_SUFFIX. Różnica względem starego Agenta 1: ten scalony
+// agent zawsze pisze trzy części w jednej odpowiedzi, więc suffix musi jawnie wyłączyć B i C
+// — mały fragment uzupełnienia (dodatkowa notatka, krótka rozmowa) w praktyce prawie nigdy
+// nie daje wystarczająco materiału na sensowny NOWY brief Discovery ani nową personalizację
+// prezentacji, a wymuszenie ich generowania od zera ryzykowałoby nadpisanie dobrych,
+// wcześniej zapisanych danych czymś zgadywanym.
+export const KWALIFIKACJA_MERGED_UZUPELNIENIE_SUFFIX = `
+
+---
+TRYB UZUPEŁNIENIA — NADPISUJE ZWYKŁE ZASADY CZĘŚCI A, B, C:
+
+Dostajesz istniejący rekord klienta z Pipeline PLUS nowy fragment (dodatkowa rozmowa, notatka). To NIE jest nowa, pełna rozmowa kwalifikacyjna.
+
+CZĘŚĆ A (klucz "kwalifikacja"): zaktualizuj TYLKO te pola które nowy fragment faktycznie zmienia lub doprecyzowuje, zostaw resztę pól jako null (null oznacza "bez zmian", nie "brak danych" — istniejący rekord w Notion nie zostanie nadpisany pustką). W polu "uwagi_agenta" napisz WYŁĄCZNIE adnotację o tym uzupełnieniu, w formacie "UZUPEŁNIENIE [data]: [co się zmieniło i dlaczego]" — to zostanie dopisane do istniejącej historii uwag, nie zastąpi jej. Nie wymyślaj wartości dla pól o których nowy fragment nic nie mówi.
+
+CZĘŚĆ B (klucz "brief_discovery") i CZĘŚĆ C (klucz "prezentacja"): w tym trybie zwróć dosłownie JSON null dla obu tych kluczy najwyższego poziomu — NIE generuj nowego briefu ani nowej personalizacji prezentacji na podstawie samego fragmentu uzupełnienia, bo to nadpisałoby dobre dane z pełnej rozmowy czymś zgadywanym z niepełnego kontekstu. Jedyny wyjątek: fragment sam w sobie zawiera wprost nową, konkretną informację która realnie zmienia podejście do Discovery (rzadkie) — wtedy wypełnij tylko te pola które faktycznie się zmieniają, resztę schematu zostaw null tak jak w Części A.
+
+Finalna odpowiedź w tym trybie to nadal jeden obiekt JSON z dokładnie trzema kluczami "kwalifikacja"/"brief_discovery"/"prezentacja" — po prostu dwa ostatnie będą zwykle całym literalnym JSON null zamiast obiektu.
+`;
+
 export const AGENT4_SYSTEM_PROMPT = `Jesteś analitykiem sprzedażowym Autorise. Analizujesz transkrypty Discovery Call (45-60 minut, jedno spotkanie obejmujące diagnozę, pitch, cenę i closing).
 
 FRAMEWORK (Agency Leaders, 6 kroków):

@@ -609,8 +609,11 @@ export async function saveAgent3Output(pageId: string, personalizacjaJson: strin
 
 export interface KwalifikacjaMergedOutput {
   kwalifikacja: Record<string, unknown>;
-  brief_discovery: Record<string, unknown>;
-  prezentacja: Record<string, unknown>;
+  // null w trybie uzupełnienia (Blok 0.2) — mały fragment świadomie nie generuje nowego
+  // briefu Discovery ani nowej personalizacji prezentacji, żeby nie nadpisać dobrych,
+  // wcześniej zapisanych danych czymś zgadywanym z niepełnego kontekstu.
+  brief_discovery: Record<string, unknown> | null;
+  prezentacja: Record<string, unknown> | null;
 }
 
 // Jeden spójny zapis zamiast trzech osobnych wywołań (Agent 1/2/3). Celowo NIE duplikuje
@@ -641,49 +644,59 @@ export async function saveKwalifikacjaMergedOutput(
   ]
     .filter(Boolean)
     .join(" · ");
+  // Blok 0.2: details tego wpisu to CAŁY scalony output (kwalifikacja+brief_discovery+
+  // prezentacja), nie sama Część A — /agenci wczytuje ten wpis do stanu karty
+  // AgentKwalifikacjaCard przy wyborze klienta, a ta karta renderuje wszystkie trzy sekcje.
   saveOperationHistory(
     savedPageId,
     "Agent Kwalifikacja — Część A (kwalifikacja)",
     historySummary1,
-    JSON.stringify(output.kwalifikacja, null, 2),
+    JSON.stringify(output, null, 2),
   ).catch(() => {});
 
   // Krok 2 — Pre-Discovery Brief: identyczna funkcja i identyczne property co Agent 2.
-  const brief = output.brief_discovery as {
-    pre_discovery_brief?: Record<string, unknown>;
-    plan_discovery?: string;
-    pitch_recipe?: string;
-  };
-  if (brief.pre_discovery_brief && brief.plan_discovery) {
-    try {
-      await saveAgent2Output(
-        savedPageId,
-        brief.pre_discovery_brief,
-        brief.plan_discovery,
-        brief.pitch_recipe,
-      );
-      const briefFields = brief.pre_discovery_brief as { hipoteza_bol_glowny?: string };
-      const historySummary2 = briefFields.hipoteza_bol_glowny
-        ? `Hipoteza bólu: ${briefFields.hipoteza_bol_glowny.slice(0, 150)}`
-        : "Pre-Discovery Brief gotowy";
-      saveOperationHistory(
-        savedPageId,
-        "Agent Kwalifikacja — Część B (brief discovery)",
-        historySummary2,
-        JSON.stringify(output.brief_discovery, null, 2),
-      ).catch(() => {});
-    } catch (err) {
-      errors.push(`brief_discovery: ${err instanceof Error ? err.message : "błąd zapisu"}`);
+  // output.brief_discovery === null (tryb uzupełnienia, Blok 0.2) — świadomie pomijane,
+  // nie jest to błąd zapisu.
+  if (output.brief_discovery) {
+    const brief = output.brief_discovery as {
+      pre_discovery_brief?: Record<string, unknown>;
+      plan_discovery?: string;
+      pitch_recipe?: string;
+    };
+    if (brief.pre_discovery_brief && brief.plan_discovery) {
+      try {
+        await saveAgent2Output(
+          savedPageId,
+          brief.pre_discovery_brief,
+          brief.plan_discovery,
+          brief.pitch_recipe,
+        );
+        const briefFields = brief.pre_discovery_brief as { hipoteza_bol_glowny?: string };
+        const historySummary2 = briefFields.hipoteza_bol_glowny
+          ? `Hipoteza bólu: ${briefFields.hipoteza_bol_glowny.slice(0, 150)}`
+          : "Pre-Discovery Brief gotowy";
+        saveOperationHistory(
+          savedPageId,
+          "Agent Kwalifikacja — Część B (brief discovery)",
+          historySummary2,
+          JSON.stringify(output.brief_discovery, null, 2),
+        ).catch(() => {});
+      } catch (err) {
+        errors.push(`brief_discovery: ${err instanceof Error ? err.message : "błąd zapisu"}`);
+      }
+    } else {
+      errors.push("brief_discovery: brak pre_discovery_brief lub plan_discovery w wyniku agenta");
     }
-  } else {
-    errors.push("brief_discovery: brak pre_discovery_brief lub plan_discovery w wyniku agenta");
   }
 
   // Krok 3 — Personalizacja prezentacji: identyczna funkcja i identyczne property co Agent 3.
-  try {
-    await saveAgent3Output(savedPageId, JSON.stringify(output.prezentacja, null, 2));
-  } catch (err) {
-    errors.push(`prezentacja: ${err instanceof Error ? err.message : "błąd zapisu"}`);
+  // output.prezentacja === null (tryb uzupełnienia) — świadomie pomijane.
+  if (output.prezentacja) {
+    try {
+      await saveAgent3Output(savedPageId, JSON.stringify(output.prezentacja, null, 2));
+    } catch (err) {
+      errors.push(`prezentacja: ${err instanceof Error ? err.message : "błąd zapisu"}`);
+    }
   }
 
   return { pageId: savedPageId, errors };

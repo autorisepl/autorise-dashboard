@@ -9,8 +9,9 @@ import { Agent3Card } from "./Agent3Card";
 
 export interface KwalifikacjaMergedOutput {
   kwalifikacja?: Agent1Output;
-  brief_discovery?: Agent2Output;
-  prezentacja?: Agent3Output;
+  // null w trybie uzupełnienia (Blok 0.2) — patrz KWALIFIKACJA_MERGED_UZUPELNIENIE_SUFFIX.
+  brief_discovery?: Agent2Output | null;
+  prezentacja?: Agent3Output | null;
 }
 
 // Scalony Agent Kwalifikacja (Etap 4 patcha) — jeden wynik złożony z trzech sekcji o
@@ -65,16 +66,27 @@ function PartHeader({ letter, title }: { letter: string; title: string }) {
 }
 
 export function AgentKwalifikacjaCard({ output }: { output: KwalifikacjaMergedOutput }) {
+  // Blok 0.2 — tryb uzupełnienia zwraca brief_discovery/prezentacja jako null (świadomie
+  // pominięte, patrz KWALIFIKACJA_MERGED_UZUPELNIENIE_SUFFIX), więc te sekcje się nie renderują
+  // zamiast pokazywać puste, mylące karty B/C.
   return (
     <div>
       <PartHeader letter="A" title="Kwalifikacja i ICP" />
       <Agent1Card output={output.kwalifikacja ?? {}} />
 
-      <PartHeader letter="B" title="Brief do Discovery" />
-      <Agent2Card output={output.brief_discovery ?? {}} />
+      {output.brief_discovery && (
+        <>
+          <PartHeader letter="B" title="Brief do Discovery" />
+          <Agent2Card output={output.brief_discovery} />
+        </>
+      )}
 
-      <PartHeader letter="C" title="Dane do prezentacji" />
-      <Agent3Card output={output.prezentacja ?? {}} />
+      {output.prezentacja && (
+        <>
+          <PartHeader letter="C" title="Dane do prezentacji" />
+          <Agent3Card output={output.prezentacja} />
+        </>
+      )}
     </div>
   );
 }

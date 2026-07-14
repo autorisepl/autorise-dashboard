@@ -25,6 +25,16 @@ const AGENT_IDS: AgentId[] = [
 ];
 const SETTER_VISIBLE_AGENT_TABS: AgentId[] = ["agentKwalifikacja", "agent4"];
 
+// Blok 0.2 — tryb "Nowa analiza" auto-wczytuje ostatnią zapisaną analizę z historii Notion
+// dla agentów które ją zapisują pod tym typem wpisu (patrz saveOperationHistory w client.ts).
+const HISTORY_TYPE_BY_AGENT: Partial<Record<AgentId, string>> = {
+  agent1: "Agent 01 — Analiza kwalifikacyjna",
+  agentKwalifikacja: "Agent Kwalifikacja — Część A (kwalifikacja)",
+};
+
+// Agenci którzy wspierają tryb weryfikacja/uzupełnienie (przełącznik w tab bar).
+const MODE_CAPABLE_AGENTS: AgentId[] = ["agent1", "agentKwalifikacja"];
+
 const INITIAL_STATE: AgentState = {
   transcript: "",
   agent1Json: "",
@@ -232,23 +242,26 @@ function AgenciPageInner() {
     (id: string) => {
       setSelectedClientIds((prev) => ({ ...prev, [activeAgent]: id }));
 
-      // Część 7: jeśli dla tego klienta istnieje już zapisana analiza Agenta 01, wczytaj ją
-      // od razu zamiast wymuszać ponowne uruchomienie.
-      if (activeAgent === "agent1" && id && analysisMode === "nowa") {
+      // Część 7 (przeniesione do agentKwalifikacja w Bloku 0.2): jeśli dla tego klienta
+      // istnieje już zapisana analiza, wczytaj ją od razu zamiast wymuszać ponowne
+      // uruchomienie.
+      const historyType = HISTORY_TYPE_BY_AGENT[activeAgent];
+      if (historyType && id && analysisMode === "nowa") {
+        const loadingAgent = activeAgent;
         void (async () => {
           try {
             const histRes = await fetch(`/api/notion/client-history?pageId=${id}`);
             const histData = await histRes.json();
             if (!histData.success) return;
             const entry = (histData.history as Array<{ id: string; type: string }>).find(
-              (h) => h.type === "Agent 01 — Analiza kwalifikacyjna",
+              (h) => h.type === historyType,
             );
             if (!entry) return;
             const detailRes = await fetch(`/api/notion/client-history?entryId=${entry.id}`);
             const detailData = await detailRes.json();
             if (!detailData.success || !detailData.details) return;
             const output = JSON.parse(detailData.details);
-            updateAgentState("agent1", {
+            updateAgentState(loadingAgent, {
               status: "done",
               output,
               loadedFromHistory: true,
@@ -312,7 +325,7 @@ function AgenciPageInner() {
     const primaryInput = state.transcript.trim();
     if (!primaryInput) return;
     if (
-      activeAgent === "agent1" &&
+      MODE_CAPABLE_AGENTS.includes(activeAgent) &&
       analysisMode === "uzupelnienie" &&
       !selectedClientIds[activeAgent]
     ) {
@@ -343,10 +356,10 @@ function AgenciPageInner() {
         notion_page_id: selectedClientId || undefined,
       };
 
-      if (activeAgent === "agent1" && analysisMode === "uzupelnienie") {
+      if (MODE_CAPABLE_AGENTS.includes(activeAgent) && analysisMode === "uzupelnienie") {
         payload.mode = "uzupelnienie";
         payload.existing_client_id = selectedClientId || undefined;
-      } else if (activeAgent === "agent1" && verificationMode) {
+      } else if (MODE_CAPABLE_AGENTS.includes(activeAgent) && verificationMode) {
         payload.mode = "weryfikacja";
       }
 
@@ -527,7 +540,7 @@ function AgenciPageInner() {
             onClick={() => changeAgent(tab.id)}
           />
         ))}
-        {activeAgent === "agent1" && (
+        {MODE_CAPABLE_AGENTS.includes(activeAgent) && (
           <div style={{ display: "flex", gap: 6, marginLeft: "auto", paddingRight: 4 }}>
             <button
               onClick={() => setAnalysisMode("nowa")}
@@ -563,7 +576,7 @@ function AgenciPageInner() {
             </button>
           </div>
         )}
-        {activeAgent === "agent1" && analysisMode === "nowa" && (
+        {MODE_CAPABLE_AGENTS.includes(activeAgent) && analysisMode === "nowa" && (
           <label
             style={{
               display: "flex",
@@ -632,9 +645,11 @@ function AgenciPageInner() {
           onNotionPush={handleNotionPush}
           onCopy={handleCopy}
           copied={copied}
-          bypassDriveRequirement={activeAgent === "agent1" && analysisMode === "uzupelnienie"}
+          bypassDriveRequirement={
+            MODE_CAPABLE_AGENTS.includes(activeAgent) && analysisMode === "uzupelnienie"
+          }
           transcriptFieldOverride={
-            activeAgent === "agent1" && analysisMode === "uzupelnienie"
+            MODE_CAPABLE_AGENTS.includes(activeAgent) && analysisMode === "uzupelnienie"
               ? {
                   label: "Uzupełnienie do istniejącego klienta",
                   placeholder:
