@@ -1,15 +1,33 @@
 "use client";
 
-import { ArrowRight, ExternalLink, Loader2, Mail, Phone, RefreshCw, X } from "lucide-react";
+import {
+  ArrowDownAZ,
+  ArrowRight,
+  ArrowUpAZ,
+  ExternalLink,
+  Loader2,
+  RefreshCw,
+  X,
+} from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import type { PipelineClientDetailed } from "@/app/api/notion/pipeline/route";
+import { type PipelineClientDetailed, SKRYPT_V4_DATA } from "@/app/api/notion/pipeline/route";
+import { ClientCompanyLine, ClientContactDetails } from "@/components/clients/ClientContactDetails";
 import { Button } from "@/components/ui/Button";
 
 // ── Constants ────────────────────────────────────────────────────────
 
+// Blok 1, punkt 1.4 — klucz localStorage dla kierunku sortowania kart w kolumnach Kanbanu.
+const PIPELINE_SORT_KEY = "autorise_pipeline_sort_direction";
+
 const ROW1 = ["Nowy lead", "Kwalifikacja", "Discovery umówione", "Finalizacja"];
 const ROW2 = ["Kickoff", "Wdrożenie", "Retainer", "Niekwalifikowany"];
-const PIPELINE_STATUSES = [...ROW1, ...ROW2];
+// Blok 1, punkt 1.2 (2026-07-14) — brakujący ROW3, znaleziony przy audycie statusów: te trzy
+// wartości enuma Status istniały w schemacie Notion i w /mapa, ale nie miały żadnej kolumny w
+// tym Kanbanie — karta z takim statusem była tu całkowicie niewidoczna (grouped/reduce niżej
+// buduje kubełki WYŁĄCZNIE z PIPELINE_STATUSES). CLAUDE.md błędnie dokumentował istnienie
+// "3 rzędów" mimo że w kodzie były tylko dwa — poprawione razem z dodaniem tego wiersza.
+const ROW3 = ["Nieaktywny (follow up)", "Upsell", "Zakończona współpraca"];
+const PIPELINE_STATUSES = [...ROW1, ...ROW2, ...ROW3];
 
 const STATUS_COLORS: Record<string, string> = {
   "Nowy lead": "var(--accent)",
@@ -20,6 +38,9 @@ const STATUS_COLORS: Record<string, string> = {
   Wdrożenie: "#15803d",
   Retainer: "#166534",
   Niekwalifikowany: "var(--text-tertiary)",
+  "Nieaktywny (follow up)": "var(--warning)",
+  Upsell: "#0ea5e9",
+  "Zakończona współpraca": "#64748b",
 };
 
 // ── Helpers ──────────────────────────────────────────────────────────
@@ -55,53 +76,44 @@ function ClientCard({ client, onClick }: { client: PipelineClientDetailed; onCli
         flexShrink: 0,
       }}
     >
-      <div
-        style={{
-          fontFamily: "var(--font-sans)",
-          fontSize: 13,
-          fontWeight: 600,
-          color: "var(--text-primary)",
-          marginBottom: 2,
-          letterSpacing: "-0.01em",
-        }}
-      >
-        {client.kontakt || client.firma}
-      </div>
-      {client.firma && client.kontakt && client.firma !== client.kontakt && (
-        <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 4 }}>
-          {client.firma}
+      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
+        <div
+          style={{
+            fontFamily: "var(--font-sans)",
+            fontSize: 13,
+            fontWeight: 600,
+            color: "var(--text-primary)",
+            letterSpacing: "-0.01em",
+            flex: 1,
+            minWidth: 0,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {client.kontakt || client.firma}
         </div>
-      )}
-      <div style={{ display: "flex", flexDirection: "column", gap: 2, marginTop: 4 }}>
-        {client.telefon && (
-          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-            <Phone size={10} color="var(--text-tertiary)" />
-            <span
-              style={{
-                fontFamily: "var(--font-sans)",
-                fontSize: 11,
-                color: "var(--text-secondary)",
-              }}
-            >
-              {client.telefon}
-            </span>
-          </div>
-        )}
-        {client.email && (
-          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-            <Mail size={10} color="var(--text-tertiary)" />
-            <span
-              style={{
-                fontFamily: "var(--font-sans)",
-                fontSize: 11,
-                color: "var(--text-secondary)",
-              }}
-            >
-              {client.email}
-            </span>
-          </div>
+        {client.utracony && (
+          <span
+            style={{
+              fontSize: 9,
+              fontWeight: 700,
+              letterSpacing: "0.04em",
+              textTransform: "uppercase",
+              color: "var(--error)",
+              background: "var(--error-bg)",
+              border: "1px solid var(--error-border)",
+              borderRadius: "var(--radius-xs)",
+              padding: "1px 5px",
+              flexShrink: 0,
+            }}
+          >
+            Utracony
+          </span>
         )}
       </div>
+      <ClientCompanyLine client={client} style={{ marginBottom: 4 }} />
+      <ClientContactDetails client={client} />
       <div
         style={{
           display: "flex",
@@ -241,13 +253,60 @@ function KanbanColumn({
 
 // ── Side panel ───────────────────────────────────────────────────────
 
-function ClientPanel({ client, onClose }: { client: PipelineClientDetailed; onClose: () => void }) {
+function ClientPanel({
+  client,
+  onClose,
+  onUpdated,
+}: {
+  client: PipelineClientDetailed;
+  onClose: () => void;
+  onUpdated: () => void;
+}) {
   const color = STATUS_COLORS[client.status] ?? "var(--text-tertiary)";
+  const [powodDraft, setPowodDraft] = useState(client.powodUtraty);
+  const [saving, setSaving] = useState(false);
+  const isOldScript = Boolean(
+    client.dataPierwszegoKontaktu && client.dataPierwszegoKontaktu < SKRYPT_V4_DATA,
+  );
+
+  const toggleUtracony = async (next: boolean) => {
+    setSaving(true);
+    try {
+      await fetch("/api/notion/pipeline-update", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pageId: client.id,
+          utracony: next,
+          ...(next ? {} : { powodUtraty: null }),
+        }),
+      });
+      onUpdated();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const savePowod = async () => {
+    if (powodDraft === client.powodUtraty) return;
+    setSaving(true);
+    try {
+      await fetch("/api/notion/pipeline-update", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pageId: client.id, powodUtraty: powodDraft }),
+      });
+      onUpdated();
+    } finally {
+      setSaving(false);
+    }
+  };
   const rows = [
     { label: "Firma", value: client.firma },
     { label: "Kontakt", value: client.kontakt },
     { label: "Telefon", value: client.telefon },
     { label: "E-mail", value: client.email },
+    { label: "NIP", value: client.nip },
     { label: "Status", value: client.status },
     { label: "Ocena ICP", value: client.ocenaICP },
     { label: "Data discovery", value: client.dataDiscovery ? fmtDate(client.dataDiscovery) : "" },
@@ -314,22 +373,72 @@ function ClientPanel({ client, onClose }: { client: PipelineClientDetailed; onCl
       </div>
 
       <div style={{ padding: "14px 16px", flex: 1, overflowY: "auto" }}>
-        <div
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            padding: "4px 10px",
-            borderRadius: "var(--radius-xs)",
-            background: `${color}18`,
-            border: `1px solid ${color}40`,
-            marginBottom: 16,
-          }}
-        >
-          <div style={{ width: 6, height: 6, borderRadius: "50%", background: color }} />
-          <span style={{ fontSize: 12, fontWeight: 600, color, fontFamily: "var(--font-sans)" }}>
-            {client.status}
-          </span>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "4px 10px",
+              borderRadius: "var(--radius-xs)",
+              background: `${color}18`,
+              border: `1px solid ${color}40`,
+            }}
+          >
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: color }} />
+            <span style={{ fontSize: 12, fontWeight: 600, color, fontFamily: "var(--font-sans)" }}>
+              {client.status}
+            </span>
+          </div>
+          {isOldScript && (
+            <div
+              title="Karta założona przed wdrożeniem skryptu V4 — dane mogą być niepełne wg dzisiejszych standardów"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "4px 10px",
+                borderRadius: "var(--radius-xs)",
+                background: "var(--bg-elevated)",
+                border: "1px solid var(--border)",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: "var(--text-tertiary)",
+                  fontFamily: "var(--font-sans)",
+                }}
+              >
+                Stary skrypt
+              </span>
+            </div>
+          )}
+          {client.utracony && (
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "4px 10px",
+                borderRadius: "var(--radius-xs)",
+                background: "var(--error-bg)",
+                border: "1px solid var(--error-border)",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: "var(--error)",
+                  fontFamily: "var(--font-sans)",
+                }}
+              >
+                Utracony
+              </span>
+            </div>
+          )}
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -359,6 +468,66 @@ function ClientPanel({ client, onClose }: { client: PipelineClientDetailed; onCl
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Blok 1, punkt 1.5 — leady które wypadły z uwagi mają być jawnie oznaczone i
+            filtrowalne, nie ginąć cicho. Wypełniane wyłącznie ręcznie tutaj. */}
+        <div
+          style={{
+            marginTop: 16,
+            paddingTop: 14,
+            borderTop: "1px solid var(--border)",
+          }}
+        >
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              cursor: saving ? "default" : "pointer",
+              userSelect: "none",
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={client.utracony}
+              disabled={saving}
+              onChange={(e) => void toggleUtracony(e.target.checked)}
+            />
+            <span
+              style={{
+                fontSize: 12,
+                fontWeight: 600,
+                color: "var(--text-primary)",
+                fontFamily: "var(--font-sans)",
+              }}
+            >
+              Utracony lead
+            </span>
+          </label>
+          {client.utracony && (
+            <textarea
+              value={powodDraft}
+              onChange={(e) => setPowodDraft(e.target.value)}
+              onBlur={() => void savePowod()}
+              placeholder="Powód (np. umówiona rozmowa nigdy niedopilnowana)..."
+              disabled={saving}
+              style={{
+                width: "100%",
+                marginTop: 8,
+                minHeight: 60,
+                padding: "8px 10px",
+                borderRadius: "var(--radius-xs)",
+                border: "1px solid var(--border)",
+                background: "var(--bg-elevated)",
+                fontFamily: "var(--font-sans)",
+                fontSize: 12,
+                color: "var(--text-primary)",
+                resize: "vertical",
+                boxSizing: "border-box",
+              }}
+            />
+          )}
         </div>
 
         <div style={{ marginTop: 20, display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -450,6 +619,19 @@ export default function PipelinePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<PipelineClientDetailed | null>(null);
+  // Blok 1, punkt 1.4 (2026-07-14) — domyślnie A-Z po nazwie firmy, z opcją odwrócenia
+  // kierunku. Zapamiętane w localStorage, żeby wybór przetrwał odświeżenie strony.
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">(() => {
+    if (typeof window === "undefined") return "asc";
+    return (localStorage.getItem(PIPELINE_SORT_KEY) as "asc" | "desc") ?? "asc";
+  });
+  const toggleSortDirection = () => {
+    setSortDirection((prev) => {
+      const next = prev === "asc" ? "desc" : "asc";
+      localStorage.setItem(PIPELINE_SORT_KEY, next);
+      return next;
+    });
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -477,8 +659,26 @@ export default function PipelinePage() {
     void load();
   }, [load]);
 
+  // Blok 1, punkt 1.5 — po odświeżeniu z onUpdated (edycja Utracony/Powód w panelu) trzeba
+  // podmienić referencję na świeżą wersję, inaczej panel dalej pokazuje stan sprzed zapisu.
+  useEffect(() => {
+    setSelected((prev) => (prev ? (clients.find((c) => c.id === prev.id) ?? prev) : prev));
+  }, [clients]);
+
+  // Blok 1, punkt 1.5 — utracone leady domyślnie ukryte z Kanbanu (żeby nie zaśmiecały
+  // aktywnego pipeline'u), ale zawsze możliwe do przywrócenia jednym przełącznikiem —
+  // "filtrowalne, nie znikające cicho", zgodnie z założeniem.
+  const [showUtracone, setShowUtracone] = useState(false);
+  const visibleClients = showUtracone ? clients : clients.filter((c) => !c.utracony);
+  const utraconeCount = clients.filter((c) => c.utracony).length;
+
   const grouped = PIPELINE_STATUSES.reduce<Record<string, PipelineClientDetailed[]>>((acc, s) => {
-    acc[s] = clients.filter((c) => c.status === s);
+    const bucket = visibleClients.filter((c) => c.status === s);
+    bucket.sort((a, b) => {
+      const cmp = a.firma.localeCompare(b.firma, "pl", { sensitivity: "base" });
+      return sortDirection === "asc" ? cmp : -cmp;
+    });
+    acc[s] = bucket;
     return acc;
   }, {});
 
@@ -529,29 +729,80 @@ export default function PipelinePage() {
             </span>
           )}
         </div>
-        <button
-          onClick={() => void load()}
-          disabled={loading}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 5,
-            padding: "5px 10px",
-            background: "transparent",
-            border: "1px solid var(--border)",
-            borderRadius: "var(--radius-xs)",
-            cursor: loading ? "default" : "pointer",
-            color: "var(--text-secondary)",
-            fontSize: 12,
-            fontFamily: "var(--font-sans)",
-          }}
-        >
-          <RefreshCw
-            size={12}
-            style={loading ? { animation: "spin 1s linear infinite" } : undefined}
-          />
-          Odśwież
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {utraconeCount > 0 && (
+            <button
+              onClick={() => setShowUtracone((v) => !v)}
+              title={
+                showUtracone
+                  ? "Ukryj utracone leady"
+                  : `Pokaż ${utraconeCount} utraconych leadów (dziś ukryte)`
+              }
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 5,
+                padding: "5px 10px",
+                background: showUtracone ? "var(--error-bg)" : "transparent",
+                border: `1px solid ${showUtracone ? "var(--error-border)" : "var(--border)"}`,
+                borderRadius: "var(--radius-xs)",
+                cursor: "pointer",
+                color: showUtracone ? "var(--error)" : "var(--text-secondary)",
+                fontSize: 12,
+                fontFamily: "var(--font-sans)",
+              }}
+            >
+              {showUtracone ? "Ukryj utracone" : `Utracone (${utraconeCount})`}
+            </button>
+          )}
+          <button
+            onClick={toggleSortDirection}
+            title={
+              sortDirection === "asc"
+                ? "Sortowanie A-Z po nazwie firmy — kliknij dla Z-A"
+                : "Sortowanie Z-A po nazwie firmy — kliknij dla A-Z"
+            }
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              padding: "5px 10px",
+              background: "transparent",
+              border: "1px solid var(--border)",
+              borderRadius: "var(--radius-xs)",
+              cursor: "pointer",
+              color: "var(--text-secondary)",
+              fontSize: 12,
+              fontFamily: "var(--font-sans)",
+            }}
+          >
+            {sortDirection === "asc" ? <ArrowDownAZ size={12} /> : <ArrowUpAZ size={12} />}
+            {sortDirection === "asc" ? "A-Z" : "Z-A"}
+          </button>
+          <button
+            onClick={() => void load()}
+            disabled={loading}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              padding: "5px 10px",
+              background: "transparent",
+              border: "1px solid var(--border)",
+              borderRadius: "var(--radius-xs)",
+              cursor: loading ? "default" : "pointer",
+              color: "var(--text-secondary)",
+              fontSize: 12,
+              fontFamily: "var(--font-sans)",
+            }}
+          >
+            <RefreshCw
+              size={12}
+              style={loading ? { animation: "spin 1s linear infinite" } : undefined}
+            />
+            Odśwież
+          </button>
+        </div>
       </div>
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
@@ -617,12 +868,21 @@ export default function PipelinePage() {
               <KanbanRow statuses={ROW1} grouped={grouped} onClientClick={(c) => setSelected(c)} />
               <div style={{ height: 1, background: "var(--border)", flexShrink: 0 }} />
               <KanbanRow statuses={ROW2} grouped={grouped} onClientClick={(c) => setSelected(c)} />
+              <div style={{ height: 1, background: "var(--border)", flexShrink: 0 }} />
+              <KanbanRow statuses={ROW3} grouped={grouped} onClientClick={(c) => setSelected(c)} />
             </>
           )}
         </div>
 
         {/* Side panel */}
-        {selected && <ClientPanel client={selected} onClose={() => setSelected(null)} />}
+        {selected && (
+          <ClientPanel
+            key={selected.id}
+            client={selected}
+            onClose={() => setSelected(null)}
+            onUpdated={() => void load()}
+          />
+        )}
       </div>
     </div>
   );

@@ -23,6 +23,8 @@ const bodySchema = z.object({
   notatki: z.string().optional(),
   dniDostepow: z.number().nullable().optional(),
   uwagiWarunki: z.string().nullable().optional(),
+  utracony: z.boolean().optional(),
+  powodUtraty: z.string().nullable().optional(),
 });
 
 function richText(text: string) {
@@ -98,6 +100,12 @@ export async function PATCH(req: Request) {
       properties["Warunki umowy — uwagi"] = {
         rich_text: d.uwagiWarunki ? richText(d.uwagiWarunki) : [],
       };
+    }
+    if (d.utracony !== undefined) {
+      properties["Utracony"] = { checkbox: d.utracony };
+    }
+    if (d.powodUtraty !== undefined) {
+      properties["Powód utraty"] = { rich_text: d.powodUtraty ? richText(d.powodUtraty) : [] };
     }
 
     if (Object.keys(properties).length === 0) {

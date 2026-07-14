@@ -23,12 +23,12 @@ import {
 import { useCallback, useEffect, useState } from "react";
 import type { GoogleTaskList } from "@/app/api/google/tasks/route";
 import type { PipelineClientDetailed } from "@/app/api/notion/pipeline/route";
+import { ClientCompanyLine, ClientContactDetails } from "@/components/clients/ClientContactDetails";
 import { ProgressBar, SectionLabelSmall, StepCard } from "@/components/dalsze-kroki/DalszeKrokiUI";
 import { KalkulatorRoi } from "@/components/kalkulator/KalkulatorRoi";
 import { DecisionDiagram } from "@/components/scripts/DecisionDiagram";
 import { NextStepArrow } from "@/components/scripts/NextStepArrow";
 import { WarunkiUmowyForm } from "@/components/sprzedaz/WarunkiUmowyForm";
-import { formatPhone } from "@/lib/format/phone";
 import { DISCOVERY_STATUSES, OBJECTIONS_D, STEPS_D } from "@/lib/scripts/discovery";
 import { fillBrief, parseCytatyKlienta } from "@/lib/scripts/fillBrief";
 import { useFormaGrzecznosciowa } from "@/lib/scripts/formaGrzecznosciowa";
@@ -1653,23 +1653,8 @@ function ClientSidebar({
                         >
                           {c.kontakt || c.firma || "—"}
                         </div>
-                        {c.firma && c.kontakt && c.firma !== c.kontakt && (
-                          <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>
-                            {c.firma}
-                          </div>
-                        )}
-                        {c.telefon && (
-                          <div
-                            style={{
-                              fontSize: 11,
-                              color: "var(--text-secondary)",
-                              marginTop: 1,
-                              fontFamily: "var(--font-sans)",
-                            }}
-                          >
-                            {formatPhone(c.telefon)}
-                          </div>
-                        )}
+                        <ClientCompanyLine client={c} />
+                        <ClientContactDetails client={c} />
                       </div>
                     );
                   })}

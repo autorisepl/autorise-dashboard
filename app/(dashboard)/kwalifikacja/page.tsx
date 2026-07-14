@@ -27,11 +27,11 @@ import {
 import { useCallback, useEffect, useState } from "react";
 import type { GoogleTaskList } from "@/app/api/google/tasks/route";
 import type { PipelineClientDetailed } from "@/app/api/notion/pipeline/route";
+import { ClientCompanyLine, ClientContactDetails } from "@/components/clients/ClientContactDetails";
 import { ProgressBar, SectionLabelSmall, StepCard } from "@/components/dalsze-kroki/DalszeKrokiUI";
 import { DecisionDiagram } from "@/components/scripts/DecisionDiagram";
 import { NextStepArrow } from "@/components/scripts/NextStepArrow";
 import { useRole } from "@/lib/auth/RoleContext";
-import { formatPhone } from "@/lib/format/phone";
 import { useFormaGrzecznosciowa } from "@/lib/scripts/formaGrzecznosciowa";
 import {
   ACKNOWLEDGMENT_PHRASES,
@@ -2221,37 +2221,8 @@ function ClientSidebar({
                   >
                     {c.kontakt || c.firma || "—"}
                   </div>
-                  {c.firma && c.kontakt && c.firma !== c.kontakt && (
-                    <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>{c.firma}</div>
-                  )}
-                  {c.telefon && (
-                    <div
-                      style={{
-                        fontSize: 11,
-                        color: "var(--text-secondary)",
-                        marginTop: 2,
-                        fontFamily: "var(--font-sans)",
-                      }}
-                    >
-                      {formatPhone(c.telefon)}
-                    </div>
-                  )}
-                  {c.email && (
-                    <div
-                      style={{
-                        fontSize: 11,
-                        color: "var(--text-tertiary)",
-                        marginTop: 1,
-                        fontFamily: "var(--font-sans)",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                        maxWidth: 200,
-                      }}
-                    >
-                      {c.email}
-                    </div>
-                  )}
+                  <ClientCompanyLine client={c} />
+                  <ClientContactDetails client={c} />
                   {typeof c.liczbaProb === "number" && c.liczbaProb > 0 && (
                     <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 3 }}>
                       {[1, 2, 3].map((n) => (

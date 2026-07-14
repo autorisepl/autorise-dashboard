@@ -22,6 +22,17 @@ Proces sprzedażowy (kwalifikacja→sprzedaż) już jest zgodny z regułą Agenc
 
 Stare `agent1`/`agent2`/`agent3` route'y i karty zostają w kodzie jako świadomy, nieusuwany fallback.
 
+## PILNE — zamknięte 2026-07-14 (dokończenie wątku Agenta Kwalifikacja + BLOK 1 z AUTORISE_MASTER_PLAN.md)
+
+1. ✓ Tryb "Aktualizacja klienta" w `/agenci` wykrywany automatycznie przy wyborze klienta (zamiast ręcznego przełącznika) — baner + dyskretny "Zacznij od zera mimo to" jako jedyny ręczny wyjątek. Tryb weryfikacji zostaje ręczny (nie da się wykryć automatycznie). Szczegóły: `AUTORISE_SESSION_LOG.md`.
+2. ✓ 1.1 Pole "Typ follow-up": 0 kart faktycznie dotkniętych mojibake/duplikatem (martwe opcje w dropdownie). Próba zmiany nazwy opcji spowodowała incydent (Notion API zastępuje CAŁĄ listę opcji select, nie patchuje) — wykryty i naprawiony w tej samej sesji, zero utraconych danych na kartach, potwierdzone dwukrotnie. Rename opcji przez API okazał się w ogóle nie działać (osobne ograniczenie) — **do Ciebie: przemianuj/skasuj ręcznie w Notion UI dwie zepsute opcje "Typ follow-up"**, 10 sekund, brak pilności bo 0 kart tego wymaga.
+3. ✓ 1.2 Dodana automatyczna gałąź "Nieaktywny (follow up)" w `upsertClientInPipeline`. Przy audycie znalezione i naprawione 2 dodatkowe bugi: `/pipeline` Kanban nie miał ROW3 (3 statusy całkowicie niewidoczne), `STATUS_ORDER` dedup nie znał tych samych 3 statusów. Pełna tabela audytu 11 statusów w `AUTORISE_SESSION_LOG.md`.
+4. ✓ 1.3 Nowy współdzielony `components/clients/ClientContactDetails.tsx` — Firma/Telefon/Email/NIP identyczne wszędzie (ClientSidebar ×2, Pipeline Kanban, selektor w `/agenci`). NIP i dane kontaktowe w `/agenci` nie istniały wcześniej w ogóle.
+5. ✓ 1.4 Sortowanie Pipeline A-Z po firmie domyślnie, przełącznik kierunku, zapamiętane w localStorage.
+6. ✓ 1.5 "Stary/aktualny skrypt" wyprowadzone z "Data pierwszego kontaktu" (bez nowego pola Notion). "Utracony"+"Powód utraty" jako nowe pola Notion (checkbox+rich_text, dodane bezpiecznie w izolacji od ryzykownych pól select) — filtr w Pipeline, domyślnie ukryte, jeden klik przywraca.
+
+**Nie w pełni domknięte**: dwie zepsute opcje "Typ follow-up" wymagają ręcznej zmiany nazwy/usunięcia bezpośrednio w Notion UI (patrz punkt 2 wyżej) — API tego nie potrafi. Żaden live test UI w przeglądarce nie wykonany w tej sesji dla całego Bloku 1.
+
 ## Priorytet: umowa i warunki gwarancji
 
 Napisać pełne warunki umowy Autorise wzorem załączonego wzorca Agency Leaders (Umowa_systemu_AI_konkurencji.pdf): okres rozliczeniowy liczony od zakończenia warsztatów wdrożeniowych/zebrania dostępów (nie od podpisania), obowiązki klienta jako warunek gwarancji (dostęp w 5 dni, odpowiedź WhatsApp 48h — już zdefiniowane w prompts.ts, przenieść do formalnego dokumentu), siła wyższa, poufność 2 lata, płatność z góry w terminie 3 dni od faktury. Zastrzeżenie: brak dostępu do wyspecjalizowanego skilla prawnego, to szkic do realnej konsultacji prawnej przed użyciem, nie gotowy dokument.

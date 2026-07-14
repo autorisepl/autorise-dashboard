@@ -22,6 +22,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import type { DriveFile } from "@/app/api/google/drive/transcripts/route";
 import type { HealthResponse } from "@/app/api/health/route";
+import { ClientContactDetails } from "@/components/clients/ClientContactDetails";
 import { Button } from "@/components/ui/Button";
 import { Panel } from "@/components/ui/Panel";
 import { PromptViewer } from "@/components/ui/PromptViewer";
@@ -102,9 +103,9 @@ interface AgentWorkspaceProps {
   onNotionPush: () => void;
   onCopy: () => void;
   copied: boolean;
-  /** agent1-only: bypasses the TXT+MP3 attachment requirement (uzupełnienie mode uses a free-text fragment instead). */
+  /** MODE_CAPABLE_AGENTS only: bypasses the TXT+MP3 attachment requirement in "Aktualizacja klienta" mode (a free-text fragment is used instead). */
   bypassDriveRequirement?: boolean;
-  /** agent1-only: overrides the transcript textarea label/placeholder in uzupełnienie mode. */
+  /** MODE_CAPABLE_AGENTS only: overrides the transcript textarea label/placeholder in "Aktualizacja klienta" mode. */
   transcriptFieldOverride?: { label: string; placeholder: string };
 }
 
@@ -589,6 +590,7 @@ function ClientDropdown({
                       >
                         {c.status}
                       </div>
+                      <ClientContactDetails client={c} size="xs" />
                     </div>
                     {isSelected && <Check size={10} color="var(--accent)" />}
                   </button>

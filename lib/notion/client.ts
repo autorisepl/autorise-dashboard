@@ -163,6 +163,12 @@ export interface PipelineClient {
   id: string;
   name: string;
   status: string;
+  // Blok 1, punkt 1.3 (2026-07-14) — dodane żeby selektor klienta w /agenci mógł pokazywać te
+  // same dane kontaktowe co ClientSidebar (/kwalifikacja, /sprzedaz) i Pipeline Kanban.
+  firma?: string;
+  telefon?: string;
+  email?: string;
+  nip?: string;
 }
 
 export interface ExistingClientData {
@@ -234,13 +240,22 @@ export async function getPipelineClients(): Promise<PipelineClient[]> {
     .map((page) => {
       const firma = page.properties["Firma"];
       const status = page.properties["Status"];
+      const telefon = page.properties["Telefon"];
+      const email = page.properties["Email"];
+      const nip = page.properties["NIP"];
+      const firmaText =
+        firma?.type === "title" ? firma.title.map((t) => t.plain_text).join("") : "";
       return {
         id: page.id,
-        name:
-          firma?.type === "title"
-            ? firma.title.map((t) => t.plain_text).join("") || "Bez nazwy"
-            : "Bez nazwy",
+        name: firmaText || "Bez nazwy",
         status: status?.type === "select" ? (status.select?.name ?? "") : "",
+        firma: firmaText || undefined,
+        telefon: telefon?.type === "phone_number" ? (telefon.phone_number ?? undefined) : undefined,
+        email: email?.type === "email" ? (email.email ?? undefined) : undefined,
+        nip:
+          nip?.type === "rich_text"
+            ? nip.rich_text.map((t) => t.plain_text).join("") || undefined
+            : undefined,
       };
     })
     .filter((c) => c.name !== "Bez nazwy");
@@ -333,9 +348,21 @@ export async function upsertClientInPipeline(
     props["Ocena ICP"] = { select: { name: icpSelect } };
   }
 
+  // Blok 1, punkt 1.2 (2026-07-14) — potwierdzona luka: kwalifikacjaToStatus() nie miał gałęzi
+  // dla "Nieaktywny (follow up)" mimo że prompt agenta (sekcja 12 FOLLOW-UP) opisuje ten
+  // scenariusz i mapa (/mapa) już go pokazuje jako realny węzeł. Naprawione dodaniem gałęzi
+  // (decyzja: agent ustawia automatycznie) zamiast usuwania instrukcji z promptu — model już
+  // klasyfikuje ten scenariusz przez strukturalne pole "followup" (typ_followup z ustalonej
+  // listy 4 wartości), silniejszy i bardziej deterministyczny sygnał niż poleganie na wolnym
+  // tekście pola "status" które i tak nigdzie nie było czytane.
+  const hasFollowupSignal = Boolean(a1.followup?.typ_followup);
+
   // Aktualizacja istniejącego klienta bez nowego sygnału ICP (np. tryb uzupełnienia gdzie
-  // fragment nie dotyczył kwalifikacji) — nie nadpisuj Statusu domyślną wartością.
-  const skipStatusWrite = Boolean(pageId) && !isDiskwalifikowany && a1.icp?.kwalifikacja == null;
+  // fragment nie dotyczył kwalifikacji) — nie nadpisuj Statusu domyślną wartością. Sygnał
+  // follow-up omija ten guard: to samodzielna, pozytywna decyzja modelu, nie "nic się nie
+  // zmieniło".
+  const skipStatusWrite =
+    Boolean(pageId) && !isDiskwalifikowany && !hasFollowupSignal && a1.icp?.kwalifikacja == null;
 
   if (skipStatusWrite) {
     if (a1.meet_data) {
@@ -347,6 +374,12 @@ export async function upsertClientInPipeline(
     }
   } else if (isDiskwalifikowany) {
     props["Status"] = { select: { name: "Niekwalifikowany" } };
+  } else if (hasFollowupSignal && !hasMeeting) {
+    props["Status"] = { select: { name: "Nieaktywny (follow up)" } };
+
+    if (a1.nastepny_krok) {
+      props["Następny krok"] = { rich_text: richText(a1.nastepny_krok) };
+    }
   } else {
     let pipelineStatus = kwalifikacjaToStatus(a1.icp?.kwalifikacja ?? null, hasMeeting);
     // "Discovery umówione" is a MANUAL action only — never auto-set for existing clients
@@ -910,6 +943,12 @@ export async function migrateNotionSchema(): Promise<{ added: string[]; errors: 
             ],
           },
         },
+        // Blok 1, punkt 1.5 (2026-07-14) — leady które wypadły z uwagi (np. umówiona rozmowa
+        // nigdy niedopilnowana) mają być jawnie oznaczone i filtrowalne, nie ginąć cicho w
+        // systemie. Wypełniane WYŁĄCZNIE ręcznie przez Michała, żaden agent tego nie ustawia —
+        // "powód" ma sens tylko jako świadoma ludzka adnotacja, nie coś do wydedukowania.
+        Utracony: { checkbox: {} },
+        "Powód utraty": { rich_text: {} },
       },
     });
     const { confirmed, missing } = await confirmSchemaFields([
@@ -929,6 +968,8 @@ export async function migrateNotionSchema(): Promise<{ added: string[]; errors: 
       "Warunki umowy — uwagi",
       "Gotowość zakupowa",
       "Pilność",
+      "Utracony",
+      "Powód utraty",
     ]);
     added.push(...confirmed);
     for (const name of missing) {
@@ -1324,4 +1365,164 @@ export async function clearOldDefaultPriceForCards(
   }
 
   return { updated, errors };
+}
+
+// Blok 1, punkt 1.1 (2026-07-14) — pole "Typ follow-up" ma w schemacie mojibake i duplikat
+// (potwierdzone bezpośrednim odczytem schematu): "Dograne wsp�lnika/decydenta" zamiast
+// poprawnego "Dograne wspólnika/decydenta" (które istnieje jako OSOBNA, poprawna opcja —
+// duplikat, nie literówka do naprawienia od zera), oraz "Po Discovery � niezdecydowany"
+// z uszkodzonym znakiem. Notion API NIE pozwala usunąć opcji select (tylko dodać/zmienić
+// nazwę) — migracja więc w dwóch krokach: (1) findPipelineCardsWithBrokenFollowup +
+// fixFollowupTypesForCards przenoszą karty na poprawne wartości, (2)
+// deprecateBrokenFollowupOptions oznacza zepsute opcje w dropdownie jako jawnie nieużywane,
+// żeby nikt ich przypadkiem nie wybrał ponownie (nie da się ich fizycznie skasować).
+const FOLLOWUP_TYPE_FIXES: Record<string, string> = {
+  "Dograne wsp�lnika/decydenta": "Dograne wspólnika/decydenta",
+  "Po Discovery � niezdecydowany": "Po Discovery: niezdecydowany",
+};
+
+export interface PipelineCardBrokenFollowup {
+  id: string;
+  name: string;
+  currentValue: string;
+  correctedValue: string;
+}
+
+export async function findPipelineCardsWithBrokenFollowup(): Promise<PipelineCardBrokenFollowup[]> {
+  const results: PipelineCardBrokenFollowup[] = [];
+  let cursor: string | undefined;
+
+  do {
+    const response = (await notion.dataSources.query({
+      data_source_id: PIPELINE_DATA_SOURCE_ID,
+      page_size: 100,
+      start_cursor: cursor,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any)) as { results: PageObjectResponse[]; has_more: boolean; next_cursor: string | null };
+
+    for (const page of response.results) {
+      if (page.object !== "page") continue;
+      const firma = page.properties["Firma"];
+      const followup = page.properties["Typ follow-up"];
+      if (followup?.type === "select" && followup.select?.name) {
+        const corrected = FOLLOWUP_TYPE_FIXES[followup.select.name];
+        if (corrected) {
+          results.push({
+            id: page.id,
+            name:
+              firma?.type === "title"
+                ? firma.title.map((t) => t.plain_text).join("") || "Bez nazwy"
+                : "Bez nazwy",
+            currentValue: followup.select.name,
+            correctedValue: corrected,
+          });
+        }
+      }
+    }
+
+    cursor = response.has_more ? (response.next_cursor ?? undefined) : undefined;
+  } while (cursor);
+
+  return results;
+}
+
+export interface FixFollowupResult {
+  updated: string[];
+  errors: string[];
+}
+
+// Migruje TYLKO karty przekazane ze świeżego findPipelineCardsWithBrokenFollowup, bez
+// ponownego sprawdzania stanu (ten sam wzorzec co fillDefaultPricingForCards).
+export async function fixFollowupTypesForCards(
+  cards: PipelineCardBrokenFollowup[],
+): Promise<FixFollowupResult> {
+  const updated: string[] = [];
+  const errors: string[] = [];
+
+  for (const card of cards) {
+    try {
+      await notion.pages.update({
+        page_id: card.id,
+        properties: { "Typ follow-up": { select: { name: card.correctedValue } } },
+      });
+      updated.push(card.name);
+    } catch (err) {
+      errors.push(`${card.name}: ${err instanceof Error ? err.message : "Błąd zapisu"}`);
+    }
+  }
+
+  return { updated, errors };
+}
+
+export interface DeprecateFollowupResult {
+  renamed: string[];
+  errors: string[];
+}
+
+// Próbuje zmienić nazwę zepsutych opcji w dropdownie na jawnie oznaczone "[NIEUŻYWANE]".
+//
+// KRYTYCZNE #1 (odkryte boleśnie 2026-07-14): Notion API przy update select.options ZASTĘPUJE
+// CAŁĄ listę opcji tym co przekażesz — każda opcja pominięta w tablicy zostaje TRWALE
+// USUNIĘTA ze schematu, nie tylko nietknięta. Pierwsza wersja tej funkcji wysyłała tylko
+// zmieniane opcje i skasowała 4 inne, prawidłowe opcje — naprawione awaryjnym skryptem
+// odtwarzającym pełną listę, zero utraconych danych na kartach (Notion dopasował wartości na
+// stronach po nazwie do nowych id). Dlatego ta funkcja zawsze wysyła PEŁNĄ, aktualną listę.
+//
+// KRYTYCZNE #2: nawet z pełną listą, `notion.dataSources.update` w tej wersji API/SDK NIE
+// faktycznie zmienia nazwy istniejącej opcji dopasowanej po id — wywołanie kończy się bez
+// błędu, ale retrieve zaraz potem pokazuje starą nazwę bez zmian (zweryfikowane dwukrotnie
+// 2026-07-14). Funkcja więc odczytuje stan PO zapisie i zwraca błąd zamiast fałszywego
+// sukcesu, jeśli nazwa faktycznie się nie zmieniła — w praktyce to znaczy że rename trzeba
+// zrobić ręcznie w UI Notion (tam działa bez ograniczeń), to narzędzie tego nie potrafi.
+export async function deprecateBrokenFollowupOptions(): Promise<DeprecateFollowupResult> {
+  const renamed: string[] = [];
+  const errors: string[] = [];
+
+  try {
+    const ds = (await notion.dataSources.retrieve({
+      data_source_id: PIPELINE_DATA_SOURCE_ID,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any)) as any;
+    const prop = ds.properties?.["Typ follow-up"];
+    const existingOptions: Array<{ id: string; name: string }> = prop?.select?.options ?? [];
+
+    const fullOptions = existingOptions.map((opt) => {
+      const correctedName = FOLLOWUP_TYPE_FIXES[opt.name];
+      if (!correctedName) return opt;
+      return { id: opt.id, name: `[NIEUŻYWANE] ${correctedName} (zepsuta wartość, nie wybieraj)` };
+    });
+    const wantedChanges = fullOptions.filter((opt, i) => opt.name !== existingOptions[i]?.name);
+
+    if (wantedChanges.length === 0) {
+      return { renamed, errors };
+    }
+
+    await notion.dataSources.update({
+      data_source_id: PIPELINE_DATA_SOURCE_ID,
+      properties: { "Typ follow-up": { select: { options: fullOptions } } },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
+
+    const verifyDs = (await notion.dataSources.retrieve({
+      data_source_id: PIPELINE_DATA_SOURCE_ID,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any)) as any;
+    const verifyOptions: Array<{ id: string; name: string }> =
+      verifyDs.properties?.["Typ follow-up"]?.select?.options ?? [];
+    const verifyById = new Map(verifyOptions.map((o) => [o.id, o.name]));
+
+    for (const wanted of wantedChanges) {
+      if (verifyById.get(wanted.id) === wanted.name) {
+        renamed.push(wanted.name);
+      } else {
+        errors.push(
+          `Zmiana nazwy opcji "${wanted.name}" nie zadziałała mimo braku wyjątku z API — zmień ją ręcznie w UI Notion (znane ograniczenie API, patrz komentarz nad tą funkcją).`,
+        );
+      }
+    }
+  } catch (err) {
+    errors.push(err instanceof Error ? err.message : "Błąd zmiany schematu");
+  }
+
+  return { renamed, errors };
 }

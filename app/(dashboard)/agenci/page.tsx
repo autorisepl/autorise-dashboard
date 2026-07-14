@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, Mic, Phone, Search } from "lucide-react";
+import { BookOpen, Info, Mic, Phone, Search } from "lucide-react";
 import { type ReactNode, Suspense, useCallback, useEffect, useState } from "react";
 import type { HealthResponse } from "@/app/api/health/route";
 import type { AgentId, AgentState, CardStage } from "@/components/agents/AgentWorkspace";
@@ -25,14 +25,18 @@ const AGENT_IDS: AgentId[] = [
 ];
 const SETTER_VISIBLE_AGENT_TABS: AgentId[] = ["agentKwalifikacja", "agent4"];
 
-// Blok 0.2 — tryb "Nowa analiza" auto-wczytuje ostatnią zapisaną analizę z historii Notion
-// dla agentów które ją zapisują pod tym typem wpisu (patrz saveOperationHistory w client.ts).
+// Blok 1, część 1 (2026-07-14) — tryb "Aktualizacja klienta" (dawniej ręczny przełącznik
+// "Uzupełnienie do istniejącego klienta") jest teraz WYKRYWANY automatycznie: przy wyborze
+// klienta sprawdzamy czy ma już zapisaną analizę pod tym typem wpisu w historii Notion
+// (patrz saveOperationHistory w client.ts). Jeśli tak, agent przełącza się w tryb aktualizacji
+// i od razu wczytuje tę analizę do podglądu — bez ręcznego przełącznika.
 const HISTORY_TYPE_BY_AGENT: Partial<Record<AgentId, string>> = {
   agent1: "Agent 01 — Analiza kwalifikacyjna",
   agentKwalifikacja: "Agent Kwalifikacja — Część A (kwalifikacja)",
 };
 
-// Agenci którzy wspierają tryb weryfikacja/uzupełnienie (przełącznik w tab bar).
+// Agenci którzy wspierają tryb weryfikacja/aktualizacja klienta (auto-wykrywanie + przełącznik
+// weryfikacji w tab bar).
 const MODE_CAPABLE_AGENTS: AgentId[] = ["agent1", "agentKwalifikacja"];
 
 const INITIAL_STATE: AgentState = {
@@ -176,6 +180,10 @@ function AgenciPageInner() {
   const changeAgent = (id: AgentId) => {
     localStorage.setItem("agenci_active_tab", id);
     setActiveAgent(id);
+    // Blok 1: reset auto-wykrywania przy zmianie zakładki — dopóki klient nie zostanie
+    // wybrany ponownie na tej zakładce, nie pokazujemy banera z poprzedniej zakładki.
+    setHistoryDetected(false);
+    setModeOverride(null);
   };
 
   const [agentStates, setAgentStates] = useState<Record<AgentId, AgentState>>(makeInitialStates);
@@ -187,7 +195,15 @@ function AgenciPageInner() {
   );
   const [copied, setCopied] = useState(false);
   const [verificationMode, setVerificationMode] = useState(false);
-  const [analysisMode, setAnalysisMode] = useState<"nowa" | "uzupelnienie">("nowa");
+  // Blok 1, część 1 — historyDetected: czy dla aktualnie wybranego klienta na aktywnej
+  // zakładce znaleziono zapisaną wcześniej analizę. modeOverride: ręczne wymuszenie "Nowa
+  // analiza" mimo wykrytej historii ("Zacznij od zera mimo to"), zerowane przy każdym nowym
+  // wyborze klienta lub zmianie zakładki. analysisMode ("uzupelnienie" = tryb "Aktualizacja
+  // klienta" w UI) jest wyłącznie POCHODNĄ tych dwóch, nie ma już własnego przełącznika.
+  const [historyDetected, setHistoryDetected] = useState(false);
+  const [modeOverride, setModeOverride] = useState<"nowa" | null>(null);
+  const analysisMode: "nowa" | "uzupelnienie" =
+    modeOverride ?? (historyDetected ? "uzupelnienie" : "nowa");
 
   // ── Data fetching ──────────────────────────────────────────────
 
@@ -238,45 +254,74 @@ function AgenciPageInner() {
     [activeAgent, updateAgentState],
   );
 
+  // Blok 1, część 1 — jeden mechanizm wykrywania: sprawdza historię Notion dla wybranego
+  // klienta i jeśli istnieje zapisana wcześniej analiza (Część 7 z Bloku 0.2), ustawia
+  // historyDetected na true ORAZ wczytuje tę analizę do podglądu, zamiast wymagać ręcznego
+  // przełącznika trybu.
+  const checkHistoryAndLoad = useCallback(
+    async (agentId: AgentId, clientId: string) => {
+      const historyType = HISTORY_TYPE_BY_AGENT[agentId];
+      if (!historyType) {
+        setHistoryDetected(false);
+        return;
+      }
+      try {
+        const histRes = await fetch(`/api/notion/client-history?pageId=${clientId}`);
+        const histData = await histRes.json();
+        if (!histData.success) {
+          setHistoryDetected(false);
+          return;
+        }
+        const entry = (histData.history as Array<{ id: string; type: string }>).find(
+          (h) => h.type === historyType,
+        );
+        if (!entry) {
+          setHistoryDetected(false);
+          return;
+        }
+        setHistoryDetected(true);
+        const detailRes = await fetch(`/api/notion/client-history?entryId=${entry.id}`);
+        const detailData = await detailRes.json();
+        if (!detailData.success || !detailData.details) return;
+        const output = JSON.parse(detailData.details);
+        updateAgentState(agentId, {
+          status: "done",
+          output,
+          loadedFromHistory: true,
+          notionPageId: clientId,
+          notionError: null,
+          elapsed: null,
+        });
+      } catch {
+        setHistoryDetected(false);
+      }
+    },
+    [updateAgentState],
+  );
+
   const handleClientSelect = useCallback(
     (id: string) => {
       setSelectedClientIds((prev) => ({ ...prev, [activeAgent]: id }));
-
-      // Część 7 (przeniesione do agentKwalifikacja w Bloku 0.2): jeśli dla tego klienta
-      // istnieje już zapisana analiza, wczytaj ją od razu zamiast wymuszać ponowne
-      // uruchomienie.
-      const historyType = HISTORY_TYPE_BY_AGENT[activeAgent];
-      if (historyType && id && analysisMode === "nowa") {
-        const loadingAgent = activeAgent;
-        void (async () => {
-          try {
-            const histRes = await fetch(`/api/notion/client-history?pageId=${id}`);
-            const histData = await histRes.json();
-            if (!histData.success) return;
-            const entry = (histData.history as Array<{ id: string; type: string }>).find(
-              (h) => h.type === historyType,
-            );
-            if (!entry) return;
-            const detailRes = await fetch(`/api/notion/client-history?entryId=${entry.id}`);
-            const detailData = await detailRes.json();
-            if (!detailData.success || !detailData.details) return;
-            const output = JSON.parse(detailData.details);
-            updateAgentState(loadingAgent, {
-              status: "done",
-              output,
-              loadedFromHistory: true,
-              notionPageId: id,
-              notionError: null,
-              elapsed: null,
-            });
-          } catch {
-            /* silent — user can still run fresh */
-          }
-        })();
+      setModeOverride(null); // nowy wybór klienta zawsze zeruje wymuszenie "od zera"
+      if (!id) {
+        setHistoryDetected(false);
+        return;
       }
+      void checkHistoryAndLoad(activeAgent, id);
     },
-    [activeAgent, analysisMode, updateAgentState],
+    [activeAgent, checkHistoryAndLoad],
   );
+
+  const handleForceNowa = useCallback(() => {
+    setModeOverride("nowa");
+    updateAgentState(activeAgent, {
+      status: "idle",
+      output: null,
+      loadedFromHistory: false,
+      notionPageId: null,
+      notionError: null,
+    });
+  }, [activeAgent, updateAgentState]);
 
   // ── Write "Kontakty" card after a stage agent run ──────────────
 
@@ -541,91 +586,114 @@ function AgenciPageInner() {
           />
         ))}
         {MODE_CAPABLE_AGENTS.includes(activeAgent) && (
-          <div style={{ display: "flex", gap: 6, marginLeft: "auto", paddingRight: 4 }}>
-            <button
-              onClick={() => setAnalysisMode("nowa")}
-              style={{
-                padding: "5px 12px",
-                borderRadius: 7,
-                border: `1px solid ${analysisMode === "nowa" ? "var(--accent)" : "var(--border)"}`,
-                background: analysisMode === "nowa" ? "var(--accent-muted)" : "transparent",
-                color: analysisMode === "nowa" ? "var(--accent)" : "var(--text-secondary)",
-                fontFamily: "var(--font-sans)",
-                fontSize: 11,
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            >
-              Nowa analiza
-            </button>
-            <button
-              onClick={() => setAnalysisMode("uzupelnienie")}
-              style={{
-                padding: "5px 12px",
-                borderRadius: 7,
-                border: `1px solid ${analysisMode === "uzupelnienie" ? "var(--accent)" : "var(--border)"}`,
-                background: analysisMode === "uzupelnienie" ? "var(--accent-muted)" : "transparent",
-                color: analysisMode === "uzupelnienie" ? "var(--accent)" : "var(--text-secondary)",
-                fontFamily: "var(--font-sans)",
-                fontSize: 11,
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            >
-              Uzupełnienie do istniejącego klienta
-            </button>
-          </div>
-        )}
-        {MODE_CAPABLE_AGENTS.includes(activeAgent) && analysisMode === "nowa" && (
-          <label
+          <div
             style={{
               display: "flex",
               alignItems: "center",
-              gap: 6,
-              cursor: "pointer",
-              userSelect: "none",
+              gap: 10,
+              marginLeft: "auto",
               paddingRight: 4,
             }}
           >
-            <div
-              onClick={() => setVerificationMode((v) => !v)}
-              style={{
-                width: 36,
-                height: 20,
-                borderRadius: 10,
-                background: verificationMode ? "var(--accent)" : "var(--border)",
-                position: "relative",
-                transition: "background 150ms",
-                cursor: "pointer",
-                flexShrink: 0,
-              }}
-            >
-              <div
+            {/* Blok 1, część 1 — tryb "Aktualizacja klienta" wykrywany automatycznie, bez
+                ręcznego przełącznika. Baner + dyskretny link do wymuszenia świeżego startu
+                pokazują się tylko gdy historia faktycznie została znaleziona. */}
+            {historyDetected && !modeOverride && (
+              <>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    padding: "5px 10px",
+                    borderRadius: 7,
+                    background: "var(--accent-muted)",
+                    border: "1px solid var(--accent-border, var(--accent))",
+                  }}
+                >
+                  <Info size={12} color="var(--accent)" />
+                  <span
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: "var(--accent)",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    Wykryto wcześniejszą analizę — aktualizuję istniejącą kartę zamiast tworzyć
+                    nową.
+                  </span>
+                </div>
+                <button
+                  onClick={handleForceNowa}
+                  style={{
+                    padding: 0,
+                    border: "none",
+                    background: "none",
+                    cursor: "pointer",
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 11,
+                    color: "var(--text-tertiary)",
+                    textDecoration: "underline",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Zacznij od zera mimo to
+                </button>
+              </>
+            )}
+            {analysisMode === "nowa" && (
+              <label
                 style={{
-                  position: "absolute",
-                  top: 2,
-                  left: verificationMode ? 18 : 2,
-                  width: 16,
-                  height: 16,
-                  borderRadius: "50%",
-                  background: "#fff",
-                  boxShadow: "0 1px 3px rgba(0,0,0,0.18)",
-                  transition: "left 150ms",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  cursor: "pointer",
+                  userSelect: "none",
                 }}
-              />
-            </div>
-            <span
-              style={{
-                fontFamily: "var(--font-sans)",
-                fontSize: 11,
-                color: verificationMode ? "var(--accent)" : "var(--text-tertiary)",
-                fontWeight: verificationMode ? 600 : 400,
-                whiteSpace: "nowrap",
-              }}
-            >
-              Tryb weryfikacji
-            </span>
-          </label>
+              >
+                <div
+                  onClick={() => setVerificationMode((v) => !v)}
+                  style={{
+                    width: 36,
+                    height: 20,
+                    borderRadius: 10,
+                    background: verificationMode ? "var(--accent)" : "var(--border)",
+                    position: "relative",
+                    transition: "background 150ms",
+                    cursor: "pointer",
+                    flexShrink: 0,
+                  }}
+                >
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: 2,
+                      left: verificationMode ? 18 : 2,
+                      width: 16,
+                      height: 16,
+                      borderRadius: "50%",
+                      background: "#fff",
+                      boxShadow: "0 1px 3px rgba(0,0,0,0.18)",
+                      transition: "left 150ms",
+                    }}
+                  />
+                </div>
+                <span
+                  style={{
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 11,
+                    color: verificationMode ? "var(--accent)" : "var(--text-tertiary)",
+                    fontWeight: verificationMode ? 600 : 400,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Tryb weryfikacji
+                </span>
+              </label>
+            )}
+          </div>
         )}
       </div>
 
@@ -651,7 +719,7 @@ function AgenciPageInner() {
           transcriptFieldOverride={
             MODE_CAPABLE_AGENTS.includes(activeAgent) && analysisMode === "uzupelnienie"
               ? {
-                  label: "Uzupełnienie do istniejącego klienta",
+                  label: "Aktualizacja klienta",
                   placeholder:
                     "Wklej dodatkową notatkę, transkrypt krótkiej rozmowy, albo cokolwiek co klient dodatkowo powiedział...",
                 }

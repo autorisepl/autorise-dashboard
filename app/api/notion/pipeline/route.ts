@@ -14,6 +14,7 @@ export interface PipelineClientDetailed {
   kontakt: string;
   telefon: string;
   email: string;
+  nip: string;
   status: string;
   lastModified: string;
   dataDiscovery: string;
@@ -36,7 +37,18 @@ export interface PipelineClientDetailed {
   cytatyKlienta: string;
   warunkiDniDostepow: number;
   warunkiUwagi: string;
+  dataPierwszegoKontaktu: string;
+  utracony: boolean;
+  powodUtraty: string;
 }
+
+// Blok 1, punkt 1.5 (2026-07-14) — data premiery skryptu kwalifikacyjnego V4 (12 kroków, ICP
+// wbudowane w diagnozę, kalkulator wielogrupowy — patrz CLAUDE.md, sekcja Skrypty
+// sprzedażowe). Karty założone PRZED tą datą pochodzą ze starszej wersji rozmowy — dane mogą
+// być niepełne wg dzisiejszych standardów. Wyprowadzone z istniejącego pola "Data pierwszego
+// kontaktu", świadomie NIE jako nowe pole Notion (nic nowego do ręcznego wypełniania, nie
+// rozjeżdża się z rzeczywistą datą wdrożenia zmiany).
+export const SKRYPT_V4_DATA = "2026-07-03";
 
 function extractText(prop: PageObjectResponse["properties"][string] | undefined): string {
   if (!prop) return "";
@@ -63,6 +75,12 @@ function extractNumber(prop: PageObjectResponse["properties"][string] | undefine
   return 0;
 }
 
+function extractCheckbox(prop: PageObjectResponse["properties"][string] | undefined): boolean {
+  if (!prop) return false;
+  if (prop.type === "checkbox") return prop.checkbox;
+  return false;
+}
+
 export async function GET() {
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -84,6 +102,7 @@ export async function GET() {
           kontakt: extractText(props["Kontakt"]),
           telefon: extractText(props["Telefon"]),
           email: extractText(props["E-mail"] ?? props["Email"]),
+          nip: extractText(props["NIP"]),
           status: extractText(props["Status"]),
           lastModified: page.last_edited_time,
           dataDiscovery: extractText(props["Data discovery"]),
@@ -106,14 +125,21 @@ export async function GET() {
           cytatyKlienta: extractText(props["Cytaty klienta"]),
           warunkiDniDostepow: extractNumber(props["Warunki umowy — dni dostępów"]),
           warunkiUwagi: extractText(props["Warunki umowy — uwagi"]),
+          dataPierwszegoKontaktu: extractText(props["Data pierwszego kontaktu"]),
+          utracony: extractCheckbox(props["Utracony"]),
+          powodUtraty: extractText(props["Powód utraty"]),
         };
       })
       .filter((c: PipelineClientDetailed) => c.firma !== "Bez nazwy");
 
     // Deduplicate: same firma+kontakt combo → keep highest-status entry
+    // Blok 1, punkt 1.2 (2026-07-14) — uzupełnione o 2 brakujące statusy z enuma Status
+    // (znalezione przy audycie: bez nich dedup traktował je jako ranga -1, czyli zawsze
+    // przegrywały tie-break z dowolnym innym statusem, nawet "Nowy lead").
     const STATUS_ORDER = [
       "Nowy lead",
       "Kwalifikacja",
+      "Nieaktywny (follow up)",
       "Discovery umówione",
       "Finalizacja",
       "Kickoff",
@@ -121,6 +147,7 @@ export async function GET() {
       "Retainer",
       "Upsell",
       "Niekwalifikowany",
+      "Zakończona współpraca",
     ];
     const deduped = new Map<string, PipelineClientDetailed>();
     for (const c of clients) {
