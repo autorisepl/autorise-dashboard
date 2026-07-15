@@ -775,6 +775,33 @@
         <iconify-icon icon="tabler:alert-triangle" width="16" height="16"></iconify-icon>
         <span id="inv-note-text">W realnej ofercie te liczby liczone są indywidualnie z danych Waszej firmy zebranych podczas rozmowy kwalifikacyjnej, nie z uśrednionego cennika.</span>
       </div>
+
+      <div class="ai" style="--i:5;margin-top:20px;padding:18px 20px;border:1px solid var(--line);border-radius:16px;background:var(--bg);">
+        <div style="font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:4px;">Co obejmuje retainer</div>
+        <div style="font-size:14px;color:var(--text-secondary);margin-bottom:2px;"><span class="val-retainer">4 000</span> PLN miesięcznie, opieka nad systemem po wdrożeniu</div>
+        <div class="check-list" style="margin-top:10px;">
+          <div class="check-item">
+            <div class="check-dot"><iconify-icon icon="tabler:check"></iconify-icon></div>
+            Poprawki przy zmianach API dostawców (TMS, księgowość, KSeF)
+          </div>
+          <div class="check-item">
+            <div class="check-dot"><iconify-icon icon="tabler:check"></iconify-icon></div>
+            Skalowanie systemu wraz ze wzrostem floty i biura
+          </div>
+          <div class="check-item">
+            <div class="check-dot"><iconify-icon icon="tabler:check"></iconify-icon></div>
+            Wsparcie telefoniczne bezpośrednio u Founder'a
+          </div>
+          <div class="check-item">
+            <div class="check-dot"><iconify-icon icon="tabler:check"></iconify-icon></div>
+            Kontrola działania systemu na dashboardzie
+          </div>
+          <div class="check-item">
+            <div class="check-dot"><iconify-icon icon="tabler:check"></iconify-icon></div>
+            Naprawa awarii w 24 godziny
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -927,6 +954,7 @@ const V = {
   cenaZRabatem:    null,
   procentKosztu:   null,
   paybackMiesiace: null,
+  retainer:        null,
 }
 const START = Math.min(Math.max((parseInt(P.get('start') || '1') || 1) - 1, 0), 6)
 
@@ -1049,6 +1077,11 @@ function applyValues() {
     el.textContent = V.cenaZRabatem != null
       ? 'jednorazowo'
       : V.cenaWdrozenia != null ? 'jednorazowo, wg zakresu wdrożenia' : 'w zależności od zakresu wdrożenia'
+  })
+  // Sekcja "Co obejmuje retainer" (slajd 6) — fallback 4000 zgodny z DOMYSLNY_RETAINER
+  // po stronie /api/notion/prezentacja-dane, ten sam mechanizm co cenaWdrozenia.
+  document.querySelectorAll('.val-retainer').forEach(el => {
+    el.textContent = fmt(V.retainer != null ? V.retainer : 4000)
   })
 
   const invNote = document.getElementById('inv-note-text')
@@ -1295,6 +1328,7 @@ if (ID_PARAM) {
         V.cenaZRabatem    = typeof data.cena_z_rabatem   === 'number' ? data.cena_z_rabatem   : null
         V.procentKosztu   = typeof data.procent_kosztu   === 'number' ? data.procent_kosztu   : null
         V.paybackMiesiace = typeof data.payback_miesiace === 'number' ? data.payback_miesiace : null
+        V.retainer        = typeof data.retainer         === 'number' ? data.retainer         : null
         FIRMA = data.firma || ''
         HAS_CLIENT_DATA = true
         if (!P.get('modul') && data.bol_kategoria) {
