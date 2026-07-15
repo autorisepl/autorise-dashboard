@@ -82,7 +82,11 @@ function ContactAttemptsBadge({
         flexShrink: 0,
       }}
     >
-      <Phone size={11} color={proby >= 3 ? "var(--error)" : "var(--text-tertiary)"} strokeWidth={2} />
+      <Phone
+        size={11}
+        color={proby >= 3 ? "var(--error)" : "var(--text-tertiary)"}
+        strokeWidth={2}
+      />
       <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
         {[1, 2, 3].map((n) => (
           <div
@@ -339,7 +343,12 @@ function KanbanColumn({
           </div>
         ) : (
           clients.map((c) => (
-            <ClientCard key={c.id} client={c} onClick={() => onClientClick(c)} onIncrement={onIncrement} />
+            <ClientCard
+              key={c.id}
+              client={c}
+              onClick={() => onClientClick(c)}
+              onIncrement={onIncrement}
+            />
           ))
         )}
       </div>
@@ -961,11 +970,26 @@ export default function PipelinePage() {
             </div>
           ) : (
             <>
-              <KanbanRow statuses={ROW1} grouped={grouped} onClientClick={(c) => setSelected(c)} onIncrement={handleIncrementProby} />
+              <KanbanRow
+                statuses={ROW1}
+                grouped={grouped}
+                onClientClick={(c) => setSelected(c)}
+                onIncrement={handleIncrementProby}
+              />
               <div style={{ height: 1, background: "var(--border)", flexShrink: 0 }} />
-              <KanbanRow statuses={ROW2} grouped={grouped} onClientClick={(c) => setSelected(c)} onIncrement={handleIncrementProby} />
+              <KanbanRow
+                statuses={ROW2}
+                grouped={grouped}
+                onClientClick={(c) => setSelected(c)}
+                onIncrement={handleIncrementProby}
+              />
               <div style={{ height: 1, background: "var(--border)", flexShrink: 0 }} />
-              <KanbanRow statuses={ROW3} grouped={grouped} onClientClick={(c) => setSelected(c)} onIncrement={handleIncrementProby} />
+              <KanbanRow
+                statuses={ROW3}
+                grouped={grouped}
+                onClientClick={(c) => setSelected(c)}
+                onIncrement={handleIncrementProby}
+              />
             </>
           )}
         </div>

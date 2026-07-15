@@ -618,7 +618,9 @@ export async function saveAgent2Output(
     props["Pitch Recipe"] = { rich_text: richText(pitchRecipe) };
   }
   if (systemTransformacji?.length) {
-    props["System transformacji (3 kroki)"] = { rich_text: richText(systemTransformacji.join("\n")) };
+    props["System transformacji (3 kroki)"] = {
+      rich_text: richText(systemTransformacji.join("\n")),
+    };
   }
   if (zdanieRoznicujace) {
     props["Zdanie różnicujące"] = { rich_text: richText(zdanieRoznicujace) };

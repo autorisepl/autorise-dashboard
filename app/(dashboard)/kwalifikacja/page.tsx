@@ -2102,7 +2102,11 @@ function ClientSidebar({
           e.currentTarget.style.boxShadow = "var(--shadow-card)";
         }}
       >
-        {collapsed ? <ChevronRight size={13} strokeWidth={1.8} /> : <ChevronLeft size={13} strokeWidth={1.8} />}
+        {collapsed ? (
+          <ChevronRight size={13} strokeWidth={1.8} />
+        ) : (
+          <ChevronLeft size={13} strokeWidth={1.8} />
+        )}
       </button>
 
       {collapsed ? (
