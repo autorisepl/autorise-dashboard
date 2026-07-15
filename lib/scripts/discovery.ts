@@ -505,7 +505,7 @@ export const STEPS_D: Step[] = [
       {
         t: "say",
         text: [
-          "Inwestycja to 18 000 zł netto, cena regularna, jednorazowo.",
+          "Inwestycja to 18 000 zł, cena regularna, jednorazowo.",
           "Plus 4 000 zł miesięcznie opieki.",
           "Gwarancja: jeśli w 30 dni nie odzyska {FORMA} 80 godzin — zwrot 100% bez pytań.",
         ],
@@ -518,7 +518,7 @@ export const STEPS_D: Step[] = [
       },
       {
         t: "say",
-        text: "Cena regularna to 18 tysięcy netto. Jeśli podpiszemy dziś i dostaniemy dostępy w ustalonym terminie, cena spada do 15 tysięcy — to nie kara za spóźnienie, to nagroda za sprawny start razem.",
+        text: "Cena regularna to 18 tysięcy. Jeśli podpiszemy dziś i dostaniemy dostępy w ustalonym terminie, cena spada do 15 tysięcy — to nie kara za spóźnienie, to nagroda za sprawny start razem.",
         cel: "Gotowa fraza do wypowiedzenia po ciszy, jeśli {FORMA} pyta o rabat albo zwleka — mechanizm rabatu za terminowość, §5 ust. 1 umowy",
       },
     ],
@@ -573,7 +573,7 @@ export const STEPS_D: Step[] = [
       },
       {
         t: "say",
-        text: "18 tysięcy netto regularnie, 15 tysięcy jeśli podpiszemy dziś i dostępy przyjdą w ustalonym terminie.",
+        text: "18 tysięcy regularnie, 15 tysięcy jeśli podpiszemy dziś i dostępy przyjdą w ustalonym terminie.",
         cel: "Cena — potwierdzenie mechanizmu 18000/15000 na głos, nie zakładanie że {FORMA} pamięta to z wcześniejszej części rozmowy",
       },
       {

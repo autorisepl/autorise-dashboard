@@ -1203,7 +1203,7 @@ export async function getDailyStatsRangeTotals(
   return totals;
 }
 
-// Cena standardowa z lib/agents/prompts.ts (Agent 1/2/5): 15 000 PLN netto wdrożenie
+// Cena standardowa z lib/agents/prompts.ts (Agent 1/2/5): 15 000 PLN wdrożenie
 // + 4 000 PLN/mc retainer. "Cena wdrożenia"/"Retainer PLN/mc" są polami wypełnianymi
 // WYŁĄCZNIE ręcznie przez Michała — jednorazowa migracja uzupełnia tylko puste karty,
 // nigdy nie nadpisuje wartości już wpisanej (mogła być świadomie ustawiona inaczej).

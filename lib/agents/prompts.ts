@@ -122,7 +122,7 @@ export const AGENT_ROADMAP_STEPS = {
 
 export const AGENT1_SYSTEM_PROMPT = `Jesteś analitykiem sprzedażowym Autorise. Czytasz transkrypty rozmów telefonicznych kwalifikacyjnych z właścicielami firm transportowych i uzupełniasz kartę klienta w Pipeline.
 
-Autorise sprzedaje System Operacyjny Firmy Transportowej: automatyzacja TMS, poczty, KSeF i płatności w 30 dni. Cena: 18 000 PLN netto wdrożenie (cena regularna), rabat za terminowość -3 000 PLN (do 15 000 PLN netto) przy łącznym spełnieniu: płatność faktury w 14 dni ORAZ dostarczenie kompletu dostępów w ustalonym terminie — plus 4 000 PLN/mc retainer (min. 12 mc). Gwarancja: minimum 80 godzin administracyjnych zaoszczędzonych miesięcznie — weryfikowane po 30 dniach na realnych zleceniach. 100% zwrotu jeśli cel nieosiągnięty przy spełnieniu warunków współpracy.
+Autorise sprzedaje System Operacyjny Firmy Transportowej: automatyzacja TMS, poczty, KSeF i płatności w 30 dni. Autorise nie jest płatnikiem VAT (zwolnienie podmiotowe) — cena to płaska kwota bez dopisków podatkowych. Cena: 18 000 PLN wdrożenie (cena regularna), rabat za terminowość -3 000 PLN (do 15 000 PLN) przy łącznym spełnieniu: płatność faktury w 14 dni ORAZ dostarczenie kompletu dostępów w ustalonym terminie — plus 4 000 PLN/mc retainer (min. 12 mc). Gwarancja: minimum 80 godzin administracyjnych zaoszczędzonych miesięcznie — weryfikowane po 30 dniach na realnych zleceniach. 100% zwrotu jeśli cel nieosiągnięty przy spełnieniu warunków współpracy.
 ICP: flota 10-150 pojazdów, 2+ osoby w biurze, właściciel jako decydent, konkretny ból operacyjny, aktywnie szuka rozwiązania.
 
 DANE Z NOTION:
@@ -500,7 +500,7 @@ Agent 1 może przekazać dane z kalkulatora obejmujące pięć kategorii pracy m
 
 Jeśli w danych od Agenta 1 pojawi się kategoria "komunikacja" jako zaznaczona, potraktuj to jako mocny sygnał dla modułu whatsapp-alerts, nawet jeśli nie było wprost powiedziane w cytacie bólu głównego.
 
-Cena: 18 000 PLN netto wdrożenie (regularna), rabat za terminowość -3 000 PLN do 15 000 PLN przy płatności w 14 dni ORAZ dostępach w ustalonym terminie + 4 000 PLN/mc retainer (min. 12 mc)
+Cena: 18 000 PLN wdrożenie (regularna), rabat za terminowość -3 000 PLN do 15 000 PLN przy płatności w 14 dni ORAZ dostępach w ustalonym terminie + 4 000 PLN/mc retainer (min. 12 mc). Autorise nie jest płatnikiem VAT (zwolnienie podmiotowe), cena to płaska kwota bez dopisków podatkowych.
 Gwarancja: minimum 80 godzin administracyjnych zaoszczędzonych miesięcznie, weryfikowane po 30 dniach. 100% zwrotu przy niespełnieniu celu i spełnieniu warunków (dostęp do systemów w 5 dni, kickoff, responsywność na WhatsApp 48h).
 
 FRAMEWORK DISCOVERY CALL (Agency Leaders, 45-60 minut, JEDNO spotkanie, 6 kroków):
@@ -665,7 +665,7 @@ współpracy z Tobą rezonuje i widzisz siebie w tym rozwiązaniu?"
 → Klient NIE lub niepewny → wróć do Kroku 4. Nie idź do ceny.
 
 Cena:
-> "Inwestycja w wdrożenie systemu dopasowanego pod Pana firmę: 18 000 PLN netto, cena regularna. Jeśli podpiszemy dziś i dostaniemy dostępy w ustalonym terminie, spada do 15 000 PLN — to nie kara za spóźnienie, to nagroda za sprawny start razem. Retainer 4 000 PLN miesięcznie."
+> "Inwestycja w wdrożenie systemu dopasowanego pod Pana firmę: 18 000 PLN, cena regularna. Jeśli podpiszemy dziś i dostaniemy dostępy w ustalonym terminie, spada do 15 000 PLN — to nie kara za spóźnienie, to nagroda za sprawny start razem. Retainer 4 000 PLN miesięcznie."
 → STOP. CISZA. Minimum 20 sekund. Zero dodatkowych słów.
 
 🖥️ PREZENTACJA — SEKCJA 5: Gwarancja na umowie

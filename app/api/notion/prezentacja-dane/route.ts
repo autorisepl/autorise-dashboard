@@ -17,7 +17,7 @@ const PO_WDROZENIU_FRACTION = 0.125;
 // godziny dziennie × liczba spedytorów × dni robocze/mc.
 const DNI_ROBOCZE_MC = 21;
 // Cena standardowa, zdefiniowana w lib/agents/prompts.ts (Agent 1/2/5) i SZKIC_UMOWA_AUTORISE.md
-// §5 ust. 1: 18 000 PLN netto cena regularna, rabat za terminowość -3 000 PLN (do 15 000 PLN)
+// §5 ust. 1: 18 000 PLN cena regularna, rabat za terminowość -3 000 PLN (do 15 000 PLN)
 // przy łącznym spełnieniu: płatność faktury w 14 dni ORAZ dostarczenie kompletu dostępów w
 // ustalonym terminie. Pola Notion "Cena wdrożenia"/"Retainer PLN/mc" są wypełniane ręcznie przez
 // Michała — puste pole oznacza standardową ofertę, nie brak ceny, więc fallback na te stałe
