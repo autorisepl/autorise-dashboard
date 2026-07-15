@@ -1892,6 +1892,54 @@ export default function SprzedazPage() {
           ? `Poza zakresem tego wdrożenia zostaje: ${pozaZakresem}.`
           : "— brak ustaleń w Notion, dopytaj teraz i zapisz w mini-formularzu 'Warunki umowy' —",
       );
+      // Blok "Arek" pkt 1 (2026-07-15) — te nawiasy były NIGDY nieusuwane na żywo, sprzedawca
+      // czytał je dosłownie klientowi. Wypełnione danymi klienta (nazwa/flota/TMS) i nowymi
+      // polami agenta (system_transformacji/roznicowanie_zdanie/roi_dopowiedzenie) zamiast
+      // zostawiać hardcodowany tekst instrukcyjny w treści skryptu.
+      const firma = selected.firma?.trim() ?? "";
+      out = out.replace(
+        /\[nazwa firmy\]/g,
+        firma || "— brak nazwy firmy w Pipeline —",
+      );
+      out = out.replace(/\[nazwa\]/g, firma || "Państwa firma");
+      out = out.replace(
+        /\[X\]\s*pojazd(?:ów|y|u)?/gi,
+        selected.flota ? `${selected.flota} pojazdów` : "— brak floty w Pipeline —",
+      );
+      out = out.replace(
+        /\[nazwa TMS\/system klienta\]/g,
+        selected.tms?.trim() || "systemu którego dziś Państwo używacie",
+      );
+      out = out.replace(
+        /Wcześniej próbowano \[poprzednie próby\] ale to nie zadziałało bo \[powód\]\./g,
+        poprzednieProby
+          ? `Wcześniej próbowano: ${poprzednieProby}.`
+          : "— dopytaj o wcześniejsze próby rozwiązania tego problemu —",
+      );
+      out = out.replace(
+        /Samodzielnie trudno to rozwiązać bo \[powód\]\./g,
+        "Samodzielnie trudno to rozwiązać bez narzędzia dedykowanego pod transport.",
+      );
+      const roznicowanie = selected.zdanieRoznicujace?.trim() ?? "";
+      out = out.replace(
+        /Wcześniej pojawiła się próba rozwiązania tego inaczej: \[poprzednia próba z rozmowy\], która nie zadziałała bo \[powód z rozmowy\]\.\s*My robimy to inaczej — nie sprzedajemy kolejnego generycznego narzędzia, tylko wdrożenie dopasowane do \[nazwa TMS\/system klienta\] i tego konkretnego procesu\./g,
+        roznicowanie ||
+          "— brak zdania różnicującego z Agenta Kwalifikacja, opisz na żywo czym Autorise różni się od poprzednich prób klienta —",
+      );
+      const systemKroki = selected.systemTransformacji ?? [];
+      out = out.replace(
+        /System transformacji wygląda tak: krok pierwszy, \[moduł 1 opisany korzyścią\]\.\s*Krok drugi, \[moduł 2 opisany korzyścią\]\.\s*Krok trzeci, \[moduł 3 opisany korzyścią\]\./g,
+        systemKroki.length >= 3
+          ? systemKroki.slice(0, 3).join(" ")
+          : "— brak system_transformacji z Agenta Kwalifikacja, opisz na żywo 3 kroki wdrożenia dla tego klienta —",
+      );
+      const roiDopowiedzenie = selected.roiDopowiedzenie?.trim() ?? "";
+      out = out.replace(
+        /Przy \[kwota oszczędności\] miesięcznie, inwestycja zwraca się w \[X\] miesięcy\./g,
+        roiDopowiedzenie || "— policz z kalkulatorem ROI —",
+      );
+      const roiMiesiace = roiDopowiedzenie.match(/zwraca się w (\d+)/)?.[1];
+      out = out.replace(/15000 zł zwraca się w \[X\] miesięcy/g, `15000 zł zwraca się w ${roiMiesiace ?? "— policz —"} miesięcy`);
     }
     return out;
   };

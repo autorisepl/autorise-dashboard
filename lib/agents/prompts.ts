@@ -715,6 +715,35 @@ Zawiera cztery elementy, każdy jako osobna sekcja w stringu:
 
 Jeśli brak danych do któregokolwiek elementu — oznacz [DO WERYFIKACJI NA DISCOVERY].
 
+POLE system_transformacji (wymagane, tablica DOKŁADNIE 3 stringów):
+Skrypt discovery.ts (krok "pitch") ma na sztywno wpisane nawiasy "[moduł 1 opisany korzyścią]",
+"[moduł 2 opisany korzyścią]", "[moduł 3 opisany korzyścią]" — to placeholder który nigdy nie był
+usuwany i sprzedawca czytał go dosłownie na żywo klientowi (zgłoszone przez Michała po rozmowie
+z Arkiem Burkowskim). Napisz 3 gotowe, KOMPLETNE zdania do wypowiedzenia na głos, jedno na krok
+systemu transformacji, budowane z modułów rzeczywiście rekomendowanych temu klientowi (na
+podstawie priorytetyzacji modułów w tej samej Części B) i konkretnego bólu z rozmowy. Przykład
+formy: "Krok pierwszy: system sam wyciąga zlecenia z Pana maila i wpisuje je do arkusza, żeby nikt
+w biurze nie przepisywał tego ręcznie." Jeśli klientowi pasują mniej niż 3 moduły, powtórz temat
+trzeciego zdania jako rozszerzenie/konsekwencję (np. kontrola i widoczność całości) zamiast
+zostawiać puste zdanie — tablica ZAWSZE ma dokładnie 3 elementy, zero nawiasów w treści.
+
+POLE roznicowanie_zdanie (wymagane, jeden string):
+Zastępuje nawiasy "[poprzednia próba z rozmowy]"/"[powód z rozmowy]"/"[nazwa TMS/system klienta]"
+w kroku "przejście" discovery.ts. Jedno gotowe zdanie łączące: co klient próbował wcześniej (z
+transkryptu), dlaczego to nie zadziałało, i czym różni się podejście Autorise — ten sam wzorzec co
+PITCH SENTENCE wyżej, ale jako osobne, w pełni sformułowane zdanie gotowe do czytania wprost, nie
+skrót. Jeśli klient nie wspomniał żadnej wcześniejszej próby: napisz zdanie różnicujące bez
+odwołania do przeszłości (np. oparte o to że rozwiązania generyczne nie rozumieją specyfiki
+transportu), nigdy nie zostawiaj nawiasu w treści.
+
+POLE roi_dopowiedzenie (wymagane, jeden string):
+Zastępuje "[kwota oszczędności]"/"[X] miesięcy" w kroku ROI discovery.ts. Jedno gotowe zdanie typu
+"Przy [kwota] miesięcznie, inwestycja zwraca się w [Y] miesięcy" z podstawionymi REALNYMI liczbami
+z koszt_problemu Agenta 1 (użyj ceny regularnej 18 000 PLN jeśli brak ustalonej ceny końcowej).
+Policz miesiące zwrotu (18000 / kwota_miesięczna, zaokrąglone w górę) — nie zostawiaj samego wzoru,
+podstaw wynik. Jeśli koszt miesięczny nieznany: napisz zdanie wprost mówiące że wartość zostanie
+policzona na żywo kalkulatorem ROI, nigdy nie zostawiaj nawiasu w treści.
+
 POLE cytaty_klienta (wymagane, osobne od pitch_recipe):
 Zamiast sklejania wielu cytatów w jedno zdanie z zagnieżdżonymi cudzysłowami, zwróć każdy cytat
 osobno jako obiekt w tablicy: { "cytat": "dosłowne słowa klienta", "kontekst": "co to pokazuje, jednym zdaniem" }.
@@ -743,7 +772,10 @@ nie Twoim zadaniem jest formatować interpunkcję finalnego wyświetlania, zwró
     "uwagi_agenta": ""
   },
   "plan_discovery": "[PEŁNY PLAN — string z formatowaniem, jak wzór wyżej]",
-  "pitch_recipe": "[MODUŁY / PITCH SENTENCE / KLUCZOWY CYTAT / LICZBA DO PREZENTACJI — string z formatowaniem]"
+  "pitch_recipe": "[MODUŁY / PITCH SENTENCE / KLUCZOWY CYTAT / LICZBA DO PREZENTACJI — string z formatowaniem]",
+  "system_transformacji": ["[krok 1 — pełne zdanie]", "[krok 2 — pełne zdanie]", "[krok 3 — pełne zdanie]"],
+  "roznicowanie_zdanie": "[pełne zdanie, zero nawiasów w treści]",
+  "roi_dopowiedzenie": "[pełne zdanie z podstawionymi liczbami, zero nawiasów w treści]"
 }`;
 
 export const AGENT3_SYSTEM_PROMPT = `Jesteś analitykiem danych Autorise. Przygotowujesz personalizację prezentacji sprzedażowej (Autorise_Prezentacja.html) pod konkretnego klienta przed Discovery Call.

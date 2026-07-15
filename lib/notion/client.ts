@@ -583,6 +583,9 @@ export async function saveAgent2Output(
   preDiscoveryBrief: Record<string, unknown>,
   planDiscovery: string,
   pitchRecipe?: string,
+  systemTransformacji?: string[] | null,
+  zdanieRoznicujace?: string | null,
+  roiDopowiedzenie?: string | null,
 ): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const props: Record<string, any> = {};
@@ -613,6 +616,15 @@ export async function saveAgent2Output(
   }
   if (pitchRecipe) {
     props["Pitch Recipe"] = { rich_text: richText(pitchRecipe) };
+  }
+  if (systemTransformacji?.length) {
+    props["System transformacji (3 kroki)"] = { rich_text: richText(systemTransformacji.join("\n")) };
+  }
+  if (zdanieRoznicujace) {
+    props["Zdanie różnicujące"] = { rich_text: richText(zdanieRoznicujace) };
+  }
+  if (roiDopowiedzenie) {
+    props["ROI dopowiedzenie"] = { rich_text: richText(roiDopowiedzenie) };
   }
   if (brief.cytaty_klienta?.length) {
     // Format: "cytat|||kontekst" per linia, sparsowane z powrotem w BriefSection (/sprzedaz)
@@ -695,6 +707,9 @@ export async function saveKwalifikacjaMergedOutput(
       pre_discovery_brief?: Record<string, unknown>;
       plan_discovery?: string;
       pitch_recipe?: string;
+      system_transformacji?: string[];
+      roznicowanie_zdanie?: string;
+      roi_dopowiedzenie?: string;
     };
     if (brief.pre_discovery_brief && brief.plan_discovery) {
       try {
@@ -703,6 +718,9 @@ export async function saveKwalifikacjaMergedOutput(
           brief.pre_discovery_brief,
           brief.plan_discovery,
           brief.pitch_recipe,
+          brief.system_transformacji,
+          brief.roznicowanie_zdanie,
+          brief.roi_dopowiedzenie,
         );
         const briefFields = brief.pre_discovery_brief as { hipoteza_bol_glowny?: string };
         const historySummary2 = briefFields.hipoteza_bol_glowny
@@ -979,6 +997,34 @@ export async function migrateNotionSchema(): Promise<{ added: string[]; errors: 
     }
   } catch (err) {
     errors.push(`Batch 2: ${err instanceof Error ? err.message : "Błąd migracji schematu"}`);
+  }
+
+  // Batch 3 (2026-07-15, Blok "Arek" pkt 1/16) — pola rozszerzające schemat agenta o gotowe,
+  // sformułowane zdania per slajd discovery.ts (system 3 kroki, różnicowanie od konkurencji,
+  // ROI dopowiedzenie), żeby skrypt czytał je z danych klienta zamiast z nieusuwalnych
+  // nawiasów typu "[moduł 1]". Patrz saveAgent2Output i fill() w /sprzedaz.
+  try {
+    await notion.dataSources.update({
+      data_source_id: PIPELINE_DATA_SOURCE_ID,
+      properties: {
+        "System transformacji (3 kroki)": { rich_text: {} },
+        "Zdanie różnicujące": { rich_text: {} },
+        "ROI dopowiedzenie": { rich_text: {} },
+      },
+    });
+    const { confirmed, missing } = await confirmSchemaFields([
+      "System transformacji (3 kroki)",
+      "Zdanie różnicujące",
+      "ROI dopowiedzenie",
+    ]);
+    added.push(...confirmed);
+    for (const name of missing) {
+      errors.push(
+        `Batch 3: pole "${name}" nie pojawiło się w schemacie po update (brak wyjątku, ale retrieve go nie potwierdza)`,
+      );
+    }
+  } catch (err) {
+    errors.push(`Batch 3: ${err instanceof Error ? err.message : "Błąd migracji schematu"}`);
   }
 
   return { added, errors };

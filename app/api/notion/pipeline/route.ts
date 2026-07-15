@@ -41,6 +41,9 @@ export interface PipelineClientDetailed {
   dataPierwszegoKontaktu: string;
   utracony: boolean;
   powodUtraty: string;
+  systemTransformacji: string[];
+  zdanieRoznicujace: string;
+  roiDopowiedzenie: string;
 }
 
 // Blok 1, punkt 1.5 (2026-07-14) — data premiery skryptu kwalifikacyjnego V4 (12 kroków, ICP
@@ -130,6 +133,12 @@ export async function GET() {
           dataPierwszegoKontaktu: extractText(props["Data pierwszego kontaktu"]),
           utracony: extractCheckbox(props["Utracony"]),
           powodUtraty: extractText(props["Powód utraty"]),
+          systemTransformacji: extractText(props["System transformacji (3 kroki)"])
+            .split("\n")
+            .map((s) => s.trim())
+            .filter(Boolean),
+          zdanieRoznicujace: extractText(props["Zdanie różnicujące"]),
+          roiDopowiedzenie: extractText(props["ROI dopowiedzenie"]),
         };
       })
       .filter((c: PipelineClientDetailed) => c.firma !== "Bez nazwy");
