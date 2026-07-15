@@ -7,6 +7,8 @@ import { approxMinutesForBytes, fmtMb, MAX_FILE_BYTES } from "@/lib/transcripts/
 
 type RecorderState = "idle" | "recording" | "preview";
 
+const DEVICE_ID_KEY = "autorise_recorder_device_id";
+
 function fmtDuration(ms: number): string {
   const s = Math.floor(ms / 1000);
   const m = Math.floor(s / 60);
@@ -69,7 +71,11 @@ export function AudioRecorder() {
   const [blob, setBlob] = useState<Blob | null>(null);
   const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
   const [audioDevices, setAudioDevices] = useState<MediaDeviceInfo[]>([]);
-  const [selectedDeviceId, setSelectedDeviceId] = useState<string>("");
+  // Blok 3, punkt 3.2 (2026-07-15/16) — wybór mikrofonu ma być trwały: zapamiętany między
+  // sesjami (localStorage), nie tylko między nagraniami w tej samej karcie.
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string>(() =>
+    typeof window === "undefined" ? "" : (localStorage.getItem(DEVICE_ID_KEY) ?? ""),
+  );
 
   const mediaRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -84,7 +90,10 @@ export function AudioRecorder() {
       const devices = await navigator.mediaDevices.enumerateDevices();
       const inputs = devices.filter((d) => d.kind === "audioinput");
       setAudioDevices(inputs);
-      if (inputs.length > 0 && !selectedDeviceId) {
+      // Zachowaj zapamiętany mikrofon jeśli nadal istnieje wśród dostępnych urządzeń;
+      // dopiero gdy go brak (albo nic jeszcze nie wybrano) — użyj pierwszego z listy.
+      const storedStillValid = inputs.some((d) => d.deviceId === selectedDeviceId);
+      if (inputs.length > 0 && !storedStillValid) {
         setSelectedDeviceId(inputs[0].deviceId);
       }
     } catch {
@@ -230,24 +239,32 @@ export function AudioRecorder() {
         )}
       </div>
 
-      {/* Microphone selector */}
-      {audioDevices.length > 1 && state === "idle" && (
+      {/* Microphone selector — Blok 3, punkt 3.2: pole trwałe, nie znika po wyborze/w
+          trakcie nagrywania (dotąd renderowane wyłącznie w state==="idle", więc znikało
+          w chwili startu nagrania i przy każdym powrocie trzeba było je odnajdywać od
+          nowa). Zablokowane (nie ukryte) podczas nagrywania — zmiana urządzenia w
+          połowie nagrania nie ma sensu, ale widoczność i pamięć wyboru już tak. */}
+      {audioDevices.length > 1 && (
         <div style={{ position: "relative", marginBottom: 10 }}>
           <select
             value={selectedDeviceId}
-            onChange={(e) => setSelectedDeviceId(e.target.value)}
+            disabled={state !== "idle"}
+            onChange={(e) => {
+              setSelectedDeviceId(e.target.value);
+              localStorage.setItem(DEVICE_ID_KEY, e.target.value);
+            }}
             style={{
               width: "100%",
               padding: "6px 28px 6px 10px",
               border: "1px solid var(--border)",
               borderRadius: 8,
-              background: "var(--bg)",
-              color: "var(--text-primary)",
+              background: state === "idle" ? "var(--bg)" : "var(--bg-hover)",
+              color: state === "idle" ? "var(--text-primary)" : "var(--text-tertiary)",
               fontFamily: "var(--font-sans)",
               fontSize: 12,
               appearance: "none",
               outline: "none",
-              cursor: "pointer",
+              cursor: state === "idle" ? "pointer" : "default",
             }}
           >
             {audioDevices.map((d, i) => (

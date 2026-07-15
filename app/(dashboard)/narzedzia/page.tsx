@@ -538,7 +538,14 @@ export default function NarzedziaPage() {
               q.id === item.id ? { ...q, status: "done", result, elapsed: currentElapsed } : q,
             ),
           );
-          void uploadToDrive(result.transcript, item.name, item.id);
+          // Blok 3, punkt 3.1 (2026-07-15/16, KRYTYCZNE) — zapis na Dysk musi zawierać
+          // timestampy per segment, nie zlany blok tekstu. Wcześniej wysyłano
+          // `result.transcript` (fullText) — dokładnie ten sam format który uczynił
+          // przeładowane leady bezużytecznymi po resecie, opisany jako blocker w
+          // AUTORISE_MASTER_PLAN.md. `timestampText()` już istniał i był używany w
+          // podglądzie w aplikacji, ale nigdy nie trafiał do pliku faktycznie
+          // zapisywanego na Dysku.
+          void uploadToDrive(timestampText(result.segments), item.name, item.id);
         } else if (event.type === "error") {
           stopTimer();
           setQueue((prev) =>
