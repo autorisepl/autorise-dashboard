@@ -1882,6 +1882,16 @@ export default function SprzedazPage() {
         /\[godziny z Pipeline\]/g,
         selected.godzinyWpisywania ? `${selected.godzinyWpisywania}` : "[X]",
       );
+      // Blok 6.8 (2026-07-15) — ustalenia "poza zakresem" wpisane w mini-formularzu Warunki
+      // umowy (patrz WarunkiUmowyForm.tsx), wstawione na żywo w kroku "Warunki umowy —
+      // potwierdź na żywo" zamiast generycznego tekstu.
+      const pozaZakresem = selected.pozaZakresem?.trim() ?? "";
+      out = out.replace(
+        /\[poza zakresem\]/g,
+        pozaZakresem
+          ? `Poza zakresem tego wdrożenia zostaje: ${pozaZakresem}.`
+          : "— brak ustaleń w Notion, dopytaj teraz i zapisz w mini-formularzu 'Warunki umowy' —",
+      );
     }
     return out;
   };

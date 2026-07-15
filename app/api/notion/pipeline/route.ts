@@ -37,6 +37,7 @@ export interface PipelineClientDetailed {
   cytatyKlienta: string;
   warunkiDniDostepow: number;
   warunkiUwagi: string;
+  pozaZakresem: string;
   dataPierwszegoKontaktu: string;
   utracony: boolean;
   powodUtraty: string;
@@ -125,6 +126,7 @@ export async function GET() {
           cytatyKlienta: extractText(props["Cytaty klienta"]),
           warunkiDniDostepow: extractNumber(props["Warunki umowy — dni dostępów"]),
           warunkiUwagi: extractText(props["Warunki umowy — uwagi"]),
+          pozaZakresem: extractText(props["Poza zakresem — ustalenia"]),
           dataPierwszegoKontaktu: extractText(props["Data pierwszego kontaktu"]),
           utracony: extractCheckbox(props["Utracony"]),
           powodUtraty: extractText(props["Powód utraty"]),

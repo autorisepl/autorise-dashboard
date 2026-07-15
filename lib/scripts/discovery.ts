@@ -561,6 +561,43 @@ export const STEPS_D: Step[] = [
       },
     ],
   },
+  {
+    id: "warunki_umowy",
+    nr: "5e",
+    label: "WARUNKI UMOWY — POTWIERDŹ NA ŻYWO",
+    tag: "POTWIERDZASZ",
+    lines: [
+      {
+        t: "note",
+        text: "Zanim wyślesz umowę, przejdź na głos przez te 5 punktów z klientem — każdy osobno, nie jednym zdaniem. To ostatni moment żeby uniknąć niejasności przed podpisem, nie krok do przeklikania w ciszy.",
+      },
+      {
+        t: "say",
+        text: "18 tysięcy netto regularnie, 15 tysięcy jeśli podpiszemy dziś i dostępy przyjdą w ustalonym terminie.",
+        cel: "Cena — potwierdzenie mechanizmu 18000/15000 na głos, nie zakładanie że {FORMA} pamięta to z wcześniejszej części rozmowy",
+      },
+      {
+        t: "say",
+        text: "30-dniowa weryfikacja gwarancji liczy się od dnia gdy dostanę komplet dostępów, nie od dzisiejszego podpisu.",
+        cel: "Start zegara — kluczowa różnica względem intuicji klienta ('podpisałem więc już się liczy'), musi być wypowiedziana wprost, nie domyślna",
+      },
+      {
+        t: "say",
+        text: "[poza zakresem]",
+        cel: "Poza zakresem — wstawiane na żywo z mini-formularza 'Warunki umowy' (Kalkulator ROI / Warunki umowy w panelu obok). Jeśli puste, dopytaj teraz i zapisz zanim wyślesz umowę",
+      },
+      {
+        t: "say",
+        text: "4 tysiące miesięcznie przez minimum 12 miesięcy, niezależnie od wyniku gwarancji — to osobna rzecz od samego wdrożenia.",
+        cel: "Retainer — oddzielić jednoznacznie od gwarancji zwrotu, najczęstszy punkt niejasności po podpisie",
+      },
+      {
+        t: "say",
+        text: "Wysyłam teraz umowę do podpisu — proszę o podpis jeszcze dziś, żeby zegar dostępów mógł ruszyć jak najszybciej.",
+        cel: "Podpis — moment wywołania Google Workspace eSignature / iLovePDF. W systemie nie ma jeszcze gotowej integracji/linku do tego kroku — to świadomie sam tekst przypominający, bez budowania nowej integracji teraz",
+      },
+    ],
+  },
 ];
 
 export const OBJECTIONS_D: Objection[] = [
@@ -744,6 +781,42 @@ export const OBJECTIONS_D: Objection[] = [
     script:
       "Rozumiem, że chce Pan wiedzieć na czym stoi, zanim podpiszemy. To proste: retainer to 12 miesięcy, bo tyle czasu potrzeba żeby system naprawdę wszedł w krew firmy i przynosił efekt, nie na to żeby Pana związać. Jeśli coś nie działa po naszej stronie, naprawiamy to, taki jest sens gwarancji. Jeśli zdecyduje się Pan zakończyć wcześniej bez naszej winy, rozliczamy pozostałe miesiące jednorazowo, żeby obie strony miały jasność od pierwszego dnia, nie żeby to było karą. Wolę powiedzieć to teraz wprost, niż żeby to było niespodzianką za pół roku.",
     note: "Do wypowiedzenia proaktywnie przy pierwszej wzmiance o retainerze, albo w odpowiedzi na wprost zadane pytanie o rezygnację. Podstawa: SZKIC_UMOWA_AUTORISE.md §5 ust. 7 (rozliczenie pozostałych miesięcy przy wcześniejszej rezygnacji bez winy Wykonawcy).",
+  },
+  {
+    id: "od13",
+    stage: "closing",
+    label: "Czemu Pan podpisuje, nie właściciel firmy?",
+    script:
+      "Działam jako pełnomocnik właściciela na podstawie pisemnego pełnomocnictwa, art. 100 kodeksu cywilnego — mam pełne prawo podpisać tę umowę w jego imieniu.",
+    note: "Krótko i pewnie, bez dalszego tłumaczenia się jeśli klient nie dopytuje dalej — to potwierdzenie faktu, nie negocjacja.",
+  },
+  {
+    id: "od14",
+    stage: "cena",
+    label: "Co jeśli AI popełni błąd np. na fakturze?",
+    script:
+      "Dlatego w pierwszych 30 dniach obowiązuje wyrywkowa weryfikacja z Pana strony — sprawdzacie próbkę dokumentów zanim w pełni zaufacie automatyzacji. Jak coś nie zgadza się, poprawiamy to od razu, taki jest sens tego okresu.",
+  },
+  {
+    id: "od15",
+    stage: "closing",
+    label: "Czemu zegar liczy się od dostępów, nie od podpisania?",
+    script:
+      "To uczciwe dla obu stron — nie płaci Pan za czas w którym fizycznie nie mogliśmy jeszcze pracować, bo nie mieliśmy dostępów. Zegar rusza dopiero gdy realnie zaczynamy.",
+  },
+  {
+    id: "od16",
+    stage: "cena",
+    label: "Co jeśli nie zapłacę w 14 dni i stracę rabat?",
+    script:
+      "To nie jest pułapka, to nagroda za sprawny start — po prostu wracamy wtedy do ceny regularnej, 18 tysięcy zamiast 15. Nic więcej się nie zmienia.",
+  },
+  {
+    id: "od17",
+    stage: "cena",
+    label: "A jeśli godziny oszczędności się nie potwierdzą bo się spóźniliście z integracją?",
+    script:
+      "Weryfikacja 30 dni liczy się od faktycznego startu, czyli od zebrania dostępów — jeśli to my się spóźnimy z integracją, zegar jeszcze się nie zaczął, więc to nie obciąża Pana. Obciąża Pana tylko jeśli to Państwa strona spóźni dostępy mimo ustalonego terminu.",
   },
 ];
 

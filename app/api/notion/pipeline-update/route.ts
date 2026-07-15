@@ -23,6 +23,7 @@ const bodySchema = z.object({
   notatki: z.string().optional(),
   dniDostepow: z.number().nullable().optional(),
   uwagiWarunki: z.string().nullable().optional(),
+  pozaZakresem: z.string().nullable().optional(),
   utracony: z.boolean().optional(),
   powodUtraty: z.string().nullable().optional(),
 });
@@ -99,6 +100,11 @@ export async function PATCH(req: Request) {
     if (d.uwagiWarunki !== undefined) {
       properties["Warunki umowy — uwagi"] = {
         rich_text: d.uwagiWarunki ? richText(d.uwagiWarunki) : [],
+      };
+    }
+    if (d.pozaZakresem !== undefined) {
+      properties["Poza zakresem — ustalenia"] = {
+        rich_text: d.pozaZakresem ? richText(d.pozaZakresem) : [],
       };
     }
     if (d.utracony !== undefined) {

@@ -25,23 +25,32 @@ const inputStyle: React.CSSProperties = {
   width: "100%",
 };
 
-// Mini-formularz "obok kalkulatora" w kroku ceny/zamknięcia: dwa pola ustalane na żywo
-// podczas rozmowy zamykającej, zapisywane do Notion Pipeline tym samym mechanizmem co
-// reszta pól ręcznych (PATCH /api/notion/pipeline-update) — wzorzec incrementCallAttempt
-// w /kwalifikacja. "Dni dostępów" trafia do Załącznika nr 1 umowy (SZKIC_UMOWA_AUTORISE.md
-// §2 ust. 1), nie jest sztywną liczbą dla wszystkich klientów.
+// Mini-formularz "obok kalkulatora" w kroku ceny/zamknięcia: pola ustalane na żywo podczas
+// rozmowy zamykającej, zapisywane do Notion Pipeline tym samym mechanizmem co reszta pól
+// ręcznych (PATCH /api/notion/pipeline-update) — wzorzec incrementCallAttempt w /kwalifikacja.
+// "Dni dostępów" trafia do Załącznika nr 1 umowy (SZKIC_UMOWA_AUTORISE.md §2 ust. 1), nie jest
+// sztywną liczbą dla wszystkich klientów. "Poza zakresem — ustalenia" (Blok 6.8, 2026-07-15)
+// dodane żeby krok "Warunki umowy — potwierdź na żywo" w discovery.ts mógł dynamicznie
+// wstawić realne ustalenia tego klienta zamiast generycznego tekstu (placeholder
+// "[poza zakresem]" w fill(), /sprzedaz/page.tsx).
 export function WarunkiUmowyForm({ client, onSaved }: WarunkiUmowyFormProps) {
   const [dni, setDni] = useState("");
   const [uwagi, setUwagi] = useState("");
+  const [pozaZakresem, setPozaZakresem] = useState("");
   const [status, setStatus] = useState<SaveStatus>("idle");
 
   useEffect(() => {
     setDni(client?.warunkiDniDostepow ? String(client.warunkiDniDostepow) : "");
     setUwagi(client?.warunkiUwagi ?? "");
+    setPozaZakresem(client?.pozaZakresem ?? "");
     setStatus("idle");
   }, [client?.id]);
 
-  const save = async (patch: { dniDostepow?: number | null; uwagiWarunki?: string | null }) => {
+  const save = async (patch: {
+    dniDostepow?: number | null;
+    uwagiWarunki?: string | null;
+    pozaZakresem?: string | null;
+  }) => {
     if (!client) return;
     setStatus("saving");
     try {
@@ -56,6 +65,7 @@ export function WarunkiUmowyForm({ client, onSaved }: WarunkiUmowyFormProps) {
       onSaved({
         ...(patch.dniDostepow !== undefined ? { warunkiDniDostepow: patch.dniDostepow ?? 0 } : {}),
         ...(patch.uwagiWarunki !== undefined ? { warunkiUwagi: patch.uwagiWarunki ?? "" } : {}),
+        ...(patch.pozaZakresem !== undefined ? { pozaZakresem: patch.pozaZakresem ?? "" } : {}),
       });
       setTimeout(() => setStatus((s) => (s === "saved" ? "idle" : s)), 2000);
     } catch {
@@ -115,6 +125,33 @@ export function WarunkiUmowyForm({ client, onSaved }: WarunkiUmowyFormProps) {
           onChange={(e) => setUwagi(e.target.value)}
           onBlur={() => void save({ uwagiWarunki: uwagi.trim() || null })}
           placeholder="Opcjonalnie — np. rozszerzenie zakresu, indywidualna wycena..."
+          style={{
+            ...inputStyle,
+            height: "auto",
+            minHeight: 72,
+            padding: "8px 10px",
+            resize: "vertical",
+            lineHeight: 1.5,
+          }}
+        />
+      </div>
+      <div>
+        <label
+          style={{
+            display: "block",
+            fontSize: 12,
+            fontWeight: 600,
+            color: "var(--text-secondary)",
+            marginBottom: 5,
+          }}
+        >
+          Poza zakresem — ustalenia
+        </label>
+        <textarea
+          value={pozaZakresem}
+          onChange={(e) => setPozaZakresem(e.target.value)}
+          onBlur={() => void save({ pozaZakresem: pozaZakresem.trim() || null })}
+          placeholder="Co świadomie zostaje poza zakresem tego wdrożenia — wypełnij przed krokiem 'Warunki umowy'..."
           style={{
             ...inputStyle,
             height: "auto",
