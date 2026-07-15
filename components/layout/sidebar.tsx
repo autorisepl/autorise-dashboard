@@ -2,13 +2,11 @@
 
 import { motion } from "framer-motion";
 import {
-  BarChart2,
   BookOpen,
   Calendar,
   CheckSquare,
   Files,
   GitBranch,
-  GraduationCap,
   Kanban,
   LayoutDashboard,
   Mic,
@@ -113,8 +111,10 @@ const NAV: {
     items: [
       { href: "/narzedzia", label: "Transkrypcja", icon: Mic, exact: true },
       { href: "/brand-book", label: "Brand Book", icon: BookOpen, exact: true },
-      { href: "/sesje", label: "Sesje szkoleniowe", icon: GraduationCap },
-      { href: "/analiza-narzedzi", label: "Analiza narzędzi", icon: BarChart2 },
+      // Blok 4, punkt 4.6 (2026-07-15/16) — "Sesje szkoleniowe" (/sesje) i "Analiza
+      // narzędzi" (/analiza-narzedzi) usunięte z głównego menu: to dokładnie ten sam
+      // Agent 5/6 co zakładki w /agenci, dwa miejsca dostępu do tej samej rzeczy. Strony
+      // zostają w kodzie (nieusunięte, nielinkowane) — jedyny punkt dostępu to teraz /agenci.
     ],
   },
   {

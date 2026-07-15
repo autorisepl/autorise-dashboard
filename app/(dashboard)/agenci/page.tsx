@@ -112,11 +112,14 @@ function makeInitialStates(): Record<AgentId, AgentState> {
 
 type TabConfig = { id: AgentId; label: string; icon: ReactNode };
 
+// Blok 4, punkt 4.1 (2026-07-15/16) — usunięte bezsensowne cyfry z etykiet ("01 Kwalifikacja"
+// itd. sugerowały numerację widoczną dla klienta, tymczasem to wyłącznie wewnętrzne ID
+// agentów). Nazwy opisowe zamiast numerów.
 const TABS: TabConfig[] = [
-  { id: "agentKwalifikacja", label: "01 Kwalifikacja", icon: <Phone size={13} /> },
-  { id: "agent4", label: "04 Analiza Discovery", icon: <Mic size={13} /> },
-  { id: "agent5", label: "05 Training", icon: <BookOpen size={13} /> },
-  { id: "agent6", label: "06 Ewaluacja", icon: <Search size={13} /> },
+  { id: "agentKwalifikacja", label: "Agent kwalifikacji", icon: <Phone size={13} /> },
+  { id: "agent4", label: "Agent sprzedaży", icon: <Mic size={13} /> },
+  { id: "agent5", label: "Agent szkoleniowy", icon: <BookOpen size={13} /> },
+  { id: "agent6", label: "Agent ewaluacyjny", icon: <Search size={13} /> },
 ];
 
 function TabBtn({

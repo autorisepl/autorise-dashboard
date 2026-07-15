@@ -231,7 +231,7 @@ const CONFIGS: Record<AgentId, AgentConfig> = {
   },
   agent4: {
     num: "04",
-    name: "Analiza Discovery",
+    name: "Agent sprzedaży",
     when: "Po rozmowie Discovery",
     db: "Notion Pipeline",
     dbFields: ["Wynik Discovery", "Kluczowe ustalenia", "Re-engagement", "Następny krok"],
@@ -260,7 +260,7 @@ const CONFIGS: Record<AgentId, AgentConfig> = {
   },
   agent5: {
     num: "05",
-    name: "Sesje szkoleniowe",
+    name: "Agent szkoleniowy",
     when: "Po sesji Agency Leaders",
     db: null,
     dbFields: [],
@@ -285,7 +285,7 @@ const CONFIGS: Record<AgentId, AgentConfig> = {
   },
   agent6: {
     num: "06",
-    name: "Analiza Narzędzia",
+    name: "Agent ewaluacyjny",
     when: "Ocena nowego narzędzia AI",
     db: null,
     dbFields: [],
@@ -310,7 +310,7 @@ const CONFIGS: Record<AgentId, AgentConfig> = {
   },
   agentKwalifikacja: {
     num: "01",
-    name: "Agent Kwalifikacja",
+    name: "Agent kwalifikacji",
     when: "Po rozmowie kwalifikacyjnej",
     db: "Notion Pipeline",
     dbFields: [
@@ -1661,17 +1661,6 @@ export function AgentWorkspace({
         <span
           style={{
             fontFamily: "var(--font-sans)",
-            fontSize: 11,
-            fontWeight: 600,
-            color: "var(--text-tertiary)",
-            letterSpacing: "0.04em",
-          }}
-        >
-          {cfg.num}
-        </span>
-        <span
-          style={{
-            fontFamily: "var(--font-sans)",
             fontSize: 14,
             fontWeight: 600,
             color: "var(--text-primary)",
@@ -1680,26 +1669,9 @@ export function AgentWorkspace({
         >
           {cfg.name}
         </span>
-        {cfg.hasThinking && (
-          <span
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 4,
-              fontSize: 10,
-              fontWeight: 600,
-              letterSpacing: "0.06em",
-              textTransform: "uppercase",
-              color: "var(--accent)",
-              background: "var(--accent-muted)",
-              padding: "2px 8px",
-              borderRadius: "var(--radius-xs)",
-            }}
-          >
-            <Brain size={10} />
-            Thinking
-          </span>
-        )}
+        {/* Blok 4, punkt 4.2 (2026-07-15/16) — usunięty badge "Thinking": kosmetyka
+            eksponująca wewnętrzny mechanizm modelu, sprawiała że narzędzie wygląda jak
+            demo AI zamiast produktu. */}
         {state.elapsed != null && (
           <span
             style={{
@@ -1858,12 +1830,12 @@ export function AgentWorkspace({
               ) : cfg.hasThinking ? (
                 <>
                   <Brain size={13} />
-                  Uruchom Agenta {cfg.num}
+                  Uruchom {cfg.name}
                 </>
               ) : (
                 <>
                   <Play size={12} fill="currentColor" />
-                  Uruchom Agenta {cfg.num}
+                  Uruchom {cfg.name}
                 </>
               )}
             </Button>
