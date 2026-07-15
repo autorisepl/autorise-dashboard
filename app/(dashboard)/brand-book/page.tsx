@@ -3,6 +3,7 @@
 import { BookOpen, Check, CheckCircle2, Copy } from "lucide-react";
 import { useState } from "react";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { Panel } from "@/components/ui/Panel";
 
 // ── Token viewer ──────────────────────────────────────────────────────
 
@@ -288,6 +289,64 @@ function RadiusScale() {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+// ── Panel — jeden wzorzec dla całego Autorise (Blok 2, punkt 2.3, 2026-07-15) ──────────
+
+// components/ui/Panel.tsx to JEDYNY dozwolony wzorzec "karty"/panelu w dashboardzie:
+// var(--glass) + var(--glass-blur) + border var(--glass-border) + var(--radius-lg) +
+// var(--shadow) (glass-shadow). Nie twórz ad-hoc divów z ręcznie wpisanym
+// background/border/radius żeby "wyglądały jak panel" — importuj Panel i przekaż
+// dzieci/padding/style. Audyt tej sesji znalazł ~10 miejsc z ręcznym odtworzeniem stylu
+// glass (drobne odchylenia: inny radius, inny border, brak cienia) — największe z nich to
+// karty w Agent0Card.tsx i AgentsOverview.tsx (mają hover/transition, którego Panel dziś nie
+// replikuje w pełni) — świadomie NIE przepisane w tej sesji bez możliwości weryfikacji
+// wizualnej na żywo (brak przeglądarki), do zrobienia w sesji z realnym podglądem zrzutów.
+function PanelShowcase() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <Panel>
+        <div
+          style={{
+            fontFamily: "var(--font-sans)",
+            fontSize: 13,
+            fontWeight: 600,
+            color: "var(--text-primary)",
+            marginBottom: 6,
+          }}
+        >
+          To jest &lt;Panel&gt; z domyślnym paddingiem (16px)
+        </div>
+        <div
+          style={{ fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--text-secondary)" }}
+        >
+          background: var(--glass) · backdrop-filter: var(--glass-blur) · border:
+          var(--glass-border) · border-radius: var(--radius-lg) · box-shadow: var(--glass-shadow)
+        </div>
+      </Panel>
+      <Panel padding={12}>
+        <div
+          style={{ fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--text-secondary)" }}
+        >
+          To samo z padding={"{12}"} — jedyny parametr który realnie różni się między zastosowaniami
+          (kompaktowe listy vs pełne karty).
+        </div>
+      </Panel>
+      <div
+        style={{
+          fontFamily: "var(--font-sans)",
+          fontSize: 11,
+          color: "var(--text-tertiary)",
+          lineHeight: 1.6,
+        }}
+      >
+        Użycie: <code>import {"{ Panel }"} from "@/components/ui/Panel"</code>. Props:{" "}
+        <code>children</code>, <code>padding</code> (domyślnie 16), <code>style</code> (nadpisania
+        punktowe), <code>onClick</code> (dodaje cursor: pointer automatycznie),{" "}
+        <code>className</code>.
+      </div>
     </div>
   );
 }
@@ -757,6 +816,9 @@ export default function BrandBookPage() {
 
           <SectionTitle>Cienie</SectionTitle>
           <ShadowShowcase />
+
+          <SectionTitle>Panele</SectionTitle>
+          <PanelShowcase />
 
           <SectionTitle>Przyciski</SectionTitle>
           <ButtonVariants />
