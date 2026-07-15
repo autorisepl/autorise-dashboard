@@ -37,7 +37,13 @@ Stare `agent1`/`agent2`/`agent3` route'y i karty zostają w kodzie jako świadom
 
 1. ✓ 2.1 Wspólny `components/ui/PageHeader.tsx` na 11 z 13 stron (styl "glass" 48px wybrany przez Michała, już większościowy — zamiast konkurencyjnego "solid" 52px z /kwalifikacja/sprzedaz/brand-book, obie strony podniesione DO stylu glass). `/narzedzia` i `/agenci` świadomie pominięte (layout master-detail / pasek zakładek, nie klasyczny header strony).
 2. **CZEKA NA DECYZJĘ MICHAŁA**: 2.2 prototyp `components/clients/GlobalClientSelector.tsx` (wyszukiwarka + scroll wewnątrz pola) podpięty PROTOTYPOWO w headerze `/kwalifikacja`, obok istniejącego ClientSidebar — nic nie usunięte. Michał wybrał "zobaczę na żywo, potem decyzja" (2026-07-15) — deploy poszedł żeby mógł ocenić na app.autorise.pl. Do zrobienia w kolejnej sesji dopiero PO jego potwierdzeniu: albo wdrożenie wszędzie + globalna persystencja wyboru między zakładkami (stan podniesiony do layoutu dashboardu), albo pozostawienie jako nieużywany prototyp, albo usunięcie.
-3. Nierozpoczęte: 2.3 (jeden wzorzec panelu w /brand-book, zastosowany konsekwentnie).
+3. ✓ 2.3 (jeden wzorzec panelu w /brand-book, zastosowany konsekwentnie) — zrobione w nocy 2026-07-14/15, patrz `AUTORISE_SESSION_LOG.md`.
+
+## BLOK 6 (warunki umowy w Discovery) — zamknięte 2026-07-14/15
+
+1. ✓ 6.5 Obiekcja retainer/rezygnacja: już istniała jako `od12` w `discovery.ts` (dodana we wcześniejszej sesji), zweryfikowana słowo w słowo przeciw `SZKIC_UMOWA_AUTORISE.md`, nie duplikowana.
+2. ✓ 6.6 Mini-formularz "dni na dostępy" + "uwagi niestandardowe": już istniał jako `components/sprzedaz/WarunkiUmowyForm.tsx`, rozszerzony tej samej nocy (Blok 6.8) o trzecie pole "Poza zakresem — ustalenia".
+3. ✓ 6.7 Sprawdzone: eSignature Google Workspace jest wliczone bez dodatkowej opłaty od planu **Business Standard w górę** (Standard/Plus/Enterprise) — natywna funkcja Docs/Drive, limit 200 wniosków/użytkownika/miesiąc na Business Standard. **Niedostępne** na Business Starter ani na darmowym koncie Gmail. Do zrobienia przez Michała: potwierdzić, na jakim planie faktycznie jest konto Autorise, zanim krok "Podpis" w `discovery.ts` (Blok 6.8, punkt e) będzie mógł się realnie odpalać przez Workspace zamiast zewnętrznego narzędzia (iLovePDF itp.). Brak integracji technicznej w kodzie, to czysto informacyjne ustalenie.
 
 ## Priorytet: umowa i warunki gwarancji
 
