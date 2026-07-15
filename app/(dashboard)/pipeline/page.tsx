@@ -5,6 +5,7 @@ import {
   ArrowRight,
   ArrowUpAZ,
   ExternalLink,
+  LayoutGrid,
   Loader2,
   RefreshCw,
   X,
@@ -13,6 +14,7 @@ import { useCallback, useEffect, useState } from "react";
 import { type PipelineClientDetailed, SKRYPT_V4_DATA } from "@/app/api/notion/pipeline/route";
 import { ClientCompanyLine, ClientContactDetails } from "@/components/clients/ClientContactDetails";
 import { Button } from "@/components/ui/Button";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 // ── Constants ────────────────────────────────────────────────────────
 
@@ -695,41 +697,19 @@ export default function PipelinePage() {
       }}
     >
       {/* Header */}
-      <div
-        style={{
-          height: 48,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "0 20px",
-          borderBottom: "1px solid var(--border)",
-          flexShrink: 0,
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <PageHeader icon={<LayoutGrid size={15} color="var(--accent)" />} title="Pipeline">
+        {!loading && (
           <span
             style={{
               fontFamily: "var(--font-sans)",
-              fontSize: 15,
-              fontWeight: 600,
-              color: "var(--text-primary)",
+              fontSize: 11,
+              color: "var(--text-tertiary)",
             }}
           >
-            Pipeline
+            {totalActive} aktywnych
           </span>
-          {!loading && (
-            <span
-              style={{
-                fontFamily: "var(--font-sans)",
-                fontSize: 11,
-                color: "var(--text-tertiary)",
-              }}
-            >
-              {totalActive} aktywnych
-            </span>
-          )}
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        )}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: "auto" }}>
           {utraconeCount > 0 && (
             <button
               onClick={() => setShowUtracone((v) => !v)}
@@ -803,7 +783,7 @@ export default function PipelinePage() {
             Odśwież
           </button>
         </div>
-      </div>
+      </PageHeader>
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 

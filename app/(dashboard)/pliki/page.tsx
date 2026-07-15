@@ -16,6 +16,7 @@ import type { DriveFile } from "@/app/api/google/drive/transcripts/route";
 import type { WorkspaceFile } from "@/app/api/workspace/list/route";
 import { ClientFileCard } from "@/components/transcripts/ClientFileCard";
 import { Markdown } from "@/components/ui/Markdown";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { Panel } from "@/components/ui/Panel";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { hasMatchingTranscript, parseClientFileName } from "@/lib/transcripts/parse";
@@ -388,62 +389,42 @@ export default function PlikiPage() {
       }}
     >
       {/* Top bar */}
-      <div
-        style={{
-          height: 48,
-          flexShrink: 0,
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          padding: "0 20px",
-          background: "var(--glass)",
-          backdropFilter: "var(--glass-blur)",
-          WebkitBackdropFilter: "var(--glass-blur)",
-          borderBottom: "1px solid var(--border)",
-        }}
-      >
-        <Files size={15} color="var(--accent)" />
-        <span
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: 14,
-            fontWeight: 600,
-            color: "var(--text-primary)",
-            letterSpacing: "-0.01em",
-            flex: 1,
-          }}
-        >
-          Najważniejsze pliki
-        </span>
-        {lastUpdated && (
-          <span
-            style={{ fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--text-tertiary)" }}
+      <PageHeader icon={<Files size={15} color="var(--accent)" />} title="Najważniejsze pliki">
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginLeft: "auto" }}>
+          {lastUpdated && (
+            <span
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 11,
+                color: "var(--text-tertiary)",
+              }}
+            >
+              Sync: {lastUpdated}
+            </span>
+          )}
+          <button
+            onClick={() => void fetchAll()}
+            disabled={loadingDrive}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              padding: "5px 10px",
+              background: "transparent",
+              border: "1px solid var(--border)",
+              borderRadius: "var(--radius-xs)",
+              cursor: loadingDrive ? "default" : "pointer",
+              fontFamily: "var(--font-sans)",
+              fontSize: 12,
+              color: "var(--text-secondary)",
+              opacity: loadingDrive ? 0.6 : 1,
+            }}
           >
-            Sync: {lastUpdated}
-          </span>
-        )}
-        <button
-          onClick={() => void fetchAll()}
-          disabled={loadingDrive}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 5,
-            padding: "5px 10px",
-            background: "transparent",
-            border: "1px solid var(--border)",
-            borderRadius: "var(--radius-xs)",
-            cursor: loadingDrive ? "default" : "pointer",
-            fontFamily: "var(--font-sans)",
-            fontSize: 12,
-            color: "var(--text-secondary)",
-            opacity: loadingDrive ? 0.6 : 1,
-          }}
-        >
-          <RefreshCw size={11} />
-          Odśwież
-        </button>
-      </div>
+            <RefreshCw size={11} />
+            Odśwież
+          </button>
+        </div>
+      </PageHeader>
 
       {/* Body — file panels (left) + preview (right) */}
       <div className="responsive-split" style={{ flex: 1, overflow: "hidden", display: "flex" }}>

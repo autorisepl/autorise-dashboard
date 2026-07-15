@@ -18,6 +18,7 @@ import {
 import { useCallback, useEffect, useState } from "react";
 import type { CalendarEvent, CalendarResponse } from "@/app/api/google/calendar/route";
 import type { GoogleTask, GoogleTasksResponse } from "@/app/api/google/tasks/route";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { Panel } from "@/components/ui/Panel";
 
 // ── Konfiguracja ──────────────────────────────────────────────────────
@@ -1639,34 +1640,11 @@ export default function HarmonogramPage() {
       }}
     >
       {/* Top bar */}
-      <div
+      <PageHeader
         className="responsive-wrap"
-        style={{
-          height: 48,
-          flexShrink: 0,
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          padding: "0 12px 0 20px",
-          background: "var(--glass)",
-          backdropFilter: "var(--glass-blur)",
-          WebkitBackdropFilter: "var(--glass-blur)",
-          borderBottom: "1px solid var(--border)",
-        }}
+        icon={<Calendar size={15} color="var(--accent)" />}
+        title="Harmonogram"
       >
-        <Calendar size={15} color="var(--accent)" />
-        <span
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: 14,
-            fontWeight: 600,
-            color: "var(--text-primary)",
-            letterSpacing: "-0.01em",
-          }}
-        >
-          Harmonogram
-        </span>
-
         {/* View switcher */}
         <div
           style={{
@@ -1818,7 +1796,7 @@ export default function HarmonogramPage() {
           />
           <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
         </button>
-      </div>
+      </PageHeader>
 
       {/* Body — horizontal scroll when window is narrow */}
       <div

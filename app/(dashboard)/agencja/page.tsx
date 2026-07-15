@@ -19,6 +19,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { SheetContact, SheetsResponse } from "@/app/api/google/sheets/route";
 import type { SheetsSyncResult } from "@/app/api/notion/sheets-sync/route";
 import { KartaKlienta } from "@/components/karta/KartaKlienta";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { Panel } from "@/components/ui/Panel";
 import { formatPhone } from "@/lib/format/phone";
 
@@ -636,164 +637,146 @@ export default function AgencjaPage() {
       }}
     >
       {/* ── Top bar ── */}
-      <div
-        style={{
-          height: 48,
-          flexShrink: 0,
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          padding: "0 18px",
-          background: "var(--glass)",
-          backdropFilter: "var(--glass-blur)",
-          WebkitBackdropFilter: "var(--glass-blur)",
-          borderBottom: "1px solid var(--border)",
-        }}
-      >
-        <Users size={14} color="var(--accent)" />
-        <span
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: 14,
-            fontWeight: 600,
-            color: "var(--text-primary)",
-            letterSpacing: "-0.01em",
-            flex: 1,
-          }}
-        >
-          Nasza karta
-        </span>
+      <PageHeader icon={<Users size={14} color="var(--accent)" />} title="Nasza karta">
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginLeft: "auto" }}>
+          {data && (
+            <span
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 11,
+                color: "var(--text-tertiary)",
+              }}
+            >
+              {filtered.length} rekordów
+            </span>
+          )}
 
-        {data && (
-          <span
-            style={{ fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--text-tertiary)" }}
-          >
-            {filtered.length} rekordów
-          </span>
-        )}
+          {syncResult && (
+            <span
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 11,
+                color: syncResult.errors.length > 0 ? "var(--error)" : "var(--text-tertiary)",
+                flexShrink: 0,
+              }}
+            >
+              {syncResult.errors.length > 0
+                ? `${syncResult.created} dodano, ${syncResult.errors.length} błędów`
+                : `Dodano ${syncResult.created} leadów`}
+            </span>
+          )}
 
-        {syncResult && (
-          <span
+          <button
+            onClick={syncLeads}
+            disabled={syncing || loading}
+            title="Dodaj kontakty z arkusza do Notion Pipeline"
             style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              padding: "5px 10px",
+              background: "transparent",
+              border: "1px solid var(--border)",
+              borderRadius: "var(--radius-xs)",
+              cursor: syncing || loading ? "default" : "pointer",
               fontFamily: "var(--font-sans)",
-              fontSize: 11,
-              color: syncResult.errors.length > 0 ? "var(--error)" : "var(--text-tertiary)",
-              flexShrink: 0,
+              fontSize: 12,
+              color: "var(--text-secondary)",
+              opacity: syncing || loading ? 0.6 : 1,
             }}
           >
-            {syncResult.errors.length > 0
-              ? `${syncResult.created} dodano, ${syncResult.errors.length} błędów`
-              : `Dodano ${syncResult.created} leadów`}
-          </span>
-        )}
+            <Upload
+              size={11}
+              style={{ animation: syncing ? "spin 0.8s linear infinite" : "none" }}
+            />
+            {syncing ? "Synchronizuję..." : "Synchronizuj leadów"}
+          </button>
 
-        <button
-          onClick={syncLeads}
-          disabled={syncing || loading}
-          title="Dodaj kontakty z arkusza do Notion Pipeline"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 5,
-            padding: "5px 10px",
-            background: "transparent",
-            border: "1px solid var(--border)",
-            borderRadius: "var(--radius-xs)",
-            cursor: syncing || loading ? "default" : "pointer",
-            fontFamily: "var(--font-sans)",
-            fontSize: 12,
-            color: "var(--text-secondary)",
-            opacity: syncing || loading ? 0.6 : 1,
-          }}
-        >
-          <Upload size={11} style={{ animation: syncing ? "spin 0.8s linear infinite" : "none" }} />
-          {syncing ? "Synchronizuję..." : "Synchronizuj leadów"}
-        </button>
+          <button
+            onClick={() => void resetAllStages()}
+            disabled={resettingStages || loading}
+            title="Wyczyść checkboxy etapów i notatki tekstowe wszystkich kontaktów. Nagrania pozostaną."
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              padding: "5px 10px",
+              background: "transparent",
+              border: "1px solid var(--border)",
+              borderRadius: "var(--radius-xs)",
+              cursor: resettingStages || loading ? "default" : "pointer",
+              fontFamily: "var(--font-sans)",
+              fontSize: 12,
+              color: "var(--error)",
+              opacity: resettingStages || loading ? 0.5 : 0.75,
+            }}
+          >
+            <RotateCcw
+              size={11}
+              style={{ animation: resettingStages ? "spin 0.8s linear infinite" : "none" }}
+            />
+            {resettingStages ? "Resetuję..." : "Wyczyść kartę"}
+          </button>
 
-        <button
-          onClick={() => void resetAllStages()}
-          disabled={resettingStages || loading}
-          title="Wyczyść checkboxy etapów i notatki tekstowe wszystkich kontaktów. Nagrania pozostaną."
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 5,
-            padding: "5px 10px",
-            background: "transparent",
-            border: "1px solid var(--border)",
-            borderRadius: "var(--radius-xs)",
-            cursor: resettingStages || loading ? "default" : "pointer",
-            fontFamily: "var(--font-sans)",
-            fontSize: 12,
-            color: "var(--error)",
-            opacity: resettingStages || loading ? 0.5 : 0.75,
-          }}
-        >
-          <RotateCcw
-            size={11}
-            style={{ animation: resettingStages ? "spin 0.8s linear infinite" : "none" }}
-          />
-          {resettingStages ? "Resetuję..." : "Wyczyść kartę"}
-        </button>
+          <button
+            onClick={() => void resetAllEverything()}
+            disabled={resettingAll || loading}
+            title="Wyczyść WSZYSTKICH kontaktów naraz w arkuszu Kontakty ORAZ w Notion Pipeline. Klienci Kickoff/Wdrożenie/Retainer/Upsell/Zakończona współpraca są pomijani."
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              padding: "5px 10px",
+              background: "transparent",
+              border: "1px solid var(--error-border)",
+              borderRadius: "var(--radius-xs)",
+              cursor: resettingAll || loading ? "default" : "pointer",
+              fontFamily: "var(--font-sans)",
+              fontSize: 12,
+              color: "var(--error)",
+              opacity: resettingAll || loading ? 0.5 : 0.85,
+            }}
+          >
+            <RotateCcw
+              size={11}
+              style={{ animation: resettingAll ? "spin 0.8s linear infinite" : "none" }}
+            />
+            {resettingAll ? "Resetuję wszystko..." : "Wyczyść kartę i Pipeline (wszyscy)"}
+          </button>
 
-        <button
-          onClick={() => void resetAllEverything()}
-          disabled={resettingAll || loading}
-          title="Wyczyść WSZYSTKICH kontaktów naraz w arkuszu Kontakty ORAZ w Notion Pipeline. Klienci Kickoff/Wdrożenie/Retainer/Upsell/Zakończona współpraca są pomijani."
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 5,
-            padding: "5px 10px",
-            background: "transparent",
-            border: "1px solid var(--error-border)",
-            borderRadius: "var(--radius-xs)",
-            cursor: resettingAll || loading ? "default" : "pointer",
-            fontFamily: "var(--font-sans)",
-            fontSize: 12,
-            color: "var(--error)",
-            opacity: resettingAll || loading ? 0.5 : 0.85,
-          }}
-        >
-          <RotateCcw
-            size={11}
-            style={{ animation: resettingAll ? "spin 0.8s linear infinite" : "none" }}
-          />
-          {resettingAll ? "Resetuję wszystko..." : "Wyczyść kartę i Pipeline (wszyscy)"}
-        </button>
+          {resetError && (
+            <span style={{ fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--error)" }}>
+              {resetError}
+            </span>
+          )}
 
-        {resetError && (
-          <span style={{ fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--error)" }}>
-            {resetError}
-          </span>
-        )}
-
-        <button
-          onClick={load}
-          disabled={loading}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 5,
-            padding: "5px 10px",
-            background: "transparent",
-            border: "1px solid var(--border)",
-            borderRadius: "var(--radius-xs)",
-            cursor: loading ? "default" : "pointer",
-            fontFamily: "var(--font-sans)",
-            fontSize: 12,
-            color: "var(--text-secondary)",
-            opacity: loading ? 0.6 : 1,
-          }}
-        >
-          <RefreshCw
-            size={11}
-            style={{ animation: loading ? "spin 0.8s linear infinite" : "none" }}
-          />
-          Odśwież
-          <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
-        </button>
-      </div>
+          <button
+            onClick={load}
+            disabled={loading}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              padding: "5px 10px",
+              background: "transparent",
+              border: "1px solid var(--border)",
+              borderRadius: "var(--radius-xs)",
+              cursor: loading ? "default" : "pointer",
+              fontFamily: "var(--font-sans)",
+              fontSize: 12,
+              color: "var(--text-secondary)",
+              opacity: loading ? 0.6 : 1,
+            }}
+          >
+            <RefreshCw
+              size={11}
+              style={{ animation: loading ? "spin 0.8s linear infinite" : "none" }}
+            />
+            Odśwież
+            <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+          </button>
+        </div>
+      </PageHeader>
 
       {/* ── Body ── */}
       {error || (loading && !error) ? (

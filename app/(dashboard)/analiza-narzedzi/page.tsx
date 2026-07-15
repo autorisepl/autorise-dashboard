@@ -3,6 +3,7 @@
 import { BarChart2, Clock, Loader2 } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { Panel } from "@/components/ui/Panel";
 import type { RoadmapStep } from "@/components/ui/StatusRoadmap";
 import { StatusRoadmap } from "@/components/ui/StatusRoadmap";
@@ -115,32 +116,10 @@ export default function AnalizaNarzedziPage() {
       <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
 
       {/* Top bar */}
-      <div
-        style={{
-          height: 48,
-          flexShrink: 0,
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          padding: "0 20px",
-          background: "var(--glass)",
-          backdropFilter: "var(--glass-blur)",
-          WebkitBackdropFilter: "var(--glass-blur)",
-          borderBottom: "1px solid var(--border)",
-        }}
+      <PageHeader
+        icon={<BarChart2 size={15} color="var(--accent)" />}
+        title="Analiza nowych narzędzi"
       >
-        <BarChart2 size={15} color="var(--accent)" />
-        <span
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: 14,
-            fontWeight: 600,
-            color: "var(--text-primary)",
-            letterSpacing: "-0.01em",
-          }}
-        >
-          Analiza nowych narzędzi
-        </span>
         <span
           style={{
             fontFamily: "var(--font-mono)",
@@ -156,7 +135,7 @@ export default function AnalizaNarzedziPage() {
         >
           06 · claude-opus-4-8
         </span>
-      </div>
+      </PageHeader>
 
       {/* Body — 2/5 + 3/5 */}
       <div style={{ flex: 1, overflow: "hidden", display: "flex" }}>

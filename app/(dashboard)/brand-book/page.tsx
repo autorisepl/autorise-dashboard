@@ -2,6 +2,7 @@
 
 import { BookOpen, Check, CheckCircle2, Copy } from "lucide-react";
 import { useState } from "react";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 // ── Token viewer ──────────────────────────────────────────────────────
 
@@ -730,37 +731,14 @@ export default function BrandBookPage() {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
       {/* Header */}
-      <div
-        style={{
-          height: 52,
-          display: "flex",
-          alignItems: "center",
-          padding: "0 24px",
-          borderBottom: "1px solid #E5E5EA",
-          background: "#fff",
-          flexShrink: 0,
-          gap: 12,
-        }}
-      >
-        <BookOpen size={16} color="var(--accent)" strokeWidth={1.8} />
-        <span
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: 16,
-            fontWeight: 700,
-            color: "var(--text-primary)",
-            letterSpacing: "-0.01em",
-          }}
-        >
-          Brand Book
-        </span>
-        <div style={{ height: 20, width: 1, background: "#E5E5EA" }} />
+      <PageHeader icon={<BookOpen size={15} color="var(--accent)" />} title="Brand Book">
+        <div style={{ height: 20, width: 1, background: "var(--border)" }} />
         <span
           style={{ fontSize: 12, color: "var(--text-tertiary)", fontFamily: "var(--font-sans)" }}
         >
           Design system — live CSS variables preview
         </span>
-      </div>
+      </PageHeader>
 
       {/* Scrollable content */}
       <div style={{ flex: 1, overflowY: "auto", padding: "8px 24px 40px", background: "#F5F5F7" }}>

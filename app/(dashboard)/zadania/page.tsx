@@ -21,6 +21,7 @@ export interface TaskPatch {
 }
 
 import type { GoogleTask, GoogleTaskList, GoogleTasksResponse } from "@/app/api/google/tasks/route";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { Panel } from "@/components/ui/Panel";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 
@@ -897,33 +898,7 @@ export default function ZadaniaPage() {
       }}
     >
       {/* Top bar */}
-      <div
-        style={{
-          height: 48,
-          flexShrink: 0,
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          padding: "0 20px",
-          background: "var(--glass)",
-          backdropFilter: "var(--glass-blur)",
-          WebkitBackdropFilter: "var(--glass-blur)",
-          borderBottom: "1px solid var(--border)",
-        }}
-      >
-        <CheckSquare size={15} color="var(--accent)" />
-        <span
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: 14,
-            fontWeight: 600,
-            color: "var(--text-primary)",
-            letterSpacing: "-0.01em",
-            flex: 1,
-          }}
-        >
-          Zadania
-        </span>
+      <PageHeader icon={<CheckSquare size={15} color="var(--accent)" />} title="Zadania">
         <button
           onClick={() => void fetchTasks()}
           disabled={loading}
@@ -940,12 +915,13 @@ export default function ZadaniaPage() {
             fontSize: 12,
             color: "var(--text-secondary)",
             opacity: loading ? 0.6 : 1,
+            marginLeft: "auto",
           }}
         >
           <RefreshCw size={11} />
           Odśwież
         </button>
-      </div>
+      </PageHeader>
 
       {/* Body */}
       <div style={{ flex: 1, overflow: "hidden", padding: 16 }}>

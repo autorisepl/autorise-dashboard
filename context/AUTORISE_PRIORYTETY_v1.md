@@ -33,6 +33,12 @@ Stare `agent1`/`agent2`/`agent3` route'y i karty zostają w kodzie jako świadom
 
 **Nie w pełni domknięte**: dwie zepsute opcje "Typ follow-up" wymagają ręcznej zmiany nazwy/usunięcia bezpośrednio w Notion UI (patrz punkt 2 wyżej) — API tego nie potrafi. Żaden live test UI w przeglądarce nie wykonany w tej sesji dla całego Bloku 1.
 
+## W TRAKCIE — BLOK 2 z AUTORISE_MASTER_PLAN.md (spójność układu dashboardu)
+
+1. ✓ 2.1 Wspólny `components/ui/PageHeader.tsx` na 11 z 13 stron (styl "glass" 48px wybrany przez Michała, już większościowy — zamiast konkurencyjnego "solid" 52px z /kwalifikacja/sprzedaz/brand-book, obie strony podniesione DO stylu glass). `/narzedzia` i `/agenci` świadomie pominięte (layout master-detail / pasek zakładek, nie klasyczny header strony).
+2. **CZEKA NA DECYZJĘ MICHAŁA**: 2.2 prototyp `components/clients/GlobalClientSelector.tsx` (wyszukiwarka + scroll wewnątrz pola) podpięty PROTOTYPOWO w headerze `/kwalifikacja`, obok istniejącego ClientSidebar — nic nie usunięte. Michał wybrał "zobaczę na żywo, potem decyzja" (2026-07-15) — deploy poszedł żeby mógł ocenić na app.autorise.pl. Do zrobienia w kolejnej sesji dopiero PO jego potwierdzeniu: albo wdrożenie wszędzie + globalna persystencja wyboru między zakładkami (stan podniesiony do layoutu dashboardu), albo pozostawienie jako nieużywany prototyp, albo usunięcie.
+3. Nierozpoczęte: 2.3 (jeden wzorzec panelu w /brand-book, zastosowany konsekwentnie).
+
 ## Priorytet: umowa i warunki gwarancji
 
 Napisać pełne warunki umowy Autorise wzorem załączonego wzorca Agency Leaders (Umowa_systemu_AI_konkurencji.pdf): okres rozliczeniowy liczony od zakończenia warsztatów wdrożeniowych/zebrania dostępów (nie od podpisania), obowiązki klienta jako warunek gwarancji (dostęp w 5 dni, odpowiedź WhatsApp 48h — już zdefiniowane w prompts.ts, przenieść do formalnego dokumentu), siła wyższa, poufność 2 lata, płatność z góry w terminie 3 dni od faktury. Zastrzeżenie: brak dostępu do wyspecjalizowanego skilla prawnego, to szkic do realnej konsultacji prawnej przed użyciem, nie gotowy dokument.

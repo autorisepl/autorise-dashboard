@@ -11,6 +11,7 @@ import {
   Flag,
   GitBranch,
   Loader2,
+  Map as MapIcon,
   RefreshCw,
   RotateCcw,
   ShieldCheck,
@@ -20,6 +21,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import type { PipelineClientDetailed } from "@/app/api/notion/pipeline/route";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { OBJECTIONS_D, STEPS_D } from "@/lib/scripts/discovery";
 import { OBJECTIONS_K, STEPS_K } from "@/lib/scripts/kwalifikacyjna";
@@ -1548,81 +1550,60 @@ export default function MapaPage() {
       }}
     >
       {/* Header */}
-      <div
-        style={{
-          height: 52,
-          flexShrink: 0,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "0 24px",
-          borderBottom: "1px solid var(--border)",
-          background: "var(--bg-elevated)",
-        }}
+      <PageHeader
+        icon={<MapIcon size={15} color="var(--accent)" />}
+        title="Mapa procesu sprzedażowego"
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+        {/* Tab switcher */}
+        <div
+          style={{
+            display: "flex",
+            background: "var(--bg-hover)",
+            borderRadius: 8,
+            padding: 2,
+            gap: 2,
+          }}
+        >
+          {(["etapy", "drzewo", "blueprint", "lejek"] as const).map((v) => (
+            <button
+              key={v}
+              onClick={() => setView(v)}
+              style={{
+                padding: "4px 12px",
+                borderRadius: 6,
+                border: "none",
+                background: view === v ? "#fff" : "transparent",
+                boxShadow: view === v ? "0 1px 4px rgba(0,0,0,0.10)" : "none",
+                color: view === v ? "var(--text-primary)" : "var(--text-tertiary)",
+                fontFamily: "var(--font-sans)",
+                fontSize: 12,
+                fontWeight: view === v ? 600 : 400,
+                cursor: "pointer",
+                transition: "all 120ms",
+              }}
+            >
+              {v === "etapy"
+                ? "Widok etapów"
+                : v === "drzewo"
+                  ? "Drzewo kroków"
+                  : v === "blueprint"
+                    ? "Blueprint danych"
+                    : "Pełny lejek"}
+            </button>
+          ))}
+        </div>
+        {!loading && view === "etapy" && (
           <span
             style={{
               fontFamily: "var(--font-sans)",
-              fontSize: 15,
-              fontWeight: 600,
-              color: "var(--text-primary)",
-              letterSpacing: "-0.01em",
+              fontSize: 11,
+              color: "var(--text-tertiary)",
             }}
           >
-            Mapa procesu sprzedażowego
+            {clients.filter((c) => c.status !== "Niekwalifikowany").length} aktywnych klientów
           </span>
-          {/* Tab switcher */}
-          <div
-            style={{
-              display: "flex",
-              background: "var(--bg-hover)",
-              borderRadius: 8,
-              padding: 2,
-              gap: 2,
-            }}
-          >
-            {(["etapy", "drzewo", "blueprint", "lejek"] as const).map((v) => (
-              <button
-                key={v}
-                onClick={() => setView(v)}
-                style={{
-                  padding: "4px 12px",
-                  borderRadius: 6,
-                  border: "none",
-                  background: view === v ? "#fff" : "transparent",
-                  boxShadow: view === v ? "0 1px 4px rgba(0,0,0,0.10)" : "none",
-                  color: view === v ? "var(--text-primary)" : "var(--text-tertiary)",
-                  fontFamily: "var(--font-sans)",
-                  fontSize: 12,
-                  fontWeight: view === v ? 600 : 400,
-                  cursor: "pointer",
-                  transition: "all 120ms",
-                }}
-              >
-                {v === "etapy"
-                  ? "Widok etapów"
-                  : v === "drzewo"
-                    ? "Drzewo kroków"
-                    : v === "blueprint"
-                      ? "Blueprint danych"
-                      : "Pełny lejek"}
-              </button>
-            ))}
-          </div>
-          {!loading && view === "etapy" && (
-            <span
-              style={{
-                fontFamily: "var(--font-sans)",
-                fontSize: 11,
-                color: "var(--text-tertiary)",
-              }}
-            >
-              {clients.filter((c) => c.status !== "Niekwalifikowany").length} aktywnych klientów
-            </span>
-          )}
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        )}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginLeft: "auto" }}>
           {/* Client picker */}
           {!loading && clients.length > 0 && (
             <select
@@ -1692,7 +1673,7 @@ export default function MapaPage() {
             Odśwież
           </button>
         </div>
-      </div>
+      </PageHeader>
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 

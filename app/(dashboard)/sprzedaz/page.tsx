@@ -29,6 +29,7 @@ import { KalkulatorRoi } from "@/components/kalkulator/KalkulatorRoi";
 import { DecisionDiagram } from "@/components/scripts/DecisionDiagram";
 import { NextStepArrow } from "@/components/scripts/NextStepArrow";
 import { WarunkiUmowyForm } from "@/components/sprzedaz/WarunkiUmowyForm";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { DISCOVERY_STATUSES, OBJECTIONS_D, STEPS_D } from "@/lib/scripts/discovery";
 import { fillBrief, parseCytatyKlienta } from "@/lib/scripts/fillBrief";
 import { useFormaGrzecznosciowa } from "@/lib/scripts/formaGrzecznosciowa";
@@ -1934,31 +1935,8 @@ export default function SprzedazPage() {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
       {/* Header */}
-      <div
-        style={{
-          height: 52,
-          display: "flex",
-          alignItems: "center",
-          padding: "0 20px",
-          borderBottom: "1px solid #E5E5EA",
-          background: "#fff",
-          flexShrink: 0,
-          gap: 16,
-        }}
-      >
-        <Target size={16} color="var(--accent)" strokeWidth={1.8} />
-        <span
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: 16,
-            fontWeight: 700,
-            color: "var(--text-primary)",
-            letterSpacing: "-0.01em",
-          }}
-        >
-          Sprzedaż
-        </span>
-        <div style={{ height: 20, width: 1, background: "#E5E5EA", marginLeft: 4 }} />
+      <PageHeader icon={<Target size={15} color="var(--accent)" />} title="Sprzedaż">
+        <div style={{ height: 20, width: 1, background: "var(--border)", marginLeft: 4 }} />
         <span
           style={{ fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--text-tertiary)" }}
         >
@@ -2043,7 +2021,7 @@ export default function SprzedazPage() {
             />
           </div>
         )}
-      </div>
+      </PageHeader>
 
       {/* 3-column layout */}
       <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>

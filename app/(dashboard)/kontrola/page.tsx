@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { ClaudeAgent, ClaudeConfigResponse, ClaudeSkill } from "@/app/api/claude-config/route";
 import type { EnvCheckResponse } from "@/app/api/env-check/route";
 import type { HealthResponse } from "@/app/api/health/route";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { Panel } from "@/components/ui/Panel";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 
@@ -322,65 +323,48 @@ export default function KontrolaPage() {
       <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
 
       {/* Top bar */}
-      <div
-        style={{
-          height: 48,
-          flexShrink: 0,
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          padding: "0 20px",
-          background: "var(--glass)",
-          backdropFilter: "var(--glass-blur)",
-          WebkitBackdropFilter: "var(--glass-blur)",
-          borderBottom: "1px solid var(--border)",
-        }}
+      <PageHeader
+        icon={<Monitor size={15} color="var(--accent)" />}
+        title="Kontrola obszaru roboczego"
       >
-        <Monitor size={15} color="var(--accent)" />
-        <span
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: 14,
-            fontWeight: 600,
-            color: "var(--text-primary)",
-            letterSpacing: "-0.01em",
-            flex: 1,
-          }}
-        >
-          Kontrola obszaru roboczego
-        </span>
-        {lastUpdated && (
-          <span
-            style={{ fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--text-tertiary)" }}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginLeft: "auto" }}>
+          {lastUpdated && (
+            <span
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 11,
+                color: "var(--text-tertiary)",
+              }}
+            >
+              {lastUpdated}
+            </span>
+          )}
+          <button
+            onClick={() => void fetchAll()}
+            disabled={loading}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              padding: "5px 10px",
+              background: "transparent",
+              border: "1px solid var(--border)",
+              borderRadius: "var(--radius-xs)",
+              cursor: loading ? "default" : "pointer",
+              fontFamily: "var(--font-sans)",
+              fontSize: 12,
+              color: "var(--text-secondary)",
+              opacity: loading ? 0.6 : 1,
+            }}
           >
-            {lastUpdated}
-          </span>
-        )}
-        <button
-          onClick={() => void fetchAll()}
-          disabled={loading}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 5,
-            padding: "5px 10px",
-            background: "transparent",
-            border: "1px solid var(--border)",
-            borderRadius: "var(--radius-xs)",
-            cursor: loading ? "default" : "pointer",
-            fontFamily: "var(--font-sans)",
-            fontSize: 12,
-            color: "var(--text-secondary)",
-            opacity: loading ? 0.6 : 1,
-          }}
-        >
-          <RefreshCw
-            size={11}
-            style={{ animation: loading ? "spin 1s linear infinite" : "none" }}
-          />
-          Odśwież
-        </button>
-      </div>
+            <RefreshCw
+              size={11}
+              style={{ animation: loading ? "spin 1s linear infinite" : "none" }}
+            />
+            Odśwież
+          </button>
+        </div>
+      </PageHeader>
 
       {/* Body */}
       <div

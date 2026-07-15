@@ -28,9 +28,11 @@ import { useCallback, useEffect, useState } from "react";
 import type { GoogleTaskList } from "@/app/api/google/tasks/route";
 import type { PipelineClientDetailed } from "@/app/api/notion/pipeline/route";
 import { ClientCompanyLine, ClientContactDetails } from "@/components/clients/ClientContactDetails";
+import { GlobalClientSelector } from "@/components/clients/GlobalClientSelector";
 import { ProgressBar, SectionLabelSmall, StepCard } from "@/components/dalsze-kroki/DalszeKrokiUI";
 import { DecisionDiagram } from "@/components/scripts/DecisionDiagram";
 import { NextStepArrow } from "@/components/scripts/NextStepArrow";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { useRole } from "@/lib/auth/RoleContext";
 import { useFormaGrzecznosciowa } from "@/lib/scripts/formaGrzecznosciowa";
 import {
@@ -2636,30 +2638,14 @@ export default function KwalifikacjaPage() {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
       {/* Header */}
-      <div
-        style={{
-          height: 52,
-          display: "flex",
-          alignItems: "center",
-          padding: "0 20px",
-          borderBottom: "1px solid #E5E5EA",
-          background: "#fff",
-          flexShrink: 0,
-          gap: 16,
-        }}
-      >
-        <Phone size={16} color="var(--accent)" strokeWidth={1.8} />
-        <span
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: 16,
-            fontWeight: 700,
-            color: "var(--text-primary)",
-            letterSpacing: "-0.01em",
-          }}
-        >
-          Kwalifikacja
-        </span>
+      <PageHeader icon={<Phone size={15} color="var(--accent)" />} title="Kwalifikacja">
+        {/* Blok 2, punkt 2.2 — PROTOTYP globalnego selektora klienta, do oceny obok
+            istniejącego ClientSidebar zanim zastąpi selektory na wszystkich stronach. */}
+        <GlobalClientSelector
+          clients={clients}
+          selectedId={selected?.id ?? ""}
+          onSelect={(id) => setSelected(clients.find((c) => c.id === id) ?? null)}
+        />
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <button
             onClick={() => tally("dial")}
@@ -2864,7 +2850,7 @@ export default function KwalifikacjaPage() {
             />
           </div>
         )}
-      </div>
+      </PageHeader>
 
       {/* 3-column layout */}
       <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
