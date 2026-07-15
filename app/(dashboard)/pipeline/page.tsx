@@ -7,6 +7,7 @@ import {
   ExternalLink,
   LayoutGrid,
   Loader2,
+  Phone,
   RefreshCw,
   X,
 } from "lucide-react";
@@ -58,7 +59,95 @@ function fmtDate(iso: string): string {
 
 // ── Client card ──────────────────────────────────────────────────────
 
-function ClientCard({ client, onClick }: { client: PipelineClientDetailed; onClick: () => void }) {
+function ContactAttemptsBadge({
+  client,
+  onIncrement,
+}: {
+  client: PipelineClientDetailed;
+  onIncrement: (client: PipelineClientDetailed) => void;
+}) {
+  const proby = client.liczbaProb ?? 0;
+  if (proby <= 0) return null;
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 5,
+        marginBottom: 5,
+        padding: "3px 6px",
+        borderRadius: "var(--radius-xs)",
+        background: proby >= 3 ? "var(--error-bg)" : "var(--bg)",
+        border: `1px solid ${proby >= 3 ? "var(--error-border)" : "var(--border)"}`,
+        flexShrink: 0,
+      }}
+    >
+      <Phone size={11} color={proby >= 3 ? "var(--error)" : "var(--text-tertiary)"} strokeWidth={2} />
+      <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
+        {[1, 2, 3].map((n) => (
+          <div
+            key={n}
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: "50%",
+              background: n <= proby ? "var(--warning)" : "var(--border)",
+            }}
+          />
+        ))}
+      </div>
+      <span
+        style={{
+          fontFamily: "var(--font-sans)",
+          fontSize: 10,
+          fontWeight: 600,
+          color: proby >= 3 ? "var(--error)" : "var(--text-tertiary)",
+        }}
+      >
+        {proby >= 3 ? "Wyślij SMS" : `Próba ${proby}`}
+      </span>
+      {/* stopPropagation — karta ma własny onClick otwierający panel klienta, bez tego
+          kliknięcie w licznik przypadkowo otwierałoby/zamykało cały panel jednocześnie
+          z inkrementacją (Blok "Arek" pkt 13, 2026-07-15). */}
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onIncrement(client);
+        }}
+        title="Zarejestruj kolejną próbę kontaktu"
+        style={{
+          marginLeft: 2,
+          width: 16,
+          height: 16,
+          borderRadius: "50%",
+          border: "1px solid var(--border)",
+          background: "var(--bg-elevated)",
+          color: "var(--text-secondary)",
+          fontSize: 11,
+          lineHeight: 1,
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+        }}
+      >
+        +
+      </button>
+    </div>
+  );
+}
+
+function ClientCard({
+  client,
+  onClick,
+  onIncrement,
+}: {
+  client: PipelineClientDetailed;
+  onClick: () => void;
+  onIncrement: (client: PipelineClientDetailed) => void;
+}) {
   const [hovered, setHovered] = useState(false);
   return (
     <div
@@ -78,6 +167,7 @@ function ClientCard({ client, onClick }: { client: PipelineClientDetailed; onCli
         flexShrink: 0,
       }}
     >
+      <ContactAttemptsBadge client={client} onIncrement={onIncrement} />
       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
         <div
           style={{
@@ -159,10 +249,12 @@ function KanbanColumn({
   status,
   clients,
   onClientClick,
+  onIncrement,
 }: {
   status: string;
   clients: PipelineClientDetailed[];
   onClientClick: (c: PipelineClientDetailed) => void;
+  onIncrement: (client: PipelineClientDetailed) => void;
 }) {
   const color = STATUS_COLORS[status] ?? "var(--text-tertiary)";
   return (
@@ -246,7 +338,9 @@ function KanbanColumn({
             —
           </div>
         ) : (
-          clients.map((c) => <ClientCard key={c.id} client={c} onClick={() => onClientClick(c)} />)
+          clients.map((c) => (
+            <ClientCard key={c.id} client={c} onClick={() => onClientClick(c)} onIncrement={onIncrement} />
+          ))
         )}
       </div>
     </div>
@@ -586,10 +680,12 @@ function KanbanRow({
   statuses,
   grouped,
   onClientClick,
+  onIncrement,
 }: {
   statuses: string[];
   grouped: Record<string, PipelineClientDetailed[]>;
   onClientClick: (c: PipelineClientDetailed) => void;
+  onIncrement: (client: PipelineClientDetailed) => void;
 }) {
   return (
     <div
@@ -608,6 +704,7 @@ function KanbanRow({
           status={status}
           clients={grouped[status] ?? []}
           onClientClick={onClientClick}
+          onIncrement={onIncrement}
         />
       ))}
     </div>
@@ -666,6 +763,25 @@ export default function PipelinePage() {
   useEffect(() => {
     setSelected((prev) => (prev ? (clients.find((c) => c.id === prev.id) ?? prev) : prev));
   }, [clients]);
+
+  // Blok "Arek" pkt 13 (2026-07-15) — inkrementacja licznika prób kontaktu wprost z karty
+  // Kanbanu (bez otwierania panelu bocznego), optymistyczny update lokalnego stanu + zapis
+  // do Notion tym samym PATCH co /kwalifikacja używa od dawna.
+  const handleIncrementProby = useCallback((client: PipelineClientDetailed) => {
+    const newCount = (client.liczbaProb ?? 0) + 1;
+    setClients((prev) =>
+      prev.map((c) => (c.id === client.id ? { ...c, liczbaProb: newCount } : c)),
+    );
+    fetch("/api/notion/pipeline-update", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pageId: client.id, liczbaProb: newCount }),
+    }).catch(() => {
+      setClients((prev) =>
+        prev.map((c) => (c.id === client.id ? { ...c, liczbaProb: client.liczbaProb } : c)),
+      );
+    });
+  }, []);
 
   // Blok 1, punkt 1.5 — utracone leady domyślnie ukryte z Kanbanu (żeby nie zaśmiecały
   // aktywnego pipeline'u), ale zawsze możliwe do przywrócenia jednym przełącznikiem —
@@ -845,11 +961,11 @@ export default function PipelinePage() {
             </div>
           ) : (
             <>
-              <KanbanRow statuses={ROW1} grouped={grouped} onClientClick={(c) => setSelected(c)} />
+              <KanbanRow statuses={ROW1} grouped={grouped} onClientClick={(c) => setSelected(c)} onIncrement={handleIncrementProby} />
               <div style={{ height: 1, background: "var(--border)", flexShrink: 0 }} />
-              <KanbanRow statuses={ROW2} grouped={grouped} onClientClick={(c) => setSelected(c)} />
+              <KanbanRow statuses={ROW2} grouped={grouped} onClientClick={(c) => setSelected(c)} onIncrement={handleIncrementProby} />
               <div style={{ height: 1, background: "var(--border)", flexShrink: 0 }} />
-              <KanbanRow statuses={ROW3} grouped={grouped} onClientClick={(c) => setSelected(c)} />
+              <KanbanRow statuses={ROW3} grouped={grouped} onClientClick={(c) => setSelected(c)} onIncrement={handleIncrementProby} />
             </>
           )}
         </div>
