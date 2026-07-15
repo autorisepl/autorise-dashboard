@@ -433,8 +433,9 @@ export const STEPS_D: Step[] = [
         },
         {
           trigger: "Niepewna, wymaga dopytania",
-          action: "Powiedz: 'Co konkretnie budzi wątpliwość, zanim przejdziemy dalej?'",
-          goToStepId: "commitment",
+          action:
+            "Powiedz: 'Co konkretnie budzi wątpliwość, zanim przejdziemy dalej?' Wysłuchaj odpowiedzi, znajdź pasującą obiekcję w prawym panelu i odpowiedz na NIĄ. Nie przechodź do commitmentu/decydenta zanim wątpliwość nie zostanie realnie zaadresowana — po odpowiedzi na obiekcję wróć do parafrazy, nie skacz od razu do pytania o decyzyjność.",
+          goToStepId: "parafraza",
           tone: "neutral",
         },
         {
