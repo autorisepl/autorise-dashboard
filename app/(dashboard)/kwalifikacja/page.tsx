@@ -2054,38 +2054,55 @@ function ClientSidebar({
         width: collapsed ? 44 : 240,
         minWidth: collapsed ? 44 : 240,
         height: "100%",
-        borderRight: "1px solid #E5E5EA",
+        borderRight: "1px solid var(--border)",
         display: "flex",
         flexDirection: "column",
-        background: "#fff",
+        background: "var(--bg-elevated)",
         position: "relative",
         transition:
           "width 240ms cubic-bezier(0.4, 0, 0.2, 1), min-width 240ms cubic-bezier(0.4, 0, 0.2, 1)",
         overflow: "hidden",
       }}
     >
+      {/* Ten sam wzorzec co .sidebar-toggle-btn głównego menu (DashboardShell/globals.css) —
+          okrągły przycisk, tokeny koloru, hover z akcentem — zamiast osobnego, gorszego
+          wariantu (Blok "Arek" pkt 14, 2026-07-15). Position:absolute względem panelu (nie
+          fixed jak w głównym menu), bo ten panel jest zagnieżdżony, nie jest stronicowym
+          sidebarem — reszta zachowania (rozmiar, cień, kolor przy hover) identyczna. */}
       <button
         onClick={toggleCollapsed}
         title={collapsed ? "Rozwiń panel klienta" : "Zwiń panel klienta"}
         style={{
           position: "absolute",
-          top: 12,
-          right: collapsed ? 6 : -12,
-          width: 24,
-          height: 24,
-          borderRadius: 8,
-          border: "1px solid #E5E5EA",
-          background: "#fff",
+          top: 11,
+          right: collapsed ? 7 : -15,
+          width: 30,
+          height: 30,
+          borderRadius: "50%",
+          border: "1px solid var(--border)",
+          background: "var(--bg-elevated)",
+          boxShadow: "var(--shadow-card)",
           cursor: "pointer",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          color: "var(--text-tertiary)",
+          color: "var(--text-secondary)",
           zIndex: 1,
-          transition: "right 240ms cubic-bezier(0.4, 0, 0.2, 1)",
+          transition:
+            "right 240ms cubic-bezier(0.4, 0, 0.2, 1), background 120ms, color 120ms, border-color 120ms, box-shadow 120ms",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.color = "var(--accent)";
+          e.currentTarget.style.borderColor = "var(--accent-border)";
+          e.currentTarget.style.boxShadow = "var(--shadow-elevated)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.color = "var(--text-secondary)";
+          e.currentTarget.style.borderColor = "var(--border)";
+          e.currentTarget.style.boxShadow = "var(--shadow-card)";
         }}
       >
-        {collapsed ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
+        {collapsed ? <ChevronRight size={13} strokeWidth={1.8} /> : <ChevronLeft size={13} strokeWidth={1.8} />}
       </button>
 
       {collapsed ? (
