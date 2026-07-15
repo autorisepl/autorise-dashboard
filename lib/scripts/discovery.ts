@@ -824,6 +824,14 @@ export const OBJECTIONS_D: Objection[] = [
     script:
       "Weryfikacja 30 dni liczy się od faktycznego startu, czyli od zebrania dostępów — jeśli to my się spóźnimy z integracją, zegar jeszcze się nie zaczął, więc to nie obciąża Pana. Obciąża Pana tylko jeśli to Państwa strona spóźni dostępy mimo ustalonego terminu.",
   },
+  {
+    id: "od18",
+    stage: "closing",
+    label: "Chcę zobaczyć demo/wizualizację działania przed podpisem",
+    script:
+      "Rozumiem tę potrzebę, ale robimy to celowo w innej kolejności: najpierw podpis, potem wizualizacja. Powód jest prosty — dopiero po podpisaniu i zebraniu dostępów mogę zbudować wizualizację na Pana realnych danych, z Pana TMS-em i Pana zleceniami, nie na generycznym przykładzie który niewiele powie o tym jak to będzie działać u Was. Gwarancja 80 godzin i zwrot 100% to jest Pana realne zabezpieczenie na wypadek gdyby coś nie zadziałało, dokładnie w tym samym celu co demo — tylko że dotyczy Pana firmy, nie cudzej.",
+    note: "Technika 'podpis, potem wizualizacja' (rozmowa z Arkiem Burkowskim, 15 lipca) — nie budować jeszcze uniwersalnego demo-przykładu wielokrotnego użytku, to osobna decyzja produktowa do podjęcia z Michałem. Ta obiekcja pojawi się częściej przy większych klientach, odpowiedź musi być pewna, nie defensywna.",
+  },
 ];
 
 export const DISCOVERY_STATUSES = [
