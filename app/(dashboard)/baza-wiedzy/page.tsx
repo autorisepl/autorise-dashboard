@@ -23,9 +23,8 @@ export default function BazaWiedzyPage() {
               fontSize: 13,
             }}
           >
-            Zakładka w budowie. Docelowo katalog produktów i modułów Autorise oraz
-            metodologia integracji, czytane bezpośrednio z Notion — patrz blok A3 w
-            context/PLAN_CLAUDE_CODE.md.
+            Zakładka w budowie. Docelowo katalog produktów i modułów Autorise oraz metodologia
+            integracji, czytane bezpośrednio z Notion — patrz blok A3 w context/PLAN_CLAUDE_CODE.md.
           </div>
         </Panel>
       </div>

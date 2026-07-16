@@ -1164,11 +1164,17 @@ export async function getKwalifikacjaKnowledge(): Promise<string> {
 
 // --- Statystyki Dzienne (ręczne liczniki: Dials / Rozmowy / SMS) ---
 
-export type DailyStatType = "dial" | "rozmowa" | "sms";
+// A6 (2026-07-16): "rozmowa" rozbite na kwalifikacja/sprzedaz — dwa osobne liczniki
+// zamiast jednej zbiorczej wartości, żeby /statystyki mogło je pokazać osobno.
+// "rozmowa_kwalifikacja" mapuje na TO SAMO pole Notion "Rozmowy" co wcześniej samo
+// "rozmowa" (zero migracji danych historycznych, ten counter zawsze i tak liczył
+// wyłącznie rozmowy kwalifikacyjne — /sprzedaz nigdy nie miało przycisku tally).
+export type DailyStatType = "dial" | "rozmowa_kwalifikacja" | "rozmowa_sprzedaz" | "sms";
 
 const DAILY_STAT_FIELD: Record<DailyStatType, string> = {
   dial: "Dials",
-  rozmowa: "Rozmowy",
+  rozmowa_kwalifikacja: "Rozmowy",
+  rozmowa_sprzedaz: "Rozmowy sprzedażowe",
   sms: "SMS Wysłane",
 };
 
@@ -1212,7 +1218,8 @@ export async function incrementDailyStat(type: DailyStatType, delta = 1): Promis
 
 export interface DailyStatsTotals {
   dials: number;
-  rozmowy: number;
+  rozmowy_kwalifikacja: number;
+  rozmowy_sprzedaz: number;
   sms: number;
 }
 
@@ -1220,7 +1227,12 @@ export async function getDailyStatsRangeTotals(
   from: string,
   to: string,
 ): Promise<DailyStatsTotals> {
-  const totals: DailyStatsTotals = { dials: 0, rozmowy: 0, sms: 0 };
+  const totals: DailyStatsTotals = {
+    dials: 0,
+    rozmowy_kwalifikacja: 0,
+    rozmowy_sprzedaz: 0,
+    sms: 0,
+  };
   let cursor: string | undefined;
 
   do {
@@ -1240,10 +1252,12 @@ export async function getDailyStatsRangeTotals(
     for (const page of response.results) {
       if (page.object !== "page") continue;
       const dials = page.properties["Dials"];
-      const rozmowy = page.properties["Rozmowy"];
+      const rozmowyK = page.properties["Rozmowy"];
+      const rozmowyS = page.properties["Rozmowy sprzedażowe"];
       const sms = page.properties["SMS Wysłane"];
       if (dials?.type === "number") totals.dials += dials.number ?? 0;
-      if (rozmowy?.type === "number") totals.rozmowy += rozmowy.number ?? 0;
+      if (rozmowyK?.type === "number") totals.rozmowy_kwalifikacja += rozmowyK.number ?? 0;
+      if (rozmowyS?.type === "number") totals.rozmowy_sprzedaz += rozmowyS.number ?? 0;
       if (sms?.type === "number") totals.sms += sms.number ?? 0;
     }
 
@@ -1251,6 +1265,24 @@ export async function getDailyStatsRangeTotals(
   } while (cursor);
 
   return totals;
+}
+
+// Migracja jednorazowa: dodaje kolumnę "Rozmowy sprzedażowe" do bazy Statystyki
+// Dzienne. Bezpieczna do wielokrotnego uruchomienia — notion.dataSources.update
+// na istniejącej właściwości number jest no-opem.
+export async function migrateDailyStatsSchema(): Promise<{ added: string[]; errors: string[] }> {
+  const added: string[] = [];
+  const errors: string[] = [];
+  try {
+    await notion.dataSources.update({
+      data_source_id: DAILY_STATS_DATA_SOURCE_ID,
+      properties: { "Rozmowy sprzedażowe": { number: {} } },
+    });
+    added.push("Rozmowy sprzedażowe");
+  } catch (err) {
+    errors.push(err instanceof Error ? err.message : "Nieznany błąd migracji Statystyk Dziennych");
+  }
+  return { added, errors };
 }
 
 // Cena standardowa z lib/agents/prompts.ts (Agent 1/2/5): 15 000 PLN wdrożenie

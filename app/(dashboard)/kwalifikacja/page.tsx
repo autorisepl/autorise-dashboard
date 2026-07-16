@@ -2467,8 +2467,10 @@ export default function KwalifikacjaPage() {
   ]);
   const [sprzedawcaImie, setSprzedawcaImie] = useState("Michał");
   const [smsForceOpen, setSmsForceOpen] = useState(false);
-  const [tallyFlash, setTallyFlash] = useState<"dial" | "rozmowa" | "sms" | null>(null);
-  const [tallyUndo, setTallyUndo] = useState<"dial" | "rozmowa" | "sms" | null>(null);
+  const [tallyFlash, setTallyFlash] = useState<"dial" | "rozmowa_kwalifikacja" | "sms" | null>(
+    null,
+  );
+  const [tallyUndo, setTallyUndo] = useState<"dial" | "rozmowa_kwalifikacja" | "sms" | null>(null);
   const role = useRole();
 
   const totalGodzinyH = calcGroups.reduce((sum, g) => sum + g.osoby * g.godziny * 22, 0);
@@ -2560,7 +2562,7 @@ export default function KwalifikacjaPage() {
     });
   };
 
-  const postTally = (type: "dial" | "rozmowa" | "sms", delta: 1 | -1) =>
+  const postTally = (type: "dial" | "rozmowa_kwalifikacja" | "sms", delta: 1 | -1) =>
     fetch("/api/stats/tally", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -2569,7 +2571,7 @@ export default function KwalifikacjaPage() {
       /* licznik jest pomocniczy — brak sieci nie blokuje pracy */
     });
 
-  const tally = useCallback((type: "dial" | "rozmowa" | "sms") => {
+  const tally = useCallback((type: "dial" | "rozmowa_kwalifikacja" | "sms") => {
     setTallyFlash(type);
     setTallyUndo(type);
     setTimeout(() => setTallyFlash((prev) => (prev === type ? null : prev)), 1800);
@@ -2577,7 +2579,7 @@ export default function KwalifikacjaPage() {
     void postTally(type, 1);
   }, []);
 
-  const undoTally = useCallback((type: "dial" | "rozmowa" | "sms") => {
+  const undoTally = useCallback((type: "dial" | "rozmowa_kwalifikacja" | "sms") => {
     setTallyUndo(null);
     setTallyFlash(null);
     void postTally(type, -1);
@@ -2692,14 +2694,17 @@ export default function KwalifikacjaPage() {
             Wykręcono
           </button>
           <button
-            onClick={() => tally("rozmowa")}
+            onClick={() => tally("rozmowa_kwalifikacja")}
             style={{
               height: 28,
               padding: "0 10px",
               borderRadius: 7,
               border: "1px solid #E5E5EA",
-              background: tallyFlash === "rozmowa" ? "var(--success-bg)" : "#F5F5F7",
-              color: tallyFlash === "rozmowa" ? "var(--success-text)" : "var(--text-secondary)",
+              background: tallyFlash === "rozmowa_kwalifikacja" ? "var(--success-bg)" : "#F5F5F7",
+              color:
+                tallyFlash === "rozmowa_kwalifikacja"
+                  ? "var(--success-text)"
+                  : "var(--text-secondary)",
               fontSize: 11,
               fontWeight: 600,
               cursor: "pointer",
@@ -2711,7 +2716,7 @@ export default function KwalifikacjaPage() {
             }}
             title="Zlicz nawiązaną rozmowę (statystyki dzienne)"
           >
-            {tallyFlash === "rozmowa" ? <Check size={11} /> : <PhoneCall size={11} />}
+            {tallyFlash === "rozmowa_kwalifikacja" ? <Check size={11} /> : <PhoneCall size={11} />}
             Rozmowa
           </button>
           {tallyUndo && (

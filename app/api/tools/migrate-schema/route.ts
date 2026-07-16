@@ -1,25 +1,21 @@
 import { NextResponse } from "next/server";
-import { migrateNotionSchema } from "@/lib/notion/client";
+import { migrateDailyStatsSchema, migrateNotionSchema } from "@/lib/notion/client";
 
 export async function POST() {
   try {
-    const result = await migrateNotionSchema();
+    const pipeline = await migrateNotionSchema();
+    const dailyStats = await migrateDailyStatsSchema();
+    const added = [...pipeline.added, ...dailyStats.added];
+    const errors = [...pipeline.errors, ...dailyStats.errors];
 
-    if (result.errors.length > 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          added: result.added,
-          errors: result.errors,
-        },
-        { status: 500 },
-      );
+    if (errors.length > 0) {
+      return NextResponse.json({ success: false, added, errors }, { status: 500 });
     }
 
     return NextResponse.json({
       success: true,
-      message: `Zaktualizowano schemat Pipeline. Pola: ${result.added.join(", ")}`,
-      added: result.added,
+      message: `Zaktualizowano schemat Pipeline + Statystyki Dzienne. Pola: ${added.join(", ")}`,
+      added,
     });
   } catch (err) {
     return NextResponse.json(

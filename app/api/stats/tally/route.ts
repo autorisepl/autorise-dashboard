@@ -3,7 +3,7 @@ import { type DailyStatType, incrementDailyStat } from "@/lib/notion/client";
 
 export const dynamic = "force-dynamic";
 
-const VALID_TYPES: DailyStatType[] = ["dial", "rozmowa", "sms"];
+const VALID_TYPES: DailyStatType[] = ["dial", "rozmowa_kwalifikacja", "rozmowa_sprzedaz", "sms"];
 
 export async function POST(request: Request) {
   try {

@@ -1821,6 +1821,31 @@ export default function SprzedazPage() {
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const [openObjectionId, setOpenObjectionId] = useState<string | null>(null);
 
+  // A6 (2026-07-16): licznik rozmów sprzedażowych — wcześniej /sprzedaz nie miało
+  // WCALE żadnego tally, "Rozmowy" w /statystyki zawsze liczyło wyłącznie
+  // kwalifikację. Wzorzec identyczny jak tally("dial"/"rozmowa") w /kwalifikacja.
+  const [rozmowaFlash, setRozmowaFlash] = useState(false);
+  const [rozmowaUndo, setRozmowaUndo] = useState(false);
+  const postRozmowaTally = (delta: 1 | -1) =>
+    fetch("/api/stats/tally", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "rozmowa_sprzedaz", delta }),
+    }).catch(() => {
+      /* licznik jest pomocniczy — brak sieci nie blokuje pracy */
+    });
+  const tallyRozmowa = useCallback(() => {
+    setRozmowaFlash(true);
+    setRozmowaUndo(true);
+    setTimeout(() => setRozmowaFlash(false), 1800);
+    setTimeout(() => setRozmowaUndo(false), 5000);
+    void postRozmowaTally(1);
+  }, []);
+  const undoRozmowaTally = useCallback(() => {
+    setRozmowaUndo(false);
+    void postRozmowaTally(-1);
+  }, []);
+
   const fetchClients = useCallback(async () => {
     setLoading(true);
     try {
@@ -2023,6 +2048,51 @@ export default function SprzedazPage() {
         >
           {selected ? selected.kontakt || selected.firma : "Discovery Call"}
         </span>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <button
+            onClick={tallyRozmowa}
+            style={{
+              height: 28,
+              padding: "0 10px",
+              borderRadius: 7,
+              border: "1px solid #E5E5EA",
+              background: rozmowaFlash ? "var(--success-bg)" : "#F5F5F7",
+              color: rozmowaFlash ? "var(--success-text)" : "var(--text-secondary)",
+              fontSize: 11,
+              fontWeight: 600,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              fontFamily: "var(--font-sans)",
+              transition: "background 150ms, color 150ms",
+            }}
+            title="Zlicz odbytą rozmowę sprzedażową (statystyki dzienne)"
+          >
+            {rozmowaFlash ? <Check size={11} /> : <MessageSquare size={11} />}
+            Rozmowa
+          </button>
+          {rozmowaUndo && (
+            <button
+              onClick={undoRozmowaTally}
+              style={{
+                height: 28,
+                padding: "0 10px",
+                borderRadius: 7,
+                border: "1px solid var(--warning)",
+                background: "var(--warning-bg)",
+                color: "var(--warning)",
+                fontSize: 11,
+                fontWeight: 700,
+                cursor: "pointer",
+                fontFamily: "var(--font-sans)",
+              }}
+              title="Cofnij ostatnie zliczenie (5 sekund)"
+            >
+              Cofnij
+            </button>
+          )}
+        </div>
         {selected && (
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: "auto" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>

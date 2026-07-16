@@ -24,9 +24,9 @@ export default function WdrozenieePage() {
               fontSize: 13,
             }}
           >
-            Zakładka w budowie. Pełna specyfikacja (dostępy, pomiar bazowy, checklist
-            tygodniowa, weryfikacja Dzień 30) czeka na prototyp i akceptację w sesji z
-            Michałem — patrz blok A1 w context/PLAN_CLAUDE_CODE.md.
+            Zakładka w budowie. Pełna specyfikacja (dostępy, pomiar bazowy, checklist tygodniowa,
+            weryfikacja Dzień 30) czeka na prototyp i akceptację w sesji z Michałem — patrz blok A1
+            w context/PLAN_CLAUDE_CODE.md.
           </div>
         </Panel>
       </div>

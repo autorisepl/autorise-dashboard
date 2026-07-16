@@ -14,7 +14,8 @@ export interface StatsResponse {
   from: string;
   to: string;
   dials: number;
-  rozmowy: number;
+  rozmowy_kwalifikacja: number;
+  rozmowy_sprzedaz: number;
   sms: number;
   nowe_leady: number;
   discovery_umowione: number;
@@ -118,7 +119,8 @@ export async function GET(request: Request) {
       from,
       to,
       dials: dailyTotals.dials,
-      rozmowy: dailyTotals.rozmowy,
+      rozmowy_kwalifikacja: dailyTotals.rozmowy_kwalifikacja,
+      rozmowy_sprzedaz: dailyTotals.rozmowy_sprzedaz,
       sms: dailyTotals.sms,
       nowe_leady,
       discovery_umowione,

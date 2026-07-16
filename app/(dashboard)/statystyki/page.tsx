@@ -8,6 +8,7 @@ import {
   Phone,
   PhoneCall,
   PhoneOff,
+  Target,
   ThumbsUp,
   TrendingUp,
   UserPlus,
@@ -16,7 +17,9 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { StatsResponse } from "@/app/api/stats/route";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { Panel } from "@/components/ui/Panel";
+import { SectionLabel } from "@/components/ui/SectionLabel";
 
 // ── Date range presets ──────────────────────────────────────────────
 
@@ -76,7 +79,6 @@ function KpiCard({
         border: `1px solid ${emphasize ? t.border : "var(--border)"}`,
         borderRadius: "var(--radius-sm)",
         boxShadow: emphasize ? "var(--glass-shadow)" : "var(--shadow-sm)",
-        gridColumn: emphasize ? "span 2" : undefined,
       }}
     >
       <div
@@ -94,7 +96,7 @@ function KpiCard({
       >
         <Icon size={emphasize ? 18 : 14} color={t.color} strokeWidth={1.9} />
       </div>
-      <div>
+      <div style={{ minWidth: 0 }}>
         <div
           style={{
             fontFamily: "var(--font-sans)",
@@ -116,6 +118,7 @@ function KpiCard({
             display: "flex",
             alignItems: "center",
             gap: 4,
+            whiteSpace: "nowrap",
           }}
         >
           {label}
@@ -123,6 +126,26 @@ function KpiCard({
             <AlertCircle size={10} color="var(--text-tertiary)" style={{ flexShrink: 0 }} />
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ── KPI section (grupa z nagłówkiem) ─────────────────────────────────
+
+function KpiSection({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div style={{ marginBottom: 20 }}>
+      <SectionLabel paddingX={0}>{label}</SectionLabel>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+          gap: 10,
+          marginTop: 4,
+        }}
+      >
+        {children}
       </div>
     </div>
   );
@@ -168,7 +191,8 @@ export default function StatystykiPage() {
   const hasAnyData =
     stats != null &&
     (stats.dials > 0 ||
-      stats.rozmowy > 0 ||
+      stats.rozmowy_kwalifikacja > 0 ||
+      stats.rozmowy_sprzedaz > 0 ||
       stats.sms > 0 ||
       stats.nowe_leady > 0 ||
       stats.discovery_umowione > 0 ||
@@ -190,32 +214,8 @@ export default function StatystykiPage() {
     >
       <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
 
-      {/* Top bar */}
-      <div
-        style={{
-          height: 52,
-          flexShrink: 0,
-          display: "flex",
-          alignItems: "center",
-          gap: 16,
-          padding: "0 20px",
-          background: "#fff",
-          borderBottom: "1px solid #E5E5EA",
-        }}
-      >
-        <TrendingUp size={16} color="var(--accent)" strokeWidth={1.8} />
-        <span
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: 16,
-            fontWeight: 700,
-            color: "var(--text-primary)",
-            letterSpacing: "-0.01em",
-          }}
-        >
-          Statystyki
-        </span>
-        <div style={{ height: 20, width: 1, background: "#E5E5EA" }} />
+      <PageHeader icon={<TrendingUp size={15} color="var(--accent)" />} title="Statystyki">
+        <div style={{ height: 20, width: 1, background: "var(--border)", marginLeft: 4 }} />
 
         {/* Range selector */}
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -224,11 +224,11 @@ export default function StatystykiPage() {
               key={days}
               onClick={() => setPreset(days)}
               style={{
-                height: 30,
+                height: 28,
                 padding: "0 12px",
-                borderRadius: 8,
-                border: `1px solid ${preset === days ? "var(--accent)" : "#E5E5EA"}`,
-                background: preset === days ? "rgba(10,132,255,0.08)" : "#F5F5F7",
+                borderRadius: 7,
+                border: `1px solid ${preset === days ? "var(--accent)" : "var(--border)"}`,
+                background: preset === days ? "var(--accent-muted)" : "var(--bg-hover)",
                 color: preset === days ? "var(--accent)" : "var(--text-secondary)",
                 fontSize: 12,
                 fontWeight: preset === days ? 600 : 400,
@@ -242,11 +242,11 @@ export default function StatystykiPage() {
           <button
             onClick={() => setPreset("custom")}
             style={{
-              height: 30,
+              height: 28,
               padding: "0 12px",
-              borderRadius: 8,
-              border: `1px solid ${preset === "custom" ? "var(--accent)" : "#E5E5EA"}`,
-              background: preset === "custom" ? "rgba(10,132,255,0.08)" : "#F5F5F7",
+              borderRadius: 7,
+              border: `1px solid ${preset === "custom" ? "var(--accent)" : "var(--border)"}`,
+              background: preset === "custom" ? "var(--accent-muted)" : "var(--bg-hover)",
               color: preset === "custom" ? "var(--accent)" : "var(--text-secondary)",
               fontSize: 12,
               fontWeight: preset === "custom" ? 600 : 400,
@@ -264,18 +264,18 @@ export default function StatystykiPage() {
                 max={customTo}
                 onChange={(e) => setCustomFrom(e.target.value)}
                 style={{
-                  height: 30,
+                  height: 28,
                   padding: "0 8px",
-                  borderRadius: 8,
-                  border: "1px solid #E5E5EA",
+                  borderRadius: 7,
+                  border: "1px solid var(--border)",
                   fontFamily: "var(--font-sans)",
                   fontSize: 12,
                   color: "var(--text-primary)",
-                  background: "#F5F5F7",
+                  background: "var(--bg-hover)",
                   outline: "none",
                 }}
               />
-              <span style={{ fontSize: 12, color: "var(--text-tertiary)" }}>—</span>
+              <span style={{ fontSize: 12, color: "var(--text-tertiary)" }}>-</span>
               <input
                 type="date"
                 value={customTo}
@@ -283,14 +283,14 @@ export default function StatystykiPage() {
                 max={todayISO()}
                 onChange={(e) => setCustomTo(e.target.value)}
                 style={{
-                  height: 30,
+                  height: 28,
                   padding: "0 8px",
-                  borderRadius: 8,
-                  border: "1px solid #E5E5EA",
+                  borderRadius: 7,
+                  border: "1px solid var(--border)",
                   fontFamily: "var(--font-sans)",
                   fontSize: 12,
                   color: "var(--text-primary)",
-                  background: "#F5F5F7",
+                  background: "var(--bg-hover)",
                   outline: "none",
                 }}
               />
@@ -305,10 +305,10 @@ export default function StatystykiPage() {
             style={{ animation: "spin 1s linear infinite", marginLeft: "auto" }}
           />
         )}
-      </div>
+      </PageHeader>
 
       {/* Body */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: "#F5F5F7" }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px" }}>
         {error && (
           <Panel style={{ padding: 16, marginBottom: 16, background: "var(--error-bg)" }}>
             <div style={{ fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--error)" }}>
@@ -354,81 +354,91 @@ export default function StatystykiPage() {
         )}
 
         {stats && hasAnyData && (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(4, 1fr)",
-              gap: 12,
-            }}
-          >
-            <KpiCard
-              label="Show Rate"
-              value={`${stats.show_rate.toFixed(0)}%`}
-              tone="accent"
-              icon={ThumbsUp}
-              emphasize
-            />
-            <KpiCard
-              label="Wartość sprzedaży PLN"
-              value={`${fmtPln(stats.wartosc_sprzedazy_pln)} zł`}
-              tone="success"
-              icon={Wallet}
-              emphasize
-            />
+          <>
+            <KpiSection label="Wynik">
+              <KpiCard
+                label="Show Rate"
+                value={`${stats.show_rate.toFixed(0)}%`}
+                tone="accent"
+                icon={ThumbsUp}
+                emphasize
+              />
+              <KpiCard
+                label="Wartość sprzedaży PLN"
+                value={`${fmtPln(stats.wartosc_sprzedazy_pln)} zł`}
+                tone="success"
+                icon={Wallet}
+                emphasize
+              />
+              <KpiCard
+                label="Sprzedaże"
+                value={String(stats.sprzedaze)}
+                tone="success"
+                icon={TrendingUp}
+                emphasize
+              />
+            </KpiSection>
 
-            <KpiCard label="Dials" value={String(stats.dials)} tone="neutral" icon={Phone} />
-            <KpiCard
-              label="Rozmowy"
-              value={String(stats.rozmowy)}
-              tone="neutral"
-              icon={PhoneCall}
-            />
-            <KpiCard
-              label="SMS Wysłane"
-              value={String(stats.sms)}
-              tone="neutral"
-              icon={MessageSquare}
-            />
-            <KpiCard
-              label="Nowe leady"
-              value={String(stats.nowe_leady)}
-              tone="accent"
-              icon={UserPlus}
-            />
+            {/* A6 (2026-07-16): "Rozmowy" rozbite na kwalifikacyjne i sprzedażowe zamiast
+                jednej zbiorczej liczby — poprzednio pole nazywało się ogólnie "Rozmowy",
+                ale w praktyce liczyło wyłącznie rozmowy kwalifikacyjne (jedyny przycisk
+                tally żył w /kwalifikacja); /sprzedaz dostało teraz własny licznik. */}
+            <KpiSection label="Aktywność dzienna">
+              <KpiCard label="Dials" value={String(stats.dials)} tone="neutral" icon={Phone} />
+              <KpiCard
+                label="Rozmowy kwalifikacyjne"
+                value={String(stats.rozmowy_kwalifikacja)}
+                tone="neutral"
+                icon={PhoneCall}
+              />
+              <KpiCard
+                label="Rozmowy sprzedażowe"
+                value={String(stats.rozmowy_sprzedaz)}
+                tone="neutral"
+                icon={Target}
+              />
+              <KpiCard
+                label="SMS Wysłane"
+                value={String(stats.sms)}
+                tone="neutral"
+                icon={MessageSquare}
+              />
+            </KpiSection>
 
-            <KpiCard
-              label="Discovery umówione"
-              value={String(stats.discovery_umowione)}
-              tone="purple"
-              icon={Users}
-            />
-            <KpiCard
-              label="Discovery odbyte"
-              value={String(stats.discovery_odbyte)}
-              tone="purple"
-              icon={Users}
-            />
-            <KpiCard
-              label="No-Show"
-              value={String(stats.no_show)}
-              tone="amber"
-              icon={PhoneOff}
-              tooltip="Szacunek: brak dedykowanego pola no-show w Notion. Liczone jako 'Data discovery' w przeszłości bez wypełnionego 'Wynik Discovery'."
-            />
-            <KpiCard
-              label="Sprzedaże"
-              value={String(stats.sprzedaze)}
-              tone="success"
-              icon={TrendingUp}
-            />
-
-            <KpiCard
-              label="Niekwalifikowani"
-              value={String(stats.niekwalifikowani)}
-              tone="neutral"
-              icon={Ban}
-            />
-          </div>
+            <KpiSection label="Lejek sprzedażowy">
+              <KpiCard
+                label="Nowe leady"
+                value={String(stats.nowe_leady)}
+                tone="accent"
+                icon={UserPlus}
+              />
+              <KpiCard
+                label="Discovery umówione"
+                value={String(stats.discovery_umowione)}
+                tone="purple"
+                icon={Users}
+              />
+              <KpiCard
+                label="Discovery odbyte"
+                value={String(stats.discovery_odbyte)}
+                tone="purple"
+                icon={Users}
+              />
+              <KpiCard
+                label="No-Show"
+                value={String(stats.no_show)}
+                tone="amber"
+                icon={PhoneOff}
+                tooltip="Szacunek: brak dedykowanego pola no-show w Notion. Liczone jako 'Data discovery' w przeszłości bez wypełnionego 'Wynik Discovery'."
+              />
+              <KpiCard
+                label="Niekwalifikowani"
+                value={String(stats.niekwalifikowani)}
+                tone="neutral"
+                icon={Ban}
+              />
+            </KpiSection>
+          </>
         )}
       </div>
     </div>
