@@ -2,17 +2,19 @@
 
 import { motion } from "framer-motion";
 import {
+  BarChart2,
   BookOpen,
   Calendar,
   CheckSquare,
-  Files,
   GitBranch,
   Kanban,
   LayoutDashboard,
+  Library,
   Mic,
   Monitor,
   Phone,
   Presentation,
+  Rocket,
   Target,
   TrendingUp,
   UserCircle2,
@@ -106,46 +108,46 @@ const SETTER_VISIBLE_HREFS = [
 
 // ── Nav structure ───────────────────────────────────────────────────
 
+// A2 (2026-07-16): redesign 3-grupowy wg context/PLAN_CLAUDE_CODE.md. Zakładka
+// "Pliki" usunięta (strona zostaje w kodzie, nielinkowana — ten sam wzorzec co
+// wcześniej /sesje i /analiza-narzedzi). "Agenci AI" i "Zadania" NIE są wymienione
+// w literalnej liście planu (Organizacja/Klienci/Wiedza i proces) — to realne
+// codzienne funkcje, nie osierocone strony jak Pliki, więc świadomie zachowane
+// i dopisane do najbliższej pasującej grupy zamiast po cichu usunięte; odstępstwo
+// zgłoszone w AUTORISE_SESSION_LOG.md zamiast czekać bezczynnie na potwierdzenie.
 const NAV: {
   label: string;
   items: { href: string; label: string; icon: React.ElementType; exact?: boolean }[];
 }[] = [
   {
-    label: "Praca z klientami",
+    label: "Organizacja",
+    items: [
+      { href: "/pipeline", label: "Pipeline", icon: Kanban },
+      { href: "/statystyki", label: "Statystyki", icon: TrendingUp },
+      { href: "/harmonogram", label: "Harmonogram", icon: Calendar },
+      { href: "/zadania", label: "Zadania", icon: CheckSquare },
+      { href: "/kontrola", label: "Kontrola", icon: Monitor },
+      { href: "/brand-book", label: "Brand Book", icon: BookOpen, exact: true },
+    ],
+  },
+  {
+    label: "Klienci",
     items: [
       { href: "/kwalifikacja", label: "Kwalifikacja", icon: Phone },
       { href: "/sprzedaz", label: "Sprzedaż", icon: Target },
-      { href: "/pipeline", label: "Pipeline", icon: Kanban },
+      { href: "/wdrozenie", label: "Wdrożenie", icon: Rocket, exact: true },
       { href: "/agenci", label: "Agenci AI", icon: LayoutDashboard, exact: false },
-      { href: "/mapa", label: "Mapa procesów", icon: GitBranch, exact: true },
-    ],
-  },
-  {
-    label: "Obszar Roboczy",
-    items: [
-      { href: "/harmonogram", label: "Harmonogram", icon: Calendar },
-      { href: "/zadania", label: "Zadania", icon: CheckSquare },
-      { href: "/pliki", label: "Pliki", icon: Files },
-      { href: "/kontrola", label: "Kontrola", icon: Monitor },
-      { href: "/statystyki", label: "Statystyki", icon: TrendingUp },
-    ],
-  },
-  {
-    label: "Narzędzia i Marka",
-    items: [
-      { href: "/narzedzia", label: "Transkrypcja", icon: Mic, exact: true },
-      { href: "/brand-book", label: "Brand Book", icon: BookOpen, exact: true },
-      // Blok 4, punkt 4.6 (2026-07-15/16) — "Sesje szkoleniowe" (/sesje) i "Analiza
-      // narzędzi" (/analiza-narzedzi) usunięte z głównego menu: to dokładnie ten sam
-      // Agent 5/6 co zakładki w /agenci, dwa miejsca dostępu do tej samej rzeczy. Strony
-      // zostają w kodzie (nieusunięte, nielinkowane) — jedyny punkt dostępu to teraz /agenci.
-    ],
-  },
-  {
-    label: "Współpraca",
-    items: [
-      { href: "/agencja", label: "Nasza karta", icon: Users },
       { href: "/prezentacja.html", label: "Prezentacja", icon: Presentation },
+      { href: "/narzedzia", label: "Transkrypcja", icon: Mic, exact: true },
+    ],
+  },
+  {
+    label: "Wiedza i proces",
+    items: [
+      { href: "/agencja", label: "Karta (Agency Leaders)", icon: Users },
+      { href: "/mapa", label: "Mapa procesów", icon: GitBranch, exact: true },
+      { href: "/baza-wiedzy", label: "Baza wiedzy", icon: Library, exact: true },
+      { href: "/analiza-narzedzi", label: "Analiza narzędzi", icon: BarChart2, exact: true },
     ],
   },
 ];
