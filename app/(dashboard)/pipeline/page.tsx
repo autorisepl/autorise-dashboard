@@ -4,6 +4,8 @@ import {
   ArrowDownAZ,
   ArrowRight,
   ArrowUpAZ,
+  CheckCircle2,
+  Copy,
   ExternalLink,
   LayoutGrid,
   Loader2,
@@ -370,6 +372,7 @@ function ClientPanel({
   const color = STATUS_COLORS[client.status] ?? "var(--text-tertiary)";
   const [powodDraft, setPowodDraft] = useState(client.powodUtraty);
   const [saving, setSaving] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const isOldScript = Boolean(
     client.dataPierwszegoKontaktu && client.dataPierwszegoKontaktu < SKRYPT_V4_DATA,
   );
@@ -677,6 +680,31 @@ function ClientPanel({
             <ExternalLink size={12} />
             Otwórz prezentację
           </a>
+          <button
+            type="button"
+            onClick={() => {
+              const url = `${window.location.origin}/prezentacja.html?id=${encodeURIComponent(client.id)}`;
+              void navigator.clipboard.writeText(url);
+              setLinkCopied(true);
+              setTimeout(() => setLinkCopied(false), 2000);
+            }}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 5,
+              fontSize: 12,
+              color: linkCopied ? "var(--success-text)" : "var(--text-secondary)",
+              background: "transparent",
+              padding: "6px 10px",
+              border: "1px solid var(--border)",
+              borderRadius: "var(--radius-xs)",
+              fontFamily: "var(--font-sans)",
+              cursor: "pointer",
+            }}
+          >
+            {linkCopied ? <CheckCircle2 size={12} /> : <Copy size={12} />}
+            {linkCopied ? "Skopiowano" : "Kopiuj link do prezentacji"}
+          </button>
         </div>
       </div>
     </div>

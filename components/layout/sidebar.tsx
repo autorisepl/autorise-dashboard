@@ -21,6 +21,7 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import type { VercelDeployData } from "@/app/api/vercel/last-deploy/route";
 import type { WeatherData } from "@/app/api/weather/route";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { useRole } from "@/lib/auth/RoleContext";
@@ -56,6 +57,29 @@ function useWeather() {
     return () => clearInterval(id);
   }, [load]);
   return weather;
+}
+
+// ── Vercel last deploy hook ─────────────────────────────────────────
+
+function useLastDeploy() {
+  const [deploy, setDeploy] = useState<VercelDeployData | null>(null);
+  const [configured, setConfigured] = useState(true);
+  const load = useCallback(async () => {
+    try {
+      const res = await fetch("/api/vercel/last-deploy");
+      const data = await res.json();
+      setConfigured(Boolean(data.configured));
+      if (data.success) setDeploy(data.deploy);
+    } catch {
+      /* silent */
+    }
+  }, []);
+  useEffect(() => {
+    load();
+    const id = setInterval(load, 5 * 60 * 1000);
+    return () => clearInterval(id);
+  }, [load]);
+  return { deploy, configured };
 }
 
 // ── Clock hook ──────────────────────────────────────────────────────
@@ -221,6 +245,7 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
   const pathname = usePathname();
   const router = useRouter();
   const weather = useWeather();
+  const { deploy, configured: deployConfigured } = useLastDeploy();
   const now = useClock();
   const role = useRole();
 
@@ -341,18 +366,88 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
           strokeWidth={1.5}
           style={{ flexShrink: 0 }}
         />
-        <span
+        <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
+          <span
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 13,
+              fontWeight: 500,
+              color: "var(--text-primary)",
+              letterSpacing: "-0.01em",
+            }}
+          >
+            Michał Roth
+          </span>
+          {role && (
+            <span
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: "0.04em",
+                textTransform: "uppercase",
+                color: role === "admin" ? "var(--accent)" : "var(--warning)",
+                width: "fit-content",
+              }}
+            >
+              {role === "admin" ? "Founder" : "Setter"}
+            </span>
+          )}
+        </div>
+      </button>
+
+      {/* 2b. Ostatni deploy Vercel */}
+      {deployConfigured && deploy && (
+        <div
           style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: 13,
-            fontWeight: 500,
-            color: "var(--text-primary)",
-            letterSpacing: "-0.01em",
+            padding: "10px 16px",
+            borderBottom: "1px solid var(--border)",
+            flexShrink: 0,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
           }}
         >
-          Michał Roth
-        </span>
-      </button>
+          <span
+            style={{
+              width: 7,
+              height: 7,
+              borderRadius: "50%",
+              flexShrink: 0,
+              background: deploy.state === "Wdrożony" ? "var(--success-text)" : "var(--warning)",
+            }}
+          />
+          <div style={{ minWidth: 0 }}>
+            <div
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 11,
+                fontWeight: 500,
+                color: "var(--text-primary)",
+              }}
+            >
+              {deploy.state}
+            </div>
+            <div
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 10,
+                color: "var(--text-tertiary)",
+              }}
+            >
+              {new Date(deploy.createdAt).toLocaleDateString("pl-PL", {
+                day: "numeric",
+                month: "short",
+              })}{" "}
+              ·{" "}
+              {new Date(deploy.createdAt).toLocaleTimeString("pl-PL", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 3. Dziś */}
       <div
