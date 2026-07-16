@@ -382,7 +382,9 @@ export async function upsertClientInPipeline(
     }
   } else {
     let pipelineStatus = kwalifikacjaToStatus(a1.icp?.kwalifikacja ?? null, hasMeeting);
-    // "Discovery umówione" is a MANUAL action only — never auto-set for existing clients
+    // Auto-ustawiane dla nowych kart (meet_data z formularza/Calendly) i przez Agent 4
+    // (wynikToStatus). Dla ISTNIEJĄCYCH kart świadomie nie nadpisujemy na "Discovery
+    // umówione" tutaj — spotkanie na już aktywnym leadzie ustala się ręcznie w Notion.
     if (pageId && pipelineStatus === "Discovery umówione") {
       pipelineStatus = "Kwalifikacja";
     }

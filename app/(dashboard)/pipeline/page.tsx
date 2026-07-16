@@ -809,7 +809,9 @@ export default function PipelinePage() {
     return acc;
   }, {});
 
-  const totalActive = clients.filter((c) => c.status !== "Niekwalifikowany").length;
+  // Licz z visibleClients (respektuje filtr utraconych), nie z pełnej clients — inaczej
+  // liczba w nagłówku przestrzeliwała sumę kart faktycznie widocznych w kolumnach Kanbanu.
+  const totalActive = visibleClients.filter((c) => c.status !== "Niekwalifikowany").length;
 
   return (
     <div
