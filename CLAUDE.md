@@ -67,7 +67,7 @@ UWAGA: `/narzedzia/kalkulator` to osierocona strona z wcześniejszej sesji, bez 
 ```
 lib/scripts/types.ts           — Step, Line, Objection, IcpRule interfaces
 lib/scripts/kwalifikacyjna.ts  — STEPS_K (12 kroków V4), OBJECTIONS_K (12), ICP_RULES
-lib/scripts/discovery.ts       — STEPS_D, OBJECTIONS_D (framework Robert AAA, od1-od11)
+lib/scripts/sprzedaz.ts        — STEPS_D, OBJECTIONS_D (framework Robert AAA, od1-od11). Do 2026-07-16 plik nazywał się discovery.ts — zmieniono, bo nazwa legacy sugerowała trzeci, osobny etap sprzedaży, mamy dwa (kwalifikacja + sprzedaż)
 lib/scripts/messages.ts        — MESSAGES_DATA (SMS/WhatsApp/FB templates)
 ```
 
@@ -243,7 +243,7 @@ app/api/notion/sheets-sync/route.ts       — Sheets → Notion sync
 components/layout/sidebar.tsx             — navigation sidebar (260px, 4 grupy)
 components/kalkulator/KalkulatorRoi.tsx   — kalkulator ROI (inline w skryptach)
 lib/agents/prompts.ts                     — all system prompts
-lib/scripts/{types,kwalifikacyjna,discovery,messages}.ts — dane skryptów
+lib/scripts/{types,kwalifikacyjna,sprzedaz,messages}.ts — dane skryptów
 lib/notion/client.ts                      — Notion API client
 context/AUTORISE_DASHBOARD_STATE_v6.md    — stan systemu dla Claude AI
 context/AUTORISE_SESSION_LOG.md           — log sesji, czytaj na starcie każdej sesji

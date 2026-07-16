@@ -23,8 +23,8 @@ import { useCallback, useEffect, useState } from "react";
 import type { PipelineClientDetailed } from "@/app/api/notion/pipeline/route";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { SectionLabel } from "@/components/ui/SectionLabel";
-import { OBJECTIONS_D, STEPS_D } from "@/lib/scripts/discovery";
 import { OBJECTIONS_K, STEPS_K } from "@/lib/scripts/kwalifikacyjna";
+import { OBJECTIONS_D, STEPS_D } from "@/lib/scripts/sprzedaz";
 import type { Objection, Step } from "@/lib/scripts/types";
 
 // ── Blueprint danych — DATA_FLOW ──────────────────────────────────────

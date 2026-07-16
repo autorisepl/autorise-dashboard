@@ -30,10 +30,10 @@ import { DecisionDiagram } from "@/components/scripts/DecisionDiagram";
 import { NextStepArrow } from "@/components/scripts/NextStepArrow";
 import { WarunkiUmowyForm } from "@/components/sprzedaz/WarunkiUmowyForm";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { DISCOVERY_STATUSES, OBJECTIONS_D, STEPS_D } from "@/lib/scripts/discovery";
 import { fillBrief, parseCytatyKlienta } from "@/lib/scripts/fillBrief";
 import { useFormaGrzecznosciowa } from "@/lib/scripts/formaGrzecznosciowa";
 import { GROUP_COLORS, MESSAGES_DATA } from "@/lib/scripts/messages";
+import { DISCOVERY_STATUSES, OBJECTIONS_D, STEPS_D } from "@/lib/scripts/sprzedaz";
 import type { DecisionOption, Objection, ScriptLine } from "@/lib/scripts/types";
 import { objectionColor } from "@/lib/scripts/types";
 
