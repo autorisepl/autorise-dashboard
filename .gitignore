@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# B10 (2026-07-16): duże fixture audio testowe i podpisane dokumenty z podpisami/danymi
+# osobowymi — nie należą do historii git, workspace-lokalne. Pliki zostają na dysku,
+# tylko nietrackowane.
+context/transkrypty-testowe/
+context/PELNOMOCNICTWO_PODPISANE.pdf

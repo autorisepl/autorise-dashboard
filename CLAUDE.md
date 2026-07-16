@@ -33,32 +33,33 @@
 - Timestamps: ZAWSZE HH:MM:SS z sekundami
 - Design system live preview: `/brand-book`
 
-## Nawigacja (sidebar) — 4 grupy, zgodne z `components/layout/sidebar.tsx`
+## Nawigacja (sidebar) — 3 grupy (A2, 2026-07-16), zgodne z `components/layout/sidebar.tsx`
 
 ```
-PRACA Z KLIENTAMI
-  /kwalifikacja    → widok etapowy: skrypt kwalifikacyjny + kalkulator inline (krok 2.6) + dalsze kroki
-  /sprzedaz        → widok etapowy: brief Agent 2 + skrypt Discovery + kalkulator + prezentacja sync
+ORGANIZACJA
   /pipeline        → Pipeline Kanban (3 rzędy: ROW1/ROW2/ROW3 z "Nieaktywny follow up" + "Upsell")
-  /agenci          → Agenci wspomagania sprzedaży (6 tabów, agent0 ukryty)
-  /mapa            → Mapa procesu sprzedażowego (4 etapy, live client tracking)
-
-OBSZAR ROBOCZY
+  /statystyki      → KPI dzienne/lejek/wynik, rozmowy kwalifikacyjne i sprzedażowe osobno
   /harmonogram     → Harmonogram (Google Calendar + Tasks)
   /zadania         → Zadania (Google Tasks, 4 listy)
-  /pliki           → Najważniejsze pliki
   /kontrola        → Kontrola obszaru roboczego (v6)
-
-NARZĘDZIA I MARKA
-  /narzedzia       → Transkrypcja (AudioRecorder + Drive picker + Groq Whisper)
   /brand-book      → Design system live preview
-  /sesje           → Sesje szkoleniowe (Agency Leaders)
-  /analiza-narzedzi → Analiza nowych narzędzi
 
-WSPÓŁPRACA
-  /agencja         → Nasza karta (Sheets sync)
+KLIENCI
+  /kwalifikacja    → widok etapowy: skrypt kwalifikacyjny + kalkulator inline (krok 2.6) + dalsze kroki
+  /sprzedaz        → widok etapowy: brief Agent 2 + skrypt sprzedażowy + kalkulator + prezentacja sync
+  /wdrozenie       → placeholder, czeka na sesję z Michałem (blok A1 w PLAN_CLAUDE_CODE.md)
+  /agenci          → Agenci wspomagania sprzedaży (6 tabów, agent0 ukryty)
   /prezentacja     → link do prezentacja.html
+  /narzedzia       → Transkrypcja (AudioRecorder + Drive picker + Groq Whisper)
+
+WIEDZA I PROCES
+  /agencja         → Karta (Agency Leaders) — Sheets sync
+  /mapa            → Mapa procesu sprzedażowego (live client tracking)
+  /baza-wiedzy     → placeholder, czeka na sesję z Michałem (blok A3 w PLAN_CLAUDE_CODE.md)
+  /analiza-narzedzi → Analiza nowych narzędzi
 ```
+
+Zakładka `/pliki` usunięta z nawigacji (A2, 2026-07-16) — strona zostaje w kodzie, nielinkowana, ten sam wzorzec co wcześniej `/sesje`. `/sesje` nadal bez linku w menu (Agent 5 dostępny wyłącznie przez `/agenci`), `/analiza-narzedzi` PRZYWRÓCONA do menu mimo wcześniejszego usunięcia jako duplikatu — nadrzędny plan tak wskazał, patrz `AUTORISE_SESSION_LOG.md`.
 
 UWAGA: `/narzedzia/kalkulator` to osierocona strona z wcześniejszej sesji, bez linku w nawigacji. Kalkulator ROI właściwy żyje inline w `/kwalifikacja` (krok 2.6) i `/sprzedaz`. Jeśli osierocona strona nie jest jeszcze usunięta, usuń ją przy najbliższej okazji, żeby uniknąć dwóch wersji tego samego narzędzia.
 
@@ -240,15 +241,27 @@ app/api/env-check/route.ts                — env vars check
 app/api/claude-config/route.ts            — Claude Code agents/skills (filtered)
 app/api/notion/pipeline/route.ts          — Pipeline clients
 app/api/notion/sheets-sync/route.ts       — Sheets → Notion sync
-components/layout/sidebar.tsx             — navigation sidebar (260px, 4 grupy)
+app/(dashboard)/wdrozenie/page.tsx        — placeholder, czeka na sesję z Michałem (blok A1)
+app/(dashboard)/baza-wiedzy/page.tsx      — placeholder, czeka na sesję z Michałem (blok A3)
+components/layout/sidebar.tsx             — navigation sidebar (260px, 3 grupy: Organizacja/Klienci/Wiedza i proces)
 components/kalkulator/KalkulatorRoi.tsx   — kalkulator ROI (inline w skryptach)
 lib/agents/prompts.ts                     — all system prompts
 lib/scripts/{types,kwalifikacyjna,sprzedaz,messages}.ts — dane skryptów
 lib/notion/client.ts                      — Notion API client
-context/AUTORISE_DASHBOARD_STATE_v6.md    — stan systemu dla Claude AI
 context/AUTORISE_SESSION_LOG.md           — log sesji, czytaj na starcie każdej sesji
-context/AUTORISE_PRIORYTETY_v1.md          — jedyne źródło prawdy o priorytetach, czytaj na starcie każdej sesji obok AUTORISE_SESSION_LOG.md
+context/PLAN_CLAUDE_CODE.md               — bieżący plan wykonawczy dla Claude Code, czytaj na starcie każdej sesji obok SESSION_LOG
 ```
+
+## Hierarchia plików kontekstowych (B10, 2026-07-16)
+
+Dwa równoległe, ręcznie synchronizowane plany istnieją celowo:
+
+- **`context/PLAN_CLAUDE_CODE.md`** — jedyny plan który czyta i wykonuje Claude Code w tym repo. Aktualny stan priorytetów i zadań technicznych. Czytaj na starcie każdej sesji.
+- **`PLAN_CLAUDE_AI.md`** — plan decyzji i dokumentów, żyje w projekcie Claude.ai, NIE istnieje lokalnie w workspace i Claude Code go nie widzi ani nie czyta. Synchronizacja między oboma planami jest wyłącznie ręczna, robi ją Michał — nie zakładaj że jeden odzwierciedla drugi bez potwierdzenia.
+- **`CLAUDE.md` (ten plik)** — źródło prawdy o BIEŻĄCYM stanie systemu (stack, struktura, wzorce), nie o priorytetach czy planach. Aktualizuj po każdej zmianie struktury/architektury, nie tylko na końcu sesji.
+- **`context/AUTORISE_SESSION_LOG.md`** — historia, append-only, jeden wiersz per punkt sesji, nigdy nie edytuj wstecz.
+
+Usunięte 2026-07-16 (B10) jako zdublowane/przestarzałe wobec powyższego: `AUTORISE_PRIORYTETY_v1.md` i `AUTORISE_PRIORYTETY_v3_FINAL.md` (oba deklarowały się jako "jedyne źródło prawdy o priorytetach" tego samego dnia 2026-07-13 — to samo zjawisko narastających wersji, które ten punkt miał naprawić; treść albo już zrealizowana, albo w pełni pokryta przez `PLAN_CLAUDE_CODE.md`), `AUTORISE_DASHBOARD_STATE_v6.md` (snapshot z 2026-07-03, kolory/nawigacja/lista stron dawno nieaktualne wobec realnego kodu, rola w pełni przejęta przez ten plik).
 
 ## Historia zmian
 
@@ -271,4 +284,4 @@ context/AUTORISE_PRIORYTETY_v1.md          — jedyne źródło prawdy o prioryt
 
 ## LOGI SESJI (OBOWIĄZKOWE)
 
-Na końcu każdej sesji: zaktualizuj `context/AUTORISE_SESSION_LOG.md` (1 wiersz tabeli) i tę sekcję "Nawigacja" / "File Locations" w CLAUDE.md, jeśli struktura stron się zmieniła. Ten plik ma być zawsze zgodny z rzeczywistym `sidebar.tsx` — jeśli się rozjeżdżają, każda następna sesja zaczyna z błędnym obrazem systemu. Aktualizuj też `context/AUTORISE_PRIORYTETY_v1.md`, gdy priorytety się zmieniają, nie tylko session log.
+Na końcu każdej sesji: zaktualizuj `context/AUTORISE_SESSION_LOG.md` (1 wiersz tabeli) i tę sekcję "Nawigacja" / "File Locations" w CLAUDE.md, jeśli struktura stron się zmieniła. Ten plik ma być zawsze zgodny z rzeczywistym `sidebar.tsx` — jeśli się rozjeżdżają, każda następna sesja zaczyna z błędnym obrazem systemu. Aktualizuj też `context/PLAN_CLAUDE_CODE.md`, gdy priorytety się zmieniają, nie tylko session log. Przed każdym wywołaniem narzędzia: jedno krótkie zdanie po polsku co robisz i dlaczego (zasada z PLAN_CLAUDE_CODE.md, dopisana tu żeby nie zgubić się przy czytaniu samego CLAUDE.md).
