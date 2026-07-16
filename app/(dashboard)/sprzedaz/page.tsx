@@ -1953,7 +1953,12 @@ export default function SprzedazPage() {
         /Przy \[kwota oszczędności\] miesięcznie, inwestycja zwraca się w \[X\] miesięcy\./g,
         roiDopowiedzenie || "— policz z kalkulatorem ROI —",
       );
-      const roiMiesiace = roiDopowiedzenie.match(/zwraca się w (\d+)/)?.[1];
+      // Wzorzec ścisły najpierw ("zwraca się w 2 miesiące"), potem luźniejszy fallback
+      // (jakakolwiek cyfra przy słowie "miesi") — model czasem zapisuje liczbę słownie
+      // ("mniej niż jeden") mimo instrukcji w prompcie, ten drugi wzorzec to łapie.
+      const roiMiesiace =
+        roiDopowiedzenie.match(/zwraca się w (\d+)/)?.[1] ??
+        roiDopowiedzenie.match(/(\d+)\s*miesi/)?.[1];
       out = out.replace(
         /15000 zł zwraca się w \[X\] miesięcy/g,
         `15000 zł zwraca się w ${roiMiesiace ?? "— policz —"} miesięcy`,

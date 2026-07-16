@@ -740,9 +740,13 @@ POLE roi_dopowiedzenie (wymagane, jeden string):
 Zastępuje "[kwota oszczędności]"/"[X] miesięcy" w kroku ROI discovery.ts. Jedno gotowe zdanie typu
 "Przy [kwota] miesięcznie, inwestycja zwraca się w [Y] miesięcy" z podstawionymi REALNYMI liczbami
 z koszt_problemu Agenta 1 (użyj ceny regularnej 18 000 PLN jeśli brak ustalonej ceny końcowej).
-Policz miesiące zwrotu (18000 / kwota_miesięczna, zaokrąglone w górę) — nie zostawiaj samego wzoru,
-podstaw wynik. Jeśli koszt miesięczny nieznany: napisz zdanie wprost mówiące że wartość zostanie
-policzona na żywo kalkulatorem ROI, nigdy nie zostawiaj nawiasu w treści.
+Policz miesiące zwrotu (18000 / kwota_miesięczna, zaokrąglone W GÓRĘ do liczby całkowitej, minimum 1)
+— nie zostawiaj samego wzoru, podstaw wynik. KRYTYCZNE: liczba miesięcy MUSI być zapisana cyfrą
+(np. "1 miesiąc", "2 miesiące"), nigdy słownie ("mniej niż jeden", "poniżej miesiąca") — kod
+frontendu wyciąga tę liczbę wyrażeniem regularnym "zwraca się w (cyfra)" z tego zdania do użycia
+w osobnej obiekcji cenowej, słowny zapis psuje to wyodrębnianie. Jeśli koszt miesięczny nieznany:
+napisz zdanie wprost mówiące że wartość zostanie policzona na żywo kalkulatorem ROI, nigdy nie
+zostawiaj nawiasu w treści.
 
 POLE cytaty_klienta (wymagane, osobne od pitch_recipe):
 Zamiast sklejania wielu cytatów w jedno zdanie z zagnieżdżonymi cudzysłowami, zwróć każdy cytat
