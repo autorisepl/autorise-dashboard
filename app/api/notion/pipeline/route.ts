@@ -44,6 +44,12 @@ export interface PipelineClientDetailed {
   systemTransformacji: string[];
   zdanieRoznicujace: string;
   roiDopowiedzenie: string;
+  retainer: number;
+  dataPotwierdzeniaDostepow: string;
+  czasBazowyPotwierdzony: number;
+  dostepyZebrane: string;
+  ostatniKontaktRetainer: string;
+  historiaZgloszenRetainer: string;
 }
 
 // Blok 1, punkt 1.5 (2026-07-14) — data premiery skryptu kwalifikacyjnego V4 (12 kroków, ICP
@@ -139,6 +145,12 @@ export async function GET() {
             .filter(Boolean),
           zdanieRoznicujace: extractText(props["Zdanie różnicujące"]),
           roiDopowiedzenie: extractText(props["ROI dopowiedzenie"]),
+          retainer: extractNumber(props["Retainer PLN/mc"]),
+          dataPotwierdzeniaDostepow: extractText(props["Data potwierdzenia dostępów"]),
+          czasBazowyPotwierdzony: extractNumber(props["Czas bazowy potwierdzony h/mc"]),
+          dostepyZebrane: extractText(props["Dostępy zebrane"]),
+          ostatniKontaktRetainer: extractText(props["Ostatni kontakt (retainer)"]),
+          historiaZgloszenRetainer: extractText(props["Historia zgłoszeń (retainer)"]),
         };
       })
       .filter((c: PipelineClientDetailed) => c.firma !== "Bez nazwy");

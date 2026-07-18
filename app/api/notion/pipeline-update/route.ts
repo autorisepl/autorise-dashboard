@@ -26,6 +26,11 @@ const bodySchema = z.object({
   pozaZakresem: z.string().nullable().optional(),
   utracony: z.boolean().optional(),
   powodUtraty: z.string().nullable().optional(),
+  dataPotwierdzeniaDostepow: z.string().nullable().optional(),
+  czasBazowyPotwierdzony: z.number().nullable().optional(),
+  dostepyZebrane: z.string().nullable().optional(),
+  ostatniKontaktRetainer: z.string().nullable().optional(),
+  historiaZgloszenRetainer: z.string().nullable().optional(),
 });
 
 function richText(text: string) {
@@ -112,6 +117,29 @@ export async function PATCH(req: Request) {
     }
     if (d.powodUtraty !== undefined) {
       properties["Powód utraty"] = { rich_text: d.powodUtraty ? richText(d.powodUtraty) : [] };
+    }
+    if (d.dataPotwierdzeniaDostepow !== undefined) {
+      properties["Data potwierdzenia dostępów"] = d.dataPotwierdzeniaDostepow
+        ? { date: { start: d.dataPotwierdzeniaDostepow } }
+        : { date: null };
+    }
+    if (d.czasBazowyPotwierdzony !== undefined) {
+      properties["Czas bazowy potwierdzony h/mc"] = { number: d.czasBazowyPotwierdzony };
+    }
+    if (d.dostepyZebrane !== undefined) {
+      properties["Dostępy zebrane"] = {
+        rich_text: d.dostepyZebrane ? richText(d.dostepyZebrane) : [],
+      };
+    }
+    if (d.ostatniKontaktRetainer !== undefined) {
+      properties["Ostatni kontakt (retainer)"] = d.ostatniKontaktRetainer
+        ? { date: { start: d.ostatniKontaktRetainer } }
+        : { date: null };
+    }
+    if (d.historiaZgloszenRetainer !== undefined) {
+      properties["Historia zgłoszeń (retainer)"] = {
+        rich_text: d.historiaZgloszenRetainer ? richText(d.historiaZgloszenRetainer) : [],
+      };
     }
 
     if (Object.keys(properties).length === 0) {

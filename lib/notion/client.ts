@@ -1031,6 +1031,38 @@ export async function migrateNotionSchema(): Promise<{ added: string[]; errors: 
     errors.push(`Batch 3: ${err instanceof Error ? err.message : "Błąd migracji schematu"}`);
   }
 
+  // Batch 4 (2026-07-18, PLAN_CLAUDE_CODE Blok A1) — pola dla /wdrozenie (start zegara 30 dni,
+  // czas bazowy potwierdzony, lista dostępów zebranych) i /utrzymanie (data ostatniego
+  // kontaktu na etapie retainera dla drabinki eskalacji, historia zgłoszeń serializowana jako
+  // tekst "data | opis" per linia — świadomie nie osobna baza, wzorem "Checklist wdrożenia").
+  try {
+    await notion.dataSources.update({
+      data_source_id: PIPELINE_DATA_SOURCE_ID,
+      properties: {
+        "Data potwierdzenia dostępów": { date: {} },
+        "Czas bazowy potwierdzony h/mc": { number: {} },
+        "Dostępy zebrane": { rich_text: {} },
+        "Ostatni kontakt (retainer)": { date: {} },
+        "Historia zgłoszeń (retainer)": { rich_text: {} },
+      },
+    });
+    const { confirmed, missing } = await confirmSchemaFields([
+      "Data potwierdzenia dostępów",
+      "Czas bazowy potwierdzony h/mc",
+      "Dostępy zebrane",
+      "Ostatni kontakt (retainer)",
+      "Historia zgłoszeń (retainer)",
+    ]);
+    added.push(...confirmed);
+    for (const name of missing) {
+      errors.push(
+        `Batch 4: pole "${name}" nie pojawiło się w schemacie po update (brak wyjątku, ale retrieve go nie potwierdza)`,
+      );
+    }
+  } catch (err) {
+    errors.push(`Batch 4: ${err instanceof Error ? err.message : "Błąd migracji schematu"}`);
+  }
+
   return { added, errors };
 }
 

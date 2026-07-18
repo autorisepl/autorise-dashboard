@@ -9,13 +9,13 @@ import {
   ExternalLink,
   LayoutGrid,
   Loader2,
-  Phone,
   RefreshCw,
   X,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { type PipelineClientDetailed, SKRYPT_V4_DATA } from "@/app/api/notion/pipeline/route";
 import { ClientCompanyLine, ClientContactDetails } from "@/components/clients/ClientContactDetails";
+import { ContactAttemptsBadge } from "@/components/clients/ContactAttemptsBadge";
 import { Button } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
 
@@ -61,90 +61,6 @@ function fmtDate(iso: string): string {
 
 // ── Client card ──────────────────────────────────────────────────────
 
-function ContactAttemptsBadge({
-  client,
-  onIncrement,
-}: {
-  client: PipelineClientDetailed;
-  onIncrement: (client: PipelineClientDetailed) => void;
-}) {
-  const proby = client.liczbaProb ?? 0;
-  if (proby <= 0) return null;
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 5,
-        marginBottom: 5,
-        padding: "3px 6px",
-        borderRadius: "var(--radius-xs)",
-        background: proby >= 3 ? "var(--error-bg)" : "var(--bg)",
-        border: `1px solid ${proby >= 3 ? "var(--error-border)" : "var(--border)"}`,
-        flexShrink: 0,
-      }}
-    >
-      <Phone
-        size={11}
-        color={proby >= 3 ? "var(--error)" : "var(--text-tertiary)"}
-        strokeWidth={2}
-      />
-      <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
-        {[1, 2, 3].map((n) => (
-          <div
-            key={n}
-            style={{
-              width: 6,
-              height: 6,
-              borderRadius: "50%",
-              background: n <= proby ? "var(--warning)" : "var(--border)",
-            }}
-          />
-        ))}
-      </div>
-      <span
-        style={{
-          fontFamily: "var(--font-sans)",
-          fontSize: 10,
-          fontWeight: 600,
-          color: proby >= 3 ? "var(--error)" : "var(--text-tertiary)",
-        }}
-      >
-        {proby >= 3 ? "Wyślij SMS" : `Próba ${proby}`}
-      </span>
-      {/* stopPropagation — karta ma własny onClick otwierający panel klienta, bez tego
-          kliknięcie w licznik przypadkowo otwierałoby/zamykało cały panel jednocześnie
-          z inkrementacją (Blok "Arek" pkt 13, 2026-07-15). */}
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          onIncrement(client);
-        }}
-        title="Zarejestruj kolejną próbę kontaktu"
-        style={{
-          marginLeft: 2,
-          width: 16,
-          height: 16,
-          borderRadius: "50%",
-          border: "1px solid var(--border)",
-          background: "var(--bg-elevated)",
-          color: "var(--text-secondary)",
-          fontSize: 11,
-          lineHeight: 1,
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexShrink: 0,
-        }}
-      >
-        +
-      </button>
-    </div>
-  );
-}
-
 function ClientCard({
   client,
   onClick,
@@ -173,7 +89,12 @@ function ClientCard({
         flexShrink: 0,
       }}
     >
-      <ContactAttemptsBadge client={client} onIncrement={onIncrement} />
+      <div style={{ marginBottom: 5 }}>
+        <ContactAttemptsBadge
+          proby={client.liczbaProb ?? 0}
+          onIncrement={() => onIncrement(client)}
+        />
+      </div>
       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
         <div
           style={{

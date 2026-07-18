@@ -19,6 +19,8 @@ Prototypy: punkty oznaczone [PROTOTYP] wymagają pokazania Michałowi jednego el
 
 ## A1. Nowa zakładka /wdrozenie (PRIORYTET 0, nie istnieje, blokuje pierwszą sprzedaż) [PROTOTYP]
 
+**Decyzja Michała 2026-07-18, zmienia strukturę poniżej**: rozdzielone na dwie zakładki. `/wdrozenie` — wyłącznie jednorazowy proces Tydzień 0 do Dzień 30 (Panel 1 Dostępy + oś czasu, prototyp zbudowany 2026-07-18, czeka na ocenę). `/utrzymanie` — nowa, osobna zakładka dla stałego retainera (Co obejmuje retainer / Metryki miesięczne / Drabinka eskalacji / Historia zgłoszeń, prototyp zbudowany 2026-07-18, czeka na ocenę). Panele 2-4 poniżej (Pomiar bazowy, Checklist tygodniowa, Weryfikacja Dzień 30) zostają w `/wdrozenie` i wciąż czekają na budowę. Szczegóły w `AUTORISE_SESSION_LOG.md` i sekcji "A1 rozdzielone na dwie zakładki" w `CLAUDE.md`.
+
 Kontekst: "Kickoff" i "Wdrożenie" istnieją dziś wyłącznie jako statusy w Pipeline i kolory w UI. Zero procesu. Jeśli klient podpisze, masz 4 tygodnie i zero struktury. Umowa zobowiązuje do zwrotu 15 000 zł przy niedowiezieniu 80h oszczędności.
 
 Zakładka ma prowadzić Michała krok po kroku od podpisu do weryfikacji, bez czytania żadnego dokumentu. Wszystko widoczne, klikalne, zapisywane do Notion.
@@ -78,12 +80,14 @@ Sprawdź najpierw czy nie istnieją. Jeśli nie: "Data potwierdzenia dostępów"
 
 Najpierw prototyp: sam Panel 1 (dostępy) plus oś czasu, dla jednego klienta, bez reszty paneli. Pokaż Michałowi. Po akceptacji: reszta paneli.
 
+**Zbudowane 2026-07-18**: Panel 1 (Dostępy) + oś czasu w `/wdrozenie`, oraz cała pierwsza wersja `/utrzymanie` (Co obejmuje retainer / Metryki miesięczne / Drabinka eskalacji / Historia zgłoszeń) — obie zakładki czekają na ocenę Michała przed rozbudową o Panel Pomiar bazowy / Checklist tygodniowa / Weryfikacja Dzień 30. Migracja nowych pól Notion (Batch 4) NIE uruchomiona, do zrobienia w `/kontrola`.
+
 ## A2. Redesign menu (nowa struktura, usunięcie zakładki Pliki)
 
 Docelowa struktura, trzy grupy z nagłówkami:
 
 **Organizacja**: Pipeline, Statystyki, Harmonogram, Kontrola, Brand Book
-**Klienci**: Kwalifikacja, Sprzedaż, Wdrożenie (nowa, A1), Prezentacja, Transkrypcja
+**Klienci**: Kwalifikacja, Sprzedaż, Wdrożenie (A1), Utrzymanie (A1, nowa 2026-07-18), Prezentacja, Transkrypcja
 **Wiedza i proces**: Karta (Agency Leaders), Mapa procesów, Baza wiedzy (nowa, A3), Analiza narzędzi
 
 Usunąć zakładkę Pliki. Agent 5 i 6 zostają wyłącznie wewnątrz /agenci (już zrobione), nie w menu.
@@ -207,7 +211,7 @@ Poza samymi skillami (Zadanie 5 w PLAN_CLAUDE_AI.md): sprawdzić realnie, nie ty
 
 ## Kolejność realizacji
 
-1. A1 prototyp (Panel 1 dostępów + oś czasu) — priorytet 0, blokuje pierwszą sprzedaż
+1. A1 prototyp (Panel 1 dostępów + oś czasu w /wdrozenie, plus /utrzymanie) — priorytet 0, blokuje pierwszą sprzedaż, ZBUDOWANE 2026-07-18, czeka na ocenę Michała
 2. B1 Sentry — szybkie, natychmiastowa wartość
 3. B2, B3, B4 — dokończenie długu z poprzednich sesji
 4. B10 audyt plików kontekstowych — wcześnie, żeby reszta pracy opierała się na czystej strukturze
