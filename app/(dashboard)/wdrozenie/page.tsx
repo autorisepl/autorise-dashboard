@@ -3,7 +3,7 @@
 import { AlertTriangle, Check, Loader2, Rocket } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { PipelineClientDetailed } from "@/app/api/notion/pipeline/route";
-import { GlobalClientSelector } from "@/components/clients/GlobalClientSelector";
+import { ClientSidebar } from "@/components/clients/ClientSidebar";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Panel } from "@/components/ui/Panel";
 
@@ -136,18 +136,22 @@ function Timeline({ stageIndex }: { stageIndex: number }) {
 
 export default function WdrozenieePage() {
   const [clients, setClients] = useState<PipelineClientDetailed[]>([]);
-  const [selectedId, setSelectedId] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<PipelineClientDetailed | null>(null);
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
   const [confirming, setConfirming] = useState(false);
 
   const fetchClients = useCallback(async () => {
+    setLoading(true);
     try {
       const res = await fetch("/api/notion/pipeline");
       const data = await res.json();
       if (data.success) setClients(data.clients as PipelineClientDetailed[]);
     } catch {
       // cichy fail, wzorem reszty dashboardu — polling odświeży za chwilę
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -157,7 +161,11 @@ export default function WdrozenieePage() {
     return () => clearInterval(id);
   }, [fetchClients]);
 
-  const selected = clients.find((c) => c.id === selectedId) ?? null;
+  // Po refetchu (np. po zapisie checkboxa) trzeba podmienić referencję na świeżą wersję
+  // z listy, inaczej panel dalej pokazuje stan sprzed zapisu — ten sam wzorzec co /pipeline.
+  useEffect(() => {
+    setSelected((prev) => (prev ? (clients.find((c) => c.id === prev.id) ?? prev) : prev));
+  }, [clients]);
 
   useEffect(() => {
     if (!selected) {
@@ -216,207 +224,212 @@ export default function WdrozenieePage() {
 
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column", overflow: "hidden" }}>
-      <PageHeader icon={<Rocket size={15} color="var(--accent)" />} title="Wdrożenie">
-        <GlobalClientSelector
+      <PageHeader icon={<Rocket size={15} color="var(--accent)" />} title="Wdrożenie" />
+
+      <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+        <ClientSidebar
           clients={clients}
-          selectedId={selectedId}
-          onSelect={setSelectedId}
-          placeholder="Wybierz klienta we wdrożeniu..."
+          loading={loading}
+          selected={selected}
+          onSelect={setSelected}
+          onRefresh={fetchClients}
+          emptyLabel="Brak klientów"
         />
-      </PageHeader>
 
-      <div style={{ flex: 1, overflow: "auto", padding: 20 }}>
-        {!selected ? (
-          <Panel>
-            <div
-              style={{
-                padding: 32,
-                textAlign: "center",
-                fontFamily: "var(--font-sans)",
-                color: "var(--text-secondary)",
-                fontSize: 13,
-              }}
-            >
-              Wybierz klienta u góry, żeby zobaczyć proces wdrożenia. Docelowo: Tydzień 0 (dostępy)
-              do Dzień 30 (weryfikacja gwarancji). Stały retainer po zamknięciu wdrożenia jest w
-              osobnej zakładce Utrzymanie.
-            </div>
-          </Panel>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 760 }}>
+        <div style={{ flex: 1, overflow: "auto", padding: 20, background: "#F5F5F7" }}>
+          {!selected ? (
             <Panel>
-              <Timeline stageIndex={stageIndex} />
-            </Panel>
-
-            {!["Kickoff", "Wdrożenie", "Retainer"].includes(selected.status) && (
               <div
                 style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: 8,
-                  padding: "10px 12px",
-                  borderRadius: "var(--radius-sm)",
-                  background: "rgba(255,149,0,0.1)",
-                  border: "1px solid var(--warning)",
+                  padding: 32,
+                  textAlign: "center",
+                  fontFamily: "var(--font-sans)",
+                  color: "var(--text-secondary)",
+                  fontSize: 13,
                 }}
               >
-                <AlertTriangle
-                  size={14}
-                  color="var(--warning)"
-                  style={{ flexShrink: 0, marginTop: 1 }}
-                />
-                <span
-                  style={{
-                    fontFamily: "var(--font-sans)",
-                    fontSize: 12,
-                    color: "var(--text-secondary)",
-                  }}
-                >
-                  Status klienta w Pipeline to "{selected.status || "brak"}", nie Kickoff, Wdrożenie
-                  ani Retainer. Ta zakładka ma sens od podpisania umowy. Sprawdź, czy status jest
-                  aktualny.
-                </span>
+                Wybierz klienta z panelu po lewej, żeby zobaczyć proces wdrożenia. Docelowo: Tydzień
+                0 (dostępy) do Dzień 30 (weryfikacja gwarancji). Stały retainer po zamknięciu
+                wdrożenia jest w osobnej zakładce Utrzymanie.
               </div>
-            )}
+            </Panel>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 760 }}>
+              <Panel>
+                <Timeline stageIndex={stageIndex} />
+              </Panel>
 
-            <Panel>
-              <div style={{ marginBottom: 14 }}>
+              {!["Kickoff", "Wdrożenie", "Retainer"].includes(selected.status) && (
                 <div
                   style={{
-                    fontFamily: "var(--font-sans)",
-                    fontSize: 11,
-                    fontWeight: 700,
-                    letterSpacing: "0.04em",
-                    textTransform: "uppercase",
-                    color: "var(--text-tertiary)",
-                    marginBottom: 3,
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 8,
+                    padding: "10px 12px",
+                    borderRadius: "var(--radius-sm)",
+                    background: "rgba(255,149,0,0.1)",
+                    border: "1px solid var(--warning)",
                   }}
                 >
-                  Panel 1: Dostępy (Tydzień 0)
-                </div>
-                {selected.warunkiDniDostepow > 0 && (
-                  <div
+                  <AlertTriangle
+                    size={14}
+                    color="var(--warning)"
+                    style={{ flexShrink: 0, marginTop: 1 }}
+                  />
+                  <span
                     style={{
                       fontFamily: "var(--font-sans)",
                       fontSize: 12,
                       color: "var(--text-secondary)",
                     }}
                   >
-                    Termin ustalony z klientem: {selected.warunkiDniDostepow} dni od podpisu umowy.
-                  </div>
-                )}
-              </div>
+                    Status klienta w Pipeline to "{selected.status || "brak"}", nie Kickoff,
+                    Wdrożenie ani Retainer. Ta zakładka ma sens od podpisania umowy. Sprawdź, czy
+                    status jest aktualny.
+                  </span>
+                </div>
+              )}
 
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {ACCESS_ITEMS.map((item) => {
-                  const isChecked = checked.has(item.key);
-                  return (
-                    <label
-                      key={item.key}
+              <Panel>
+                <div style={{ marginBottom: 14 }}>
+                  <div
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      letterSpacing: "0.04em",
+                      textTransform: "uppercase",
+                      color: "var(--text-tertiary)",
+                      marginBottom: 3,
+                    }}
+                  >
+                    Panel 1: Dostępy (Tydzień 0)
+                  </div>
+                  {selected.warunkiDniDostepow > 0 && (
+                    <div
                       style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 10,
-                        padding: "9px 10px",
-                        borderRadius: "var(--radius-sm)",
-                        border: "1px solid var(--border)",
-                        background: isChecked ? "var(--bg-active)" : "var(--bg)",
-                        cursor: "pointer",
+                        fontFamily: "var(--font-sans)",
+                        fontSize: 12,
+                        color: "var(--text-secondary)",
                       }}
                     >
-                      <div
+                      Termin ustalony z klientem: {selected.warunkiDniDostepow} dni od podpisu
+                      umowy.
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {ACCESS_ITEMS.map((item) => {
+                    const isChecked = checked.has(item.key);
+                    return (
+                      <label
+                        key={item.key}
                         style={{
-                          width: 16,
-                          height: 16,
-                          borderRadius: 4,
-                          border: `1px solid ${isChecked ? "var(--accent)" : "var(--border)"}`,
-                          background: isChecked ? "var(--accent)" : "transparent",
                           display: "flex",
                           alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
+                          gap: 10,
+                          padding: "9px 10px",
+                          borderRadius: "var(--radius-sm)",
+                          border: "1px solid var(--border)",
+                          background: isChecked ? "var(--bg-active)" : "var(--bg)",
+                          cursor: "pointer",
                         }}
                       >
-                        {isChecked && <Check size={11} color="#fff" strokeWidth={3} />}
-                      </div>
-                      <input
-                        type="checkbox"
-                        checked={isChecked}
-                        onChange={() => void toggleItem(item.key)}
-                        style={{ display: "none" }}
-                      />
-                      <span
-                        style={{
-                          fontFamily: "var(--font-sans)",
-                          fontSize: 13,
-                          color: "var(--text-primary)",
-                        }}
-                      >
-                        {item.label(selected)}
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
+                        <div
+                          style={{
+                            width: 16,
+                            height: 16,
+                            borderRadius: 4,
+                            border: `1px solid ${isChecked ? "var(--accent)" : "var(--border)"}`,
+                            background: isChecked ? "var(--accent)" : "transparent",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexShrink: 0,
+                          }}
+                        >
+                          {isChecked && <Check size={11} color="#fff" strokeWidth={3} />}
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => void toggleItem(item.key)}
+                          style={{ display: "none" }}
+                        />
+                        <span
+                          style={{
+                            fontFamily: "var(--font-sans)",
+                            fontSize: 13,
+                            color: "var(--text-primary)",
+                          }}
+                        >
+                          {item.label(selected)}
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
 
-              {selected.dataPotwierdzeniaDostepow ? (
-                <div
-                  style={{
-                    marginTop: 14,
-                    padding: "10px 12px",
-                    borderRadius: "var(--radius-sm)",
-                    background: "rgba(52,199,89,0.1)",
-                    border: "1px solid #34c759",
-                    fontFamily: "var(--font-sans)",
-                    fontSize: 12,
-                    color: "var(--text-secondary)",
-                  }}
-                >
-                  Zegar 30 dni uruchomiony {fmtDate(selected.dataPotwierdzeniaDostepow)}.
-                  Weryfikacja: {fmtDate(addDays(selected.dataPotwierdzeniaDostepow, 30))} (
-                  {daysSince(selected.dataPotwierdzeniaDostepow)} dni minęło).
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => void confirmAccess()}
-                  disabled={!allChecked || confirming}
-                  style={{
-                    marginTop: 14,
-                    height: 36,
-                    padding: "0 16px",
-                    borderRadius: 8,
-                    border: "none",
-                    background: allChecked ? "var(--accent)" : "var(--bg-hover)",
-                    color: allChecked ? "#fff" : "var(--text-tertiary)",
-                    fontFamily: "var(--font-sans)",
-                    fontSize: 13,
-                    fontWeight: 600,
-                    cursor: allChecked ? "pointer" : "not-allowed",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                  }}
-                >
-                  {confirming && <Loader2 size={13} />}
-                  Potwierdź komplet dostępów
-                </button>
-              )}
-              {saving && (
-                <div
-                  style={{
-                    marginTop: 6,
-                    fontFamily: "var(--font-sans)",
-                    fontSize: 11,
-                    color: "var(--text-tertiary)",
-                  }}
-                >
-                  Zapisywanie...
-                </div>
-              )}
-            </Panel>
-          </div>
-        )}
+                {selected.dataPotwierdzeniaDostepow ? (
+                  <div
+                    style={{
+                      marginTop: 14,
+                      padding: "10px 12px",
+                      borderRadius: "var(--radius-sm)",
+                      background: "rgba(52,199,89,0.1)",
+                      border: "1px solid #34c759",
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 12,
+                      color: "var(--text-secondary)",
+                    }}
+                  >
+                    Zegar 30 dni uruchomiony {fmtDate(selected.dataPotwierdzeniaDostepow)}.
+                    Weryfikacja: {fmtDate(addDays(selected.dataPotwierdzeniaDostepow, 30))} (
+                    {daysSince(selected.dataPotwierdzeniaDostepow)} dni minęło).
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => void confirmAccess()}
+                    disabled={!allChecked || confirming}
+                    style={{
+                      marginTop: 14,
+                      height: 36,
+                      padding: "0 16px",
+                      borderRadius: 8,
+                      border: "none",
+                      background: allChecked ? "var(--accent)" : "var(--bg-hover)",
+                      color: allChecked ? "#fff" : "var(--text-tertiary)",
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 13,
+                      fontWeight: 600,
+                      cursor: allChecked ? "pointer" : "not-allowed",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                    }}
+                  >
+                    {confirming && <Loader2 size={13} />}
+                    Potwierdź komplet dostępów
+                  </button>
+                )}
+                {saving && (
+                  <div
+                    style={{
+                      marginTop: 6,
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 11,
+                      color: "var(--text-tertiary)",
+                    }}
+                  >
+                    Zapisywanie...
+                  </div>
+                )}
+              </Panel>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

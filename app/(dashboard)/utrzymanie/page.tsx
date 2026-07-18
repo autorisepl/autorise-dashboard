@@ -3,8 +3,8 @@
 import { Check, LifeBuoy, Phone, Plus } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import type { PipelineClientDetailed } from "@/app/api/notion/pipeline/route";
+import { ClientSidebar } from "@/components/clients/ClientSidebar";
 import { ContactAttemptsBadge } from "@/components/clients/ContactAttemptsBadge";
-import { GlobalClientSelector } from "@/components/clients/GlobalClientSelector";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Panel } from "@/components/ui/Panel";
 
@@ -98,18 +98,22 @@ function currentEscalation(days: number) {
 
 export default function UtrzymanieePage() {
   const [clients, setClients] = useState<PipelineClientDetailed[]>([]);
-  const [selectedId, setSelectedId] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<PipelineClientDetailed | null>(null);
   const [savingKontakt, setSavingKontakt] = useState(false);
   const [nowyOpis, setNowyOpis] = useState("");
   const [savingHistoria, setSavingHistoria] = useState(false);
 
   const fetchClients = useCallback(async () => {
+    setLoading(true);
     try {
       const res = await fetch("/api/notion/pipeline");
       const data = await res.json();
       if (data.success) setClients(data.clients as PipelineClientDetailed[]);
     } catch {
       // cichy fail, wzorem reszty dashboardu
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -119,7 +123,11 @@ export default function UtrzymanieePage() {
     return () => clearInterval(id);
   }, [fetchClients]);
 
-  const selected = clients.find((c) => c.id === selectedId) ?? null;
+  // Po refetchu trzeba podmienić referencję na świeżą wersję z listy, ten sam wzorzec co
+  // /pipeline i /wdrozenie.
+  useEffect(() => {
+    setSelected((prev) => (prev ? (clients.find((c) => c.id === prev.id) ?? prev) : prev));
+  }, [clients]);
 
   const registerContact = useCallback(async () => {
     if (!selected) return;
@@ -168,349 +176,354 @@ export default function UtrzymanieePage() {
 
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column", overflow: "hidden" }}>
-      <PageHeader icon={<LifeBuoy size={15} color="var(--accent)" />} title="Utrzymanie">
-        <GlobalClientSelector
+      <PageHeader icon={<LifeBuoy size={15} color="var(--accent)" />} title="Utrzymanie" />
+
+      <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+        <ClientSidebar
           clients={clients}
-          selectedId={selectedId}
-          onSelect={setSelectedId}
-          placeholder="Wybierz klienta na retainerze..."
+          loading={loading}
+          selected={selected}
+          onSelect={setSelected}
+          onRefresh={fetchClients}
+          emptyLabel="Brak klientów"
         />
-      </PageHeader>
 
-      <div style={{ flex: 1, overflow: "auto", padding: 20 }}>
-        {!selected ? (
-          <Panel>
-            <div
-              style={{
-                padding: 32,
-                textAlign: "center",
-                fontFamily: "var(--font-sans)",
-                color: "var(--text-secondary)",
-                fontSize: 13,
-              }}
-            >
-              Wybierz klienta u góry. Ta zakładka jest dla klientów w statusie Retainer, po
-              zamknięciu weryfikacji Dzień 30 w zakładce Wdrożenie.
-            </div>
-          </Panel>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 760 }}>
-            {selected.status !== "Retainer" && (
+        <div style={{ flex: 1, overflow: "auto", padding: 20, background: "#F5F5F7" }}>
+          {!selected ? (
+            <Panel>
               <div
                 style={{
-                  padding: "10px 12px",
-                  borderRadius: "var(--radius-sm)",
-                  background: "rgba(255,149,0,0.1)",
-                  border: "1px solid var(--warning)",
+                  padding: 32,
+                  textAlign: "center",
                   fontFamily: "var(--font-sans)",
-                  fontSize: 12,
                   color: "var(--text-secondary)",
+                  fontSize: 13,
                 }}
               >
-                Status klienta w Pipeline to "{selected.status || "brak"}", nie Retainer. Panel
-                pokazuje dane mimo to, ale sprawdź, czy klient rzeczywiście jest już na utrzymaniu.
-              </div>
-            )}
-
-            {/* Panel: Co obejmuje retainer — deterministyczny, zero AI, wzorem prezentacji */}
-            <Panel>
-              <div
-                style={{
-                  fontFamily: "var(--font-sans)",
-                  fontSize: 11,
-                  fontWeight: 700,
-                  letterSpacing: "0.04em",
-                  textTransform: "uppercase",
-                  color: "var(--text-tertiary)",
-                  marginBottom: 6,
-                }}
-              >
-                Co obejmuje retainer
-              </div>
-              <div
-                style={{
-                  fontFamily: "var(--font-sans)",
-                  fontSize: 15,
-                  color: "var(--text-primary)",
-                  marginBottom: 12,
-                }}
-              >
-                <strong>{retainerAmount.toLocaleString("pl-PL")} PLN</strong> miesięcznie, opieka
-                nad systemem po wdrożeniu
-                {selected.retainer <= 0 && (
-                  <span style={{ fontSize: 11, color: "var(--text-tertiary)", marginLeft: 6 }}>
-                    (fallback, kwota nie ustalona ręcznie w Notion)
-                  </span>
-                )}
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {RETAINER_ZAKRES.map((line) => (
-                  <div key={line} style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
-                    <Check
-                      size={13}
-                      color="var(--accent)"
-                      style={{ flexShrink: 0, marginTop: 2 }}
-                    />
-                    <span
-                      style={{
-                        fontFamily: "var(--font-sans)",
-                        fontSize: 13,
-                        color: "var(--text-secondary)",
-                      }}
-                    >
-                      {line}
-                    </span>
-                  </div>
-                ))}
+                Wybierz klienta z panelu po lewej. Ta zakładka jest dla klientów w statusie
+                Retainer, po zamknięciu weryfikacji Dzień 30 w zakładce Wdrożenie.
               </div>
             </Panel>
-
-            {/* Panel: Metryki miesięczne — KARTA_PRODUKTU pkt 13 */}
-            <Panel>
-              <div
-                style={{
-                  fontFamily: "var(--font-sans)",
-                  fontSize: 11,
-                  fontWeight: 700,
-                  letterSpacing: "0.04em",
-                  textTransform: "uppercase",
-                  color: "var(--text-tertiary)",
-                  marginBottom: 8,
-                }}
-              >
-                Metryki miesięczne
-              </div>
-              <div
-                style={{
-                  padding: "10px 12px",
-                  borderRadius: "var(--radius-sm)",
-                  background: "var(--bg)",
-                  border: "1px dashed var(--border)",
-                  fontFamily: "var(--font-sans)",
-                  fontSize: 12,
-                  color: "var(--text-tertiary)",
-                }}
-              >
-                Godziny zaoszczędzone, dokumenty przetworzone, wyjątki, czas reakcji: brak
-                integracji z logami systemu (system produktowy jeszcze nie generuje ich per klient).
-                Panel czeka na tę integrację zamiast pokazywać wymyślone liczby — patrz
-                KARTA_PRODUKTU_SYSTEM_OPERACYJNY.md pkt 13.
-              </div>
-            </Panel>
-
-            {/* Panel: Drabinka eskalacji — reużywa tokeny/styl ContactAttemptsBadge z Pipeline,
-                sama odznaka nie pasuje 1:1 (tam licznik prób 1-3, tu dni 0/3-4/7/14/30) */}
-            <Panel>
-              <div
-                style={{
-                  fontFamily: "var(--font-sans)",
-                  fontSize: 11,
-                  fontWeight: 700,
-                  letterSpacing: "0.04em",
-                  textTransform: "uppercase",
-                  color: "var(--text-tertiary)",
-                  marginBottom: 8,
-                }}
-              >
-                Drabinka eskalacji przy braku kontaktu
-              </div>
-              {selected.liczbaProb > 0 && (
-                <div style={{ marginBottom: 10 }}>
-                  <ContactAttemptsBadge proby={selected.liczbaProb} />
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 760 }}>
+              {selected.status !== "Retainer" && (
+                <div
+                  style={{
+                    padding: "10px 12px",
+                    borderRadius: "var(--radius-sm)",
+                    background: "rgba(255,149,0,0.1)",
+                    border: "1px solid var(--warning)",
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 12,
+                    color: "var(--text-secondary)",
+                  }}
+                >
+                  Status klienta w Pipeline to "{selected.status || "brak"}", nie Retainer. Panel
+                  pokazuje dane mimo to, ale sprawdź, czy klient rzeczywiście jest już na
+                  utrzymaniu.
                 </div>
               )}
-              {selected.ostatniKontaktRetainer ? (
-                <>
-                  <div
-                    style={{
-                      fontFamily: "var(--font-sans)",
-                      fontSize: 12,
-                      color: "var(--text-secondary)",
-                      marginBottom: 10,
-                    }}
-                  >
-                    Ostatni potwierdzony kontakt: {fmtDate(selected.ostatniKontaktRetainer)} (
-                    {kontaktDays} dni temu).
-                  </div>
-                  {escalation && kontaktDays !== null && kontaktDays >= 3 ? (
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "flex-start",
-                        gap: 8,
-                        padding: "10px 12px",
-                        borderRadius: "var(--radius-sm)",
-                        background: kontaktDays >= 14 ? "var(--error-bg)" : "rgba(255,149,0,0.1)",
-                        border: `1px solid ${kontaktDays >= 14 ? "var(--error-border)" : "var(--warning)"}`,
-                      }}
-                    >
-                      <Phone
+
+              {/* Panel: Co obejmuje retainer — deterministyczny, zero AI, wzorem prezentacji */}
+              <Panel>
+                <div
+                  style={{
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    letterSpacing: "0.04em",
+                    textTransform: "uppercase",
+                    color: "var(--text-tertiary)",
+                    marginBottom: 6,
+                  }}
+                >
+                  Co obejmuje retainer
+                </div>
+                <div
+                  style={{
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 15,
+                    color: "var(--text-primary)",
+                    marginBottom: 12,
+                  }}
+                >
+                  <strong>{retainerAmount.toLocaleString("pl-PL")} PLN</strong> miesięcznie, opieka
+                  nad systemem po wdrożeniu
+                  {selected.retainer <= 0 && (
+                    <span style={{ fontSize: 11, color: "var(--text-tertiary)", marginLeft: 6 }}>
+                      (fallback, kwota nie ustalona ręcznie w Notion)
+                    </span>
+                  )}
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {RETAINER_ZAKRES.map((line) => (
+                    <div key={line} style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+                      <Check
                         size={13}
-                        color={kontaktDays >= 14 ? "var(--error)" : "var(--warning)"}
-                        style={{ flexShrink: 0, marginTop: 1 }}
+                        color="var(--accent)"
+                        style={{ flexShrink: 0, marginTop: 2 }}
                       />
                       <span
                         style={{
                           fontFamily: "var(--font-sans)",
-                          fontSize: 12,
+                          fontSize: 13,
                           color: "var(--text-secondary)",
                         }}
                       >
-                        <strong>{escalation.label}:</strong> {escalation.action}
-                      </span>
-                    </div>
-                  ) : (
-                    <div
-                      style={{
-                        fontFamily: "var(--font-sans)",
-                        fontSize: 12,
-                        color: "var(--text-tertiary)",
-                      }}
-                    >
-                      Kontakt w normie, poniżej progu 3 dni.
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div
-                  style={{
-                    fontFamily: "var(--font-sans)",
-                    fontSize: 12,
-                    color: "var(--text-tertiary)",
-                    marginBottom: 10,
-                  }}
-                >
-                  Brak zapisanej daty ostatniego kontaktu.
-                </div>
-              )}
-              <button
-                type="button"
-                onClick={() => void registerContact()}
-                disabled={savingKontakt}
-                style={{
-                  marginTop: 12,
-                  height: 32,
-                  padding: "0 12px",
-                  borderRadius: 7,
-                  border: "1px solid var(--border)",
-                  background: "var(--bg-elevated)",
-                  color: "var(--text-secondary)",
-                  fontFamily: "var(--font-sans)",
-                  fontSize: 12,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                }}
-              >
-                Zarejestruj kontakt dzisiaj
-              </button>
-            </Panel>
-
-            {/* Panel: Historia zgłoszeń */}
-            <Panel>
-              <div
-                style={{
-                  fontFamily: "var(--font-sans)",
-                  fontSize: 11,
-                  fontWeight: 700,
-                  letterSpacing: "0.04em",
-                  textTransform: "uppercase",
-                  color: "var(--text-tertiary)",
-                  marginBottom: 8,
-                }}
-              >
-                Historia zgłoszeń
-              </div>
-              <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-                <input
-                  value={nowyOpis}
-                  onChange={(e) => setNowyOpis(e.target.value)}
-                  placeholder="Opis zgłoszenia / interwencji..."
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") void addHistoriaEntry();
-                  }}
-                  style={{
-                    flex: 1,
-                    height: 32,
-                    borderRadius: 7,
-                    border: "1px solid var(--border)",
-                    background: "var(--bg)",
-                    padding: "0 10px",
-                    fontFamily: "var(--font-sans)",
-                    fontSize: 12,
-                    color: "var(--text-primary)",
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => void addHistoriaEntry()}
-                  disabled={savingHistoria || !nowyOpis.trim()}
-                  style={{
-                    height: 32,
-                    padding: "0 10px",
-                    borderRadius: 7,
-                    border: "none",
-                    background: "var(--accent)",
-                    color: "#fff",
-                    cursor: nowyOpis.trim() ? "pointer" : "not-allowed",
-                    opacity: nowyOpis.trim() ? 1 : 0.5,
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                >
-                  <Plus size={14} />
-                </button>
-              </div>
-              {historia.length === 0 ? (
-                <div
-                  style={{
-                    fontFamily: "var(--font-sans)",
-                    fontSize: 12,
-                    color: "var(--text-tertiary)",
-                  }}
-                >
-                  Brak zgłoszeń.
-                </div>
-              ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  {historia.map((e) => (
-                    <div
-                      key={`${e.data}-${e.opis}`}
-                      style={{
-                        display: "flex",
-                        gap: 10,
-                        padding: "7px 10px",
-                        borderRadius: "var(--radius-xs)",
-                        background: "var(--bg)",
-                        border: "1px solid var(--border)",
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontFamily: "var(--font-sans)",
-                          fontSize: 11,
-                          color: "var(--text-tertiary)",
-                          flexShrink: 0,
-                          width: 78,
-                        }}
-                      >
-                        {fmtDate(e.data)}
-                      </span>
-                      <span
-                        style={{
-                          fontFamily: "var(--font-sans)",
-                          fontSize: 12,
-                          color: "var(--text-secondary)",
-                        }}
-                      >
-                        {e.opis}
+                        {line}
                       </span>
                     </div>
                   ))}
                 </div>
-              )}
-            </Panel>
-          </div>
-        )}
+              </Panel>
+
+              {/* Panel: Metryki miesięczne — KARTA_PRODUKTU pkt 13 */}
+              <Panel>
+                <div
+                  style={{
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    letterSpacing: "0.04em",
+                    textTransform: "uppercase",
+                    color: "var(--text-tertiary)",
+                    marginBottom: 8,
+                  }}
+                >
+                  Metryki miesięczne
+                </div>
+                <div
+                  style={{
+                    padding: "10px 12px",
+                    borderRadius: "var(--radius-sm)",
+                    background: "var(--bg)",
+                    border: "1px dashed var(--border)",
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 12,
+                    color: "var(--text-tertiary)",
+                  }}
+                >
+                  Godziny zaoszczędzone, dokumenty przetworzone, wyjątki, czas reakcji: brak
+                  integracji z logami systemu (system produktowy jeszcze nie generuje ich per
+                  klient). Panel czeka na tę integrację zamiast pokazywać wymyślone liczby — patrz
+                  KARTA_PRODUKTU_SYSTEM_OPERACYJNY.md pkt 13.
+                </div>
+              </Panel>
+
+              {/* Panel: Drabinka eskalacji — reużywa tokeny/styl ContactAttemptsBadge z Pipeline,
+                sama odznaka nie pasuje 1:1 (tam licznik prób 1-3, tu dni 0/3-4/7/14/30) */}
+              <Panel>
+                <div
+                  style={{
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    letterSpacing: "0.04em",
+                    textTransform: "uppercase",
+                    color: "var(--text-tertiary)",
+                    marginBottom: 8,
+                  }}
+                >
+                  Drabinka eskalacji przy braku kontaktu
+                </div>
+                {selected.liczbaProb > 0 && (
+                  <div style={{ marginBottom: 10 }}>
+                    <ContactAttemptsBadge proby={selected.liczbaProb} />
+                  </div>
+                )}
+                {selected.ostatniKontaktRetainer ? (
+                  <>
+                    <div
+                      style={{
+                        fontFamily: "var(--font-sans)",
+                        fontSize: 12,
+                        color: "var(--text-secondary)",
+                        marginBottom: 10,
+                      }}
+                    >
+                      Ostatni potwierdzony kontakt: {fmtDate(selected.ostatniKontaktRetainer)} (
+                      {kontaktDays} dni temu).
+                    </div>
+                    {escalation && kontaktDays !== null && kontaktDays >= 3 ? (
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          gap: 8,
+                          padding: "10px 12px",
+                          borderRadius: "var(--radius-sm)",
+                          background: kontaktDays >= 14 ? "var(--error-bg)" : "rgba(255,149,0,0.1)",
+                          border: `1px solid ${kontaktDays >= 14 ? "var(--error-border)" : "var(--warning)"}`,
+                        }}
+                      >
+                        <Phone
+                          size={13}
+                          color={kontaktDays >= 14 ? "var(--error)" : "var(--warning)"}
+                          style={{ flexShrink: 0, marginTop: 1 }}
+                        />
+                        <span
+                          style={{
+                            fontFamily: "var(--font-sans)",
+                            fontSize: 12,
+                            color: "var(--text-secondary)",
+                          }}
+                        >
+                          <strong>{escalation.label}:</strong> {escalation.action}
+                        </span>
+                      </div>
+                    ) : (
+                      <div
+                        style={{
+                          fontFamily: "var(--font-sans)",
+                          fontSize: 12,
+                          color: "var(--text-tertiary)",
+                        }}
+                      >
+                        Kontakt w normie, poniżej progu 3 dni.
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 12,
+                      color: "var(--text-tertiary)",
+                      marginBottom: 10,
+                    }}
+                  >
+                    Brak zapisanej daty ostatniego kontaktu.
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => void registerContact()}
+                  disabled={savingKontakt}
+                  style={{
+                    marginTop: 12,
+                    height: 32,
+                    padding: "0 12px",
+                    borderRadius: 7,
+                    border: "1px solid var(--border)",
+                    background: "var(--bg-elevated)",
+                    color: "var(--text-secondary)",
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  Zarejestruj kontakt dzisiaj
+                </button>
+              </Panel>
+
+              {/* Panel: Historia zgłoszeń */}
+              <Panel>
+                <div
+                  style={{
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    letterSpacing: "0.04em",
+                    textTransform: "uppercase",
+                    color: "var(--text-tertiary)",
+                    marginBottom: 8,
+                  }}
+                >
+                  Historia zgłoszeń
+                </div>
+                <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+                  <input
+                    value={nowyOpis}
+                    onChange={(e) => setNowyOpis(e.target.value)}
+                    placeholder="Opis zgłoszenia / interwencji..."
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") void addHistoriaEntry();
+                    }}
+                    style={{
+                      flex: 1,
+                      height: 32,
+                      borderRadius: 7,
+                      border: "1px solid var(--border)",
+                      background: "var(--bg)",
+                      padding: "0 10px",
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 12,
+                      color: "var(--text-primary)",
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => void addHistoriaEntry()}
+                    disabled={savingHistoria || !nowyOpis.trim()}
+                    style={{
+                      height: 32,
+                      padding: "0 10px",
+                      borderRadius: 7,
+                      border: "none",
+                      background: "var(--accent)",
+                      color: "#fff",
+                      cursor: nowyOpis.trim() ? "pointer" : "not-allowed",
+                      opacity: nowyOpis.trim() ? 1 : 0.5,
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Plus size={14} />
+                  </button>
+                </div>
+                {historia.length === 0 ? (
+                  <div
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 12,
+                      color: "var(--text-tertiary)",
+                    }}
+                  >
+                    Brak zgłoszeń.
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    {historia.map((e) => (
+                      <div
+                        key={`${e.data}-${e.opis}`}
+                        style={{
+                          display: "flex",
+                          gap: 10,
+                          padding: "7px 10px",
+                          borderRadius: "var(--radius-xs)",
+                          background: "var(--bg)",
+                          border: "1px solid var(--border)",
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontFamily: "var(--font-sans)",
+                            fontSize: 11,
+                            color: "var(--text-tertiary)",
+                            flexShrink: 0,
+                            width: 78,
+                          }}
+                        >
+                          {fmtDate(e.data)}
+                        </span>
+                        <span
+                          style={{
+                            fontFamily: "var(--font-sans)",
+                            fontSize: 12,
+                            color: "var(--text-secondary)",
+                          }}
+                        >
+                          {e.opis}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Panel>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
