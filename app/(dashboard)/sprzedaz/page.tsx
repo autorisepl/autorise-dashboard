@@ -11,7 +11,9 @@ import {
   FileText,
   MessageSquare,
   Monitor,
+  PhoneOff,
   Target,
+  Undo2,
   Users,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -138,6 +140,104 @@ function Card({
         )}
       </div>
       {open && <div style={{ padding: 16 }}>{children}</div>}
+    </div>
+  );
+}
+
+// ── No-show banner ────────────────────────────────────────────────────
+
+// A6 (2026-07-18): dotąd zero mechanizmu no-show w całym systemie — /statystyki miało
+// wyłącznie szacunek (pole "Wynik Discovery" puste + data w przeszłości). Ten przycisk
+// zapisuje realną wartość "NO-SHOW" do tego samego pola, więc show rate i licznik No-Show
+// w /statystyki liczą się z faktu, nie z domysłu. Zapis idzie tym samym PATCH
+// /api/notion/pipeline-update co WarunkiUmowyForm, ten sam wzorzec optimistic update.
+function NoShowBanner({
+  client,
+  onSaved,
+}: {
+  client: PipelineClientDetailed;
+  onSaved: (patch: Partial<PipelineClientDetailed>) => void;
+}) {
+  const [saving, setSaving] = useState(false);
+  const isNoShow = client.wynikDiscovery === "NO-SHOW";
+
+  const toggle = useCallback(async () => {
+    setSaving(true);
+    const next = isNoShow ? null : "NO-SHOW";
+    try {
+      await fetch("/api/notion/pipeline-update", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pageId: client.id, wynikDiscovery: next }),
+      });
+      onSaved({ wynikDiscovery: next ?? "" });
+    } finally {
+      setSaving(false);
+    }
+  }, [client.id, isNoShow, onSaved]);
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        padding: "10px 14px",
+        marginBottom: 12,
+        borderRadius: 10,
+        background: isNoShow ? "var(--error-bg)" : "var(--warning-bg)",
+        border: `1px solid ${isNoShow ? "var(--error-border)" : "var(--warning)"}`,
+      }}
+    >
+      <PhoneOff size={16} color={isNoShow ? "var(--error)" : "var(--warning)"} strokeWidth={2} />
+      <div style={{ flex: 1 }}>
+        <span
+          style={{
+            fontFamily: "var(--font-sans)",
+            fontSize: 12,
+            fontWeight: 700,
+            color: "var(--text-primary)",
+          }}
+        >
+          {isNoShow ? "Oznaczono: klient się nie stawił" : "Klient się nie stawił?"}
+        </span>{" "}
+        <span
+          style={{ fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--text-secondary)" }}
+        >
+          {isNoShow
+            ? "Liczy się jako No-Show w statystykach."
+            : "Zapisze No-Show do Notion, licznik w /statystyki zaktualizuje się od razu."}
+        </span>
+      </div>
+      <button
+        onClick={() => void toggle()}
+        disabled={saving}
+        style={{
+          height: 28,
+          padding: "0 12px",
+          borderRadius: 7,
+          border: `1px solid ${isNoShow ? "var(--error)" : "var(--warning)"}`,
+          background: "#fff",
+          color: isNoShow ? "var(--error)" : "var(--warning)",
+          fontFamily: "var(--font-sans)",
+          fontSize: 11,
+          fontWeight: 700,
+          cursor: saving ? "default" : "pointer",
+          opacity: saving ? 0.6 : 1,
+          flexShrink: 0,
+          display: "flex",
+          alignItems: "center",
+          gap: 5,
+        }}
+      >
+        {isNoShow ? (
+          <>
+            <Undo2 size={11} /> Cofnij
+          </>
+        ) : (
+          "Oznacz No-Show"
+        )}
+      </button>
     </div>
   );
 }
@@ -1859,6 +1959,18 @@ export default function SprzedazPage() {
           <Card title="Brief Agenta 02" collapsible defaultOpen={true}>
             <BriefSection client={selected} />
           </Card>
+
+          {selected && (
+            <NoShowBanner
+              client={selected}
+              onSaved={(patch) => {
+                setSelected((prev) => (prev ? { ...prev, ...patch } : prev));
+                setClients((prev) =>
+                  prev.map((c) => (c.id === selected.id ? { ...c, ...patch } : c)),
+                );
+              }}
+            />
+          )}
 
           <Card title="Skrypt Discovery">
             {STEPS_D.map((step) => (

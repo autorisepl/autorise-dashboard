@@ -825,6 +825,9 @@ export async function migrateNotionSchema(): Promise<{ added: string[]; errors: 
               { name: "TAK", color: "green" },
               { name: "NIE", color: "red" },
               { name: "W TRAKCIE", color: "yellow" },
+              // A6 (2026-07-18) — realny przycisk w /sprzedaz zamiast wyłącznie heurystyki
+              // w /statystyki (pole puste + data w przeszłości).
+              { name: "NO-SHOW", color: "orange" },
             ],
           },
         },

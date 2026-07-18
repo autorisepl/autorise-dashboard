@@ -78,3 +78,24 @@ export function hasMatchingTranscript(mp3Name: string, txtNames: string[]): bool
   const pk = personKey(mp3Name);
   return txtNames.some((t) => personKey(t) === pk);
 }
+
+/**
+ * Etap rozmowy wg tagu z nazwy pliku, dla statystyk (A6, 2026-07-18 — "Odbyte,
+ * nieprzetworzone"). "sprzedaz"/"discovery"/"diagnoza"/"spotkanie" to ten sam etap
+ * pod różnymi nazwami legacy — jeden koszyk "sprzedaz". "analiza"/"rozmowa" są zbyt
+ * ogólne żeby bezpiecznie przypisać do jednego etapu — świadomie pominięte (null),
+ * nie zgadywane.
+ */
+export function classifyStage(filename: string): "kwalifikacja" | "sprzedaz" | null {
+  const tag = parseClientFileName(filename).tag.toLowerCase();
+  if (tag.startsWith("kwalifikacja")) return "kwalifikacja";
+  if (
+    tag.startsWith("sprzedaz") ||
+    tag.startsWith("discovery") ||
+    tag.startsWith("diagnoza") ||
+    tag.startsWith("spotkanie")
+  ) {
+    return "sprzedaz";
+  }
+  return null;
+}

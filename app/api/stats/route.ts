@@ -1,7 +1,11 @@
 import { Client } from "@notionhq/client";
 import type { PageObjectResponse } from "@notionhq/client/build/src/api-endpoints";
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { getDriveClient, getRefreshToken } from "@/lib/google/auth";
+import { listAllFileNames } from "@/lib/google/driveFolder";
 import { getDailyStatsRangeTotals } from "@/lib/notion/client";
+import { classifyStage, hasMatchingTranscript } from "@/lib/transcripts/parse";
 
 export const dynamic = "force-dynamic";
 
@@ -9,6 +13,9 @@ const notion = new Client({ auth: process.env.NOTION_TOKEN });
 const PIPELINE_DATA_SOURCE_ID = "2ea38355-7529-48f9-8d7f-1c62f5570df3";
 
 const SPRZEDAZ_STATUSES = ["Kickoff", "Wdrożenie", "Retainer", "Upsell"];
+
+const MP3_FOLDER_ID = process.env.GOOGLE_DRIVE_TRANSCRIPTS_MP3_FOLDER_ID ?? "";
+const TXT_FOLDER_ID = process.env.GOOGLE_DRIVE_TRANSCRIPTS_TXT_FOLDER_ID ?? "";
 
 export interface StatsResponse {
   from: string;
@@ -25,6 +32,50 @@ export interface StatsResponse {
   sprzedaze: number;
   wartosc_sprzedazy_pln: number;
   niekwalifikowani: number;
+  odbyte_nieprzetworzone_kwalifikacja: number;
+  odbyte_nieprzetworzone_sprzedaz: number;
+  /** false gdy Google Drive niepodłączony — front-end pokazuje honest fallback, nie 0. */
+  nagrania_dostepne: boolean;
+}
+
+// A6 (2026-07-18): "Odbyte, nieprzetworzone" — różnica między nagraniami mp3 faktycznie
+// zebranymi na Drive a transkryptami które faktycznie powstały, rozbita na etap wg tagu w
+// nazwie pliku (ten sam parser co /pliki, sprawdzony jako już zgodny format nazw).
+async function countUnprocessedRecordings(): Promise<{
+  kwalifikacja: number;
+  sprzedaz: number;
+  available: boolean;
+}> {
+  if (!MP3_FOLDER_ID || !TXT_FOLDER_ID) return { kwalifikacja: 0, sprzedaz: 0, available: false };
+
+  const cookieStore = await cookies();
+  const refreshToken = getRefreshToken({
+    get: (name) => {
+      const val = cookieStore.get(name);
+      return val ? { value: val.value } : undefined;
+    },
+  });
+  if (!refreshToken) return { kwalifikacja: 0, sprzedaz: 0, available: false };
+
+  try {
+    const drive = getDriveClient(refreshToken);
+    const [mp3Names, txtNames] = await Promise.all([
+      listAllFileNames(drive, MP3_FOLDER_ID),
+      listAllFileNames(drive, TXT_FOLDER_ID),
+    ]);
+
+    let kwalifikacja = 0;
+    let sprzedaz = 0;
+    for (const name of mp3Names) {
+      if (hasMatchingTranscript(name, txtNames)) continue;
+      const stage = classifyStage(name);
+      if (stage === "kwalifikacja") kwalifikacja += 1;
+      else if (stage === "sprzedaz") sprzedaz += 1;
+    }
+    return { kwalifikacja, sprzedaz, available: true };
+  } catch {
+    return { kwalifikacja: 0, sprzedaz: 0, available: false };
+  }
 }
 
 function extractDate(prop: PageObjectResponse["properties"][string] | undefined): string | null {
@@ -97,7 +148,14 @@ export async function GET(request: Request) {
 
       if (isInRange(dataDiscovery, from, to)) {
         discovery_umowione += 1;
-        if (wynikDiscovery != null) {
+        // A6 (2026-07-18): "NO-SHOW" to teraz realna wartość zapisywana przyciskiem w
+        // /sprzedaz (PATCH pipeline-update, pole "Wynik Discovery"), nie tylko szacunek.
+        // Heurystyka (pole puste + data w przeszłości) zostaje jako fallback wyłącznie dla
+        // starszych kart sprzed wprowadzenia przycisku — bez tego historyczne no-show
+        // zniknęłyby z raportu.
+        if (wynikDiscovery === "NO-SHOW") {
+          no_show += 1;
+        } else if (wynikDiscovery != null) {
           discovery_odbyte += 1;
         } else if (dataDiscovery! < todayISO) {
           no_show += 1;
@@ -113,7 +171,10 @@ export async function GET(request: Request) {
 
     const show_rate = discovery_umowione > 0 ? (discovery_odbyte / discovery_umowione) * 100 : 0;
 
-    const dailyTotals = await getDailyStatsRangeTotals(from, to);
+    const [dailyTotals, recordings] = await Promise.all([
+      getDailyStatsRangeTotals(from, to),
+      countUnprocessedRecordings(),
+    ]);
 
     const payload: StatsResponse = {
       from,
@@ -130,6 +191,9 @@ export async function GET(request: Request) {
       sprzedaze,
       wartosc_sprzedazy_pln,
       niekwalifikowani,
+      odbyte_nieprzetworzone_kwalifikacja: recordings.kwalifikacja,
+      odbyte_nieprzetworzone_sprzedaz: recordings.sprzedaz,
+      nagrania_dostepne: recordings.available,
     };
 
     return NextResponse.json({ success: true, stats: payload });

@@ -50,6 +50,7 @@ export interface PipelineClientDetailed {
   dostepyZebrane: string;
   ostatniKontaktRetainer: string;
   historiaZgloszenRetainer: string;
+  wynikDiscovery: string;
 }
 
 // Blok 1, punkt 1.5 (2026-07-14) — data premiery skryptu kwalifikacyjnego V4 (12 kroków, ICP
@@ -151,6 +152,7 @@ export async function GET() {
           dostepyZebrane: extractText(props["Dostępy zebrane"]),
           ostatniKontaktRetainer: extractText(props["Ostatni kontakt (retainer)"]),
           historiaZgloszenRetainer: extractText(props["Historia zgłoszeń (retainer)"]),
+          wynikDiscovery: extractText(props["Wynik Discovery"]),
         };
       })
       .filter((c: PipelineClientDetailed) => c.firma !== "Bez nazwy");

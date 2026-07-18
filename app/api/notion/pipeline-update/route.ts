@@ -31,6 +31,7 @@ const bodySchema = z.object({
   dostepyZebrane: z.string().nullable().optional(),
   ostatniKontaktRetainer: z.string().nullable().optional(),
   historiaZgloszenRetainer: z.string().nullable().optional(),
+  wynikDiscovery: z.string().nullable().optional(),
 });
 
 function richText(text: string) {
@@ -140,6 +141,11 @@ export async function PATCH(req: Request) {
       properties["Historia zgłoszeń (retainer)"] = {
         rich_text: d.historiaZgloszenRetainer ? richText(d.historiaZgloszenRetainer) : [],
       };
+    }
+    if (d.wynikDiscovery !== undefined) {
+      properties["Wynik Discovery"] = d.wynikDiscovery
+        ? { select: { name: d.wynikDiscovery } }
+        : { select: null };
     }
 
     if (Object.keys(properties).length === 0) {
