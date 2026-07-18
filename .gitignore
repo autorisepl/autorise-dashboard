@@ -45,3 +45,5 @@ next-env.d.ts
 # tylko nietrackowane.
 context/transkrypty-testowe/
 context/PELNOMOCNICTWO_PODPISANE.pdf
+
+.vercel
