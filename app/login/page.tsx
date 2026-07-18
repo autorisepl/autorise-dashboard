@@ -1,11 +1,10 @@
 "use client";
 
 import { Eye, EyeOff, Loader2, Lock, Zap } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 
 function LoginForm() {
-  const router = useRouter();
   const params = useSearchParams();
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -30,8 +29,13 @@ function LoginForm() {
       });
       const json = await res.json();
       if (json.success) {
-        router.push(params.get("from") ?? "/agenci");
-        router.refresh();
+        // Twarde przeładowanie (nie router.push) — Router Cache Next.js potrafi
+        // trzymać przechwycony wcześniej redirect do /login (z proxy.ts sprzed
+        // zalogowania) dla stron dashboardu bez force-dynamic, przez co soft
+        // nawigacja po zalogowaniu renderowała stary, niezalogowany stan i
+        // wymagała ponownego wpisania hasła. Pełne przeładowanie wymusza
+        // nowe żądanie do proxy.ts z już ustawionym ciasteczkiem sesji.
+        window.location.href = params.get("from") ?? "/agenci";
       } else {
         setError(json.error ?? "Błąd logowania");
         setPassword("");
