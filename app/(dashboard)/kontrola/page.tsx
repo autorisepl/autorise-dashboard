@@ -1,6 +1,15 @@
 "use client";
 
-import { ChevronRight, Monitor, RefreshCw, X } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  ChevronRight,
+  Database,
+  Loader2,
+  Monitor,
+  RefreshCw,
+  X,
+} from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import type { ClaudeAgent, ClaudeConfigResponse, ClaudeSkill } from "@/app/api/claude-config/route";
 import type { EnvCheckResponse } from "@/app/api/env-check/route";
@@ -268,6 +277,37 @@ export default function KontrolaPage() {
     item: ClaudeAgent | ClaudeSkill;
     type: "agent" | "skill";
   } | null>(null);
+  const [migrating, setMigrating] = useState(false);
+  const [migrateResult, setMigrateResult] = useState<{
+    success: boolean;
+    message: string;
+    added?: string[];
+    errors?: string[];
+  } | null>(null);
+
+  // Znaleziony 2026-07-18: przycisk migracji schematu Notion był od kilku sesji
+  // opisywany w SESSION_LOG jako istniejący w /kontrola ("kliknij Migruj schemat"),
+  // ale nigdy faktycznie nie trafił do kodu UI — backend (/api/tools/migrate-schema,
+  // migrateNotionSchema + migrateDailyStatsSchema, wszystkie 4 batche Pipeline plus
+  // Statystyki Dzienne) był gotowy, po prostu nic go nie wywoływało.
+  const runMigration = useCallback(async () => {
+    setMigrating(true);
+    setMigrateResult(null);
+    try {
+      const res = await fetch("/api/tools/migrate-schema", { method: "POST" });
+      const data = await res.json();
+      setMigrateResult({
+        success: Boolean(data.success),
+        message: data.message ?? data.error ?? "Nieznany wynik",
+        added: data.added,
+        errors: data.errors,
+      });
+    } catch {
+      setMigrateResult({ success: false, message: "Błąd połączenia z serwerem" });
+    } finally {
+      setMigrating(false);
+    }
+  }, []);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -841,6 +881,110 @@ export default function KontrolaPage() {
             </div>
           </Panel>
         </div>
+
+        {/* Row 3 — Baza danych Notion: migracja schematu (wszystkie zaległe batche naraz) */}
+        <Panel style={{ padding: 14 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+              gap: 16,
+              flexWrap: "wrap",
+            }}
+          >
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <Database size={13} color="var(--text-tertiary)" />
+                <SectionLabel>Baza danych Notion</SectionLabel>
+              </div>
+              <div
+                style={{
+                  marginTop: 6,
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 12,
+                  color: "var(--text-secondary)",
+                  maxWidth: 480,
+                }}
+              >
+                Migracja schematu Pipeline (wszystkie batche naraz: kontakt/pain/Cytaty klienta,
+                daty/select/ceny, System transformacji, Data potwierdzenia dostępów/Historia
+                zgłoszeń) plus Statystyki Dzienne (Rozmowy sprzedażowe). Bezpieczna do wielokrotnego
+                uruchomienia — dodaje wyłącznie brakujące pola, nic nie kasuje.
+              </div>
+            </div>
+            <button
+              onClick={() => void runMigration()}
+              disabled={migrating}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "6px 12px",
+                background: "transparent",
+                border: "1px solid var(--border)",
+                borderRadius: "var(--radius-xs)",
+                cursor: migrating ? "default" : "pointer",
+                fontFamily: "var(--font-sans)",
+                fontSize: 12,
+                fontWeight: 600,
+                color: "var(--text-secondary)",
+                opacity: migrating ? 0.6 : 1,
+                flexShrink: 0,
+              }}
+            >
+              {migrating ? (
+                <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} />
+              ) : (
+                <Database size={12} />
+              )}
+              Migruj schemat
+            </button>
+          </div>
+
+          {migrateResult && (
+            <div
+              style={{
+                marginTop: 12,
+                padding: "8px 10px",
+                borderRadius: "var(--radius-xs)",
+                background: migrateResult.success ? "rgba(48,209,88,0.06)" : "rgba(255,69,58,0.06)",
+                border: `1px solid ${migrateResult.success ? "rgba(48,209,88,0.2)" : "rgba(255,69,58,0.2)"}`,
+                display: "flex",
+                alignItems: "flex-start",
+                gap: 8,
+              }}
+            >
+              {migrateResult.success ? (
+                <CheckCircle2
+                  size={13}
+                  color="var(--success)"
+                  style={{ flexShrink: 0, marginTop: 1 }}
+                />
+              ) : (
+                <AlertTriangle
+                  size={13}
+                  color="var(--error)"
+                  style={{ flexShrink: 0, marginTop: 1 }}
+                />
+              )}
+              <div
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 11,
+                  color: "var(--text-secondary)",
+                }}
+              >
+                {migrateResult.message}
+                {migrateResult.errors && migrateResult.errors.length > 0 && (
+                  <div style={{ marginTop: 4, color: "var(--error)" }}>
+                    {migrateResult.errors.join(" · ")}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </Panel>
       </div>
 
       {/* Detail panel */}
