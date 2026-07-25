@@ -861,7 +861,8 @@ const FUNNEL_NODES: FunnelNode[] = [
     title: "Retainer",
     tone: "success",
     agent: "Opieka stała: monitoring wykorzystania, kontakt cykliczny, wsparcie bieżące.",
-    entry: "Gwarancja potwierdzona: minimum 70% czasu bazowego zaoszczędzone (pierwsza lub druga weryfikacja).",
+    entry:
+      "Gwarancja potwierdzona: minimum 70% czasu bazowego zaoszczędzone (pierwsza lub druga weryfikacja).",
     exit: "Ciągła współpraca. Wyzwalacz rozszerzenia zakresu przenosi klienta do Upsell.",
     statusKey: "Retainer",
   },
