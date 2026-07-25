@@ -1750,8 +1750,19 @@ export default function SprzedazPage() {
         roiDopowiedzenie.match(/zwraca się w (\d+)/)?.[1] ??
         roiDopowiedzenie.match(/(\d+)\s*miesi/)?.[1];
       out = out.replace(
-        /15000 zł zwraca się w \[X\] miesięcy/g,
-        `15000 zł zwraca się w ${roiMiesiace ?? "— policz —"} miesięcy`,
+        /18000 zł zwraca się w \[X\] miesięcy/g,
+        `18000 zł zwraca się w ${roiMiesiace ?? "— policz —"} miesięcy`,
+      );
+      // Gwarancja procentowa (nowa umowa, §4): 70% czasu bazowego klienta z Notion
+      // ("Czas bazowy potwierdzony h/mc", pole dotąd zarezerwowane, niewykorzystane w UI).
+      // Honest fallback gdy pole puste, zamiast fabrykować liczbę godzin.
+      const czasBazowy = selected.czasBazowyPotwierdzony;
+      const gwarancjaH = czasBazowy && czasBazowy > 0 ? Math.round(czasBazowy * 0.7) : null;
+      out = out.replace(
+        /\[gwarancja godzin\]/g,
+        gwarancjaH != null
+          ? `${gwarancjaH} godzin`
+          : "— brak czasu bazowego w Pipeline, policz z kalkulatorem ROI —",
       );
     }
     return out;

@@ -361,7 +361,7 @@ export const STEPS_D: Step[] = [
         t: "say",
         text: [
           "To co przed chwilą zostało opisane — [ból główny słowami klienta z parafrazy] — to dokładnie to, co u naszych klientów znika w ciągu 30 dni.",
-          "Odzyskuje {FORMA} minimum 80 godzin miesięcznie, albo zwracamy 100% inwestycji. Bez wyjątków.",
+          "Odzyskuje {FORMA} minimum 70% obliczonego czasu bazowego — [gwarancja godzin] miesięcznie — albo zwracamy 100% inwestycji. Bez wyjątków.",
         ],
         cel: "Obietnica/big promise — prowadzisz pitch od razu ofertą i gwarancją, nie chowasz jej na koniec",
       },
@@ -375,7 +375,7 @@ export const STEPS_D: Step[] = [
       },
       {
         t: "say",
-        text: "I jeszcze jedno, zanim przejdziemy dalej: ryzyko finansowe jest po naszej stronie, nie po Waszej. Jeśli po 30 dniach nie odzyskacie minimum 80 godzin miesięcznie, oddajemy 100% pieniędzy. Bez pytań, bez wyjątków.",
+        text: "I jeszcze jedno, zanim przejdziemy dalej: ryzyko finansowe jest po naszej stronie, nie po Waszej. Jeśli po 30 dniach nie odzyskacie minimum 70% obliczonego czasu bazowego, czyli [gwarancja godzin] miesięcznie, oddajemy 100% pieniędzy. Bez pytań, bez wyjątków.",
         cel: "Stały, mocny wyróżnik różnicujący (Blok 'Arek' pkt 4, 2026-07-15) — nie wzmianka o gwarancji przy okazji, tylko jawne nazwanie kto ponosi ryzyko finansowe. Zbija najczęstszą niewypowiedzianą obiekcję 'a jeśli to nie zadziała' zanim padnie",
       },
       {
@@ -402,7 +402,7 @@ export const STEPS_D: Step[] = [
       },
       {
         t: "action",
-        text: "SLAJD 7: Gwarancja 80h. Ten slajd zamyka pitch, nie przewijaj dalej.",
+        text: "SLAJD 7: Gwarancja 70%. Ten slajd zamyka pitch, nie przewijaj dalej.",
       },
       {
         t: "say",
@@ -506,14 +506,14 @@ export const STEPS_D: Step[] = [
     lines: [
       {
         t: "note",
-        text: "PRZED wypowiedzeniem ceny, ustal na żywo (nie zakładaj uniwersalnej liczby): (a) konkretny termin zebrania dostępów w dniach — wpisz go w mini-formularzu obok kalkulatora, trafi do Notion i Załącznika nr 1; (b) potwierdź że {FORMA} rozumie mechanizm 18000/15000 — cena spada tylko przy obu warunkach naraz: płatność w 14 dni ORAZ dostępy w ustalonym terminie.",
+        text: "PRZED wypowiedzeniem ceny, ustal na żywo (nie zakładaj uniwersalnej liczby) konkretny termin zebrania dostępów w dniach — wpisz go w mini-formularzu obok kalkulatora, trafi do Notion i Załącznika nr 1.",
       },
       {
         t: "say",
         text: [
-          "Inwestycja to 18 000 zł, cena regularna, jednorazowo.",
+          "Inwestycja to 18 000 zł, jednorazowo.",
           "Plus 4 000 zł miesięcznie opieki.",
-          "Gwarancja: jeśli w 30 dni nie odzyska {FORMA} 80 godzin — zwrot 100% bez pytań.",
+          "Gwarancja: minimum 70% obliczonego czasu bazowego Pana firmy, czyli [gwarancja godzin] miesięcznie, sprawdzane po 30 dniach — jeśli nie osiągniemy progu, zwrot 100%.",
         ],
         cel: "Podać konkretną liczbę i przetrzymać ciszę — pierwsza osoba która przerwie milczenie zwykle przegrywa negocjację",
       },
@@ -521,11 +521,6 @@ export const STEPS_D: Step[] = [
       {
         t: "note",
         text: "Jeśli klient nie odezwie się sam po 6-8 sekundach: 'Jak to {FORMA} widzi?' To jedyna dopuszczalna interwencja w tej ciszy, nic więcej.",
-      },
-      {
-        t: "say",
-        text: "Cena regularna to 18 tysięcy. Jeśli podpiszemy dziś i dostaniemy dostępy w ustalonym terminie, cena spada do 15 tysięcy — to nie kara za spóźnienie, to nagroda za sprawny start razem.",
-        cel: "Gotowa fraza do wypowiedzenia po ciszy, jeśli {FORMA} pyta o rabat albo zwleka — mechanizm rabatu za terminowość, §5 ust. 1 umowy",
       },
     ],
   },
@@ -559,11 +554,13 @@ export const STEPS_D: Step[] = [
       {
         t: "say",
         text: [
-          "Zaczynamy.",
-          "Prześlę umowę i fakturę na [email].",
-          "Kickoff umawiamy na [termin].",
+          "Świetnie.",
+          "Prześlę umowę na [email] do podpisu.",
+          "Po podpisaniu wystawiam fakturę, płatna w 2 dni.",
+          "Kickoff umawiamy w ciągu 7 dni roboczych od zaksięgowania wpłaty — to jest moment od którego realnie zaczynamy.",
           "Pasuje?",
         ],
+        cel: "Kolejność podpis → faktura → wpłata → Kickoff — praca zaczyna się dopiero po zaksięgowaniu wpłaty (SZKIC_UMOWA_AUTORISE.md §2 ust. 1-2), nie od samego podpisania",
       },
     ],
   },
@@ -575,17 +572,27 @@ export const STEPS_D: Step[] = [
     lines: [
       {
         t: "note",
-        text: "Zanim wyślesz umowę, przejdź na głos przez te 5 punktów z klientem — każdy osobno, nie jednym zdaniem. To ostatni moment żeby uniknąć niejasności przed podpisem, nie krok do przeklikania w ciszy.",
+        text: "Zanim wyślesz umowę, przejdź na głos przez tych 9 punktów z klientem — każdy osobno, nie jednym zdaniem. To ostatni moment żeby uniknąć niejasności przed podpisem, nie krok do przeklikania w ciszy.",
       },
       {
         t: "say",
-        text: "18 tysięcy regularnie, 15 tysięcy jeśli podpiszemy dziś i dostępy przyjdą w ustalonym terminie.",
-        cel: "Cena — potwierdzenie mechanizmu 18000/15000 na głos, nie zakładanie że {FORMA} pamięta to z wcześniejszej części rozmowy",
+        text: "18 tysięcy złotych, płatne jednorazowo w ciągu 2 dni od faktury.",
+        cel: "Cena — potwierdzenie kwoty na głos, nie zakładanie że {FORMA} pamięta to z wcześniejszej części rozmowy. Jedna cena, bez mechanizmu rabatu za terminowość (usunięty z nowej wersji umowy)",
+      },
+      {
+        t: "say",
+        text: "Praca zaczyna się dopiero po zaksięgowaniu wpłaty, nie po samym podpisaniu — dlatego zależy mi żeby faktura poszła szybko po podpisie.",
+        cel: "Kolejność płatność → praca — kluczowa różnica względem intuicji klienta ('podpisałem więc już zaczynacie'), musi być wypowiedziana wprost, nie domyślna",
       },
       {
         t: "say",
         text: "30-dniowa weryfikacja gwarancji liczy się od dnia gdy dostanę komplet dostępów, nie od dzisiejszego podpisu.",
         cel: "Start zegara — kluczowa różnica względem intuicji klienta ('podpisałem więc już się liczy'), musi być wypowiedziana wprost, nie domyślna",
+      },
+      {
+        t: "say",
+        text: "Jeśli po pierwszych 30 dniach wynik nie osiągnie progu, mamy 2 tygodnie na poprawki i sprawdzamy jeszcze raz — dopiero jeśli i to nie wyjdzie, przysługuje Panu zwrot.",
+        cel: "Druga runda weryfikacji przed zwrotem — SZKIC_UMOWA_AUTORISE.md §4 ust. 7. Wypowiadane wprost, żeby klient znał realną procedurę, nie zakładał automatycznego zwrotu zaraz po pierwszym negatywnym wyniku",
       },
       {
         t: "say",
@@ -596,6 +603,16 @@ export const STEPS_D: Step[] = [
         t: "say",
         text: "4 tysiące miesięcznie przez minimum 12 miesięcy, niezależnie od wyniku gwarancji — to osobna rzecz od samego wdrożenia.",
         cel: "Retainer — oddzielić jednoznacznie od gwarancji zwrotu, najczęstszy punkt niejasności po podpisie",
+      },
+      {
+        t: "say",
+        text: "Jeśli Pana TMS nie ma jeszcze potwierdzonego dostępu do API, na Kickoff w pierwszych dniach skontaktuję się bezpośrednio z dostawcą systemu — to jest zawsze pierwszy krok. Jeśli się nie uda, mam jeszcze trzy inne sprawdzone sposoby na obejście tego, więc to nie jest ryzyko że wdrożenie stanie w miejscu.",
+        cel: "Wykonalność integracji TMS — proces oceny z KARTA_PRODUKTU_SYSTEM_OPERACYJNY.md pkt 8 (2026-07-19) wypowiadany klientowi wprost, żeby dawał pewność PRZED podpisaniem, nie był niespodzianką odkrywaną dopiero na Kickoff",
+      },
+      {
+        t: "say",
+        text: "Po podpisaniu dostanie Pan konkretny rytm, nie ciszę: Kickoff w ciągu 7 dni roboczych od wpłaty, potem zbieramy dostępy, potem 4 tygodnie wdrożenia, na końcu weryfikacja efektywności — każdy etap z ustaloną datą, nie zawieszony w niepewności.",
+        cel: "Zapowiedź całego cyklu, nie tylko momentu podpisu — żeby klient nie miał wrażenia że po podpisie 'coś się dzieje' bez konkretnego rytmu. Wypowiadane PRZED prośbą o podpis, jako ostatni punkt pewności zanim padnie pytanie o samą decyzję",
       },
       {
         t: "say",
@@ -637,7 +654,7 @@ export const OBJECTIONS_D: Objection[] = [
     stage: "cena",
     label: "Zastanowienie: kwestia finansowa",
     script:
-      "To częste, rozumiem. Mamy opcję rat, dwa razy 9000 zł zamiast 18000 zł jednorazowo — rata nie kwalifikuje się do rabatu za terminowość, bo ten wymaga pełnej płatności w 14 dni. Zmienia to sytuację?",
+      "To częste, rozumiem. Mamy opcję rat, dwa razy 9000 zł zamiast 18000 zł jednorazowo — wdrożenie startuje po pierwszej wpłacie. Zmienia to sytuację?",
   },
   {
     id: "od1_partner",
@@ -688,21 +705,21 @@ export const OBJECTIONS_D: Objection[] = [
     stage: "cena",
     label: "Za drogo: kwestia logistyki płatności",
     script:
-      "Rozumiem, to nie jest mała kwota jednorazowo. Mamy raty: dwa razy 9000 zł (cena regularna 18000, rata nie kwalifikuje się do rabatu za terminowość). Retainer zostaje 4000 zł miesięcznie. Ułatwia to decyzję?",
+      "Rozumiem, to nie jest mała kwota jednorazowo. Mamy raty: dwa razy 9000 zł zamiast 18000 zł jednorazowo, wdrożenie startuje po pierwszej wpłacie. Retainer zostaje 4000 zł miesięcznie. Ułatwia to decyzję?",
   },
   {
     id: "od3_wartosc",
     stage: "cena",
     label: "Za drogo: wątpliwość czy się zwróci",
     script:
-      "Dobre pytanie. Sam Pan policzył ze mną że to [kwota] miesięcznie, prawda? 15000 zł zwraca się w [X] miesięcy, a retainer jest mniejszy niż jedna trzecia tego co teraz tracicie. Widzi Pan to inaczej po tych liczbach?",
+      "Dobre pytanie. Sam Pan policzył ze mną że to [kwota] miesięcznie, prawda? 18000 zł zwraca się w [X] miesięcy, a retainer jest mniejszy niż jedna trzecia tego co teraz tracicie. Widzi Pan to inaczej po tych liczbach?",
   },
   {
     id: "od3_konkurencja",
     stage: "cena",
     label: "Za drogo: porównuje z inną ofertą",
     script:
-      "Jasne. Kto i co dokładnie oferuje za tę cenę? Dają gwarancję konkretnego efektu na umowie, tak jak my dajemy 80 godzin albo zwrot całości?",
+      "Jasne. Kto i co dokładnie oferuje za tę cenę? Dają gwarancję konkretnego efektu na umowie, tak jak my dajemy [gwarancja godzin] miesięcznie albo zwrot całości?",
   },
   {
     id: "od4",
@@ -778,7 +795,7 @@ export const OBJECTIONS_D: Objection[] = [
     stage: "cena",
     label: "Mogę płacić w ratach?",
     script:
-      "Tak, mamy opcję 2 × 9 000 zł zamiast 18 000 zł jednorazowo — to cena regularna, rata nie kwalifikuje się do rabatu za terminowość (ten wymaga pełnej płatności w 14 dni). Retainer zostaje 4 000 zł/mc. Przy ratach wdrożenie startuje po pierwszej wpłacie. Pasuje Panu?",
+      "Tak, mamy opcję 2 × 9 000 zł zamiast 18 000 zł jednorazowo. Retainer zostaje 4 000 zł/mc. Przy ratach wdrożenie startuje po pierwszej wpłacie. Pasuje Panu?",
   },
   {
     id: "od12",
@@ -811,13 +828,6 @@ export const OBJECTIONS_D: Objection[] = [
       "To uczciwe dla obu stron — nie płaci Pan za czas w którym fizycznie nie mogliśmy jeszcze pracować, bo nie mieliśmy dostępów. Zegar rusza dopiero gdy realnie zaczynamy.",
   },
   {
-    id: "od16",
-    stage: "cena",
-    label: "Co jeśli nie zapłacę w 14 dni i stracę rabat?",
-    script:
-      "To nie jest pułapka, to nagroda za sprawny start — po prostu wracamy wtedy do ceny regularnej, 18 tysięcy zamiast 15. Nic więcej się nie zmienia.",
-  },
-  {
     id: "od17",
     stage: "cena",
     label: "A jeśli godziny oszczędności się nie potwierdzą bo się spóźniliście z integracją?",
@@ -829,8 +839,16 @@ export const OBJECTIONS_D: Objection[] = [
     stage: "closing",
     label: "Chcę zobaczyć demo/wizualizację działania przed podpisem",
     script:
-      "Rozumiem tę potrzebę, ale robimy to celowo w innej kolejności: najpierw podpis, potem wizualizacja. Powód jest prosty — dopiero po podpisaniu i zebraniu dostępów mogę zbudować wizualizację na Pana realnych danych, z Pana TMS-em i Pana zleceniami, nie na generycznym przykładzie który niewiele powie o tym jak to będzie działać u Was. Gwarancja 80 godzin i zwrot 100% to jest Pana realne zabezpieczenie na wypadek gdyby coś nie zadziałało, dokładnie w tym samym celu co demo — tylko że dotyczy Pana firmy, nie cudzej.",
+      "Rozumiem tę potrzebę, ale robimy to celowo w innej kolejności: najpierw podpis, potem wizualizacja. Powód jest prosty — dopiero po podpisaniu i zebraniu dostępów mogę zbudować wizualizację na Pana realnych danych, z Pana TMS-em i Pana zleceniami, nie na generycznym przykładzie który niewiele powie o tym jak to będzie działać u Was. Gwarancja minimum 70% obliczonego czasu bazowego i zwrot 100% to jest Pana realne zabezpieczenie na wypadek gdyby coś nie zadziałało, dokładnie w tym samym celu co demo — tylko że dotyczy Pana firmy, nie cudzej.",
     note: "Technika 'podpis, potem wizualizacja' (rozmowa z Arkiem Burkowskim, 15 lipca) — nie budować jeszcze uniwersalnego demo-przykładu wielokrotnego użytku, to osobna decyzja produktowa do podjęcia z Michałem. Ta obiekcja pojawi się częściej przy większych klientach, odpowiedź musi być pewna, nie defensywna.",
+  },
+  {
+    id: "od19",
+    stage: "closing",
+    label: "Musimy przesłać umowę do prawnika/działu prawnego",
+    script:
+      "Rozumiem, to standardowa procedura przy większych firmach. Wyślę umowę dziś/jutro na maila — czy mogę prosić o konkretny termin kiedy spodziewa się Pan odpowiedzi od prawnika, żebyśmy mogli zaplanować start? Jeśli po drodze pojawią się pytania techniczne czy dotyczące zakresu, chętnie odpowiem prawnikowi bezpośrednio albo Panu, żeby nie utknęło bez potrzeby.",
+    note: "Realny, powtarzalny przypadek u większych klientów, nie to samo co generyczne 'muszę pomyśleć' (od1) — to legalna procedura korporacyjna, nie wymówka. Potwierdzone na Arku Burkowskim ('u nas czyta prawnie', 'on na pewno nie usiądzie do tego na CITO'). Cel: nie naciskać na podpis tego samego dnia w takiej sytuacji, tylko wyciągnąć konkretny termin follow-up zamiast otwartego 'jakoś się odezwę'.",
   },
 ];
 

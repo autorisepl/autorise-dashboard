@@ -32,6 +32,10 @@ const bodySchema = z.object({
   ostatniKontaktRetainer: z.string().nullable().optional(),
   historiaZgloszenRetainer: z.string().nullable().optional(),
   wynikDiscovery: z.string().nullable().optional(),
+  protokolOdbioruPodpisany: z.boolean().optional(),
+  dataProtokoluOdbioru: z.string().nullable().optional(),
+  kickoffOdbyty: z.boolean().optional(),
+  dataKickoff: z.string().nullable().optional(),
 });
 
 function richText(text: string) {
@@ -146,6 +150,20 @@ export async function PATCH(req: Request) {
       properties["Wynik Discovery"] = d.wynikDiscovery
         ? { select: { name: d.wynikDiscovery } }
         : { select: null };
+    }
+    if (d.protokolOdbioruPodpisany !== undefined) {
+      properties["Protokół odbioru podpisany"] = { checkbox: d.protokolOdbioruPodpisany };
+    }
+    if (d.dataProtokoluOdbioru !== undefined) {
+      properties["Data protokołu odbioru"] = d.dataProtokoluOdbioru
+        ? { date: { start: d.dataProtokoluOdbioru } }
+        : { date: null };
+    }
+    if (d.kickoffOdbyty !== undefined) {
+      properties["Kickoff odbyty"] = { checkbox: d.kickoffOdbyty };
+    }
+    if (d.dataKickoff !== undefined) {
+      properties["Data Kickoff"] = d.dataKickoff ? { date: { start: d.dataKickoff } } : { date: null };
     }
 
     if (Object.keys(properties).length === 0) {

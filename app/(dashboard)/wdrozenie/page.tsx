@@ -15,7 +15,15 @@ import { Panel } from "@/components/ui/Panel";
 // Zakres tej zakładki po decyzji Michała (2026-07-18): wyłącznie jednorazowy proces Tydzień 0
 // do Dzień 30. Stały retainer po zamknięciu weryfikacji żyje w osobnej zakładce /utrzymanie.
 
-const STAGES = ["Tydzień 0", "Tydzień 1", "Tydzień 2-3", "Tydzień 4", "Dzień 30"] as const;
+const STAGES = [
+  "Kickoff",
+  "Tydzień 0",
+  "Tydzień 1",
+  "Tydzień 2-3",
+  "Tydzień 4",
+  "Odbiór",
+  "Dzień 30",
+] as const;
 
 interface AccessItem {
   key: string;
@@ -63,13 +71,44 @@ function daysSince(iso: string): number {
   return Math.floor((now - start) / (1000 * 60 * 60 * 24));
 }
 
+// Zadania (Google Tasks), nie sztywne wydarzenia kalendarzowe — umowa mówi że terminy sesji
+// ustala się "przez Strony", więc `due` tutaj jest zawsze PRZYBLIŻENIEM/przypomnieniem do
+// umówienia, nigdy zapisanym terminem spotkania. "@default" to specjalny identyfikator
+// Google Tasks API wskazujący na domyślną listę użytkownika — świadomie nie zgadujemy nazwy
+// jednej z realnych list Michała (są 4, różne nazwy własne), żeby nie utworzyć zadania w
+// niewłaściwym miejscu. Cichy fail jeśli Google niepodłączone, zwraca false do wywołującego,
+// żeby UI mogło pokazać ostrzeżenie zamiast milczeć o nieudanej integracji.
+async function createGoogleTask(params: {
+  title: string;
+  notes?: string;
+  due?: string;
+}): Promise<boolean> {
+  try {
+    const res = await fetch("/api/google/tasks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        listId: "@default",
+        title: params.title,
+        notes: params.notes,
+        due: params.due,
+      }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 function computeStageIndex(client: PipelineClientDetailed): number {
-  if (!client.dataPotwierdzeniaDostepow) return 0;
+  if (!client.kickoffOdbyty) return 0;
+  if (!client.dataPotwierdzeniaDostepow) return 1;
   const days = daysSince(client.dataPotwierdzeniaDostepow);
-  if (days < 7) return 1;
-  if (days < 21) return 2;
-  if (days < 30) return 3;
-  return 4;
+  if (days < 7) return 2;
+  if (days < 21) return 3;
+  if (days < 30) return 4;
+  if (!client.protokolOdbioruPodpisany) return 5;
+  return 6;
 }
 
 function Timeline({ stageIndex }: { stageIndex: number }) {
@@ -141,6 +180,8 @@ export default function WdrozenieePage() {
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [savingProtokol, setSavingProtokol] = useState(false);
+  const [taskWarning, setTaskWarning] = useState<string | null>(null);
 
   const fetchClients = useCallback(async () => {
     setLoading(true);
@@ -206,9 +247,110 @@ export default function WdrozenieePage() {
     [selected, checked],
   );
 
+  // Krok "Kickoff" (2026-07-25) — pierwszy formalny kontakt po podpisaniu (30-45 minut,
+  // ustalenie Wykazu dostępów), dotąd brakujący jako punkt w samej osi czasu mimo że
+  // poprzedza Panel 1 Dostępy koncepcyjnie. Ten sam prosty wzorzec co panel Odbioru: checkbox
+  // + data, bez dodatkowej logiki.
+  const toggleKickoff = useCallback(async () => {
+    if (!selected) return;
+    const next = !selected.kickoffOdbyty;
+    setSavingProtokol(true);
+    try {
+      await fetch("/api/notion/pipeline-update", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pageId: selected.id,
+          kickoffOdbyty: next,
+          ...(next && !selected.dataKickoff
+            ? { dataKickoff: new Date().toISOString().slice(0, 10) }
+            : {}),
+        }),
+      });
+      await fetchClients();
+    } finally {
+      setSavingProtokol(false);
+    }
+  }, [selected, fetchClients]);
+
+  const updateDataKickoff = useCallback(
+    async (value: string) => {
+      if (!selected) return;
+      setSavingProtokol(true);
+      try {
+        await fetch("/api/notion/pipeline-update", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pageId: selected.id, dataKickoff: value || null }),
+        });
+        await fetchClients();
+      } finally {
+        setSavingProtokol(false);
+      }
+    },
+    [selected, fetchClients],
+  );
+
+  // Krok "Odbiór" (nowa umowa §3, między Tydzień 4/Live i Dzień 30/Weryfikacja) — na razie
+  // świadomie prosty panel (checkbox + data), bez pełnej logiki usterka krytyczna/niekrytyczna
+  // ani "milczącego odbioru", zgodnie z zakresem tej rundy. Może poczekać na kolejną iterację.
+  const toggleProtokolOdbioru = useCallback(async () => {
+    if (!selected) return;
+    const next = !selected.protokolOdbioruPodpisany;
+    setSavingProtokol(true);
+    setTaskWarning(null);
+    try {
+      await fetch("/api/notion/pipeline-update", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pageId: selected.id,
+          protokolOdbioruPodpisany: next,
+          ...(next && !selected.dataProtokoluOdbioru
+            ? { dataProtokoluOdbioru: new Date().toISOString().slice(0, 10) }
+            : {}),
+        }),
+      });
+      // Zadanie tworzone tylko przy przejściu false→true, nie przy odznaczeniu — instrukcja
+      // KARTA_PRODUKTU/umowa §4 ust. 4: do 3 sesji uzupełniających w trakcie 30-dniowego
+      // okresu. Świadomie bez daty due — umowa nie daje punktu odniesienia węższego niż "w
+      // trakcie 30 dni", nie zgadujemy konkretnego dnia.
+      if (next) {
+        const ok = await createGoogleTask({
+          title: `Zaplanuj 3 sesje uzupełniające weryfikacji — ${selected.firma}`,
+          notes:
+            "Umowa §4 ust. 4: do 3 sesji po 30 minut w trakcie 30-dniowego okresu weryfikacji, termin do ustalenia z klientem.",
+        });
+        if (!ok) setTaskWarning("Zadanie w Google Tasks nie zostało utworzone (sprawdź połączenie z Google).");
+      }
+      await fetchClients();
+    } finally {
+      setSavingProtokol(false);
+    }
+  }, [selected, fetchClients]);
+
+  const updateDataProtokolu = useCallback(
+    async (value: string) => {
+      if (!selected) return;
+      setSavingProtokol(true);
+      try {
+        await fetch("/api/notion/pipeline-update", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pageId: selected.id, dataProtokoluOdbioru: value || null }),
+        });
+        await fetchClients();
+      } finally {
+        setSavingProtokol(false);
+      }
+    },
+    [selected, fetchClients],
+  );
+
   const confirmAccess = useCallback(async () => {
     if (!selected || !allChecked) return;
     setConfirming(true);
+    setTaskWarning(null);
     const today = new Date().toISOString().slice(0, 10);
     try {
       await fetch("/api/notion/pipeline-update", {
@@ -216,6 +358,15 @@ export default function WdrozenieePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pageId: selected.id, dataPotwierdzeniaDostepow: today }),
       });
+      // Termin przybliżony: +25 dni, nie dokładnie Dzień 30 — margines żeby zdążyć umówić
+      // realny termin z klientem (umowa: terminy sesji ustalane są "przez Strony"), nie
+      // sztywne wydarzenie kalendarzowe z domyślną datą.
+      const ok = await createGoogleTask({
+        title: `Umów termin Dnia 30 — weryfikacja efektywności ${selected.firma}`,
+        notes: `Zegar 30-dniowej gwarancji wystartował ${today}. Umów z klientem konkretny termin sesji weryfikacyjnej blisko Dnia 30 — ta data jest tylko przybliżeniem, żeby nie zapomnieć.`,
+        due: addDays(today, 25),
+      });
+      if (!ok) setTaskWarning("Zadanie w Google Tasks nie zostało utworzone (sprawdź połączenie z Google).");
       await fetchClients();
     } finally {
       setConfirming(false);
@@ -259,6 +410,36 @@ export default function WdrozenieePage() {
                 <Timeline stageIndex={stageIndex} />
               </Panel>
 
+              {taskWarning && (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 8,
+                    padding: "10px 12px",
+                    borderRadius: "var(--radius-sm)",
+                    background: "rgba(255,149,0,0.1)",
+                    border: "1px solid var(--warning)",
+                  }}
+                >
+                  <AlertTriangle
+                    size={14}
+                    color="var(--warning)"
+                    style={{ flexShrink: 0, marginTop: 1 }}
+                  />
+                  <span
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 12,
+                      color: "var(--text-secondary)",
+                    }}
+                  >
+                    {taskWarning} Zapis w Notion się powiódł, tylko przypomnienie w Google Tasks
+                    nie zostało utworzone — utwórz je ręcznie.
+                  </span>
+                </div>
+              )}
+
               {!["Kickoff", "Wdrożenie", "Retainer"].includes(selected.status) && (
                 <div
                   style={{
@@ -289,6 +470,105 @@ export default function WdrozenieePage() {
                   </span>
                 </div>
               )}
+
+              <Panel>
+                <div style={{ marginBottom: 14 }}>
+                  <div
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      letterSpacing: "0.04em",
+                      textTransform: "uppercase",
+                      color: "var(--text-tertiary)",
+                      marginBottom: 3,
+                    }}
+                  >
+                    Panel 0: Kickoff
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 12,
+                      color: "var(--text-secondary)",
+                    }}
+                  >
+                    Pierwszy formalny kontakt po podpisaniu (30-45 minut), ustalenie Wykazu
+                    dostępów przed Panelem Dostępy poniżej.
+                  </div>
+                </div>
+
+                <label
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    padding: "9px 10px",
+                    borderRadius: "var(--radius-sm)",
+                    border: "1px solid var(--border)",
+                    background: selected.kickoffOdbyty ? "var(--bg-active)" : "var(--bg)",
+                    cursor: "pointer",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 16,
+                      height: 16,
+                      borderRadius: 4,
+                      border: `1px solid ${selected.kickoffOdbyty ? "var(--accent)" : "var(--border)"}`,
+                      background: selected.kickoffOdbyty ? "var(--accent)" : "transparent",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {selected.kickoffOdbyty && <Check size={11} color="#fff" strokeWidth={3} />}
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={selected.kickoffOdbyty}
+                    onChange={() => void toggleKickoff()}
+                    style={{ display: "none" }}
+                  />
+                  <span
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 13,
+                      color: "var(--text-primary)",
+                    }}
+                  >
+                    Kickoff odbyty
+                  </span>
+                </label>
+
+                <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 8 }}>
+                  <span
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 12,
+                      color: "var(--text-secondary)",
+                    }}
+                  >
+                    Data Kickoff
+                  </span>
+                  <input
+                    type="date"
+                    value={selected.dataKickoff?.slice(0, 10) ?? ""}
+                    onChange={(e) => void updateDataKickoff(e.target.value)}
+                    style={{
+                      height: 32,
+                      padding: "0 8px",
+                      borderRadius: 6,
+                      border: "1px solid var(--border)",
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 13,
+                      color: "var(--text-primary)",
+                      background: "var(--bg)",
+                    }}
+                  />
+                </div>
+              </Panel>
 
               <Panel>
                 <div style={{ marginBottom: 14 }}>
@@ -415,6 +695,124 @@ export default function WdrozenieePage() {
                   </button>
                 )}
                 {saving && (
+                  <div
+                    style={{
+                      marginTop: 6,
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 11,
+                      color: "var(--text-tertiary)",
+                    }}
+                  >
+                    Zapisywanie...
+                  </div>
+                )}
+              </Panel>
+
+              <Panel>
+                <div style={{ marginBottom: 14 }}>
+                  <div
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      letterSpacing: "0.04em",
+                      textTransform: "uppercase",
+                      color: "var(--text-tertiary)",
+                      marginBottom: 3,
+                    }}
+                  >
+                    Panel 2: Odbiór systemu
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 12,
+                      color: "var(--text-secondary)",
+                    }}
+                  >
+                    Formalny odbiór wg umowy §3. Na razie prosty panel — protokół + data, bez
+                    rozróżnienia usterka krytyczna/niekrytyczna ani "milczącego odbioru".
+                  </div>
+                </div>
+
+                <label
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    padding: "9px 10px",
+                    borderRadius: "var(--radius-sm)",
+                    border: "1px solid var(--border)",
+                    background: selected.protokolOdbioruPodpisany
+                      ? "var(--bg-active)"
+                      : "var(--bg)",
+                    cursor: "pointer",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 16,
+                      height: 16,
+                      borderRadius: 4,
+                      border: `1px solid ${selected.protokolOdbioruPodpisany ? "var(--accent)" : "var(--border)"}`,
+                      background: selected.protokolOdbioruPodpisany
+                        ? "var(--accent)"
+                        : "transparent",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {selected.protokolOdbioruPodpisany && (
+                      <Check size={11} color="#fff" strokeWidth={3} />
+                    )}
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={selected.protokolOdbioruPodpisany}
+                    onChange={() => void toggleProtokolOdbioru()}
+                    style={{ display: "none" }}
+                  />
+                  <span
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 13,
+                      color: "var(--text-primary)",
+                    }}
+                  >
+                    Protokół odbioru podpisany
+                  </span>
+                </label>
+
+                <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 8 }}>
+                  <span
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 12,
+                      color: "var(--text-secondary)",
+                    }}
+                  >
+                    Data protokołu
+                  </span>
+                  <input
+                    type="date"
+                    value={selected.dataProtokoluOdbioru?.slice(0, 10) ?? ""}
+                    onChange={(e) => void updateDataProtokolu(e.target.value)}
+                    style={{
+                      height: 32,
+                      padding: "0 8px",
+                      borderRadius: 6,
+                      border: "1px solid var(--border)",
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 13,
+                      color: "var(--text-primary)",
+                      background: "var(--bg)",
+                    }}
+                  />
+                </div>
+
+                {savingProtokol && (
                   <div
                     style={{
                       marginTop: 6,

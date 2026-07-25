@@ -96,6 +96,34 @@ function currentEscalation(days: number) {
   return ESCALATION_LEVELS.find((l) => days >= l.minDays) ?? null;
 }
 
+// Zadanie (Google Tasks), nie sztywne wydarzenie — ten sam wzorzec co /wdrozenie.
+// Świadomie przycisk manualny, nie automatyczne tworzenie na każdym renderze/pollingu (60s) —
+// próg 30 dni jest wartością WYLICZANĄ z daty ostatniego kontaktu, nie dyskretnym zdarzeniem
+// kliknięcia, więc automatyczne tworzenie przy każdym odświeżeniu strony tworzyłoby duplikaty
+// zadania za każdym razem gdy Michał otwiera tę zakładkę. Manualny przycisk daje ten sam efekt
+// (zadanie zamiast tylko wizualnego alertu) bez ryzyka spamu.
+async function createGoogleTask(params: {
+  title: string;
+  notes?: string;
+  due?: string;
+}): Promise<boolean> {
+  try {
+    const res = await fetch("/api/google/tasks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        listId: "@default",
+        title: params.title,
+        notes: params.notes,
+        due: params.due,
+      }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 export default function UtrzymanieePage() {
   const [clients, setClients] = useState<PipelineClientDetailed[]>([]);
   const [loading, setLoading] = useState(true);
@@ -103,6 +131,9 @@ export default function UtrzymanieePage() {
   const [savingKontakt, setSavingKontakt] = useState(false);
   const [nowyOpis, setNowyOpis] = useState("");
   const [savingHistoria, setSavingHistoria] = useState(false);
+  const [creatingEscalationTask, setCreatingEscalationTask] = useState(false);
+  const [escalationTaskCreated, setEscalationTaskCreated] = useState(false);
+  const [taskWarning, setTaskWarning] = useState<string | null>(null);
 
   const fetchClients = useCallback(async () => {
     setLoading(true);
@@ -128,6 +159,13 @@ export default function UtrzymanieePage() {
   useEffect(() => {
     setSelected((prev) => (prev ? (clients.find((c) => c.id === prev.id) ?? prev) : prev));
   }, [clients]);
+
+  // Reset stanu przycisku eskalacji przy zmianie klienta — inaczej "utworzone" z poprzedniego
+  // klienta zostałoby błędnie pokazane przy nowo wybranym.
+  useEffect(() => {
+    setEscalationTaskCreated(false);
+    setTaskWarning(null);
+  }, [selected?.id]);
 
   const registerContact = useCallback(async () => {
     if (!selected) return;
@@ -173,6 +211,21 @@ export default function UtrzymanieePage() {
     : null;
   const escalation = kontaktDays !== null ? currentEscalation(kontaktDays) : null;
   const historia = selected ? parseHistoria(selected.historiaZgloszenRetainer) : [];
+
+  const createEscalationTask = useCallback(async () => {
+    if (!selected || kontaktDays === null) return;
+    setCreatingEscalationTask(true);
+    setTaskWarning(null);
+    const today = new Date().toISOString().slice(0, 10);
+    const ok = await createGoogleTask({
+      title: `PILNE: brak kontaktu 30+ dni — ${selected.firma}`,
+      notes: `Próg 30 dni bez kontaktu przekroczony (ostatni potwierdzony kontakt: ${fmtDate(selected.ostatniKontaktRetainer)}, ${kontaktDays} dni temu). Umowa: prawo do zakończenia współpracy bez zwrotu (jak przy spóźnionych dostępach, §2 ust. 4). Zdecyduj o dalszych krokach.`,
+      due: today,
+    });
+    if (ok) setEscalationTaskCreated(true);
+    else setTaskWarning("Zadanie w Google Tasks nie zostało utworzone (sprawdź połączenie z Google).");
+    setCreatingEscalationTask(false);
+  }, [selected, kontaktDays]);
 
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column", overflow: "hidden" }}>
@@ -371,7 +424,48 @@ export default function UtrzymanieePage() {
                           <strong>{escalation.label}:</strong> {escalation.action}
                         </span>
                       </div>
-                    ) : (
+                    ) : null}
+                    {kontaktDays !== null && kontaktDays >= 30 && (
+                      <div style={{ marginTop: 8 }}>
+                        <button
+                          type="button"
+                          onClick={() => void createEscalationTask()}
+                          disabled={creatingEscalationTask || escalationTaskCreated}
+                          style={{
+                            height: 32,
+                            padding: "0 12px",
+                            borderRadius: 7,
+                            border: "1px solid var(--error-border)",
+                            background: escalationTaskCreated ? "var(--bg-hover)" : "var(--error)",
+                            color: escalationTaskCreated ? "var(--text-tertiary)" : "#fff",
+                            fontFamily: "var(--font-sans)",
+                            fontSize: 12,
+                            fontWeight: 600,
+                            cursor:
+                              creatingEscalationTask || escalationTaskCreated
+                                ? "not-allowed"
+                                : "pointer",
+                          }}
+                        >
+                          {escalationTaskCreated
+                            ? "Zadanie utworzone w Google Tasks"
+                            : "Utwórz zadanie eskalacji (Google Tasks)"}
+                        </button>
+                        {taskWarning && (
+                          <div
+                            style={{
+                              marginTop: 6,
+                              fontFamily: "var(--font-sans)",
+                              fontSize: 11,
+                              color: "var(--warning)",
+                            }}
+                          >
+                            {taskWarning}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {!escalation || kontaktDays === null || kontaktDays < 3 ? (
                       <div
                         style={{
                           fontFamily: "var(--font-sans)",
@@ -381,7 +475,7 @@ export default function UtrzymanieePage() {
                       >
                         Kontakt w normie, poniżej progu 3 dni.
                       </div>
-                    )}
+                    ) : null}
                   </>
                 ) : (
                   <div

@@ -51,6 +51,10 @@ export interface PipelineClientDetailed {
   ostatniKontaktRetainer: string;
   historiaZgloszenRetainer: string;
   wynikDiscovery: string;
+  protokolOdbioruPodpisany: boolean;
+  dataProtokoluOdbioru: string;
+  kickoffOdbyty: boolean;
+  dataKickoff: string;
 }
 
 // Blok 1, punkt 1.5 (2026-07-14) — data premiery skryptu kwalifikacyjnego V4 (12 kroków, ICP
@@ -153,6 +157,10 @@ export async function GET() {
           ostatniKontaktRetainer: extractText(props["Ostatni kontakt (retainer)"]),
           historiaZgloszenRetainer: extractText(props["Historia zgłoszeń (retainer)"]),
           wynikDiscovery: extractText(props["Wynik Discovery"]),
+          protokolOdbioruPodpisany: extractCheckbox(props["Protokół odbioru podpisany"]),
+          dataProtokoluOdbioru: extractText(props["Data protokołu odbioru"]),
+          kickoffOdbyty: extractCheckbox(props["Kickoff odbyty"]),
+          dataKickoff: extractText(props["Data Kickoff"]),
         };
       })
       .filter((c: PipelineClientDetailed) => c.firma !== "Bez nazwy");

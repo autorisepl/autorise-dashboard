@@ -1066,6 +1066,38 @@ export async function migrateNotionSchema(): Promise<{ added: string[]; errors: 
     errors.push(`Batch 4: ${err instanceof Error ? err.message : "Błąd migracji schematu"}`);
   }
 
+  // Batch 5 (2026-07-24, nowa wersja umowy §3) — krok formalnego odbioru systemu w
+  // /wdrozenie, między "Live" (Tydzień 4) a "Weryfikacja" (Dzień 30). Na razie tylko prosty
+  // panel: checkbox + data, bez pełnej logiki usterka krytyczna/niekrytyczna ani "milczącego
+  // odbioru" — to może poczekać na kolejną iterację (świadomie uproszczone, jak zlecono).
+  // Rozszerzony 2026-07-25 o Kickoff (pierwszy formalny krok osi czasu, dotąd brakujący jako
+  // punkt w samej zakładce, mimo że jest pierwszym kontaktem po podpisaniu).
+  try {
+    await notion.dataSources.update({
+      data_source_id: PIPELINE_DATA_SOURCE_ID,
+      properties: {
+        "Protokół odbioru podpisany": { checkbox: {} },
+        "Data protokołu odbioru": { date: {} },
+        "Kickoff odbyty": { checkbox: {} },
+        "Data Kickoff": { date: {} },
+      },
+    });
+    const { confirmed, missing } = await confirmSchemaFields([
+      "Protokół odbioru podpisany",
+      "Data protokołu odbioru",
+      "Kickoff odbyty",
+      "Data Kickoff",
+    ]);
+    added.push(...confirmed);
+    for (const name of missing) {
+      errors.push(
+        `Batch 5: pole "${name}" nie pojawiło się w schemacie po update (brak wyjątku, ale retrieve go nie potwierdza)`,
+      );
+    }
+  } catch (err) {
+    errors.push(`Batch 5: ${err instanceof Error ? err.message : "Błąd migracji schematu"}`);
+  }
+
   return { added, errors };
 }
 

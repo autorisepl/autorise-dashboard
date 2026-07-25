@@ -17,15 +17,12 @@ const PO_WDROZENIU_FRACTION = 0.125;
 // godziny dziennie × liczba spedytorów × dni robocze/mc.
 const DNI_ROBOCZE_MC = 21;
 // Cena standardowa, zdefiniowana w lib/agents/prompts.ts (Agent 1/2/5) i SZKIC_UMOWA_AUTORISE.md
-// §5 ust. 1: 18 000 PLN cena regularna, rabat za terminowość -3 000 PLN (do 15 000 PLN)
-// przy łącznym spełnieniu: płatność faktury w 14 dni ORAZ dostarczenie kompletu dostępów w
-// ustalonym terminie. Pola Notion "Cena wdrożenia"/"Retainer PLN/mc" są wypełniane ręcznie przez
-// Michała — puste pole oznacza standardową ofertę, nie brak ceny, więc fallback na te stałe
-// zamiast null/"ustalana indywidualnie". Wartość ręcznie wpisana w Notion to zawsze cena finalna
-// dla wdrożeń niestandardowych (poza 4 modułami albo skalą floty/biura) — w takim wypadku nie
-// pokazujemy dwóch cen, tylko jedną wynegocjowaną kwotę (patrz cena_z_rabatem niżej).
+// §5 ust. 1 (wersja umowy z 2026-07-24): 18 000 PLN, jedna cena, bez rabatu za terminowość —
+// mechanizm rabatu (poprzednia wersja umowy) usunięty. Pole Notion "Cena wdrożenia" jest
+// wypełniane ręcznie przez Michała — puste pole oznacza standardową ofertę, nie brak ceny, więc
+// fallback na tę stałą zamiast null/"ustalana indywidualnie". Wartość ręcznie wpisana w Notion to
+// zawsze cena finalna dla wdrożeń niestandardowych (poza 4 modułami albo skalą floty/biura).
 const DOMYSLNA_CENA_WDROZENIA = 18000;
-const DOMYSLNA_CENA_Z_RABATEM = 15000;
 const DOMYSLNY_RETAINER = 4000;
 
 function extractText(prop: PageObjectResponse["properties"][string] | undefined): string {
@@ -104,18 +101,17 @@ export async function GET(req: Request) {
     const po = roi > 0 ? Math.max(Math.round(roi * PO_WDROZENIU_FRACTION), 0) : 0;
 
     // Pole puste w Notion (<=0) = standardowa oferta, nie brak ceny — fallback na cenę
-    // regularną 18000 + osobne cena_z_rabatem 15000 (mechanizm §5 ust. 1 umowy). Wartość
-    // faktycznie wpisana ręcznie (niestandardowe wdrożenie, poza 4 modułami/skalą floty)
-    // zawsze ma pierwszeństwo i jest ceną finalną — wtedy cena_z_rabatem = null, front-end
-    // pokazuje jedną kwotę bez przekreślenia zamiast fabrykować drugą cenę.
+    // 18000 zamiast null/"ustalana indywidualnie". Wartość faktycznie wpisana ręcznie
+    // (niestandardowe wdrożenie, poza 4 modułami/skalą floty) zawsze ma pierwszeństwo.
+    // cena_z_rabatem zostaje zawsze null — mechanizm rabatu za terminowość usunięty z nowej
+    // wersji umowy (2026-07-24), front-end przy null pokazuje jedną kwotę bez przekreślenia.
     const cenaWdrozeniaEfektywna = cenaWdrozenia > 0 ? cenaWdrozenia : DOMYSLNA_CENA_WDROZENIA;
-    const cenaZRabatem = cenaWdrozenia > 0 ? null : DOMYSLNA_CENA_Z_RABATEM;
+    const cenaZRabatem: number | null = null;
     const retainerEfektywny = retainer > 0 ? retainer : DOMYSLNY_RETAINER;
 
-    // ROI/payback liczone względem ceny którą klient faktycznie zapłaci w typowym,
-    // pomyślnym scenariuszu (z rabatem, gdy dotyczy) — nie ceny regularnej, która jest
-    // górnym progiem, nie oczekiwanym wynikiem.
-    const cenaDoPrzelicznikaRoi = cenaZRabatem ?? cenaWdrozeniaEfektywna;
+    // ROI/payback liczone względem ceny którą klient faktycznie zapłaci — jedna cena,
+    // bez wariantu z rabatem.
+    const cenaDoPrzelicznikaRoi = cenaWdrozeniaEfektywna;
     let procentKosztu: number | null = null;
     let paybackMiesiace: number | null = null;
     if (kosztMiesiecznie > 0) {

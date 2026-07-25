@@ -1037,14 +1037,15 @@ function applyValues() {
 
   // Realne payback_miesiace/procent_kosztu (endpoint) mają pierwszeństwo, gdy Notion ma
   // "Koszt problemu PLN/mc" wypełnione. Tryb podglądu/URL-params (brak HAS_CLIENT_DATA) bez
-  // tego pokazuje starą heurystykę opartą o cenę z rabatem (15 000 PLN, mechanizm §5 ust. 1
-  // umowy) jako orientacyjną. Gdy dane klienta SĄ realne (fetch się powiódł), ale koszt
-  // problemu nie jest jeszcze policzony w Notion — pokazujemy "–", nie fabrykujemy liczby
-  // obok notatki twierdzącej że to realne dane klienta. "Cena wdrożenia" sama w sobie zawsze
-  // ma wartość (fallback 18000/15000 w endpoincie), więc ten guard dotyczy tylko ROI/payback.
+  // tego pokazuje starą heurystykę opartą o cenie 18 000 PLN (jedna cena, bez rabatu za
+  // terminowość — mechanizm rabatu usunięty z umowy 2026-07-24) jako orientacyjną. Gdy dane
+  // klienta SĄ realne (fetch się powiódł), ale koszt problemu nie jest jeszcze policzony w
+  // Notion — pokazujemy "–", nie fabrykujemy liczby obok notatki twierdzącej że to realne dane
+  // klienta. "Cena wdrożenia" sama w sobie zawsze ma wartość (fallback 18000 w endpoincie),
+  // więc ten guard dotyczy tylko ROI/payback.
   const gain            = bol / 12 - 4000
-  const monthsFallback  = !HAS_CLIENT_DATA && gain > 0 ? Math.ceil(15000 / gain) : '–'
-  const pctFallback     = !HAS_CLIENT_DATA && bol > 0  ? Math.round(15000 / bol * 100) : '–'
+  const monthsFallback  = !HAS_CLIENT_DATA && gain > 0 ? Math.ceil(18000 / gain) : '–'
+  const pctFallback     = !HAS_CLIENT_DATA && bol > 0  ? Math.round(18000 / bol * 100) : '–'
   const months = V.paybackMiesiace != null ? V.paybackMiesiace : monthsFallback
   const pct    = V.procentKosztu   != null ? V.procentKosztu   : pctFallback
   const vm = document.getElementById('val-months')
@@ -1055,10 +1056,11 @@ function applyValues() {
   const pi = document.getElementById('pct-inv')
   if (pi) pi.textContent = pct
 
-  // Dwie ceny (regularna przekreślona + wyróżniona z rabatem) gdy cenaZRabatem jest znane
-  // (pole "Cena wdrożenia" puste w Notion — standardowa oferta, mechanizm §5 ust. 1 umowy).
-  // Wartość ręcznie wpisana w Notion = jedna wynegocjowana cena, cenaZRabatem wtedy null,
-  // pokazujemy tylko cenaWdrozenia bez przekreślenia, dokładnie jak dotychczas.
+  // Dwie ceny (regularna przekreślona + wyróżniona z rabatem) — mechanizm rabatu za
+  // terminowość usunięty z umowy (2026-07-24), endpoint zwraca cena_z_rabatem zawsze null,
+  // więc ta gałąź jest teraz martwa (zachowana świadomie, bez usuwania kodu — jeśli kiedyś
+  // wróci jednorazowo wynegocjowana druga cena, mechanizm wyświetlania jest gotowy). Dziś
+  // zawsze pokazujemy tylko cenaWdrozenia bez przekreślenia.
   document.querySelectorAll('.val-cena-wdrozenia').forEach(el => {
     const cenaGlowna = V.cenaZRabatem != null ? V.cenaZRabatem : V.cenaWdrozenia
     el.textContent = cenaGlowna != null ? fmt(cenaGlowna) + ' PLN' : 'Cena ustalana indywidualnie'
