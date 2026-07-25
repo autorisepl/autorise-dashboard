@@ -321,7 +321,10 @@ export default function WdrozenieePage() {
           notes:
             "Umowa §4 ust. 4: do 3 sesji po 30 minut w trakcie 30-dniowego okresu weryfikacji, termin do ustalenia z klientem.",
         });
-        if (!ok) setTaskWarning("Zadanie w Google Tasks nie zostało utworzone (sprawdź połączenie z Google).");
+        if (!ok)
+          setTaskWarning(
+            "Zadanie w Google Tasks nie zostało utworzone (sprawdź połączenie z Google).",
+          );
       }
       await fetchClients();
     } finally {
@@ -366,7 +369,10 @@ export default function WdrozenieePage() {
         notes: `Zegar 30-dniowej gwarancji wystartował ${today}. Umów z klientem konkretny termin sesji weryfikacyjnej blisko Dnia 30 — ta data jest tylko przybliżeniem, żeby nie zapomnieć.`,
         due: addDays(today, 25),
       });
-      if (!ok) setTaskWarning("Zadanie w Google Tasks nie zostało utworzone (sprawdź połączenie z Google).");
+      if (!ok)
+        setTaskWarning(
+          "Zadanie w Google Tasks nie zostało utworzone (sprawdź połączenie z Google).",
+        );
       await fetchClients();
     } finally {
       setConfirming(false);
@@ -434,8 +440,8 @@ export default function WdrozenieePage() {
                       color: "var(--text-secondary)",
                     }}
                   >
-                    {taskWarning} Zapis w Notion się powiódł, tylko przypomnienie w Google Tasks
-                    nie zostało utworzone — utwórz je ręcznie.
+                    {taskWarning} Zapis w Notion się powiódł, tylko przypomnienie w Google Tasks nie
+                    zostało utworzone — utwórz je ręcznie.
                   </span>
                 </div>
               )}
@@ -493,8 +499,8 @@ export default function WdrozenieePage() {
                       color: "var(--text-secondary)",
                     }}
                   >
-                    Pierwszy formalny kontakt po podpisaniu (30-45 minut), ustalenie Wykazu
-                    dostępów przed Panelem Dostępy poniżej.
+                    Pierwszy formalny kontakt po podpisaniu (30-45 minut), ustalenie Wykazu dostępów
+                    przed Panelem Dostępy poniżej.
                   </div>
                 </div>
 

@@ -163,7 +163,9 @@ export async function PATCH(req: Request) {
       properties["Kickoff odbyty"] = { checkbox: d.kickoffOdbyty };
     }
     if (d.dataKickoff !== undefined) {
-      properties["Data Kickoff"] = d.dataKickoff ? { date: { start: d.dataKickoff } } : { date: null };
+      properties["Data Kickoff"] = d.dataKickoff
+        ? { date: { start: d.dataKickoff } }
+        : { date: null };
     }
 
     if (Object.keys(properties).length === 0) {

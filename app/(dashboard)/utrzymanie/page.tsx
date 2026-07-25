@@ -223,7 +223,8 @@ export default function UtrzymanieePage() {
       due: today,
     });
     if (ok) setEscalationTaskCreated(true);
-    else setTaskWarning("Zadanie w Google Tasks nie zostało utworzone (sprawdź połączenie z Google).");
+    else
+      setTaskWarning("Zadanie w Google Tasks nie zostało utworzone (sprawdź połączenie z Google).");
     setCreatingEscalationTask(false);
   }, [selected, kontaktDays]);
 
