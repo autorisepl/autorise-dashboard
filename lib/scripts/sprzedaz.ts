@@ -148,7 +148,7 @@ export const STEPS_D: Step[] = [
       { t: "client", text: "[potwierdza lub koryguje]" },
       {
         t: "note",
-        text: "Jeśli klient nie potrafi podać dokładnej liczby, zachęć do przybliżenia (\"na oko, w przybliżeniu, żeby mieć punkt odniesienia\") zamiast zostawiać pole puste albo traktować brak precyzji jako brak odpowiedzi. Szacunek przybliżony zawsze lepszy niż żaden — kalkulator ROI pokazuje rząd wielkości problemu, nie księgowość co do złotówki.",
+        text: 'Jeśli klient nie potrafi podać dokładnej liczby, zachęć do przybliżenia ("na oko, w przybliżeniu, żeby mieć punkt odniesienia") zamiast zostawiać pole puste albo traktować brak precyzji jako brak odpowiedzi. Szacunek przybliżony zawsze lepszy niż żaden — kalkulator ROI pokazuje rząd wielkości problemu, nie księgowość co do złotówki.',
       },
     ],
     nextStepId: "proby",
