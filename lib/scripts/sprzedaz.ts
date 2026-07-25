@@ -146,6 +146,10 @@ export const STEPS_D: Step[] = [
         cel: "Potwierdzić dane z kalkulatora kwalifikacji zamiast pytać od zera, zgodnie z zasadą że Discovery nie powtarza pytań z kwalifikacji. Godziny na spedytora to realne pole zapisane w Pipeline; liczba osób nie jest jeszcze zapisywana do Notion (kalkulator liczy ją tylko lokalnie w UI kwalifikacji), więc to jedyna część pytana od nowa",
       },
       { t: "client", text: "[potwierdza lub koryguje]" },
+      {
+        t: "note",
+        text: "Jeśli klient nie potrafi podać dokładnej liczby, zachęć do przybliżenia (\"na oko, w przybliżeniu, żeby mieć punkt odniesienia\") zamiast zostawiać pole puste albo traktować brak precyzji jako brak odpowiedzi. Szacunek przybliżony zawsze lepszy niż żaden — kalkulator ROI pokazuje rząd wielkości problemu, nie księgowość co do złotówki.",
+      },
     ],
     nextStepId: "proby",
   },
@@ -849,6 +853,24 @@ export const OBJECTIONS_D: Objection[] = [
     script:
       "Rozumiem, to standardowa procedura przy większych firmach. Wyślę umowę dziś/jutro na maila — czy mogę prosić o konkretny termin kiedy spodziewa się Pan odpowiedzi od prawnika, żebyśmy mogli zaplanować start? Jeśli po drodze pojawią się pytania techniczne czy dotyczące zakresu, chętnie odpowiem prawnikowi bezpośrednio albo Panu, żeby nie utknęło bez potrzeby.",
     note: "Realny, powtarzalny przypadek u większych klientów, nie to samo co generyczne 'muszę pomyśleć' (od1) — to legalna procedura korporacyjna, nie wymówka. Potwierdzone na Arku Burkowskim ('u nas czyta prawnie', 'on na pewno nie usiądzie do tego na CITO'). Cel: nie naciskać na podpis tego samego dnia w takiej sytuacji, tylko wyciągnąć konkretny termin follow-up zamiast otwartego 'jakoś się odezwę'.",
+  },
+  {
+    id: "od20",
+    stage: "closing",
+    label: "Nie wie kiedy chce zacząć, zwleka bez konkretnego powodu",
+    script:
+      "Policzyliśmy razem że to kosztuje Pana firmę [kwota roczna] rocznie. Skoro wiemy ile to Pana kosztuje, czy warto dalej poświęcać na to czas i energię, czy się rozłączamy?",
+    note: "Wskazówka Agency Leaders: nie naciskać dalej po tym pytaniu, dać klientowi samemu podjąć decyzję mając konkretną liczbę przed oczami — ta sama zasada ciszy co przy podaniu ceny. Zadawane gdy klient sam nie potrafi określić momentu decyzji, nie jako pierwsza reakcja na każde wahanie.",
+  },
+  {
+    id: "od21",
+    stage: "closing",
+    label: "To temat na za miesiąc",
+    script:
+      "Rozumiem, ale zanim to zostawimy na później — co konkretnie sprawia że to akurat za miesiąc, nie teraz? Budżet, sezon, czy ktoś inny musi to jeszcze zaakceptować?",
+    followup:
+      "Skoro wiemy co konkretnie stoi na przeszkodzie, sprawdźmy razem czy da się to rozwiązać już teraz, zamiast czekać miesiąc z tym samym kosztem który dalej biegnie.",
+    note: "Wskazówka Agency Leaders: nie akceptować 'za miesiąc' biernie — dobry sprzedawca doradza, nie tylko czeka na 'tak'. Po poznaniu realnego powodu, spróbuj pokazać koszt dalszego zwlekania i sprawdź czy przeszkoda da się usunąć teraz, zanim zaakceptujesz odłożenie w czasie.",
   },
 ];
 
