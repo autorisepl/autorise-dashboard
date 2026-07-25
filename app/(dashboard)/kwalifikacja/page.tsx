@@ -452,7 +452,9 @@ function ScriptKalkulator({
   const miesiecznieH = groups.reduce((sum, g) => sum + g.osoby * g.godziny * 22, 0);
   const miesieczniePLN = groups.reduce((sum, g) => sum + g.osoby * g.godziny * 22 * g.stawka, 0);
   const rocznie = miesieczniePLN * 12;
-  const gwarancjaH = Math.round(miesiecznieH * 0.8);
+  // 70% czasu bazowego (nowa umowa §4, 2026-07-24) — było 0.8, ten sam mechanizm procentowy
+  // co [gwarancja godzin] w sprzedaz.ts i gwar w prezentacja-dane/route.ts.
+  const gwarancjaH = Math.round(miesiecznieH * 0.7);
 
   const fmt = (n: number) =>
     n.toLocaleString("pl-PL", { minimumFractionDigits: 0, maximumFractionDigits: 0 });

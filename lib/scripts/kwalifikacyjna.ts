@@ -183,7 +183,7 @@ export const STEPS_K: Step[] = [
       {
         t: "say",
         text: "Ile osób pracuje w biurze — mam na myśli osoby które zajmują się zleceniami, dokumentami, fakturami?",
-        cel: "Sprawdzić twardy próg ICP — poniżej 2 osób matematycznie nie osiągniemy 80h gwarancji",
+        cel: "Sprawdzić twardy próg ICP — poniżej 2 osób ból zwykle zbyt mały żeby uzasadnić inwestycję, niezależnie od gwarancji (gwarancja jest procentowa, 70% czasu bazowego klienta, skaluje się z wielkością biura, więc to nie jest już kwestia nieosiągalnego progu godzin)",
       },
     ],
     decision: {

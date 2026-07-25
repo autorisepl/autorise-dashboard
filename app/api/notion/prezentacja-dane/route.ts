@@ -6,8 +6,11 @@ export const dynamic = "force-dynamic";
 
 const notion = new Client({ auth: process.env.NOTION_TOKEN });
 
-// Gwarancja to stała firmowa (minimum 80h/mc, patrz AGENT1_SYSTEM_PROMPT), nie pole per-klient.
-const GWARANCJA_H_MC = 80;
+// Gwarancja to procent czasu bazowego klienta (minimum 70%, patrz AGENT1_SYSTEM_PROMPT i
+// SZKIC_UMOWA_AUTORISE.md §4, wersja umowy 2026-07-24), nie sztywna liczba firmowa — ten sam
+// mechanizm co placeholder [gwarancja godzin] w lib/scripts/sprzedaz.ts (`fill()` w
+// app/(dashboard)/sprzedaz/page.tsx).
+const GWARANCJA_PROCENT = 0.7;
 // "Po wdrożeniu" nie ma dedykowanego pola w Notion — Agent 3 szacuje je jako 10-15%
 // wartości "Dziś" (patrz AGENT3_SYSTEM_PROMPT). Ten endpoint nie wywołuje AI, więc
 // replikuje tę samą heurystykę deterministycznie, na środku podanego zakresu (12.5%).
@@ -81,6 +84,7 @@ export async function GET(req: Request) {
     const cenaWdrozenia = extractNumber(props["Cena wdrożenia"]);
     const retainer = extractNumber(props["Retainer PLN/mc"]);
     const bolGlowny = extractText(props["Ból główny"]);
+    const czasBazowyPotwierdzony = extractNumber(props["Czas bazowy potwierdzony h/mc"]);
 
     // roi = h/mc CAŁEGO biura, nie surowa wartość dzienna na osobę (patrz stała
     // DNI_ROBOCZE_MC wyżej). Brak "Spedytorzy" w Notion nie może cicho wyzerować
@@ -99,6 +103,13 @@ export async function GET(req: Request) {
     }
 
     const po = roi > 0 ? Math.max(Math.round(roi * PO_WDROZENIU_FRACTION), 0) : 0;
+
+    // Gwarancja 70% czasu bazowego. "Czas bazowy potwierdzony h/mc" jest zwykle jeszcze puste
+    // przed podpisaniem (wypełniane dopiero podczas Pomiaru bazowego po Kickoff), więc honest
+    // fallback na `roi` (bieżący szacunek "Dziś" z kalkulatora kwalifikacji) — nie pokazujemy
+    // null/0 na slajdzie gwarancji tylko dlatego że formalne potwierdzenie jeszcze nie nastąpiło.
+    const bazaGwarancji = czasBazowyPotwierdzony > 0 ? czasBazowyPotwierdzony : roi;
+    const gwarancjaH = bazaGwarancji > 0 ? Math.round(bazaGwarancji * GWARANCJA_PROCENT) : null;
 
     // Pole puste w Notion (<=0) = standardowa oferta, nie brak ceny — fallback na cenę
     // 18000 zamiast null/"ustalana indywidualnie". Wartość faktycznie wpisana ręcznie
@@ -128,7 +139,7 @@ export async function GET(req: Request) {
       po,
       bol: kosztRoczny,
       tms,
-      gwar: GWARANCJA_H_MC,
+      gwar: gwarancjaH,
       cena_wdrozenia: cenaWdrozeniaEfektywna,
       cena_z_rabatem: cenaZRabatem,
       retainer: retainerEfektywny,

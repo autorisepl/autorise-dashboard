@@ -644,7 +644,7 @@ const STAGES = [
     steps: [
       "Kickoff — onboarding, dostępy, harmonogram",
       "Wdrożenie modułów — 4–8 tygodni",
-      "Weryfikacja: min. 80h/mc zaoszczędzonych",
+      "Weryfikacja: min. 70% czasu bazowego zaoszczędzonego",
       "Przejście na Retainer — opieka stała",
       "Upsell — kolejne moduły i referrals",
     ],
@@ -824,7 +824,7 @@ const FUNNEL_NODES: FunnelNode[] = [
     entry: "Kickoff zakończony, harmonogram ustalony.",
     exit: "Komplet dostępów potwierdzony pisemnie: start 4-tygodniowego wdrożenia i 30-dniowego okna weryfikacji gwarancji.",
     endNote:
-      "30-dniowy zegar weryfikacji gwarancji startuje stąd, nie od podpisania umowy. Termin ustalany indywidualnie z klientem podczas rozmowy zamykającej (Załącznik nr 1 umowy), nie jest sztywną liczbą dni dla wszystkich. Dostarczenie dostępów po terminie przesuwa start okna weryfikacji proporcjonalnie o czas opóźnienia (SZKIC_UMOWA_AUTORISE.md §2 ust. 2) i jest jednym z dwóch warunków rabatu za terminowość (§5 ust. 1, mechanizm 18000/15000 PLN).",
+      "30-dniowy zegar weryfikacji gwarancji startuje stąd, nie od podpisania umowy. Termin ustalany indywidualnie z klientem podczas rozmowy zamykającej (Załącznik nr 1 umowy), nie jest sztywną liczbą dni dla wszystkich. Dostarczenie dostępów po terminie przesuwa start okna weryfikacji proporcjonalnie o czas opóźnienia (SZKIC_UMOWA_AUTORISE.md §2 ust. 2).",
   },
   {
     id: "wdrozenie",
@@ -850,9 +850,10 @@ const FUNNEL_NODES: FunnelNode[] = [
     title: "Weryfikacja gwarancji",
     subtitle: "30 dni",
     tone: "neutral",
-    agent: "Porównanie godzin zaoszczędzonych miesięcznie z progiem gwarancji (minimum 80h/mc).",
+    agent:
+      "Porównanie godzin zaoszczędzonych miesięcznie z progiem gwarancji (minimum 70% czasu bazowego klienta).",
     entry: "System działa na produkcji od co najmniej 30 dni na realnych zleceniach.",
-    exit: "Próg spełniony: Retainer. Próg niespełniony: renegocjacja zakresu albo przedłużenie wdrożenia, obsługiwane ręcznie.",
+    exit: "Próg spełniony: Retainer. Próg niespełniony: 2 tygodnie na poprawki, potem druga 30-dniowa weryfikacja (SZKIC_UMOWA_AUTORISE.md §4 ust. 7) — dopiero drugi negatywny wynik uprawnia klienta do zwrotu.",
   },
   {
     id: "retainer",
@@ -860,7 +861,7 @@ const FUNNEL_NODES: FunnelNode[] = [
     title: "Retainer",
     tone: "success",
     agent: "Opieka stała: monitoring wykorzystania, kontakt cykliczny, wsparcie bieżące.",
-    entry: "Gwarancja potwierdzona: minimum 80h/mc zaoszczędzone po 30 dniach.",
+    entry: "Gwarancja potwierdzona: minimum 70% czasu bazowego zaoszczędzone (pierwsza lub druga weryfikacja).",
     exit: "Ciągła współpraca. Wyzwalacz rozszerzenia zakresu przenosi klienta do Upsell.",
     statusKey: "Retainer",
   },

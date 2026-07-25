@@ -1352,11 +1352,12 @@ export async function migrateDailyStatsSchema(): Promise<{ added: string[]; erro
   return { added, errors };
 }
 
-// Cena standardowa z lib/agents/prompts.ts (Agent 1/2/5): 15 000 PLN wdrożenie
-// + 4 000 PLN/mc retainer. "Cena wdrożenia"/"Retainer PLN/mc" są polami wypełnianymi
-// WYŁĄCZNIE ręcznie przez Michała — jednorazowa migracja uzupełnia tylko puste karty,
-// nigdy nie nadpisuje wartości już wpisanej (mogła być świadomie ustawiona inaczej).
-const DOMYSLNA_CENA_WDROZENIA = 15000;
+// Cena standardowa z lib/agents/prompts.ts (Agent 1/2/5): 18 000 PLN wdrożenie, jednorazowo
+// (bez rabatu za terminowość, mechanizm usunięty z umowy 2026-07-24) + 4 000 PLN/mc retainer.
+// "Cena wdrożenia"/"Retainer PLN/mc" są polami wypełnianymi WYŁĄCZNIE ręcznie przez Michała —
+// jednorazowa migracja uzupełnia tylko puste karty, nigdy nie nadpisuje wartości już wpisanej
+// (mogła być świadomie ustawiona inaczej).
+const DOMYSLNA_CENA_WDROZENIA = 18000;
 const DOMYSLNY_RETAINER = 4000;
 
 export interface PipelineCardMissingPricing {
@@ -1436,15 +1437,16 @@ export async function fillDefaultPricingForCards(
   return { updated, errors };
 }
 
-// Cena regularna po zmianie mechanizmu 2026-07-13 (SZKIC_UMOWA_AUTORISE.md §5 ust. 1):
-// 18 000 PLN, rabat za terminowość -3 000 PLN (do 15 000 PLN) przy płatności w 14 dni ORAZ
-// dostępach w ustalonym terminie. Migracja z poprzedniej sesji (fillDefaultPricingForCards
-// wyżej, stała DOMYSLNA_CENA_WDROZENIA=15000 sprzed tej zmiany) zapisała 15000 jako
-// SAMODZIELNĄ cenę w kartach z pustym polem — pod nowym mechanizmem te karty powinny
-// pokazywać DWIE ceny (18000 przekreślona + 15000 wyróżniona), co wymaga pustego pola
-// (fallback w prezentacja-dane/route.ts), nie zapisanej liczby. Ta migracja odwraca
-// TYLKO karty z wartością dokładnie 15000 — realna, świadomie inna cena niestandardowa
-// (np. 22000 dla dużej floty) zostaje nietknięta, bo nie pasuje do exact match.
+// Historyczna migracja (2026-07-13, SZKIC_UMOWA_AUTORISE.md §5 ust. 1 sprzed zmiany
+// 2026-07-24) — mechanizm rabatu za terminowość (18000/15000) jest już CAŁKOWICIE usunięty z
+// umowy i z tego pliku (patrz DOMYSLNA_CENA_WDROZENIA=18000 wyżej), ale niektóre karty w
+// Notion nadal mogą mieć "Cena wdrożenia"=15000 zapisane przez starą, wcześniejszą wersję
+// fillDefaultPricingForCards sprzed tej zmiany — pod obecnym mechanizmem to zwyczajnie
+// NIEPRAWIDŁOWA cena (klient zobaczyłby 15000 zamiast realnych 18000), nie do utrzymania z
+// żadnego powodu. Ta migracja czyści TYLKO karty z wartością dokładnie 15000 — realna,
+// świadomie inna cena niestandardowa (np. 22000 dla dużej floty) zostaje nietknięta, bo nie
+// pasuje do exact match. Po wyczyszczeniu pole jest puste i fallback w prezentacja-dane/route.ts
+// pokazuje poprawne 18000.
 const STARA_CENA_DOMYSLNA = 15000;
 
 export interface PipelineCardOldDefaultPrice {
