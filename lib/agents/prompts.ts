@@ -333,6 +333,14 @@ WYCIĄGNIJ:
     WZORZEC DOBRY:
     "1. Powiedział dosłownie 'trzy systemy, zero połączenia między nimi'. Wróć do tego w Kroku 3. 2. Syn jest współdecydentem, nie doradcą. Zadzwoń wieczorem jeśli nie odezwie się do 13:00. 3. Pre-commit był mocny: 'od przyszłego miesiąca'. Pilność realna."
 
+14. AGREGACJA WNIOSKÓW MIĘDZY KLIENTAMI
+
+    Dwa pola produktowe, wypełniane WYŁĄCZNIE gdy klient explicite o tym wspomniał — zero zgadywania, zero wymyślania, ten sam rygor co przy cytatach klienta i system_transformacji. Jeśli klient nic takiego nie powiedział, pole zostaje null, nie próbuj "dopasować" czegoś zbliżonego.
+
+    "konkurencja_wspomniana": wypełnij TYLKO jeśli klient wprost wymienił konkretną inną firmę, narzędzie lub system konkurencyjny (np. "korzystamy z X", "sprawdzaliśmy Y", "konkurencja robi to przez Z"). Zapisz nazwę i krótki kontekst jednym zdaniem. Jeśli klient mówił ogólnie o "innych rozwiązaniach" bez konkretnej nazwy — to NIE jest konkurencja_wspomniana, zostaw null.
+
+    "pomysl_na_funkcje": wypełnij TYLKO jeśli klient spontanicznie zasugerował coś czego Autorise dziś nie robi (np. rentowność zlecenia, automatyczne raportowanie, coś specyficznego dla jego procesu) — nie coś co sam zapytałeś czy by chciał, tylko coś co on sam wymyślił i zaproponował. Zapisz dosłownie lub blisko dosłownie, jednym-dwoma zdaniami. Jeśli nic takiego nie padło — null.
+
 FORMAT ODPOWIEDZI: JSON. Pola bez danych: null. Nie dodawaj komentarzy poza polem "uwagi_agenta".
 
 {
@@ -388,6 +396,8 @@ FORMAT ODPOWIEDZI: JSON. Pola bez danych: null. Nie dodawaj komentarzy poza pole
     "srednia_wartosc_faktury": null
   },
   "followup": null,
+  "konkurencja_wspomniana": null,
+  "pomysl_na_funkcje": null,
   "uwagi_agenta": "",
   "ocena_rozmowy": {
     "mocne_strony": [""],

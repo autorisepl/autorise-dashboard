@@ -301,6 +301,8 @@ export async function upsertClientInPipeline(
       data_followup?: string | null;
       kontekst_followup?: string | null;
     } | null;
+    konkurencja_wspomniana?: string | null;
+    pomysl_na_funkcje?: string | null;
   };
 
   const hasMeeting = Boolean(a1.meet_data);
@@ -407,6 +409,14 @@ export async function upsertClientInPipeline(
   }
   if (a1.uwagi_agenta) {
     props["Uwagi Agenta 1"] = { rich_text: richText(a1.uwagi_agenta) };
+  }
+  // Agregacja wniosków między klientami (2026-07-26) — wypełniane TYLKO jeśli klient
+  // explicite wspomniał, zero zgadywania/wymyślania, ten sam rygor co system_transformacji.
+  if (a1.konkurencja_wspomniana) {
+    props["Konkurencja wspomniana"] = { rich_text: richText(a1.konkurencja_wspomniana) };
+  }
+  if (a1.pomysl_na_funkcje) {
+    props["Pomysł na funkcję"] = { rich_text: richText(a1.pomysl_na_funkcje) };
   }
   if (a1.kalkulator_dane?.maile_dziennie != null) {
     props["Maile ze zleceniami / dzień"] = { number: a1.kalkulator_dane.maile_dziennie };
@@ -1128,6 +1138,32 @@ export async function migrateNotionSchema(): Promise<{ added: string[]; errors: 
     }
   } catch (err) {
     errors.push(`Batch 6: ${err instanceof Error ? err.message : "Błąd migracji schematu"}`);
+  }
+
+  // Batch 7 (2026-07-26) — agregacja wniosków między klientami dla Agenta Kwalifikacja:
+  // "Konkurencja wspomniana" i "Pomysł na funkcję", wypełniane WYŁĄCZNIE gdy klient explicite
+  // o tym wspomniał (żadne pole nigdy nie zgaduje/wymyśla treści — ten sam rygor co
+  // system_transformacji, Blok "Arek" pkt 1, 2026-07-15).
+  try {
+    await notion.dataSources.update({
+      data_source_id: PIPELINE_DATA_SOURCE_ID,
+      properties: {
+        "Konkurencja wspomniana": { rich_text: {} },
+        "Pomysł na funkcję": { rich_text: {} },
+      },
+    });
+    const { confirmed, missing } = await confirmSchemaFields([
+      "Konkurencja wspomniana",
+      "Pomysł na funkcję",
+    ]);
+    added.push(...confirmed);
+    for (const name of missing) {
+      errors.push(
+        `Batch 7: pole "${name}" nie pojawiło się w schemacie po update (brak wyjątku, ale retrieve go nie potwierdza)`,
+      );
+    }
+  } catch (err) {
+    errors.push(`Batch 7: ${err instanceof Error ? err.message : "Błąd migracji schematu"}`);
   }
 
   return { added, errors };
