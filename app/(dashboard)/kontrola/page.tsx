@@ -1,224 +1,12 @@
 "use client";
 
-import {
-  AlertTriangle,
-  CheckCircle2,
-  ChevronRight,
-  Database,
-  Loader2,
-  Monitor,
-  RefreshCw,
-  X,
-} from "lucide-react";
+import { AlertTriangle, CheckCircle2, Database, Loader2, Monitor, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import type { ClaudeAgent, ClaudeConfigResponse, ClaudeSkill } from "@/app/api/claude-config/route";
 import type { EnvCheckResponse } from "@/app/api/env-check/route";
 import type { HealthResponse } from "@/app/api/health/route";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Panel } from "@/components/ui/Panel";
 import { SectionLabel } from "@/components/ui/SectionLabel";
-
-// ── Detail panel ─────────────────────────────────────────────────────
-
-function DetailPanel({
-  item,
-  type,
-  onClose,
-}: {
-  item: ClaudeAgent | ClaudeSkill;
-  type: "agent" | "skill";
-  onClose: () => void;
-}) {
-  const isAgent = type === "agent";
-  const agent = isAgent ? (item as ClaudeAgent) : null;
-
-  return (
-    <div
-      style={{
-        position: "fixed",
-        top: 0,
-        right: 0,
-        bottom: 0,
-        width: 360,
-        background: "var(--bg-sidebar)",
-        backdropFilter: "blur(24px) saturate(180%)",
-        WebkitBackdropFilter: "blur(24px) saturate(180%)",
-        borderLeft: "1px solid var(--border)",
-        zIndex: 50,
-        display: "flex",
-        flexDirection: "column",
-        boxShadow: "-8px 0 32px rgba(0,0,0,0.08)",
-      }}
-    >
-      <div
-        style={{
-          padding: "14px 16px",
-          borderBottom: "1px solid var(--border)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          flexShrink: 0,
-        }}
-      >
-        <div>
-          <div
-            style={{
-              fontFamily: "var(--font-sans)",
-              fontSize: 14,
-              fontWeight: 700,
-              color: "var(--text-primary)",
-              letterSpacing: "-0.01em",
-            }}
-          >
-            {item.name}
-          </div>
-          <div
-            style={{
-              fontSize: 10,
-              fontWeight: 600,
-              letterSpacing: "0.07em",
-              textTransform: "uppercase",
-              color: isAgent ? "var(--accent)" : "var(--text-tertiary)",
-              marginTop: 2,
-            }}
-          >
-            {isAgent ? "Agent" : "Skill"}
-          </div>
-        </div>
-        <button
-          onClick={onClose}
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            color: "var(--text-tertiary)",
-            padding: 4,
-          }}
-        >
-          <X size={15} />
-        </button>
-      </div>
-
-      <div style={{ flex: 1, overflowY: "auto", padding: "16px" }}>
-        {item.description && (
-          <div style={{ marginBottom: 16 }}>
-            <div
-              style={{
-                fontSize: 10,
-                fontWeight: 600,
-                letterSpacing: "0.07em",
-                textTransform: "uppercase",
-                color: "var(--text-tertiary)",
-                marginBottom: 6,
-              }}
-            >
-              Opis
-            </div>
-            <div
-              style={{
-                fontSize: 13,
-                color: "var(--text-primary)",
-                lineHeight: 1.6,
-                fontFamily: "var(--font-sans)",
-              }}
-            >
-              {item.description}
-            </div>
-          </div>
-        )}
-
-        {agent?.whenToUse && (
-          <div style={{ marginBottom: 16 }}>
-            <div
-              style={{
-                fontSize: 10,
-                fontWeight: 600,
-                letterSpacing: "0.07em",
-                textTransform: "uppercase",
-                color: "var(--text-tertiary)",
-                marginBottom: 6,
-              }}
-            >
-              Kiedy używać
-            </div>
-            <div
-              style={{
-                fontSize: 13,
-                color: "var(--text-secondary)",
-                lineHeight: 1.6,
-                fontFamily: "var(--font-sans)",
-              }}
-            >
-              {agent.whenToUse}
-            </div>
-          </div>
-        )}
-
-        {agent?.model && (
-          <div style={{ marginBottom: 16 }}>
-            <div
-              style={{
-                fontSize: 10,
-                fontWeight: 600,
-                letterSpacing: "0.07em",
-                textTransform: "uppercase",
-                color: "var(--text-tertiary)",
-                marginBottom: 6,
-              }}
-            >
-              Model
-            </div>
-            <div
-              style={{
-                fontSize: 12,
-                color: "var(--accent)",
-                background: "var(--accent-muted)",
-                padding: "4px 10px",
-                borderRadius: "var(--radius-xs)",
-                display: "inline-block",
-                fontFamily: "var(--font-sans)",
-              }}
-            >
-              {agent.model}
-            </div>
-          </div>
-        )}
-
-        {item.body && (
-          <div>
-            <div
-              style={{
-                fontSize: 10,
-                fontWeight: 600,
-                letterSpacing: "0.07em",
-                textTransform: "uppercase",
-                color: "var(--text-tertiary)",
-                marginBottom: 6,
-              }}
-            >
-              Dokumentacja
-            </div>
-            <div
-              style={{
-                fontSize: 12,
-                color: "var(--text-secondary)",
-                lineHeight: 1.7,
-                fontFamily: "var(--font-sans)",
-                whiteSpace: "pre-wrap",
-                background: "var(--bg-elevated)",
-                borderRadius: "var(--radius-sm)",
-                padding: "10px 12px",
-                border: "1px solid var(--border)",
-              }}
-            >
-              {item.body}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
 
 // ── Status dot helper ────────────────────────────────────────────────
 
@@ -270,13 +58,8 @@ const API_ITEMS = [
 export default function KontrolaPage() {
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [envVars, setEnvVars] = useState<EnvCheckResponse["vars"]>([]);
-  const [claudeConfig, setClaudeConfig] = useState<ClaudeConfigResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<string>("");
-  const [selectedItem, setSelectedItem] = useState<{
-    item: ClaudeAgent | ClaudeSkill;
-    type: "agent" | "skill";
-  } | null>(null);
   const [migrating, setMigrating] = useState(false);
   const [migrateResult, setMigrateResult] = useState<{
     success: boolean;
@@ -312,19 +95,16 @@ export default function KontrolaPage() {
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [healthRes, envRes, claudeRes] = await Promise.all([
+      const [healthRes, envRes] = await Promise.all([
         fetch("/api/health"),
         fetch("/api/env-check"),
-        fetch("/api/claude-config"),
       ]);
-      const [healthData, envData, claudeData] = await Promise.all([
+      const [healthData, envData] = await Promise.all([
         healthRes.json() as Promise<HealthResponse>,
         envRes.json() as Promise<EnvCheckResponse>,
-        claudeRes.json() as Promise<ClaudeConfigResponse>,
       ]);
       setHealth(healthData);
       setEnvVars(envData.vars ?? []);
-      setClaudeConfig(claudeData);
       setLastUpdated(
         new Date().toLocaleTimeString("pl-PL", {
           hour: "2-digit",
@@ -591,9 +371,8 @@ export default function KontrolaPage() {
           </Panel>
         </div>
 
-        {/* Row 2 — Env vars (40%) | Claude Code (60%) */}
-        <div style={{ display: "grid", gridTemplateColumns: "2fr 3fr", gap: 12 }}>
-          {/* Env vars */}
+        {/* Row 2 — Env vars */}
+        <div>
           <Panel style={{ padding: 14 }}>
             <SectionLabel>Zmienne środowiskowe</SectionLabel>
             <div
@@ -670,217 +449,15 @@ export default function KontrolaPage() {
               )}
             </div>
           </Panel>
-
-          {/* Claude Code config */}
-          <Panel style={{ padding: 14 }}>
-            <SectionLabel>Claude Code — konfiguracja</SectionLabel>
-            <div
-              style={{ marginTop: 10, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}
-            >
-              {/* Agents */}
-              <div>
-                <div
-                  style={{
-                    fontFamily: "var(--font-sans)",
-                    fontSize: 10,
-                    fontWeight: 700,
-                    color: "var(--text-tertiary)",
-                    letterSpacing: "0.07em",
-                    textTransform: "uppercase",
-                    marginBottom: 6,
-                  }}
-                >
-                  Agenci ({claudeConfig?.agents?.length ?? "…"})
-                </div>
-                {!claudeConfig?.agents?.length ? (
-                  <div
-                    style={{
-                      fontFamily: "var(--font-sans)",
-                      fontSize: 11,
-                      color: "var(--text-tertiary)",
-                    }}
-                  >
-                    {loading ? "Ładowanie..." : "Brak agentów"}
-                  </div>
-                ) : (
-                  <div style={{ display: "flex", flexDirection: "column" }}>
-                    {claudeConfig.agents.map((agent) => (
-                      <button
-                        key={agent.name}
-                        onClick={() => setSelectedItem({ item: agent, type: "agent" })}
-                        style={
-                          {
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            gap: 6,
-                            width: "100%",
-                            padding: "4px 0",
-                            background: "none",
-                            border: "none",
-                            borderBottom: "1px solid var(--border)",
-                            cursor: "pointer",
-                            textAlign: "left",
-                          } as React.CSSProperties
-                        }
-                      >
-                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                          <div
-                            style={{
-                              width: 4,
-                              height: 4,
-                              borderRadius: "50%",
-                              background: "var(--accent)",
-                              flexShrink: 0,
-                            }}
-                          />
-                          <span
-                            style={{
-                              fontFamily: "var(--font-sans)",
-                              fontSize: 11,
-                              color: "var(--text-secondary)",
-                            }}
-                          >
-                            {agent.name}
-                          </span>
-                        </div>
-                        <ChevronRight size={10} color="var(--text-tertiary)" />
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Skills + Model */}
-              <div>
-                <div
-                  style={{
-                    fontFamily: "var(--font-sans)",
-                    fontSize: 10,
-                    fontWeight: 700,
-                    color: "var(--text-tertiary)",
-                    letterSpacing: "0.07em",
-                    textTransform: "uppercase",
-                    marginBottom: 6,
-                  }}
-                >
-                  Skills ({claudeConfig?.skills?.length ?? "…"})
-                </div>
-                {!claudeConfig?.skills?.length ? (
-                  <div
-                    style={{
-                      fontFamily: "var(--font-sans)",
-                      fontSize: 11,
-                      color: "var(--text-tertiary)",
-                    }}
-                  >
-                    {loading ? "Ładowanie..." : "Brak skills"}
-                  </div>
-                ) : (
-                  <div style={{ display: "flex", flexDirection: "column" }}>
-                    {claudeConfig.skills.map((skill) => (
-                      <button
-                        key={skill.name}
-                        onClick={() => setSelectedItem({ item: skill, type: "skill" })}
-                        style={
-                          {
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            gap: 6,
-                            width: "100%",
-                            padding: "4px 0",
-                            background: "none",
-                            border: "none",
-                            borderBottom: "1px solid var(--border)",
-                            cursor: "pointer",
-                            textAlign: "left",
-                          } as React.CSSProperties
-                        }
-                      >
-                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                          <div
-                            style={{
-                              width: 4,
-                              height: 4,
-                              borderRadius: "50%",
-                              background: "var(--text-tertiary)",
-                              flexShrink: 0,
-                            }}
-                          />
-                          <span
-                            style={{
-                              fontFamily: "var(--font-sans)",
-                              fontSize: 11,
-                              color: "var(--text-tertiary)",
-                            }}
-                          >
-                            {skill.name}
-                          </span>
-                        </div>
-                        <ChevronRight size={10} color="var(--text-tertiary)" />
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                <div
-                  style={{ marginTop: 14, paddingTop: 10, borderTop: "1px solid var(--border)" }}
-                >
-                  <div
-                    style={{
-                      fontFamily: "var(--font-sans)",
-                      fontSize: 10,
-                      fontWeight: 700,
-                      color: "var(--text-tertiary)",
-                      letterSpacing: "0.07em",
-                      textTransform: "uppercase",
-                      marginBottom: 6,
-                    }}
-                  >
-                    Modele
-                  </div>
-                  {[
-                    ["Główny", "Claude Sonnet 4.6"],
-                    ["Reasoning", "Claude Opus 4.8"],
-                    ["Worker", "Claude Haiku 4.5"],
-                  ].map(([k, v]) => (
-                    <div
-                      key={k}
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        padding: "3px 0",
-                        borderBottom: "1px solid var(--border)",
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontFamily: "var(--font-sans)",
-                          fontSize: 10,
-                          color: "var(--text-tertiary)",
-                        }}
-                      >
-                        {k}
-                      </span>
-                      <span
-                        style={{
-                          fontFamily: "var(--font-sans)",
-                          fontSize: 10,
-                          color: "var(--text-secondary)",
-                          fontWeight: 500,
-                        }}
-                      >
-                        {v}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </Panel>
         </div>
+
+        {/* USUNIĘTE (2026-07-26): karta "Claude Code — konfiguracja" pokazywała statyczne
+            "Modele: Główny/Reasoning/Worker" które nigdy nie odpowiadało realnej architekturze
+            (agenci mają modele konfigurowane indywidualnie w prompts.ts, nie trzy stałe warstwy),
+            a listy Agenci/Skills czytały lokalny filesystem (~/.claude/agents, ~/.claude/skills)
+            który na Vercelu po prostu nie istnieje — stąd zawsze "Agenci (0)"/"Skills (0)" na
+            produkcji, mimo że lokalnie działały poprawnie. Karta z wczesnego makietowania,
+            nigdy realnie użyteczna w środowisku gdzie faktycznie działa dashboard. */}
 
         {/* Row 3 — Baza danych Notion: migracja schematu (wszystkie zaległe batche naraz) */}
         <Panel style={{ padding: 14 }}>
@@ -986,15 +563,6 @@ export default function KontrolaPage() {
           )}
         </Panel>
       </div>
-
-      {/* Detail panel */}
-      {selectedItem && (
-        <DetailPanel
-          item={selectedItem.item}
-          type={selectedItem.type}
-          onClose={() => setSelectedItem(null)}
-        />
-      )}
     </div>
   );
 }
