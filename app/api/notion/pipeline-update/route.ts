@@ -37,6 +37,8 @@ const bodySchema = z.object({
   kickoffOdbyty: z.boolean().optional(),
   dataKickoff: z.string().nullable().optional(),
   moduleWdrazane: z.array(z.string()).optional(),
+  tabelaModulowKickoff: z.string().nullable().optional(),
+  tabelaModulowWeryfikacja: z.string().nullable().optional(),
 });
 
 function richText(text: string) {
@@ -171,6 +173,16 @@ export async function PATCH(req: Request) {
     if (d.moduleWdrazane !== undefined) {
       properties["Moduły wdrażane"] = {
         multi_select: d.moduleWdrazane.map((name) => ({ name })),
+      };
+    }
+    if (d.tabelaModulowKickoff !== undefined) {
+      properties["Tabela modułów Kickoff"] = {
+        rich_text: d.tabelaModulowKickoff ? richText(d.tabelaModulowKickoff) : [],
+      };
+    }
+    if (d.tabelaModulowWeryfikacja !== undefined) {
+      properties["Tabela modułów Weryfikacja"] = {
+        rich_text: d.tabelaModulowWeryfikacja ? richText(d.tabelaModulowWeryfikacja) : [],
       };
     }
 

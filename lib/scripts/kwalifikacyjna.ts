@@ -514,6 +514,11 @@ export const STEPS_K: Step[] = [
     lines: [
       {
         t: "say",
+        text: "Dokładny podział na poszczególne zadania zmierzymy razem na Kickoffie, teraz potrzebuję orientacyjnej całości.",
+        cel: "Ustawić oczekiwanie, że to pierwsze przybliżenie, nie finalna liczba — dokładny pomiar per moduł następuje dopiero na Kickoffie (Załącznik 1 umowy)",
+      },
+      {
+        t: "say",
         text: "Podsumowując to o czym rozmawialiśmy, ile czasu dziennie to wszystko zajmuje, licząc wszystkie osoby razem?",
         cel: "Zebrać dane do konkretnego wyliczenia straty czasu",
       },

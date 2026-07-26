@@ -18,6 +18,7 @@ import { ClientCompanyLine, ClientContactDetails } from "@/components/clients/Cl
 import { ContactAttemptsBadge } from "@/components/clients/ContactAttemptsBadge";
 import { Button } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { MODULE_CATALOG } from "@/lib/scripts/moduleCatalog";
 
 // ── Constants ────────────────────────────────────────────────────────
 
@@ -34,16 +35,10 @@ const ROW2 = ["Kickoff", "Wdrożenie", "Retainer", "Niekwalifikowany"];
 const ROW3 = ["Nieaktywny (follow up)", "Upsell", "Zakończona współpraca"];
 const PIPELINE_STATUSES = [...ROW1, ...ROW2, ...ROW3];
 
-// Baza Notion Produkty (Blok "Arek" pkt 11) — 4 standardowe moduły wdrożeniowe, ten sam
-// zestaw kodów co "Kod modułu" w Produkty i "Kategorie kalkulatora" w kwalifikacyjna.ts.
 // Pole "Moduły wdrażane" (Batch 6, 2026-07-26) nie istniało wcześniej na karcie klienta —
 // dotąd żadne miejsce nie zapisywało które moduły faktycznie wdraża się dla danego klienta.
-const MODULE_CATALOG: { code: string; label: string }[] = [
-  { code: "email-parser", label: "Wczytywanie zleceń z maila" },
-  { code: "document-ocr", label: "Skan i odczyt dokumentów (CMR, faktury)" },
-  { code: "payment-monitor", label: "Pilnowanie terminów płatności / KSeF" },
-  { code: "whatsapp-alerts", label: "Status zleceń na WhatsApp" },
-];
+// MODULE_CATALOG samo wydzielone do lib/scripts/moduleCatalog.ts (2026-07-26), bo /wdrozenie
+// potrzebuje tych samych etykiet dla tabeli czasu bazowego per moduł.
 
 // Ściągawka cennika modułowego (2026-07-26) — WYŁĄCZNIE orientacyjna podpowiedź dla Michała,
 // nigdy nie wysyłana do klienta ani nigdzie nie zapisywana. Stałe placeholder, nieoparte na

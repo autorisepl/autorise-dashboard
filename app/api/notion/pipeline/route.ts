@@ -57,6 +57,8 @@ export interface PipelineClientDetailed {
   dataKickoff: string;
   uwagiAgenta1: string;
   moduleWdrazane: string[];
+  tabelaModulowKickoff: string;
+  tabelaModulowWeryfikacja: string;
 }
 
 // Blok 1, punkt 1.5 (2026-07-14) — data premiery skryptu kwalifikacyjnego V4 (12 kroków, ICP
@@ -171,6 +173,8 @@ export async function GET() {
           dataKickoff: extractText(props["Data Kickoff"]),
           uwagiAgenta1: extractText(props["Uwagi Agenta 1"]),
           moduleWdrazane: extractMultiSelect(props["Moduły wdrażane"]),
+          tabelaModulowKickoff: extractText(props["Tabela modułów Kickoff"]),
+          tabelaModulowWeryfikacja: extractText(props["Tabela modułów Weryfikacja"]),
         };
       })
       .filter((c: PipelineClientDetailed) => c.firma !== "Bez nazwy");

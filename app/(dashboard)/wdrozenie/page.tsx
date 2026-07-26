@@ -6,6 +6,16 @@ import type { PipelineClientDetailed } from "@/app/api/notion/pipeline/route";
 import { ClientSidebar } from "@/components/clients/ClientSidebar";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Panel } from "@/components/ui/Panel";
+import {
+  type ModuleTimeRow,
+  ModuleTimeTable,
+  sumGodzinyMiesiecznie,
+} from "@/components/wdrozenie/ModuleTimeTable";
+import {
+  MODULE_CATALOG,
+  MODULE_DEFAULT_UNIT,
+  MODULE_DEFAULT_WLICZAJ_DO_PROGU,
+} from "@/lib/scripts/moduleCatalog";
 
 // A1 (2026-07-18) — PROTOTYP zgodnie z instrukcją "zacznij prototypem: sam Panel Dostępy
 // + oś czasu, dla jednego klienta, do oceny Michała". Reszta specyfikacji (Panel Pomiar
@@ -100,6 +110,30 @@ async function createGoogleTask(params: {
   }
 }
 
+const MODULE_LABELS: Record<string, string> = Object.fromEntries(
+  MODULE_CATALOG.map((m) => [m.code, m.label]),
+);
+
+function buildDefaultModuleRows(client: PipelineClientDetailed): ModuleTimeRow[] {
+  return MODULE_CATALOG.filter((m) => client.moduleWdrazane.includes(m.code)).map((m) => ({
+    moduleId: m.code,
+    jednostka: MODULE_DEFAULT_UNIT[m.code] ?? "",
+    czasMinut: 0,
+    wolumenMiesieczny: 0,
+    wliczajDoProgu: MODULE_DEFAULT_WLICZAJ_DO_PROGU[m.code] ?? true,
+  }));
+}
+
+function parseModuleRows(raw: string): ModuleTimeRow[] | null {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed as ModuleTimeRow[]) : null;
+  } catch {
+    return null;
+  }
+}
+
 function computeStageIndex(client: PipelineClientDetailed): number {
   if (!client.kickoffOdbyty) return 0;
   if (!client.dataPotwierdzeniaDostepow) return 1;
@@ -182,6 +216,10 @@ export default function WdrozenieePage() {
   const [confirming, setConfirming] = useState(false);
   const [savingProtokol, setSavingProtokol] = useState(false);
   const [taskWarning, setTaskWarning] = useState<string | null>(null);
+  const [kickoffRows, setKickoffRows] = useState<ModuleTimeRow[]>([]);
+  const [savingKickoffTable, setSavingKickoffTable] = useState(false);
+  const [verificationVolumes, setVerificationVolumes] = useState<Record<string, number>>({});
+  const [savingWeryfikacjaTable, setSavingWeryfikacjaTable] = useState(false);
 
   const fetchClients = useCallback(async () => {
     setLoading(true);
@@ -222,6 +260,43 @@ export default function WdrozenieePage() {
     setChecked(new Set(saved));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected?.id, selected?.dostepyZebrane]);
+
+  // Inicjalizacja tabeli Kickoff TYLKO przy zmianie wybranego klienta, nie przy każdym
+  // pollingu odświeżenia listy (60s) — inaczej niezapisane zmiany w tabeli byłyby co chwilę
+  // nadpisywane danymi z serwera, mimo że użytkownik jeszcze edytuje. Zapis jest jawny
+  // (przycisk "Zapisz"), więc lokalny stan jest źródłem prawdy między zapisami.
+  useEffect(() => {
+    if (!selected) {
+      setKickoffRows([]);
+      setVerificationVolumes({});
+      return;
+    }
+    const savedKickoff = parseModuleRows(selected.tabelaModulowKickoff);
+    setKickoffRows(savedKickoff ?? buildDefaultModuleRows(selected));
+
+    const savedWeryfikacja = parseModuleRows(selected.tabelaModulowWeryfikacja);
+    setVerificationVolumes(
+      savedWeryfikacja
+        ? Object.fromEntries(savedWeryfikacja.map((r) => [r.moduleId, r.wolumenMiesieczny]))
+        : {},
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected?.id]);
+
+  // Wiersze Weryfikacji wyprowadzone NA ŻYWO z kickoffRows (jednostka/czas na jednostkę/
+  // wliczaj-do-progu), tylko wolumen podmieniony na rzeczywisty (verificationVolumes). Świadomie
+  // NIE osobny stan pełnych wierszy — wcześniejsza wersja trzymała drugą kopię tych samych pól i
+  // traciła synchronizację z Kickoffem po zapisie (czas na jednostkę zostawał 0, bo kopia
+  // powstała zanim tabela Kickoff w ogóle miała zapisane wartości). Zapis nadal robi pełny
+  // zrzut JSON (nie sam wolumen), więc dane w Notion są samodzielnym snapshotem.
+  const weryfikacjaRows = useMemo<ModuleTimeRow[]>(
+    () => kickoffRows.map((r) => ({ ...r, wolumenMiesieczny: verificationVolumes[r.moduleId] ?? 0 })),
+    [kickoffRows, verificationVolumes],
+  );
+
+  const updateVerificationVolumes = useCallback((rows: ModuleTimeRow[]) => {
+    setVerificationVolumes(Object.fromEntries(rows.map((r) => [r.moduleId, r.wolumenMiesieczny])));
+  }, []);
 
   const stageIndex = useMemo(() => (selected ? computeStageIndex(selected) : 0), [selected]);
   const allChecked = ACCESS_ITEMS.every((item) => checked.has(item.key));
@@ -290,6 +365,52 @@ export default function WdrozenieePage() {
     },
     [selected, fetchClients],
   );
+
+  // Tabela czasu bazowego per moduł (nowa umowa, Załącznik 1) — wypełniana na Kickoff, suma
+  // nadpisuje "Czas bazowy potwierdzony h/mc" (dawniej wpisywane ręcznie jedną liczbą, teraz
+  // liczone automatycznie z sumy wierszy modułowych, patrz CLAUDE.md).
+  const saveKickoffTable = useCallback(async () => {
+    if (!selected) return;
+    setSavingKickoffTable(true);
+    try {
+      const total = Math.round(sumGodzinyMiesiecznie(kickoffRows) * 10) / 10;
+      await fetch("/api/notion/pipeline-update", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pageId: selected.id,
+          tabelaModulowKickoff: JSON.stringify(kickoffRows),
+          czasBazowyPotwierdzony: total,
+        }),
+      });
+      await fetchClients();
+    } finally {
+      setSavingKickoffTable(false);
+    }
+  }, [selected, kickoffRows, fetchClients]);
+
+  // Ta sama tabela, druga runda na Weryfikacji Dnia 30 — jednostka/czas na jednostkę/wliczaj-
+  // do-progu przychodzą z Kickoffu jako tylko-do-odczytu (ModuleTimeTable editableFields=
+  // "wolumenOnly"), edytowalny jest wyłącznie rzeczywisty wolumen z minionych 30 dni. Zapisujemy
+  // pełny wiersz (nie sam wolumen), żeby zapis był samodzielnym zrzutem stanu w chwili
+  // weryfikacji, niezależnym od ewentualnej późniejszej zmiany tabeli Kickoff.
+  const saveWeryfikacjaTable = useCallback(async () => {
+    if (!selected) return;
+    setSavingWeryfikacjaTable(true);
+    try {
+      await fetch("/api/notion/pipeline-update", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pageId: selected.id,
+          tabelaModulowWeryfikacja: JSON.stringify(weryfikacjaRows),
+        }),
+      });
+      await fetchClients();
+    } finally {
+      setSavingWeryfikacjaTable(false);
+    }
+  }, [selected, weryfikacjaRows, fetchClients]);
 
   // Krok "Odbiór" (nowa umowa §3, między Tydzień 4/Live i Dzień 30/Weryfikacja) — na razie
   // świadomie prosty panel (checkbox + data), bez pełnej logiki usterka krytyczna/niekrytyczna
@@ -574,6 +695,67 @@ export default function WdrozenieePage() {
                     }}
                   />
                 </div>
+
+                <div style={{ marginTop: 18 }}>
+                  <div
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      letterSpacing: "0.04em",
+                      textTransform: "uppercase",
+                      color: "var(--text-tertiary)",
+                      marginBottom: 3,
+                    }}
+                  >
+                    Pomiar bazowy — czas per moduł
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 12,
+                      color: "var(--text-secondary)",
+                      marginBottom: 10,
+                    }}
+                  >
+                    Załącznik 1 umowy. Ta sama tabela wraca na Weryfikacji Dnia 30 z rzeczywistym
+                    wolumenem.
+                  </div>
+
+                  <ModuleTimeTable
+                    rows={kickoffRows}
+                    moduleLabels={MODULE_LABELS}
+                    editableFields="all"
+                    onChange={setKickoffRows}
+                  />
+
+                  {kickoffRows.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => void saveKickoffTable()}
+                      disabled={savingKickoffTable}
+                      style={{
+                        marginTop: 12,
+                        height: 34,
+                        padding: "0 14px",
+                        borderRadius: 8,
+                        border: "none",
+                        background: "var(--accent)",
+                        color: "#fff",
+                        fontFamily: "var(--font-sans)",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        cursor: savingKickoffTable ? "default" : "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                      }}
+                    >
+                      {savingKickoffTable && <Loader2 size={13} />}
+                      Zapisz tabelę Kickoff
+                    </button>
+                  )}
+                </div>
               </Panel>
 
               <Panel>
@@ -829,6 +1011,84 @@ export default function WdrozenieePage() {
                   >
                     Zapisywanie...
                   </div>
+                )}
+              </Panel>
+
+              <Panel>
+                <div style={{ marginBottom: 14 }}>
+                  <div
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      letterSpacing: "0.04em",
+                      textTransform: "uppercase",
+                      color: "var(--text-tertiary)",
+                      marginBottom: 3,
+                    }}
+                  >
+                    Panel 3: Weryfikacja (Dzień 30)
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 12,
+                      color: "var(--text-secondary)",
+                    }}
+                  >
+                    Ta sama tabela co na Kickoffie — jednostka i czas na jednostkę nie zmieniają
+                    się, wpisz rzeczywisty wolumen z minionych 30 dni (z logów systemu). Suma
+                    porównana z progiem 70% zapisanym na Kickoffie.
+                  </div>
+                </div>
+
+                {kickoffRows.length === 0 ? (
+                  <div
+                    style={{
+                      padding: "10px 12px",
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 12,
+                      color: "var(--text-tertiary)",
+                    }}
+                  >
+                    Uzupełnij i zapisz tabelę Kickoff w Panelu 0 zanim rozpoczniesz weryfikację —
+                    to stamtąd pochodzi jednostka, czas na jednostkę i próg gwarancji.
+                  </div>
+                ) : (
+                  <>
+                    <ModuleTimeTable
+                      rows={weryfikacjaRows}
+                      moduleLabels={MODULE_LABELS}
+                      editableFields="wolumenOnly"
+                      onChange={updateVerificationVolumes}
+                      progGwarancji={Math.round(sumGodzinyMiesiecznie(kickoffRows) * 0.7 * 10) / 10}
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => void saveWeryfikacjaTable()}
+                      disabled={savingWeryfikacjaTable}
+                      style={{
+                        marginTop: 12,
+                        height: 34,
+                        padding: "0 14px",
+                        borderRadius: 8,
+                        border: "none",
+                        background: "var(--accent)",
+                        color: "#fff",
+                        fontFamily: "var(--font-sans)",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        cursor: savingWeryfikacjaTable ? "default" : "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                      }}
+                    >
+                      {savingWeryfikacjaTable && <Loader2 size={13} />}
+                      Zapisz weryfikację
+                    </button>
+                  </>
                 )}
               </Panel>
             </div>

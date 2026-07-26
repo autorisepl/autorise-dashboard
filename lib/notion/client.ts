@@ -1166,6 +1166,34 @@ export async function migrateNotionSchema(): Promise<{ added: string[]; errors: 
     errors.push(`Batch 7: ${err instanceof Error ? err.message : "Błąd migracji schematu"}`);
   }
 
+  // Batch 8 (2026-07-26) — tabela czasu bazowego per moduł (Załącznik 1 nowej umowy: Moduł/
+  // Jednostka/Czas na jednostkę/Wolumen na miesiąc/Godziny), wypełniana na Kickoff i ponownie
+  // przy Weryfikacji Dnia 30 z rzeczywistym wolumenem. Zapisana jako JSON w rich_text (lista
+  // wierszy per moduł z "Moduły wdrażane"), ten sam wzorzec co inne pola JSON-w-rich_text tego
+  // batcha. "Czas bazowy potwierdzony h/mc" (istniejące pole, number) dalej trzyma finalną
+  // sumę — teraz liczoną automatycznie z tej tabeli zamiast wpisywaną ręcznie.
+  try {
+    await notion.dataSources.update({
+      data_source_id: PIPELINE_DATA_SOURCE_ID,
+      properties: {
+        "Tabela modułów Kickoff": { rich_text: {} },
+        "Tabela modułów Weryfikacja": { rich_text: {} },
+      },
+    });
+    const { confirmed, missing } = await confirmSchemaFields([
+      "Tabela modułów Kickoff",
+      "Tabela modułów Weryfikacja",
+    ]);
+    added.push(...confirmed);
+    for (const name of missing) {
+      errors.push(
+        `Batch 8: pole "${name}" nie pojawiło się w schemacie po update (brak wyjątku, ale retrieve go nie potwierdza)`,
+      );
+    }
+  } catch (err) {
+    errors.push(`Batch 8: ${err instanceof Error ? err.message : "Błąd migracji schematu"}`);
+  }
+
   return { added, errors };
 }
 
