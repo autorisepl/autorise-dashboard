@@ -45,6 +45,19 @@ const MODULE_CATALOG: { code: string; label: string }[] = [
   { code: "whatsapp-alerts", label: "Status zleceń na WhatsApp" },
 ];
 
+// Ściągawka cennika modułowego (2026-07-26) — WYŁĄCZNIE orientacyjna podpowiedź dla Michała,
+// nigdy nie wysyłana do klienta ani nigdzie nie zapisywana. Stałe placeholder, nieoparte na
+// żadnym realnym cenniku modułowym (dziś jest jedna cena 18 000 zł za całe wdrożenie,
+// niezależnie od liczby modułów — patrz lib/agents/prompts.ts) — do skorygowania przez
+// Michała, jeśli/gdy pojawi się realna decyzja o cenniku per moduł.
+const MODULE_PRICE_BASE = 8000; // pierwszy moduł
+const MODULE_PRICE_ADDITIONAL = 4000; // każdy kolejny moduł
+
+function estimateModulePricing(moduleCount: number): number | null {
+  if (moduleCount <= 0) return null;
+  return MODULE_PRICE_BASE + (moduleCount - 1) * MODULE_PRICE_ADDITIONAL;
+}
+
 const STATUS_COLORS: Record<string, string> = {
   "Nowy lead": "var(--accent)",
   Kwalifikacja: "#7c3aed",
@@ -557,6 +570,34 @@ function ClientPanel({
               );
             })}
           </div>
+          {/* Ściągawka cennika modułowego — WYŁĄCZNIE wewnętrzna podpowiedź, nigdy nie
+              wysyłana/pokazywana klientowi, Michał decyduje ostatecznie sam. Bez dodatkowego
+              sprawdzania roli w kodzie — /pipeline jest już dostępne wyłącznie dla admina
+              (Foundera), setter jest przekierowywany na poziomie proxy.ts zanim ta strona się
+              w ogóle wyrenderuje (patrz SETTER_ALLOWED_PREFIXES), więc ten panel i tak nigdy
+              nie trafia przed oczy settera. */}
+          {(() => {
+            const moduleCount = (client.moduleWdrazane ?? []).length;
+            const estimate = estimateModulePricing(moduleCount);
+            if (estimate == null) return null;
+            return (
+              <div
+                style={{
+                  marginTop: 8,
+                  padding: "6px 8px",
+                  borderRadius: "var(--radius-xs)",
+                  border: "1px dashed var(--border)",
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 10,
+                  color: "var(--text-tertiary)",
+                }}
+                title="Wyłącznie orientacyjna podpowiedź wewnętrzna — nigdy niewysyłana do klienta."
+              >
+                Sugerowana cena (orientacyjnie, {moduleCount}{" "}
+                {moduleCount === 1 ? "moduł" : "moduły"}): {estimate.toLocaleString("pl-PL")} zł
+              </div>
+            );
+          })()}
         </div>
 
         {/* Notatki jakościowe — Cytaty klienta / Uwagi Agenta 1 / Uwagi Agenta 2, dotąd
