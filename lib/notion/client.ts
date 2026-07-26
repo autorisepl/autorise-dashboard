@@ -1098,6 +1098,38 @@ export async function migrateNotionSchema(): Promise<{ added: string[]; errors: 
     errors.push(`Batch 5: ${err instanceof Error ? err.message : "Błąd migracji schematu"}`);
   }
 
+  // Batch 6 (2026-07-26) — "Moduły wdrażane" na karcie klienta w /pipeline. Wcześniej NIE
+  // istniało żadne pole trzymające które z 4 standardowych modułów (baza Produkty, Blok
+  // "Arek" pkt 11) faktycznie wdraża się dla danego klienta — tylko rekomendacja liczona
+  // lokalnie w kalkulatorze /kwalifikacja (nigdy niezapisywana). Opcje = te same 4 kody co w
+  // Produkty/"Kod modułu": email-parser/document-ocr/payment-monitor/whatsapp-alerts.
+  try {
+    await notion.dataSources.update({
+      data_source_id: PIPELINE_DATA_SOURCE_ID,
+      properties: {
+        "Moduły wdrażane": {
+          multi_select: {
+            options: [
+              { name: "email-parser" },
+              { name: "document-ocr" },
+              { name: "payment-monitor" },
+              { name: "whatsapp-alerts" },
+            ],
+          },
+        },
+      },
+    });
+    const { confirmed, missing } = await confirmSchemaFields(["Moduły wdrażane"]);
+    added.push(...confirmed);
+    for (const name of missing) {
+      errors.push(
+        `Batch 6: pole "${name}" nie pojawiło się w schemacie po update (brak wyjątku, ale retrieve go nie potwierdza)`,
+      );
+    }
+  } catch (err) {
+    errors.push(`Batch 6: ${err instanceof Error ? err.message : "Błąd migracji schematu"}`);
+  }
+
   return { added, errors };
 }
 

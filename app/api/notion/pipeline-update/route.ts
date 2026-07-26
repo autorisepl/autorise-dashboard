@@ -36,6 +36,7 @@ const bodySchema = z.object({
   dataProtokoluOdbioru: z.string().nullable().optional(),
   kickoffOdbyty: z.boolean().optional(),
   dataKickoff: z.string().nullable().optional(),
+  moduleWdrazane: z.array(z.string()).optional(),
 });
 
 function richText(text: string) {
@@ -166,6 +167,11 @@ export async function PATCH(req: Request) {
       properties["Data Kickoff"] = d.dataKickoff
         ? { date: { start: d.dataKickoff } }
         : { date: null };
+    }
+    if (d.moduleWdrazane !== undefined) {
+      properties["Moduły wdrażane"] = {
+        multi_select: d.moduleWdrazane.map((name) => ({ name })),
+      };
     }
 
     if (Object.keys(properties).length === 0) {

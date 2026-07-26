@@ -55,6 +55,8 @@ export interface PipelineClientDetailed {
   dataProtokoluOdbioru: string;
   kickoffOdbyty: boolean;
   dataKickoff: string;
+  uwagiAgenta1: string;
+  moduleWdrazane: string[];
 }
 
 // Blok 1, punkt 1.5 (2026-07-14) — data premiery skryptu kwalifikacyjnego V4 (12 kroków, ICP
@@ -94,6 +96,12 @@ function extractCheckbox(prop: PageObjectResponse["properties"][string] | undefi
   if (!prop) return false;
   if (prop.type === "checkbox") return prop.checkbox;
   return false;
+}
+
+function extractMultiSelect(prop: PageObjectResponse["properties"][string] | undefined): string[] {
+  if (!prop) return [];
+  if (prop.type === "multi_select") return prop.multi_select.map((o) => o.name);
+  return [];
 }
 
 export async function GET() {
@@ -161,6 +169,8 @@ export async function GET() {
           dataProtokoluOdbioru: extractText(props["Data protokołu odbioru"]),
           kickoffOdbyty: extractCheckbox(props["Kickoff odbyty"]),
           dataKickoff: extractText(props["Data Kickoff"]),
+          uwagiAgenta1: extractText(props["Uwagi Agenta 1"]),
+          moduleWdrazane: extractMultiSelect(props["Moduły wdrażane"]),
         };
       })
       .filter((c: PipelineClientDetailed) => c.firma !== "Bez nazwy");

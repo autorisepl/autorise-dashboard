@@ -34,6 +34,17 @@ const ROW2 = ["Kickoff", "Wdrożenie", "Retainer", "Niekwalifikowany"];
 const ROW3 = ["Nieaktywny (follow up)", "Upsell", "Zakończona współpraca"];
 const PIPELINE_STATUSES = [...ROW1, ...ROW2, ...ROW3];
 
+// Baza Notion Produkty (Blok "Arek" pkt 11) — 4 standardowe moduły wdrożeniowe, ten sam
+// zestaw kodów co "Kod modułu" w Produkty i "Kategorie kalkulatora" w kwalifikacyjna.ts.
+// Pole "Moduły wdrażane" (Batch 6, 2026-07-26) nie istniało wcześniej na karcie klienta —
+// dotąd żadne miejsce nie zapisywało które moduły faktycznie wdraża się dla danego klienta.
+const MODULE_CATALOG: { code: string; label: string }[] = [
+  { code: "email-parser", label: "Wczytywanie zleceń z maila" },
+  { code: "document-ocr", label: "Skan i odczyt dokumentów (CMR, faktury)" },
+  { code: "payment-monitor", label: "Pilnowanie terminów płatności / KSeF" },
+  { code: "whatsapp-alerts", label: "Status zleceń na WhatsApp" },
+];
+
 const STATUS_COLORS: Record<string, string> = {
   "Nowy lead": "var(--accent)",
   Kwalifikacja: "#7c3aed",
@@ -330,6 +341,31 @@ function ClientPanel({
       setSaving(false);
     }
   };
+
+  const toggleModule = async (code: string) => {
+    const current = client.moduleWdrazane ?? [];
+    const next = current.includes(code)
+      ? current.filter((c) => c !== code)
+      : [...current, code];
+    setSaving(true);
+    try {
+      await fetch("/api/notion/pipeline-update", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pageId: client.id, moduleWdrazane: next }),
+      });
+      onUpdated();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const notatkiJakosciowe = [
+    { label: "Cytaty klienta", value: client.cytatyKlienta },
+    { label: "Uwagi Agenta 1", value: client.uwagiAgenta1 },
+    { label: "Uwagi Agenta 2", value: client.uwagiFAgent2 },
+  ].filter((n) => n.value);
+
   const rows = [
     { label: "Firma", value: client.firma },
     { label: "Kontakt", value: client.kontakt },
@@ -469,6 +505,117 @@ function ClientPanel({
             </div>
           )}
         </div>
+
+        {/* Moduły wdrażane — widoczne od razu, edytowalne na miejscu (Batch 6, 2026-07-26).
+            Checkbox toggle, ten sam wzorzec co Panel Dostępy w /wdrozenie. */}
+        <div style={{ marginBottom: 16 }}>
+          <div
+            style={{
+              fontSize: 10,
+              fontWeight: 600,
+              letterSpacing: "0.07em",
+              textTransform: "uppercase",
+              color: "var(--text-tertiary)",
+              marginBottom: 6,
+              fontFamily: "var(--font-sans)",
+            }}
+          >
+            Moduły wdrażane
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {MODULE_CATALOG.map((m) => {
+              const active = (client.moduleWdrazane ?? []).includes(m.code);
+              return (
+                <label
+                  key={m.code}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "6px 8px",
+                    borderRadius: "var(--radius-xs)",
+                    border: "1px solid var(--border)",
+                    background: active ? "var(--accent-muted)" : "var(--bg-elevated)",
+                    cursor: saving ? "default" : "pointer",
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={active}
+                    disabled={saving}
+                    onChange={() => void toggleModule(m.code)}
+                  />
+                  <span
+                    style={{
+                      fontSize: 12,
+                      color: active ? "var(--accent)" : "var(--text-secondary)",
+                      fontWeight: active ? 600 : 400,
+                      fontFamily: "var(--font-sans)",
+                    }}
+                  >
+                    {m.label}
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Notatki jakościowe — Cytaty klienta / Uwagi Agenta 1 / Uwagi Agenta 2, dotąd
+            zapisywane wyłącznie do Notion bez żadnego miejsca do przeczytania ich w
+            dashboardzie. Widoczne od razu, nie wymaga scrollowania w typowej karcie. */}
+        {notatkiJakosciowe.length > 0 && (
+          <div style={{ marginBottom: 16 }}>
+            <div
+              style={{
+                fontSize: 10,
+                fontWeight: 600,
+                letterSpacing: "0.07em",
+                textTransform: "uppercase",
+                color: "var(--text-tertiary)",
+                marginBottom: 6,
+                fontFamily: "var(--font-sans)",
+              }}
+            >
+              Notatki jakościowe
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {notatkiJakosciowe.map((n) => (
+                <div
+                  key={n.label}
+                  style={{
+                    padding: "8px 10px",
+                    borderRadius: "var(--radius-xs)",
+                    background: "var(--bg-elevated)",
+                    border: "1px solid var(--border)",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 600,
+                      color: "var(--text-tertiary)",
+                      marginBottom: 3,
+                      fontFamily: "var(--font-sans)",
+                    }}
+                  >
+                    {n.label}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 12,
+                      color: "var(--text-primary)",
+                      fontFamily: "var(--font-sans)",
+                      whiteSpace: "pre-wrap",
+                    }}
+                  >
+                    {n.value}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {rows.map(({ label, value }) => (
