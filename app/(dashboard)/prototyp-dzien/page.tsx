@@ -867,21 +867,18 @@ export default function PrototypDzienPage() {
     [lists, tasksByList],
   );
 
-  const patchTask = useCallback(
-    (listId: string, taskId: string, patch: Partial<GoogleTask>) => {
-      // Optymistyczny update lokalny, ten sam wzorzec co reszta dashboardu.
-      setTasksByList((prev) => ({
-        ...prev,
-        [listId]: (prev[listId] ?? []).map((t) => (t.id === taskId ? { ...t, ...patch } : t)),
-      }));
-      void fetch("/api/google/tasks", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ listId, taskId, ...patch }),
-      }).catch(() => void 0);
-    },
-    [],
-  );
+  const patchTask = useCallback((listId: string, taskId: string, patch: Partial<GoogleTask>) => {
+    // Optymistyczny update lokalny, ten sam wzorzec co reszta dashboardu.
+    setTasksByList((prev) => ({
+      ...prev,
+      [listId]: (prev[listId] ?? []).map((t) => (t.id === taskId ? { ...t, ...patch } : t)),
+    }));
+    void fetch("/api/google/tasks", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ listId, taskId, ...patch }),
+    }).catch(() => void 0);
+  }, []);
 
   const patchEvent = useCallback((eventId: string, patch: Record<string, string>) => {
     setEvents((prev) =>
@@ -1031,7 +1028,10 @@ export default function PrototypDzienPage() {
             opacity: loading ? 0.6 : 1,
           }}
         >
-          <RefreshCw size={11} style={{ animation: loading ? "spin 1s linear infinite" : "none" }} />
+          <RefreshCw
+            size={11}
+            style={{ animation: loading ? "spin 1s linear infinite" : "none" }}
+          />
           Odśwież
         </button>
       </PageHeader>
@@ -1120,7 +1120,9 @@ export default function PrototypDzienPage() {
                           setDragOverZone(zoneKey);
                         }
                       }}
-                      onDragLeave={() => setDragOverZone(dragOverZone === zoneKey ? null : dragOverZone)}
+                      onDragLeave={() =>
+                        setDragOverZone(dragOverZone === zoneKey ? null : dragOverZone)
+                      }
                       onDrop={(e) => handlePriorityDrop(e, level)}
                       style={{
                         minHeight: 90,
