@@ -86,8 +86,8 @@ export function ModuleTimeTable({
           color: "var(--text-tertiary)",
         }}
       >
-        Klient nie ma jeszcze zaznaczonych żadnych modułów w polu "Moduły wdrażane" (karta
-        klienta w /pipeline) — tabela pojawi się po ich wybraniu.
+        Klient nie ma jeszcze zaznaczonych żadnych modułów w polu "Moduły wdrażane" (karta klienta w
+        /pipeline) — tabela pojawi się po ich wybraniu.
       </div>
     );
   }

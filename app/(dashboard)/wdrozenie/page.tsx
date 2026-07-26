@@ -290,7 +290,8 @@ export default function WdrozenieePage() {
   // powstała zanim tabela Kickoff w ogóle miała zapisane wartości). Zapis nadal robi pełny
   // zrzut JSON (nie sam wolumen), więc dane w Notion są samodzielnym snapshotem.
   const weryfikacjaRows = useMemo<ModuleTimeRow[]>(
-    () => kickoffRows.map((r) => ({ ...r, wolumenMiesieczny: verificationVolumes[r.moduleId] ?? 0 })),
+    () =>
+      kickoffRows.map((r) => ({ ...r, wolumenMiesieczny: verificationVolumes[r.moduleId] ?? 0 })),
     [kickoffRows, verificationVolumes],
   );
 
@@ -1051,8 +1052,8 @@ export default function WdrozenieePage() {
                       color: "var(--text-tertiary)",
                     }}
                   >
-                    Uzupełnij i zapisz tabelę Kickoff w Panelu 0 zanim rozpoczniesz weryfikację —
-                    to stamtąd pochodzi jednostka, czas na jednostkę i próg gwarancji.
+                    Uzupełnij i zapisz tabelę Kickoff w Panelu 0 zanim rozpoczniesz weryfikację — to
+                    stamtąd pochodzi jednostka, czas na jednostkę i próg gwarancji.
                   </div>
                 ) : (
                   <>
