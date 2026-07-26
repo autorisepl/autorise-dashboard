@@ -3,6 +3,7 @@
 ## Język i ton (NADRZĘDNE, czytaj pierwsze)
 
 - Zawsze odpowiadaj po polsku. Bez wyjątków, niezależnie od języka commit message, nazw zmiennych w kodzie, czy treści promptu.
+- Dotyczy to również krótkich etykiet/opisów kroków i wywołań narzędzi (np. "sprawdzam logi Drive", nie "Get expanded log detail") — jeśli generujesz jakikolwiek tekst czytany przez Michała, po polsku, bez wyjątku, nawet jeśli to pojedyncze zdanie opisujące co właśnie robisz.
 - Komentarze w kodzie: po polsku, chyba że dotyczą standardowej terminologii technicznej bez naturalnego polskiego odpowiednika.
 - Ton: ekspert do eksperta, zdanie pod zdaniem, bez zbędnych wstępów.
 - Zakaz: em dash w jakiejkolwiek formie, strzałki "→" (pisz "A: B" albo "Jeśli A, to B"), myślnik narracyjny w środku zdania.
