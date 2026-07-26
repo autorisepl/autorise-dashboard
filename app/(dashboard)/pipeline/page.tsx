@@ -344,9 +344,7 @@ function ClientPanel({
 
   const toggleModule = async (code: string) => {
     const current = client.moduleWdrazane ?? [];
-    const next = current.includes(code)
-      ? current.filter((c) => c !== code)
-      : [...current, code];
+    const next = current.includes(code) ? current.filter((c) => c !== code) : [...current, code];
     setSaving(true);
     try {
       await fetch("/api/notion/pipeline-update", {
