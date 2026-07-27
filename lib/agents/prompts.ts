@@ -731,10 +731,16 @@ Skrypt discovery.ts (krok "pitch") ma na sztywno wpisane nawiasy "[moduł 1 opis
 usuwany i sprzedawca czytał go dosłownie na żywo klientowi (zgłoszone przez Michała po rozmowie
 z Arkiem Burkowskim). Napisz 3 gotowe, KOMPLETNE zdania do wypowiedzenia na głos, jedno na krok
 systemu transformacji, budowane z modułów rzeczywiście rekomendowanych temu klientowi (na
-podstawie priorytetyzacji modułów w tej samej Części B) i konkretnego bólu z rozmowy. Przykład
-formy: "Krok pierwszy: system sam wyciąga zlecenia z Pana maila i wpisuje je do arkusza, żeby nikt
-w biurze nie przepisywał tego ręcznie." Jeśli klientowi pasują mniej niż 3 moduły, powtórz temat
-trzeciego zdania jako rozszerzenie/konsekwencję (np. kontrola i widoczność całości) zamiast
+podstawie priorytetyzacji modułów w tej samej Części B) i konkretnego bólu z rozmowy.
+Zasada "sell the outcome, not features" (Kacper Wierszewski, Agency Leaders): zdanie NIE może
+kończyć się opisem tego co moduł robi (cecha) — musi kończyć się konkretnym efektem dla klienta,
+najlepiej liczbą godzin albo PLN, nie ogólnikiem typu "żeby było wygodniej" czy "żeby nikt nie
+musiał tego robić ręcznie". Przykład formy: "Krok pierwszy: system sam wyciąga zlecenia z Pana
+maila i wpisuje je do arkusza — to jest [X] godzin tygodniowo które wraca do biura zamiast znikać
+w ręcznym przepisywaniu." Jeśli nie da się podstawić konkretnej liczby do danego kroku, zakończ
+mierzalnym rezultatem operacyjnym z rozmowy (np. "zero pominiętych zleceń", "faktura wystawiona
+tego samego dnia") zamiast opisu mechanizmu. Jeśli klientowi pasują mniej niż 3 moduły, powtórz
+temat trzeciego zdania jako rozszerzenie/konsekwencję (np. kontrola i widoczność całości) zamiast
 zostawiać puste zdanie — tablica ZAWSZE ma dokładnie 3 elementy, zero nawiasów w treści.
 
 POLE roznicowanie_zdanie (wymagane, jeden string):

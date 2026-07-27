@@ -395,12 +395,12 @@ export const STEPS_D: Step[] = [
       {
         t: "say",
         text: [
-          "System transformacji wygląda tak: krok pierwszy, [moduł 1 opisany korzyścią].",
-          "Krok drugi, [moduł 2 opisany korzyścią].",
-          "Krok trzeci, [moduł 3 opisany korzyścią].",
+          "System transformacji wygląda tak: krok pierwszy, [moduł 1 zakończony konkretnym efektem, nie opisem funkcji].",
+          "Krok drugi, [moduł 2 zakończony konkretnym efektem, nie opisem funkcji].",
+          "Krok trzeci, [moduł 3 zakończony konkretnym efektem, nie opisem funkcji].",
           "Od tego co ma {FORMA} dziś, do stanu w którym te godziny wracają do biura.",
         ],
-        cel: "System Transformacji A do B w 3 krokach — USP, konkretne kroki nie abstrakcyjna obietnica",
+        cel: "System Transformacji A do B w 3 krokach — sell the outcome, not features (Kacper Wierszewski): każdy krok kończy się efektem dla klienta (godziny/PLN), nie opisem co moduł robi",
       },
       {
         t: "action",
@@ -521,11 +521,12 @@ export const STEPS_D: Step[] = [
       {
         t: "say",
         text: [
+          "Za tę inwestycję odzyskuje {FORMA} minimum [gwarancja godzin] godzin miesięcznie, które dziś firma traci na ręcznej pracy.",
           "Inwestycja to 18 000 zł, jednorazowo.",
           "Plus 4 000 zł miesięcznie opieki.",
           "Gwarancja: minimum 70% obliczonego czasu bazowego Pana firmy, czyli [gwarancja godzin] miesięcznie, sprawdzane po 30 dniach — jeśli nie osiągniemy progu, zwrot 100%.",
         ],
-        cel: "Podać konkretną liczbę i przetrzymać ciszę — pierwsza osoba która przerwie milczenie zwykle przegrywa negocjację",
+        cel: "Clear value proposition (Kacper Wierszewski) — jedno jasne zdanie łączące liczbę z wynikiem PRZED samą kwotą, żeby klient słyszał najpierw efekt, potem cenę. Potem podać konkretną liczbę i przetrzymać ciszę — pierwsza osoba która przerwie milczenie zwykle przegrywa negocjację",
       },
       { t: "action", text: "CISZA. Minimum 20 sekund. Nie wypełniaj jej niczym." },
       {
@@ -555,6 +556,11 @@ export const STEPS_D: Step[] = [
     label: "CLOSING",
     tag: "ZAMKNIĘCIE",
     lines: [
+      {
+        t: "say",
+        text: "Ryzyko po naszej stronie, gwarancja zwrotu, i już dziś wie {FORMA} że to się zwraca w [X] miesięcy — pytanie właściwie brzmi, co miałoby powstrzymać Pana przed startem?",
+        cel: "Make people feel dumb saying no (Kacper Wierszewski) — podsumowanie asymetrii ryzyka tuż przed pytaniem o decyzję, żeby odmowa wymagała od klienta konkretnego kontrargumentu, nie ogólnego wahania",
+      },
       { t: "say", text: "Co potrzebuje {FORMA} żeby podjąć decyzję dziś?" },
       { t: "client", text: "[odpowiedź]" },
       {
@@ -616,8 +622,12 @@ export const STEPS_D: Step[] = [
       },
       {
         t: "say",
-        text: "Jeśli Pana TMS nie ma jeszcze potwierdzonego dostępu do API, na Kickoff w pierwszych dniach skontaktuję się bezpośrednio z dostawcą systemu — to jest zawsze pierwszy krok. Jeśli się nie uda, mam jeszcze trzy inne sprawdzone sposoby na obejście tego, więc to nie jest ryzyko że wdrożenie stanie w miejscu.",
-        cel: "Wykonalność integracji TMS — proces oceny z KARTA_PRODUKTU_SYSTEM_OPERACYJNY.md pkt 8 (2026-07-19) wypowiadany klientowi wprost, żeby dawał pewność PRZED podpisaniem, nie był niespodzianką odkrywaną dopiero na Kickoff",
+        text: "Jeśli Pana TMS nie ma jeszcze potwierdzonego dostępu do API, to nie jest ryzyko że wdrożenie stanie w miejscu — mamy na to sprawdzony sposób, zajmę się tym na Kickoff.",
+        cel: "Wykonalność integracji TMS — proces oceny z KARTA_PRODUKTU_SYSTEM_OPERACYJNY.md pkt 8 (2026-07-19), tu w skróconej formie: pewność bez rozwlekania mechanizmu, którego klient na tym etapie nie potrzebuje. Simplicity > complexity (Kacper Wierszewski) — pełna metodologia w notatce niżej, dopiero jeśli klient dopyta",
+      },
+      {
+        t: "note",
+        text: "Jeśli klient dopyta jak dokładnie to działa: pierwszy krok to zawsze bezpośredni kontakt z dostawcą systemu na Kickoff. Jeśli się nie uda, są jeszcze trzy sprawdzone sposoby obejścia braku dostępu do API strony trzeciej (metodologia w bazie Notion Produkty) — dopiero na to pytanie warto rozwijać szczegóły, nie w głównym przepływie przed podpisem.",
       },
       {
         t: "say",
