@@ -39,6 +39,7 @@ const bodySchema = z.object({
   moduleWdrazane: z.array(z.string()).optional(),
   tabelaModulowKickoff: z.string().nullable().optional(),
   tabelaModulowWeryfikacja: z.string().nullable().optional(),
+  celEfektywnosciProcent: z.number().nullable().optional(),
 });
 
 function richText(text: string) {
@@ -184,6 +185,9 @@ export async function PATCH(req: Request) {
       properties["Tabela modułów Weryfikacja"] = {
         rich_text: d.tabelaModulowWeryfikacja ? richText(d.tabelaModulowWeryfikacja) : [],
       };
+    }
+    if (d.celEfektywnosciProcent !== undefined) {
+      properties["Cel efektywności (%)"] = { number: d.celEfektywnosciProcent };
     }
 
     if (Object.keys(properties).length === 0) {

@@ -44,13 +44,13 @@ Z kim się kontaktować przy problemach technicznych po stronie klienta. Jakie s
 
 ## 11. Harmonogram delivery
 
-**Tydzień 1 — Discovery techniczne**: zmapowane realne procesy (nie deklarowane na sprzedaży). Test dostępu do API głównego TMS — działa/nie działa. Jeśli nie działa: wybrana ścieżka z punktu 8. Zmierzony REALNY czas bazowy (nie szacunek z telefonu) — metodologia: obserwacja/pomiar rzeczywistego czasu pracy zespołu na miejscu lub przez zrzuty ekranu z timestampami, nie deklaracja słowna. Lista priorytetowych automatyzacji z szacowanym czasem każdej. Zidentyfikowane wymagania dodatkowe (np. wyższa licencja API) przekazane klientowi od razu, zgodnie z umową §5 ust. 5.
+**Tydzień 1 — Discovery techniczne**: zmapowane realne procesy (nie deklarowane na sprzedaży). Test dostępu do API głównego TMS — działa/nie działa. Jeśli nie działa: wybrana ścieżka z punktu 8. Zmierzony REALNY czas manualny na jedną operację, per moduł (C, w godzinach) — nie szacunek z telefonu, nie wolumen. Metodologia: obserwacja/pomiar rzeczywistego czasu jednej operacji zespołu na miejscu lub przez zrzuty ekranu z timestampami, nie deklaracja słowna. Wolumen operacji świadomie NIE jest zbierany na tym etapie — trafia do wzoru dopiero na Dniu 30, z logów Systemu. Lista priorytetowych automatyzacji z szacowanym czasem każdej. Zidentyfikowane wymagania dodatkowe (np. wyższa licencja API) przekazane klientowi od razu, zgodnie z umową §5 ust. 5.
 
 **Tydzień 2-3 — Integracja**: moduł po module podłączony i testowany na realnych danych klienta. Pierwsze realne zlecenie przechodzi przez system testowo. Mechanizm potwierdzenia jednym kliknięciem przez spedytora skonfigurowany, jeśli klient go chce (umowa §8 ust. 2).
 
 **Tydzień 4 — Live i szkolenie**: zespół przeszkolony (spedytorzy, księgowość). Stare metody ręczne wyłączone. Logi systemu zbierają dane do weryfikacji.
 
-**Dzień 30 — Weryfikacja**: porównanie logów systemu z czasem bazowym z Tygodnia 1. Sprawdzenie warunków umowy §3 ust. 4 (dostępy w terminie, responsywność 48h, udział w Kickoff, brak ingerencji w konfigurację, ciągłość systemów zewnętrznych).
+**Dzień 30 — Weryfikacja**: dla każdego modułu z Tygodnia 1 (czas na operację C, tylko do odczytu), zbierane są dwie nowe liczby z logów/obserwacji: liczba operacji wykonanych przez System w okresie (D) i rzeczywisty czas jaki zajęła obsługa tych operacji człowiekowi przy systemie (F — mierzone z obserwacji/logów, nie zakładane jako zero; dziś nie istnieje żaden automatyczny mechanizm śledzenia tego czasu). Teoretyczny czas manualny E = C × D, per moduł, sumowane do ΣE i ΣF po modułach objętych celem efektywności. Wynik: (ΣE − ΣF) / ΣE × 100 = osiągnięty procent efektywności, porównany z celem % ustalonym na Kickoffie (domyślnie 70%, edytowalny per klient — jedno źródło tej liczby, nie osobno zaszyte w kilku miejscach). Sprawdzenie warunków umowy §3 ust. 4 (dostępy w terminie, responsywność 48h, udział w Kickoff, brak ingerencji w konfigurację, ciągłość systemów zewnętrznych).
 
 ## 12. Kryterium odbioru
 

@@ -6,16 +6,19 @@ import type { PipelineClientDetailed } from "@/app/api/notion/pipeline/route";
 import { ClientSidebar } from "@/components/clients/ClientSidebar";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Panel } from "@/components/ui/Panel";
-import {
-  type ModuleTimeRow,
-  ModuleTimeTable,
-  sumGodzinyMiesiecznie,
-} from "@/components/wdrozenie/ModuleTimeTable";
+import { KickoffModuleTable } from "@/components/wdrozenie/KickoffModuleTable";
+import type {
+  KickoffModuleRow,
+  WeryfikacjaModuleRow,
+} from "@/components/wdrozenie/moduleTypes";
+import { WeryfikacjaModuleTable } from "@/components/wdrozenie/WeryfikacjaModuleTable";
 import {
   MODULE_CATALOG,
   MODULE_DEFAULT_UNIT,
-  MODULE_DEFAULT_WLICZAJ_DO_PROGU,
+  MODULE_DEFAULT_WLICZAJ_DO_CELU,
 } from "@/lib/scripts/moduleCatalog";
+
+const DOMYSLNY_CEL_EFEKTYWNOSCI = 70;
 
 // A1 (2026-07-18) — PROTOTYP zgodnie z instrukcją "zacznij prototypem: sam Panel Dostępy
 // + oś czasu, dla jednego klienta, do oceny Michała". Reszta specyfikacji (Panel Pomiar
@@ -114,21 +117,20 @@ const MODULE_LABELS: Record<string, string> = Object.fromEntries(
   MODULE_CATALOG.map((m) => [m.code, m.label]),
 );
 
-function buildDefaultModuleRows(client: PipelineClientDetailed): ModuleTimeRow[] {
+function buildDefaultModuleRows(client: PipelineClientDetailed): KickoffModuleRow[] {
   return MODULE_CATALOG.filter((m) => client.moduleWdrazane.includes(m.code)).map((m) => ({
     moduleId: m.code,
-    jednostka: MODULE_DEFAULT_UNIT[m.code] ?? "",
-    czasMinut: 0,
-    wolumenMiesieczny: 0,
-    wliczajDoProgu: MODULE_DEFAULT_WLICZAJ_DO_PROGU[m.code] ?? true,
+    operacja: MODULE_DEFAULT_UNIT[m.code] ?? "",
+    czasGodziny: 0,
+    wliczajDoCelu: MODULE_DEFAULT_WLICZAJ_DO_CELU[m.code] ?? true,
   }));
 }
 
-function parseModuleRows(raw: string): ModuleTimeRow[] | null {
+function parseModuleRows<T>(raw: string): T[] | null {
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as ModuleTimeRow[]) : null;
+    return Array.isArray(parsed) ? (parsed as T[]) : null;
   } catch {
     return null;
   }
@@ -216,9 +218,12 @@ export default function WdrozenieePage() {
   const [confirming, setConfirming] = useState(false);
   const [savingProtokol, setSavingProtokol] = useState(false);
   const [taskWarning, setTaskWarning] = useState<string | null>(null);
-  const [kickoffRows, setKickoffRows] = useState<ModuleTimeRow[]>([]);
+  const [kickoffRows, setKickoffRows] = useState<KickoffModuleRow[]>([]);
   const [savingKickoffTable, setSavingKickoffTable] = useState(false);
-  const [verificationVolumes, setVerificationVolumes] = useState<Record<string, number>>({});
+  const [celEfektywnosci, setCelEfektywnosci] = useState(DOMYSLNY_CEL_EFEKTYWNOSCI);
+  const [verificationData, setVerificationData] = useState<
+    Record<string, { liczbaOperacji: number; czasSystemGodziny: number }>
+  >({});
   const [savingWeryfikacjaTable, setSavingWeryfikacjaTable] = useState(false);
 
   const fetchClients = useCallback(async () => {
@@ -268,35 +273,58 @@ export default function WdrozenieePage() {
   useEffect(() => {
     if (!selected) {
       setKickoffRows([]);
-      setVerificationVolumes({});
+      setVerificationData({});
+      setCelEfektywnosci(DOMYSLNY_CEL_EFEKTYWNOSCI);
       return;
     }
-    const savedKickoff = parseModuleRows(selected.tabelaModulowKickoff);
+    const savedKickoff = parseModuleRows<KickoffModuleRow>(selected.tabelaModulowKickoff);
     setKickoffRows(savedKickoff ?? buildDefaultModuleRows(selected));
+    setCelEfektywnosci(selected.celEfektywnosciProcent || DOMYSLNY_CEL_EFEKTYWNOSCI);
 
-    const savedWeryfikacja = parseModuleRows(selected.tabelaModulowWeryfikacja);
-    setVerificationVolumes(
+    const savedWeryfikacja = parseModuleRows<WeryfikacjaModuleRow>(
+      selected.tabelaModulowWeryfikacja,
+    );
+    setVerificationData(
       savedWeryfikacja
-        ? Object.fromEntries(savedWeryfikacja.map((r) => [r.moduleId, r.wolumenMiesieczny]))
+        ? Object.fromEntries(
+            savedWeryfikacja.map((r) => [
+              r.moduleId,
+              {
+                liczbaOperacji: r.liczbaOperacji ?? 0,
+                czasSystemGodziny: r.czasSystemGodziny ?? 0,
+              },
+            ]),
+          )
         : {},
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected?.id]);
 
-  // Wiersze Weryfikacji wyprowadzone NA ŻYWO z kickoffRows (jednostka/czas na jednostkę/
-  // wliczaj-do-progu), tylko wolumen podmieniony na rzeczywisty (verificationVolumes). Świadomie
-  // NIE osobny stan pełnych wierszy — wcześniejsza wersja trzymała drugą kopię tych samych pól i
-  // traciła synchronizację z Kickoffem po zapisie (czas na jednostkę zostawał 0, bo kopia
-  // powstała zanim tabela Kickoff w ogóle miała zapisane wartości). Zapis nadal robi pełny
-  // zrzut JSON (nie sam wolumen), więc dane w Notion są samodzielnym snapshotem.
-  const weryfikacjaRows = useMemo<ModuleTimeRow[]>(
+  // Wiersze Weryfikacji wyprowadzone NA ŻYWO z kickoffRows (operacja/czas na operację/wliczaj-
+  // do-celu), tylko D (liczba operacji) i F (rzeczywisty czas Systemu) podmienione na dane
+  // weryfikacji (verificationData). Świadomie NIE osobny stan pełnych wierszy — wcześniejsza
+  // wersja trzymała drugą kopię tych samych pól i traciła synchronizację z Kickoffem po zapisie.
+  // Zapis nadal robi pełny zrzut JSON (nie same D/F), więc dane w Notion są samodzielnym
+  // snapshotem, niezależnym od ewentualnej późniejszej zmiany tabeli Kickoff.
+  const weryfikacjaRows = useMemo<WeryfikacjaModuleRow[]>(
     () =>
-      kickoffRows.map((r) => ({ ...r, wolumenMiesieczny: verificationVolumes[r.moduleId] ?? 0 })),
-    [kickoffRows, verificationVolumes],
+      kickoffRows.map((r) => ({
+        ...r,
+        liczbaOperacji: verificationData[r.moduleId]?.liczbaOperacji ?? 0,
+        czasSystemGodziny: verificationData[r.moduleId]?.czasSystemGodziny ?? 0,
+      })),
+    [kickoffRows, verificationData],
   );
 
-  const updateVerificationVolumes = useCallback((rows: ModuleTimeRow[]) => {
-    setVerificationVolumes(Object.fromEntries(rows.map((r) => [r.moduleId, r.wolumenMiesieczny])));
+  const updateVerificationData = useCallback((rows: WeryfikacjaModuleRow[]) => {
+    setVerificationData(
+      Object.fromEntries(
+        rows.map((r) => [
+          r.moduleId,
+          { liczbaOperacji: r.liczbaOperacji, czasSystemGodziny: r.czasSystemGodziny },
+        ]),
+      ),
+    );
   }, []);
 
   const stageIndex = useMemo(() => (selected ? computeStageIndex(selected) : 0), [selected]);
@@ -367,34 +395,33 @@ export default function WdrozenieePage() {
     [selected, fetchClients],
   );
 
-  // Tabela czasu bazowego per moduł (nowa umowa, Załącznik 1) — wypełniana na Kickoff, suma
-  // nadpisuje "Czas bazowy potwierdzony h/mc" (dawniej wpisywane ręcznie jedną liczbą, teraz
-  // liczone automatycznie z sumy wierszy modułowych, patrz CLAUDE.md).
+  // Tabela czasu manualnego per moduł (Załącznik 1, finalna wersja 26.07.2026) — wypełniana na
+  // Kickoff, zbiera WYŁĄCZNIE czas na jedną operację (C), zero wolumenu. "Cel efektywności (%)"
+  // zapisywany razem z tabelą, raz per klient (edytowalny, nie sztywne 70% zaszyte w kodzie).
   const saveKickoffTable = useCallback(async () => {
     if (!selected) return;
     setSavingKickoffTable(true);
     try {
-      const total = Math.round(sumGodzinyMiesiecznie(kickoffRows) * 10) / 10;
       await fetch("/api/notion/pipeline-update", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           pageId: selected.id,
           tabelaModulowKickoff: JSON.stringify(kickoffRows),
-          czasBazowyPotwierdzony: total,
+          celEfektywnosciProcent: celEfektywnosci,
         }),
       });
       await fetchClients();
     } finally {
       setSavingKickoffTable(false);
     }
-  }, [selected, kickoffRows, fetchClients]);
+  }, [selected, kickoffRows, celEfektywnosci, fetchClients]);
 
-  // Ta sama tabela, druga runda na Weryfikacji Dnia 30 — jednostka/czas na jednostkę/wliczaj-
-  // do-progu przychodzą z Kickoffu jako tylko-do-odczytu (ModuleTimeTable editableFields=
-  // "wolumenOnly"), edytowalny jest wyłącznie rzeczywisty wolumen z minionych 30 dni. Zapisujemy
-  // pełny wiersz (nie sam wolumen), żeby zapis był samodzielnym zrzutem stanu w chwili
-  // weryfikacji, niezależnym od ewentualnej późniejszej zmiany tabeli Kickoff.
+  // Ta sama tabela, druga runda na Weryfikacji Dnia 30 — operacja/czas na operację/wliczaj-do-
+  // celu przychodzą z Kickoffu jako tylko-do-odczytu (WeryfikacjaModuleTable), edytowalne są
+  // wyłącznie D (liczba operacji) i F (rzeczywisty czas Systemu) z minionych 30 dni. Zapisujemy
+  // pełny wiersz (nie same D/F), żeby zapis był samodzielnym zrzutem stanu w chwili weryfikacji,
+  // niezależnym od ewentualnej późniejszej zmiany tabeli Kickoff.
   const saveWeryfikacjaTable = useCallback(async () => {
     if (!selected) return;
     setSavingWeryfikacjaTable(true);
@@ -709,7 +736,7 @@ export default function WdrozenieePage() {
                       marginBottom: 3,
                     }}
                   >
-                    Pomiar bazowy — czas per moduł
+                    Pomiar bazowy — czas manualny per moduł
                   </div>
                   <div
                     style={{
@@ -719,16 +746,55 @@ export default function WdrozenieePage() {
                       marginBottom: 10,
                     }}
                   >
-                    Załącznik 1 umowy. Ta sama tabela wraca na Weryfikacji Dnia 30 z rzeczywistym
-                    wolumenem.
+                    Załącznik 1 umowy. Wyłącznie czas manualny na jedną operację (C), zero
+                    wolumenu na tym etapie — wolumen i rzeczywisty czas Systemu zbiera dopiero
+                    Weryfikacja Dnia 30 poniżej.
                   </div>
 
-                  <ModuleTimeTable
+                  <KickoffModuleTable
                     rows={kickoffRows}
                     moduleLabels={MODULE_LABELS}
-                    editableFields="all"
                     onChange={setKickoffRows}
                   />
+
+                  {kickoffRows.length > 0 && (
+                    <div
+                      style={{
+                        marginTop: 14,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontFamily: "var(--font-sans)",
+                          fontSize: 12,
+                          color: "var(--text-secondary)",
+                        }}
+                      >
+                        Cel efektywności (%)
+                      </span>
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={celEfektywnosci}
+                        onChange={(e) => setCelEfektywnosci(Number(e.target.value) || 0)}
+                        style={{
+                          height: 32,
+                          width: 70,
+                          padding: "0 8px",
+                          borderRadius: 6,
+                          border: "1px solid var(--border)",
+                          fontFamily: "var(--font-sans)",
+                          fontSize: 13,
+                          color: "var(--text-primary)",
+                          background: "var(--bg)",
+                        }}
+                      />
+                    </div>
+                  )}
 
                   {kickoffRows.length > 0 && (
                     <button
@@ -1037,9 +1103,12 @@ export default function WdrozenieePage() {
                       color: "var(--text-secondary)",
                     }}
                   >
-                    Ta sama tabela co na Kickoffie — jednostka i czas na jednostkę nie zmieniają
-                    się, wpisz rzeczywisty wolumen z minionych 30 dni (z logów systemu). Suma
-                    porównana z progiem 70% zapisanym na Kickoffie.
+                    Operacja i czas na operację nie zmieniają się od Kickoffu. Wpisz dla każdego
+                    modułu liczbę operacji wykonanych przez System w okresie (D) i rzeczywisty
+                    czas jaki zajęła obsługa tych operacji człowiekowi przy systemie (F) — F
+                    mierzone z obserwacji/logów, nie zakładane jako zero. Dziś nie istnieje żaden
+                    automatyczny mechanizm śledzenia tego czasu, wpisz najlepszy dostępny pomiar.
+                    Wynik: (ΣE − ΣF) / ΣE × 100, porównany z celem % zapisanym na Kickoffie.
                   </div>
                 </div>
 
@@ -1053,16 +1122,15 @@ export default function WdrozenieePage() {
                     }}
                   >
                     Uzupełnij i zapisz tabelę Kickoff w Panelu 0 zanim rozpoczniesz weryfikację — to
-                    stamtąd pochodzi jednostka, czas na jednostkę i próg gwarancji.
+                    stamtąd pochodzi operacja, czas na operację i cel efektywności.
                   </div>
                 ) : (
                   <>
-                    <ModuleTimeTable
+                    <WeryfikacjaModuleTable
                       rows={weryfikacjaRows}
                       moduleLabels={MODULE_LABELS}
-                      editableFields="wolumenOnly"
-                      onChange={updateVerificationVolumes}
-                      progGwarancji={Math.round(sumGodzinyMiesiecznie(kickoffRows) * 0.7 * 10) / 10}
+                      onChange={updateVerificationData}
+                      celProcent={celEfektywnosci}
                     />
 
                     <button

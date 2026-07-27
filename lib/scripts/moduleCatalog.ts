@@ -14,9 +14,10 @@ export const MODULE_CATALOG: ModuleCatalogEntry[] = [
   { code: "whatsapp-alerts", label: "Status zleceń na WhatsApp" },
 ];
 
-// Domyślna jednostka rozliczeniowa czasu bazowego per moduł (Załącznik 1 nowej umowy, tabela
-// Moduł/Jednostka/Czas na jednostkę/Wolumen na miesiąc) — prefill w tabeli Kickoff w
-// /wdrozenie, użytkownik może zmienić.
+// Domyślny opis jednej operacji per moduł (Załącznik 1 nowej umowy, finalna wersja 26.07.2026:
+// Moduł/Operacja/Czas manualny na jedną operację) — prefill w tabeli Kickoff w /wdrozenie,
+// użytkownik może zmienić. Wolumen NIE jest tu zbierany — to pole istnieje wyłącznie na
+// Weryfikacji Dnia 30 (liczba operacji wykonanych przez System w okresie).
 export const MODULE_DEFAULT_UNIT: Record<string, string> = {
   "email-parser": "zlecenie",
   "document-ocr": "dokument (CMR/POD/faktura)",
@@ -24,10 +25,10 @@ export const MODULE_DEFAULT_UNIT: Record<string, string> = {
   "whatsapp-alerts": "zdarzenie eskalacyjne",
 };
 
-// whatsapp-alerts jest jedynym modułem, który umowa traktuje jako opcjonalny wkład do progu
-// gwarancji 70% (zdarzenie eskalacyjne nie jest podstawową jednostką pracy jak zlecenie czy
+// whatsapp-alerts jest jedynym modułem, który umowa traktuje jako opcjonalny wkład do celu
+// efektywności (zdarzenie eskalacyjne nie jest podstawową jednostką pracy jak zlecenie czy
 // dokument) — pozostałe trzy domyślnie wliczają się w całości, użytkownik może to zmienić per
-// klient checkboxem "Wliczaj do progu gwarancji".
-export const MODULE_DEFAULT_WLICZAJ_DO_PROGU: Record<string, boolean> = {
+// klient checkboxem "Wliczaj do celu efektywności".
+export const MODULE_DEFAULT_WLICZAJ_DO_CELU: Record<string, boolean> = {
   "whatsapp-alerts": false,
 };

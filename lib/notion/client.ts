@@ -1194,6 +1194,29 @@ export async function migrateNotionSchema(): Promise<{ added: string[]; errors: 
     errors.push(`Batch 8: ${err instanceof Error ? err.message : "Błąd migracji schematu"}`);
   }
 
+  // Batch 9 (2026-07-27) — przebudowa Załącznika 1 na wzór dwuetapowy: Kickoff zbiera tylko
+  // czas manualny na operację (C), Weryfikacja Dnia 30 dopiero zbiera wolumen (D) i rzeczywisty
+  // czas Systemu (F). "Cel efektywności (%)" zastępuje sztywne 70% zaszyte wcześniej w UI —
+  // jedno źródło prawdy per klient, ustawiane raz na Kickoffie, domyślnie 70 dopóki nie
+  // zapisane (fallback w kodzie, nie duplikat pola w Notion).
+  try {
+    await notion.dataSources.update({
+      data_source_id: PIPELINE_DATA_SOURCE_ID,
+      properties: {
+        "Cel efektywności (%)": { number: {} },
+      },
+    });
+    const { confirmed, missing } = await confirmSchemaFields(["Cel efektywności (%)"]);
+    added.push(...confirmed);
+    for (const name of missing) {
+      errors.push(
+        `Batch 9: pole "${name}" nie pojawiło się w schemacie po update (brak wyjątku, ale retrieve go nie potwierdza)`,
+      );
+    }
+  } catch (err) {
+    errors.push(`Batch 9: ${err instanceof Error ? err.message : "Błąd migracji schematu"}`);
+  }
+
   return { added, errors };
 }
 
