@@ -1217,6 +1217,32 @@ export async function migrateNotionSchema(): Promise<{ added: string[]; errors: 
     errors.push(`Batch 9: ${err instanceof Error ? err.message : "Błąd migracji schematu"}`);
   }
 
+  // Batch 10 (2026-07-28, potwierdzone z prawniczką) — tabela czasu manualnego per moduł dla
+  // etapu "Analiza przedkontraktowa" (/sprzedaz), spotkanie PO Discovery, PRZED wysłaniem umowy.
+  // Ten sam kształt JSON co "Tabela modułów Kickoff" (Batch 8) — Kickoff krok 4 (kickoff.ts)
+  // odtąd wyłącznie POTWIERDZA te liczby, nie mierzy ich od nowa. Osobne pole, nie ten sam co
+  // Kickoff, bo to dwa różne momenty prawne: przed podpisem (wiążące dla treści umowy) i po
+  // podpisie (potwierdzenie tego co już podpisano).
+  try {
+    await notion.dataSources.update({
+      data_source_id: PIPELINE_DATA_SOURCE_ID,
+      properties: {
+        "Tabela modułów Analiza przedkontraktowa": { rich_text: {} },
+      },
+    });
+    const { confirmed, missing } = await confirmSchemaFields([
+      "Tabela modułów Analiza przedkontraktowa",
+    ]);
+    added.push(...confirmed);
+    for (const name of missing) {
+      errors.push(
+        `Batch 10: pole "${name}" nie pojawiło się w schemacie po update (brak wyjątku, ale retrieve go nie potwierdza)`,
+      );
+    }
+  } catch (err) {
+    errors.push(`Batch 10: ${err instanceof Error ? err.message : "Błąd migracji schematu"}`);
+  }
+
   return { added, errors };
 }
 

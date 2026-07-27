@@ -57,7 +57,17 @@ export interface Objection {
   type?: "sms" | "fb";
   note?: string;
   followup?: string;
-  stage: "opening" | "icp" | "diagnoza" | "kalkulator" | "pitch" | "cena" | "closing" | "wszedzie";
+  stage:
+    | "opening"
+    | "icp"
+    | "diagnoza"
+    | "kalkulator"
+    | "pitch"
+    | "cena"
+    | "closing"
+    | "wszedzie"
+    | "kickoff"
+    | "przedkontraktowa";
   decision?: Decision;
 }
 

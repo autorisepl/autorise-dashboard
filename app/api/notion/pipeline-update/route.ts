@@ -40,6 +40,7 @@ const bodySchema = z.object({
   tabelaModulowKickoff: z.string().nullable().optional(),
   tabelaModulowWeryfikacja: z.string().nullable().optional(),
   celEfektywnosciProcent: z.number().nullable().optional(),
+  tabelaModulowPrzedkontraktowa: z.string().nullable().optional(),
 });
 
 function richText(text: string) {
@@ -188,6 +189,11 @@ export async function PATCH(req: Request) {
     }
     if (d.celEfektywnosciProcent !== undefined) {
       properties["Cel efektywności (%)"] = { number: d.celEfektywnosciProcent };
+    }
+    if (d.tabelaModulowPrzedkontraktowa !== undefined) {
+      properties["Tabela modułów Analiza przedkontraktowa"] = {
+        rich_text: d.tabelaModulowPrzedkontraktowa ? richText(d.tabelaModulowPrzedkontraktowa) : [],
+      };
     }
 
     if (Object.keys(properties).length === 0) {

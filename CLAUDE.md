@@ -281,7 +281,9 @@ app/(dashboard)/baza-wiedzy/page.tsx      — placeholder, czeka na sesję z Mic
 components/layout/sidebar.tsx             — navigation sidebar (260px, 3 grupy: Organizacja/Klienci/Wiedza i proces)
 components/kalkulator/KalkulatorRoi.tsx   — kalkulator ROI (inline w skryptach)
 lib/agents/prompts.ts                     — all system prompts
-lib/scripts/{types,kwalifikacyjna,sprzedaz,messages}.ts — dane skryptów
+lib/scripts/{types,kwalifikacyjna,sprzedaz,kickoff,analizaPrzedkontraktowa,messages}.ts — dane skryptów
+components/wdrozenie/KickoffScriptPanel.tsx — panel skryptu Kickoff w /wdrozenie (akordeon + obiekcje)
+components/sprzedaz/AnalizaPrzedkontraktowaPanel.tsx — panel skryptu Analiza przedkontraktowa w /sprzedaz (po Discovery, przed umową), zapisuje tabelę czasu manualnego per moduł
 lib/notion/client.ts                      — Notion API client
 context/AUTORISE_SESSION_LOG.md           — log sesji, czytaj na starcie każdej sesji
 context/PLAN_CLAUDE_CODE.md               — bieżący plan wykonawczy dla Claude Code, czytaj na starcie każdej sesji obok SESSION_LOG

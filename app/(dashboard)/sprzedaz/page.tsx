@@ -24,6 +24,7 @@ import { ProgressBar, SectionLabelSmall, StepCard } from "@/components/dalsze-kr
 import { KalkulatorRoi } from "@/components/kalkulator/KalkulatorRoi";
 import { DecisionDiagram } from "@/components/scripts/DecisionDiagram";
 import { NextStepArrow } from "@/components/scripts/NextStepArrow";
+import { AnalizaPrzedkontraktowaPanel } from "@/components/sprzedaz/AnalizaPrzedkontraktowaPanel";
 import { WarunkiUmowyForm } from "@/components/sprzedaz/WarunkiUmowyForm";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { fillBrief, parseCytatyKlienta } from "@/lib/scripts/fillBrief";
@@ -2007,6 +2008,18 @@ export default function SprzedazPage() {
 
           <Card title="Warunki umowy" collapsible defaultOpen={false}>
             <WarunkiUmowyForm
+              client={selected}
+              onSaved={(patch) => {
+                setSelected((prev) => (prev ? { ...prev, ...patch } : prev));
+                setClients((prev) =>
+                  prev.map((c) => (c.id === selected?.id ? { ...c, ...patch } : c)),
+                );
+              }}
+            />
+          </Card>
+
+          <Card title="Skrypt: Analiza przedkontraktowa" collapsible defaultOpen={false}>
+            <AnalizaPrzedkontraktowaPanel
               client={selected}
               onSaved={(patch) => {
                 setSelected((prev) => (prev ? { ...prev, ...patch } : prev));
