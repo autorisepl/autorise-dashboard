@@ -791,12 +791,12 @@ const FUNNEL_NODES: FunnelNode[] = [
     agent:
       "Agent 2, pre-discovery brief (Opus 4.8, extended thinking): hipoteza bólu, przewidywane obiekcje, pitch recipe. Agent 3 personalizuje prezentację pod ten brief. Fathom nagrywa rozmowę.",
     entry: "Agent 1 zakwalifikował leada, a termin Discovery Call jest potwierdzony w Calendly.",
-    exit:
-      "Jedno spotkanie, 6 kroków frameworku Kimura: diagnoza → pitch dopasowany do modułów → cena → warunki umowy → closing. Po spotkaniu Agent 4 analizuje transkrypt.",
+    exit: "Jedno spotkanie, 6 kroków frameworku Kimura: diagnoza → pitch dopasowany do modułów → cena → warunki umowy → closing. Po spotkaniu Agent 4 analizuje transkrypt.",
     statusKey: "Discovery umówione",
     ref: "AGENT4_SYSTEM_PROMPT",
     refStatus: "confirmed",
-    refNote: '"Discovery Call (45-60 minut, jedno spotkanie obejmujące diagnozę, pitch, cenę i closing)" — dosłowny cytat z lib/agents/prompts.ts, AGENT4_SYSTEM_PROMPT.',
+    refNote:
+      '"Discovery Call (45-60 minut, jedno spotkanie obejmujące diagnozę, pitch, cenę i closing)" — dosłowny cytat z lib/agents/prompts.ts, AGENT4_SYSTEM_PROMPT.',
   },
   {
     id: "discovery-analiza",
@@ -808,8 +808,7 @@ const FUNNEL_NODES: FunnelNode[] = [
     agent:
       "Na żywo: setter domyka rozmowę wg skryptu (obiekcje closing, sprzedaz.ts). Po fakcie: Agent 4 (Sonnet 4.6) czyta transkrypt i klasyfikuje wynik w polu Wynik Discovery (TAK / NIE / W TRAKCIE).",
     entry: "Spotkanie Discovery Call dotarło do fazy closing.",
-    exit:
-      "Podpisano: Finalizacja. Odmowa/brak ICP: Niekwalifikowany. Obiekcja odraczająca (\"muszę przemyśleć\" / \"prawnik musi przejrzeć\"): W trakcie, wraca do closing po follow-upie.",
+    exit: 'Podpisano: Finalizacja. Odmowa/brak ICP: Niekwalifikowany. Obiekcja odraczająca ("muszę przemyśleć" / "prawnik musi przejrzeć"): W trakcie, wraca do closing po follow-upie.',
     branches: [
       {
         label: "Podpisano",
@@ -821,7 +820,7 @@ const FUNNEL_NODES: FunnelNode[] = [
         label: "Muszę przemyśleć",
         targetId: "discovery-umowione",
         tone: "accent",
-        note: "Obiekcja closing (sprzedaz.ts, rodzina od1/od20/od21) — setter wyciąga konkretny termin follow-up, nie zostawia otwartego \"jakoś się odezwę\". Agent 4 oznacza W TRAKCIE do czasu decyzji.",
+        note: 'Obiekcja closing (sprzedaz.ts, rodzina od1/od20/od21) — setter wyciąga konkretny termin follow-up, nie zostawia otwartego "jakoś się odezwę". Agent 4 oznacza W TRAKCIE do czasu decyzji.',
         ref: "sprzedaz.ts, od1/od20/od21",
         refStatus: "confirmed",
       },
@@ -829,7 +828,7 @@ const FUNNEL_NODES: FunnelNode[] = [
         label: "Prawnik musi przejrzeć",
         targetId: "discovery-umowione",
         tone: "accent",
-        note: 'Obiekcja od19 — standardowa procedura w większych firmach, nie wymówka. Setter wysyła umowę tego samego/następnego dnia i wyciąga konkretny termin odpowiedzi prawnika, zamiast naciskać na podpis od razu.',
+        note: "Obiekcja od19 — standardowa procedura w większych firmach, nie wymówka. Setter wysyła umowę tego samego/następnego dnia i wyciąga konkretny termin odpowiedzi prawnika, zamiast naciskać na podpis od razu.",
         ref: "sprzedaz.ts, od19",
         refStatus: "confirmed",
       },
@@ -864,8 +863,7 @@ const FUNNEL_NODES: FunnelNode[] = [
     agent:
       "Ręcznie: wystawienie faktury za wdrożenie (18 000 PLN, bez rabatu — mechanizm rabatu za terminowość 18000/15000 z §5 ust. 1 usunięty z produktu 2026-07-25, dokument umowy jeszcze tego nie odzwierciedla).",
     entry: "Umowa podpisana.",
-    exit:
-      "Faktura wystawiona w 2 dni robocze. Zgodnie z §5 ust. 3 prace wdrożeniowe (Kickoff, zbieranie dostępów) ruszają od dostarczenia dostępów NIEZALEŻNIE od statusu płatności — umowa nie przewiduje mechanizmu \"umowa niezawarta\" przy braku wpłaty.",
+    exit: 'Faktura wystawiona w 2 dni robocze. Zgodnie z §5 ust. 3 prace wdrożeniowe (Kickoff, zbieranie dostępów) ruszają od dostarczenia dostępów NIEZALEŻNIE od statusu płatności — umowa nie przewiduje mechanizmu "umowa niezawarta" przy braku wpłaty.',
     ref: "§5 ust. 3",
     refStatus: "stale",
     refNote:
@@ -911,9 +909,9 @@ const FUNNEL_NODES: FunnelNode[] = [
     isBranch: true,
     agent:
       "Ręcznie: Wykonawca potwierdza pisemnie (e-mail/uzgodniony kanał) otrzymanie kompletu dostępów ustalonych w Załączniku nr 1 (TMS, poczta, system księgowy/KSeF, kontakty operacyjne).",
-    entry: "Kickoff zakończony, harmonogram i termin dostarczenia dostępów ustalone indywidualnie w Załączniku nr 1.",
-    exit:
-      "Komplet dostępów potwierdzony pisemnie: start 4-tygodniowego wdrożenia i 30-dniowego okna weryfikacji NARAZ, tego samego dnia.",
+    entry:
+      "Kickoff zakończony, harmonogram i termin dostarczenia dostępów ustalone indywidualnie w Załączniku nr 1.",
+    exit: "Komplet dostępów potwierdzony pisemnie: start 4-tygodniowego wdrożenia i 30-dniowego okna weryfikacji NARAZ, tego samego dnia.",
     ref: "§2 ust. 2-3",
     refStatus: "confirmed",
     refNote:
@@ -939,7 +937,7 @@ const FUNNEL_NODES: FunnelNode[] = [
         label: "Opóźnienie — strona trzecia (dostawca TMS)",
         targetId: "wdrozenie",
         tone: "accent",
-        note: 'To nie osobny mechanizm terminu dostępów, tylko przedłużenie 4-tygodniowego WDROŻENIA o max 2 tygodnie, gdy potrzebny jest dostęp do API strony trzeciej (np. HMSoft u Arka Burkowskiego) na co Wykonawca nie ma wpływu. Wykonawca informuje klienta niezwłocznie z przyczyną i nowym terminem.',
+        note: "To nie osobny mechanizm terminu dostępów, tylko przedłużenie 4-tygodniowego WDROŻENIA o max 2 tygodnie, gdy potrzebny jest dostęp do API strony trzeciej (np. HMSoft u Arka Burkowskiego) na co Wykonawca nie ma wpływu. Wykonawca informuje klienta niezwłocznie z przyczyną i nowym terminem.",
         ref: "§2 ust. 6(b)",
         refStatus: "confirmed",
       },
@@ -965,7 +963,7 @@ const FUNNEL_NODES: FunnelNode[] = [
       { week: "Tydzień 4", label: "Live" },
     ],
     endNote:
-      'Tydzień 1: test dostępu do API głównego TMS — działa / nie działa. Jeśli nie działa (np. HMSoft, właściciel odmawia dostępu): cztery metody w kolejności próby — (1) bezpośredni kontakt z dostawcą systemu o dostęp, (2) automatyzacja RPA klikająca interfejs jak człowiek, (3) rozpoznawanie elementów wizualnie na ekranie, (4) dostęp przez panel w przeglądarce jeśli istnieje. Decyzja którą metodę wybrać zapada dopiero na Tygodniu 1, po realnym teście, nie wcześniej (Karta Produktu, pkt 8).',
+      "Tydzień 1: test dostępu do API głównego TMS — działa / nie działa. Jeśli nie działa (np. HMSoft, właściciel odmawia dostępu): cztery metody w kolejności próby — (1) bezpośredni kontakt z dostawcą systemu o dostęp, (2) automatyzacja RPA klikająca interfejs jak człowiek, (3) rozpoznawanie elementów wizualnie na ekranie, (4) dostęp przez panel w przeglądarce jeśli istnieje. Decyzja którą metodę wybrać zapada dopiero na Tygodniu 1, po realnym teście, nie wcześniej (Karta Produktu, pkt 8).",
   },
   {
     id: "odbior",
@@ -977,8 +975,7 @@ const FUNNEL_NODES: FunnelNode[] = [
     agent:
       'Ręcznie w /wdrozenie: checkbox "Protokół odbioru podpisany" + data. Mechanizm już żywy w kodzie i używany z realnymi klientami.',
     entry: "System działa na produkcji (Live, koniec Tygodnia 4).",
-    exit:
-      "Brak usterek: odbiór podpisany od razu. Usterka niekrytyczna: odbiór mimo to, usterka notowana do naprawy. Usterka krytyczna: odmowa odbioru, naprawa, ponowny odbiór. Milczenie klienta: uznany za odebrany.",
+    exit: "Brak usterek: odbiór podpisany od razu. Usterka niekrytyczna: odbiór mimo to, usterka notowana do naprawy. Usterka krytyczna: odmowa odbioru, naprawa, ponowny odbiór. Milczenie klienta: uznany za odebrany.",
     ref: "Brak w umowie i Karcie Produktu",
     refStatus: "missing",
     refNote:
@@ -1020,8 +1017,7 @@ const FUNNEL_NODES: FunnelNode[] = [
     agent:
       "Porównanie godzin zaoszczędzonych miesięcznie (logi systemu) z progiem gwarancji: minimum 70% czasu bazowego potwierdzonego na Kickoffie. Może się częściowo pokrywać z Odbiorem — oba liczone od innych punktów startu (Odbiór od Live, Weryfikacja od zebrania dostępów).",
     entry: "30 dni minęło od potwierdzenia kompletu dostępów, na realnych zleceniach klienta.",
-    exit:
-      "Pozytywny (próg 70% osiągnięty, LUB niespełnienie wynika z winy klienta — np. brak dostarczenia danych, ingerencja w konfigurację — liczone automatycznie jako pozytywny): Retainer. Negatywny (przyczyna po stronie systemu): 2 tygodnie naprawcze.",
+    exit: "Pozytywny (próg 70% osiągnięty, LUB niespełnienie wynika z winy klienta — np. brak dostarczenia danych, ingerencja w konfigurację — liczone automatycznie jako pozytywny): Retainer. Negatywny (przyczyna po stronie systemu): 2 tygodnie naprawcze.",
     ref: "§3 ust. 1-6",
     refStatus: "stale",
     refNote:
@@ -1047,7 +1043,8 @@ const FUNNEL_NODES: FunnelNode[] = [
     title: "Działania naprawcze",
     subtitle: "2 tygodnie",
     tone: "accent",
-    agent: "Zespół wdrożeniowy: poprawki w konfiguracji/automatyzacjach zidentyfikowane jako przyczyna niespełnienia progu.",
+    agent:
+      "Zespół wdrożeniowy: poprawki w konfiguracji/automatyzacjach zidentyfikowane jako przyczyna niespełnienia progu.",
     entry: "Pierwsza weryfikacja: wynik negatywny z winy systemu.",
     exit: "Po 2 tygodniach: druga, niezależna 30-dniowa runda weryfikacji.",
     ref: "Dawny SZKIC_UMOWA §4 ust. 7 (plik usunięty)",
@@ -1087,7 +1084,8 @@ const FUNNEL_NODES: FunnelNode[] = [
     subtitle: "Miesiąc na skorzystanie",
     tone: "negative",
     isBranch: true,
-    agent: "Klient decyduje, czy skorzystać z prawa odstąpienia w ciągu miesiąca od drugiego negatywnego wyniku.",
+    agent:
+      "Klient decyduje, czy skorzystać z prawa odstąpienia w ciągu miesiąca od drugiego negatywnego wyniku.",
     entry: "Druga weryfikacja: wynik negatywny.",
     exit: "Skorzystał w terminie: zwrot całości wpłaconej kwoty w 14 dni. Nie skorzystał: uznaje się że cel osiągnięty, umowa trwa dalej na Retainer.",
     ref: "Brak w umowie/Karcie Produktu",
@@ -1118,9 +1116,9 @@ const FUNNEL_NODES: FunnelNode[] = [
     isBranch: true,
     agent:
       "Opieka stała: monitoring wykorzystania, naprawa usterek do 48h roboczych, drabinka eskalacji przy braku kontaktu klienta (0 / 3-4 / 7 / 14 / 30 dni — /utrzymanie, ta sama metodologia progów co przy ciszy w trakcie wdrożenia, Karta Produktu pkt 14).",
-    entry: "Odbiór systemu podpisany (albo uznany za odebrany) I gwarancja potwierdzona (weryfikacja pierwsza, druga, albo nieskorzystanie z prawa odstąpienia) — start retainera liczy się od dnia Odbioru, weryfikacja może się z nim częściowo pokrywać w czasie.",
-    exit:
-      "Trwa min. 12 miesięcy, potem automatyczne przedłużenie na czas nieokreślony (30-dniowy okres wypowiedzenia, nie \"3 miesiące wcześniej\"). Wyzwalacz rozszerzenia zakresu przenosi klienta do Upsell. Trzy ścieżki wyjścia w trakcie trwania: patrz gałęzie.",
+    entry:
+      "Odbiór systemu podpisany (albo uznany za odebrany) I gwarancja potwierdzona (weryfikacja pierwsza, druga, albo nieskorzystanie z prawa odstąpienia) — start retainera liczy się od dnia Odbioru, weryfikacja może się z nim częściowo pokrywać w czasie.",
+    exit: 'Trwa min. 12 miesięcy, potem automatyczne przedłużenie na czas nieokreślony (30-dniowy okres wypowiedzenia, nie "3 miesiące wcześniej"). Wyzwalacz rozszerzenia zakresu przenosi klienta do Upsell. Trzy ścieżki wyjścia w trakcie trwania: patrz gałęzie.',
     statusKey: "Retainer",
     ref: "§6 ust. 2-3, §5 ust. 2",
     refStatus: "stale",
@@ -1288,7 +1286,9 @@ function RefBadge({
       }}
       title={refStatusLabel(status)}
     >
-      <span style={{ width: 6, height: 6, borderRadius: "50%", background: color, flexShrink: 0 }} />
+      <span
+        style={{ width: 6, height: 6, borderRadius: "50%", background: color, flexShrink: 0 }}
+      />
       <span
         style={{
           fontFamily: "var(--font-jetbrains-mono)",
@@ -1393,9 +1393,7 @@ function FunnelCard({ node, count, active, onClick, compact }: FunnelCardProps) 
             {node.subtitle}
           </div>
         )}
-        {node.ref && (
-          <RefBadge refText={node.ref} status={node.refStatus} compact={compact} />
-        )}
+        {node.ref && <RefBadge refText={node.ref} status={node.refStatus} compact={compact} />}
         {count !== null && (
           <div
             style={{
@@ -1461,7 +1459,9 @@ function BranchPillRow({
     <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8, marginLeft: 44 }}>
       {branches.map((b) => {
         const color = funnelToneColor(b.tone);
-        const tooltip = b.ref ? `${b.note}\n\n${b.ref}${b.refNote ? ` — ${b.refNote}` : ""}` : b.note;
+        const tooltip = b.ref
+          ? `${b.note}\n\n${b.ref}${b.refNote ? ` — ${b.refNote}` : ""}`
+          : b.note;
         return (
           <button
             key={b.label}
@@ -1621,7 +1621,14 @@ function NodeDetail({ node, count }: { node: FunnelNode; count: number | null })
             background: "#fff",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: node.refNote ? 6 : 0 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              marginBottom: node.refNote ? 6 : 0,
+            }}
+          >
             <RefBadge refText={node.ref} status={node.refStatus} />
             <span
               style={{
