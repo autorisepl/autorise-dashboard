@@ -7,10 +7,8 @@ import { ClientSidebar } from "@/components/clients/ClientSidebar";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Panel } from "@/components/ui/Panel";
 import { KickoffModuleTable } from "@/components/wdrozenie/KickoffModuleTable";
-import type {
-  KickoffModuleRow,
-  WeryfikacjaModuleRow,
-} from "@/components/wdrozenie/moduleTypes";
+import { KickoffScriptPanel } from "@/components/wdrozenie/KickoffScriptPanel";
+import type { KickoffModuleRow, WeryfikacjaModuleRow } from "@/components/wdrozenie/moduleTypes";
 import { WeryfikacjaModuleTable } from "@/components/wdrozenie/WeryfikacjaModuleTable";
 import {
   MODULE_CATALOG,
@@ -117,6 +115,11 @@ const MODULE_LABELS: Record<string, string> = Object.fromEntries(
   MODULE_CATALOG.map((m) => [m.code, m.label]),
 );
 
+// TODO (2026-07-28, potwierdzone z prawniczką): czasGodziny startuje puste, bo etap "Analiza
+// przedkontraktowa" (pomiar czasu manualnego PRZED podpisem, wynik wiążący w Załączniku 1) nie
+// istnieje jeszcze w kodzie — brak pola Notion, brak promptu, brak strony. Docelowo ten pomiar
+// powinien wczytywać się tu automatycznie zamiast zaczynać od zera, patrz kickoff.ts krok 4
+// (POTWIERDZENIE, nie pomiar) — do zbudowania jako osobny blok pracy.
 function buildDefaultModuleRows(client: PipelineClientDetailed): KickoffModuleRow[] {
   return MODULE_CATALOG.filter((m) => client.moduleWdrazane.includes(m.code)).map((m) => ({
     moduleId: m.code,
@@ -626,6 +629,8 @@ export default function WdrozenieePage() {
                 </div>
               )}
 
+              {stageIndex === 0 && <KickoffScriptPanel />}
+
               <Panel>
                 <div style={{ marginBottom: 14 }}>
                   <div
@@ -746,9 +751,9 @@ export default function WdrozenieePage() {
                       marginBottom: 10,
                     }}
                   >
-                    Załącznik 1 umowy. Wyłącznie czas manualny na jedną operację (C), zero
-                    wolumenu na tym etapie — wolumen i rzeczywisty czas Systemu zbiera dopiero
-                    Weryfikacja Dnia 30 poniżej.
+                    Załącznik 1 umowy. Wyłącznie czas manualny na jedną operację (C), zero wolumenu
+                    na tym etapie — wolumen i rzeczywisty czas Systemu zbiera dopiero Weryfikacja
+                    Dnia 30 poniżej.
                   </div>
 
                   <KickoffModuleTable
@@ -1104,11 +1109,11 @@ export default function WdrozenieePage() {
                     }}
                   >
                     Operacja i czas na operację nie zmieniają się od Kickoffu. Wpisz dla każdego
-                    modułu liczbę operacji wykonanych przez System w okresie (D) i rzeczywisty
-                    czas jaki zajęła obsługa tych operacji człowiekowi przy systemie (F) — F
-                    mierzone z obserwacji/logów, nie zakładane jako zero. Dziś nie istnieje żaden
-                    automatyczny mechanizm śledzenia tego czasu, wpisz najlepszy dostępny pomiar.
-                    Wynik: (ΣE − ΣF) / ΣE × 100, porównany z celem % zapisanym na Kickoffie.
+                    modułu liczbę operacji wykonanych przez System w okresie (D) i rzeczywisty czas
+                    jaki zajęła obsługa tych operacji człowiekowi przy systemie (F) — F mierzone z
+                    obserwacji/logów, nie zakładane jako zero. Dziś nie istnieje żaden automatyczny
+                    mechanizm śledzenia tego czasu, wpisz najlepszy dostępny pomiar. Wynik: (ΣE −
+                    ΣF) / ΣE × 100, porównany z celem % zapisanym na Kickoffie.
                   </div>
                 </div>
 
