@@ -653,7 +653,7 @@ const STAGES = [
   },
 ];
 
-// ── Pełny lejek — paleta dokumentowa (spójna z public/prezentacja.html) ──
+// ── Cykl życia klienta (dawniej "Pełny lejek") — paleta dokumentowa (spójna z public/prezentacja.html) ──
 
 const LJ_ASPHALT = "#1B1D22";
 const LJ_ACCENT = "#F5A623";
@@ -666,11 +666,23 @@ const SOURCE_OPTIONS = ["META Ads", "Polecenie", "LinkedIn", "Cold outreach", "I
 
 type FunnelTone = "neutral" | "accent" | "success" | "negative" | "source";
 
+// Status odniesienia prawnego (2026-07-27, przebudowa cyklu życia klienta):
+// - "confirmed": dosłownie zgodne z UMOWA_AUTORISE_FINAL.md albo aktualnym mechanizmem produktu
+// - "stale": umowa/dawny SZKIC mówi coś innego (liczby albo brak aktualizacji) — produkt już
+//   działa inaczej, tekst umowy nie został jeszcze dogoniony
+// - "missing": mechanizm nie istnieje w ŻADNYM dokumencie Autorise (umowa, Karta Produktu,
+//   prompty) — albo tylko w kodzie/komentarzu bez realnej podstawy, albo wyłącznie w treści tego
+//   zlecenia. Wymaga potwierdzenia z Michałem/prawnikiem zanim będzie traktowane jako wiążące.
+type RefStatus = "confirmed" | "stale" | "missing";
+
 interface FunnelBranch {
   label: string;
   targetId: string;
   tone: FunnelTone;
   note: string;
+  ref?: string;
+  refNote?: string;
+  refStatus?: RefStatus;
 }
 
 interface FunnelSubStep {
@@ -698,8 +710,23 @@ interface FunnelNode {
   returnItems?: FunnelReturnItem[];
   loopNote?: string;
   endNote?: string;
+  ref?: string;
+  refNote?: string;
+  refStatus?: RefStatus;
 }
 
+// Przebudowa 2026-07-27 — cykl życia klienta od leada do retainera, zgodny ze WSZYSTKIMI
+// mechanizmami z aktualnej umowy (UMOWA_AUTORISE_FINAL.md). Podczas researchu znaleziono realny
+// rozjazd: sam tekst umowy (§3, §5, §6) wciąż opisuje płaską gwarancję 80h/mc + rabat
+// 18000/15000 + jedną weryfikację, podczas gdy CAŁY produkt (prompty agentów, prezentacja,
+// kalkulatory, tabela Kickoff w /wdrozenie) od commitu 98d95cf liczy 70% czasu bazowego, bez
+// rabatu, w dwóch rundach — zdecydowano (Michał, 2026-07-27) trzymać się aktualnych liczb
+// produktowych, oznaczając literalny tekst umowy jako nieaktualny tam gdzie się rozjeżdża
+// (pole `ref`/`refStatus` niżej), zamiast fabrykować cytaty które nie odpowiadają żadnemu
+// realnemu dokumentowi. Węzeł "Odbiór systemu" (usterka krytyczna/niekrytyczna/milczący odbiór)
+// istniał już w kodzie /wdrozenie z komentarzem błędnie cytującym "umowa §3" — w rzeczywistości
+// ten mechanizm nie występuje w ŻADNYM dokumencie Autorise (ani w umowie, ani w Karcie Produktu),
+// oznaczony tu jako refStatus "missing".
 const FUNNEL_NODES: FunnelNode[] = [
   {
     id: "source",
@@ -758,31 +785,53 @@ const FUNNEL_NODES: FunnelNode[] = [
   {
     id: "discovery-umowione",
     nr: "03",
-    title: "Discovery umówione",
+    title: "Discovery Call",
+    subtitle: "45-60 min, jedno spotkanie",
     tone: "neutral",
     agent:
-      "Agent 2, pre-discovery brief (Opus 4.8, extended thinking): hipoteza bólu, przewidywane obiekcje, pitch recipe. Agent 3 personalizuje prezentację pod ten brief.",
-    entry: "Agent 1 zakwalifikował leada, a termin Discovery Call jest potwierdzony.",
-    exit: "Discovery Call się odbywa (Fathom nagrywa rozmowę), po czym Agent 4 analizuje wynik.",
+      "Agent 2, pre-discovery brief (Opus 4.8, extended thinking): hipoteza bólu, przewidywane obiekcje, pitch recipe. Agent 3 personalizuje prezentację pod ten brief. Fathom nagrywa rozmowę.",
+    entry: "Agent 1 zakwalifikował leada, a termin Discovery Call jest potwierdzony w Calendly.",
+    exit:
+      "Jedno spotkanie, 6 kroków frameworku Kimura: diagnoza → pitch dopasowany do modułów → cena → warunki umowy → closing. Po spotkaniu Agent 4 analizuje transkrypt.",
     statusKey: "Discovery umówione",
+    ref: "AGENT4_SYSTEM_PROMPT",
+    refStatus: "confirmed",
+    refNote: '"Discovery Call (45-60 minut, jedno spotkanie obejmujące diagnozę, pitch, cenę i closing)" — dosłowny cytat z lib/agents/prompts.ts, AGENT4_SYSTEM_PROMPT.',
   },
   {
     id: "discovery-analiza",
     nr: "04",
-    title: "Discovery Call",
-    subtitle: "Analiza rozmowy",
+    title: "Zamknięcie rozmowy",
+    subtitle: "Closing + analiza",
     tone: "accent",
     isBranch: true,
     agent:
-      "Agent 4, analiza Discovery Call (Sonnet 4.6): czyta transkrypt i klasyfikuje wynik w polu Wynik Discovery (TAK / NIE / W TRAKCIE).",
-    entry: "Spotkanie Discovery Call się odbyło i transkrypt jest dostępny do analizy.",
-    exit: "TAK: Finalizacja. NIE: Niekwalifikowany. W TRAKCIE: klient zostaje w Discovery umówione do czasu decyzji.",
+      "Na żywo: setter domyka rozmowę wg skryptu (obiekcje closing, sprzedaz.ts). Po fakcie: Agent 4 (Sonnet 4.6) czyta transkrypt i klasyfikuje wynik w polu Wynik Discovery (TAK / NIE / W TRAKCIE).",
+    entry: "Spotkanie Discovery Call dotarło do fazy closing.",
+    exit:
+      "Podpisano: Finalizacja. Odmowa/brak ICP: Niekwalifikowany. Obiekcja odraczająca (\"muszę przemyśleć\" / \"prawnik musi przejrzeć\"): W trakcie, wraca do closing po follow-upie.",
     branches: [
       {
-        label: "Finalizacja",
+        label: "Podpisano",
         targetId: "finalizacja",
         tone: "neutral",
-        note: "Wynik Discovery: TAK.",
+        note: "Wynik Discovery: TAK. Klient zaakceptował cenę i warunki na miejscu albo tuż po.",
+      },
+      {
+        label: "Muszę przemyśleć",
+        targetId: "discovery-umowione",
+        tone: "accent",
+        note: "Obiekcja closing (sprzedaz.ts, rodzina od1/od20/od21) — setter wyciąga konkretny termin follow-up, nie zostawia otwartego \"jakoś się odezwę\". Agent 4 oznacza W TRAKCIE do czasu decyzji.",
+        ref: "sprzedaz.ts, od1/od20/od21",
+        refStatus: "confirmed",
+      },
+      {
+        label: "Prawnik musi przejrzeć",
+        targetId: "discovery-umowione",
+        tone: "accent",
+        note: 'Obiekcja od19 — standardowa procedura w większych firmach, nie wymówka. Setter wysyła umowę tego samego/następnego dnia i wyciąga konkretny termin odpowiedzi prawnika, zamiast naciskać na podpis od razu.',
+        ref: "sprzedaz.ts, od19",
+        refStatus: "confirmed",
       },
       {
         label: "Niekwalifikowany",
@@ -795,36 +844,106 @@ const FUNNEL_NODES: FunnelNode[] = [
   {
     id: "finalizacja",
     nr: "05",
-    title: "Finalizacja",
+    title: "Podpisanie umowy",
     tone: "neutral",
-    agent:
-      "Ręcznie: rozmowa finalizacyjna, obsługa obiekcji cenowych, przygotowanie i podpisanie umowy.",
-    entry: "Agent 4 ocenił wynik Discovery Call jako TAK.",
-    exit: "Umowa podpisana albo przedpłata potwierdzona: status zmienia się na Kickoff.",
+    agent: "Ręcznie: przygotowanie i podpisanie umowy (elektronicznie albo papierowo).",
+    entry: "Closing zakończony wynikiem Podpisano.",
+    exit: "Umowa podpisana: Wykonawca wystawia fakturę w ciągu 2 dni roboczych.",
     statusKey: "Finalizacja",
+    ref: "§14 ust. 3",
+    refStatus: "confirmed",
+    refNote:
+      '"Umowa może zostać zawarta w formie elektronicznej (podpis elektroniczny), co Strony uznają za równoważne z formą pisemną."',
+  },
+  {
+    id: "platnosc",
+    nr: "05b",
+    title: "Faktura i płatność",
+    tone: "accent",
+    isBranch: true,
+    agent:
+      "Ręcznie: wystawienie faktury za wdrożenie (18 000 PLN, bez rabatu — mechanizm rabatu za terminowość 18000/15000 z §5 ust. 1 usunięty z produktu 2026-07-25, dokument umowy jeszcze tego nie odzwierciedla).",
+    entry: "Umowa podpisana.",
+    exit:
+      "Faktura wystawiona w 2 dni robocze. Zgodnie z §5 ust. 3 prace wdrożeniowe (Kickoff, zbieranie dostępów) ruszają od dostarczenia dostępów NIEZALEŻNIE od statusu płatności — umowa nie przewiduje mechanizmu \"umowa niezawarta\" przy braku wpłaty.",
+    ref: "§5 ust. 3",
+    refStatus: "stale",
+    refNote:
+      '§5 ust. 3: "Faktura za wdrożenie wystawiana w terminie 2 dni roboczych po podpisaniu umowy. Prace wdrożeniowe rozpoczynają się od dnia dostarczenia kompletu dostępów, niezależnie od statusu płatności." Zlecenie tej przebudowy zakładało "warunek rozwiązujący: brak pełnej wpłaty w 7 dni = umowa uważana za niezawartą" — TAKI ZAPIS NIE ISTNIEJE w UMOWA_AUTORISE_FINAL.md, umowa mówi dosłownie coś przeciwnego (start prac niezależny od płatności). Gałąź "Brak wpłaty" poniżej pokazuje to jako niepotwierdzony mechanizm, nie fakt.',
+    branches: [
+      {
+        label: "Wpłata zaksięgowana",
+        targetId: "kickoff",
+        tone: "neutral",
+        note: "Bieg dalszy: Kick-off w ciągu 7 dni roboczych od podpisania umowy (§2 ust. 1) — niezależnie od tego, czy płatność już wpłynęła.",
+      },
+      {
+        label: "Brak wpłaty (niepotwierdzone)",
+        targetId: "zakonczona",
+        tone: "negative",
+        note: 'Mechanizm z briefu tej mapy ("7 dni, umowa niezawarta") nie ma pokrycia w §5 ust. 3 ani nigdzie indziej w dokumentach Autorise. Jeśli ma obowiązywać, wymaga dopisania do umowy — dziś brak wpłaty NIE zatrzymuje prac wdrożeniowych.',
+        ref: "Brak w umowie",
+        refStatus: "missing",
+      },
+    ],
   },
   {
     id: "kickoff",
     nr: "06",
-    title: "Kickoff",
+    title: "Kick-off",
+    subtitle: "30-45 min, w 7 dni roboczych",
     tone: "neutral",
     agent:
-      "Ręcznie: onboarding, konfiguracja dostępów, ustalenie harmonogramu wdrożenia z klientem.",
-    entry: "Umowa podpisana albo przedpłata potwierdzona.",
-    exit: "Start czterotygodniowego procesu wdrożenia.",
+      "Ręcznie: warsztat Kick-off — ustalenie harmonogramu wdrożenia i zebranie tabeli czasu bazowego per moduł (Załącznik nr 1: Moduł/Jednostka/Czas na jednostkę/Wolumen na miesiąc), teraz budowanej w Panelu 0 zakładki /wdrozenie zamiast jednego ręcznie wpisywanego pola.",
+    entry: "Umowa podpisana.",
+    exit: "Harmonogram i tabela czasu bazowego ustalone: start zbierania dostępów (Załącznik nr 1).",
     statusKey: "Kickoff",
+    ref: "§2 ust. 1",
+    refStatus: "confirmed",
+    refNote:
+      '"Wykonawca zobowiązuje się do przeprowadzenia warsztatu Kick-off (30-45 minut) w ciągu 7 dni roboczych od podpisania umowy, którego celem jest ustalenie harmonogramu wdrożenia i zebranie niezbędnych dostępów."',
   },
   {
     id: "zebranie-dostepow",
     nr: "06b",
     title: "Zebranie dostępów",
-    tone: "neutral",
+    tone: "accent",
+    isBranch: true,
     agent:
       "Ręcznie: Wykonawca potwierdza pisemnie (e-mail/uzgodniony kanał) otrzymanie kompletu dostępów ustalonych w Załączniku nr 1 (TMS, poczta, system księgowy/KSeF, kontakty operacyjne).",
-    entry: "Kickoff zakończony, harmonogram ustalony.",
-    exit: "Komplet dostępów potwierdzony pisemnie: start 4-tygodniowego wdrożenia i 30-dniowego okna weryfikacji gwarancji.",
-    endNote:
-      "30-dniowy zegar weryfikacji gwarancji startuje stąd, nie od podpisania umowy. Termin ustalany indywidualnie z klientem podczas rozmowy zamykającej (Załącznik nr 1 umowy), nie jest sztywną liczbą dni dla wszystkich. Dostarczenie dostępów po terminie przesuwa start okna weryfikacji proporcjonalnie o czas opóźnienia (SZKIC_UMOWA_AUTORISE.md §2 ust. 2).",
+    entry: "Kickoff zakończony, harmonogram i termin dostarczenia dostępów ustalone indywidualnie w Załączniku nr 1.",
+    exit:
+      "Komplet dostępów potwierdzony pisemnie: start 4-tygodniowego wdrożenia i 30-dniowego okna weryfikacji NARAZ, tego samego dnia.",
+    ref: "§2 ust. 2-3",
+    refStatus: "confirmed",
+    refNote:
+      '§2 ust. 2: "Okres weryfikacji rozpoczyna bieg od dnia, w którym Wykonawca pisemnie potwierdzi Zamawiającemu otrzymanie kompletu dostępów." §2 ust. 3: termin dostarczenia dostępów jest ustalany INDYWIDUALNIE per klient w Załączniku nr 1 — nie ma jednego sztywnego "5 dni roboczych, max 19 dni łącznie" dla wszystkich umów; to musi być konkretna liczba z Załącznika 1 danego klienta.',
+    branches: [
+      {
+        label: "Dostarczone w terminie",
+        targetId: "wdrozenie",
+        tone: "neutral",
+        note: "Komplet dostępów potwierdzony pisemnie w terminie ustalonym w Załączniku nr 1.",
+      },
+      {
+        label: "Opóźnienie — wina klienta",
+        targetId: "zakonczona",
+        tone: "negative",
+        note: "Zegar weryfikacji przesuwa się proporcjonalnie o czas opóźnienia. Dopiero opóźnienie przekraczające 30 DNI KALENDARZOWYCH od ustalonego terminu (nie 19 dni) uprawnia Wykonawcę do odstąpienia bez zwrotu wynagrodzenia za wdrożenie.",
+        ref: "§2 ust. 4",
+        refStatus: "stale",
+        refNote:
+          'Brief tej przebudowy podawał próg 19 dni — umowa mówi dosłownie "30 dni kalendarzowych od ustalonego terminu". Poprawiono na mapie do liczby z §2 ust. 4.',
+      },
+      {
+        label: "Opóźnienie — strona trzecia (dostawca TMS)",
+        targetId: "wdrozenie",
+        tone: "accent",
+        note: 'To nie osobny mechanizm terminu dostępów, tylko przedłużenie 4-tygodniowego WDROŻENIA o max 2 tygodnie, gdy potrzebny jest dostęp do API strony trzeciej (np. HMSoft u Arka Burkowskiego) na co Wykonawca nie ma wpływu. Wykonawca informuje klienta niezwłocznie z przyczyną i nowym terminem.',
+        ref: "§2 ust. 6(b)",
+        refStatus: "confirmed",
+      },
+    ],
   },
   {
     id: "wdrozenie",
@@ -833,38 +952,212 @@ const FUNNEL_NODES: FunnelNode[] = [
     subtitle: "4 tygodnie",
     tone: "neutral",
     agent:
-      "Zespół wdrożeniowy: Discovery procesów, integracja z TMS, testy na realnych danych, uruchomienie live.",
+      "Zespół wdrożeniowy: Discovery techniczne, integracja z TMS, testy na realnych danych, uruchomienie live.",
     entry: "Komplet dostępów potwierdzony pisemnie (Zebranie dostępów).",
-    exit: "System działa na produkcji: zaczyna się 30-dniowe okno weryfikacji gwarancji.",
+    exit: "System działa na produkcji: zaczyna się liczenie 30-dniowego okna weryfikacji gwarancji (już wystartowało razem z wdrożeniem, nie od Live).",
     statusKey: "Wdrożenie",
+    ref: "§2 ust. 6 / Karta Produktu pkt 8, 11",
+    refStatus: "confirmed",
     subSteps: [
-      { week: "Tydzień 1", label: "Discovery procesów" },
+      { week: "Tydzień 1", label: "Discovery techniczne: test API TMS" },
       { week: "Tydzień 2-3", label: "Integracja z TMS" },
       { week: "Tydzień 3", label: "Testy na danych" },
       { week: "Tydzień 4", label: "Live" },
+    ],
+    endNote:
+      'Tydzień 1: test dostępu do API głównego TMS — działa / nie działa. Jeśli nie działa (np. HMSoft, właściciel odmawia dostępu): cztery metody w kolejności próby — (1) bezpośredni kontakt z dostawcą systemu o dostęp, (2) automatyzacja RPA klikająca interfejs jak człowiek, (3) rozpoznawanie elementów wizualnie na ekranie, (4) dostęp przez panel w przeglądarce jeśli istnieje. Decyzja którą metodę wybrać zapada dopiero na Tygodniu 1, po realnym teście, nie wcześniej (Karta Produktu, pkt 8).',
+  },
+  {
+    id: "odbior",
+    nr: "07b",
+    title: "Odbiór systemu",
+    subtitle: "Protokół, 3 dni robocze od Live",
+    tone: "accent",
+    isBranch: true,
+    agent:
+      'Ręcznie w /wdrozenie: checkbox "Protokół odbioru podpisany" + data. Mechanizm już żywy w kodzie i używany z realnymi klientami.',
+    entry: "System działa na produkcji (Live, koniec Tygodnia 4).",
+    exit:
+      "Brak usterek: odbiór podpisany od razu. Usterka niekrytyczna: odbiór mimo to, usterka notowana do naprawy. Usterka krytyczna: odmowa odbioru, naprawa, ponowny odbiór. Milczenie klienta: uznany za odebrany.",
+    ref: "Brak w umowie i Karcie Produktu",
+    refStatus: "missing",
+    refNote:
+      'Kod /wdrozenie (komentarz przy polu "Protokół odbioru podpisany") cytuje "umowa §3" — to POMYŁKA: §3 UMOWA_AUTORISE_FINAL.md to "Zobowiązanie zwrotu", nie protokół odbioru. Cały mechanizm usterka krytyczna/niekrytyczna/milczący odbiór/3 dni robocze/10 dni naprawy nie występuje w żadnym dokumencie Autorise (ani w umowie, ani w Karcie Produktu) — istnieje wyłącznie jako pole Notion i UI zbudowane w code session 2026-07-25 bez podstawy prawnej. Kryterium odbioru najbliższe realnemu dokumentowi to Karta Produktu pkt 12 ("wszystkie moduły działają na realnych zleceniach, zespół przeszkolony, zero krytycznych błędów w logach z ostatniego tygodnia") — ale bez formalnego protokołu/terminów. Wymaga potwierdzenia z Michałem/prawnikiem zanim to trafi do umowy albo zanim ta mapa będzie cytowana jako wiążąca w tym punkcie.',
+    branches: [
+      {
+        label: "Brak usterek",
+        targetId: "retainer",
+        tone: "neutral",
+        note: "Protokół odbioru podpisany bez zastrzeżeń.",
+      },
+      {
+        label: "Usterka niekrytyczna",
+        targetId: "retainer",
+        tone: "accent",
+        note: "Nie wstrzymuje odbioru — notowana do naprawy w ramach retainera (§5 ust. 2b: naprawa usterek do 48h roboczych od zgłoszenia).",
+      },
+      {
+        label: "Usterka krytyczna",
+        targetId: "odbior",
+        tone: "negative",
+        note: "Odmowa odbioru. Naprawa min. 10 dni roboczych, potem ponowny odbiór (pętla do tego samego węzła).",
+      },
+      {
+        label: "Milczący odbiór",
+        targetId: "retainer",
+        tone: "accent",
+        note: "Klient nie reaguje na zgłoszenie odbioru w wyznaczonym terminie: system uznaje odbiór za dokonany.",
+      },
     ],
   },
   {
     id: "weryfikacja",
     nr: "08",
     title: "Weryfikacja gwarancji",
-    subtitle: "30 dni",
+    subtitle: "30 dni od zebrania dostępów",
     tone: "neutral",
+    isBranch: true,
     agent:
-      "Porównanie godzin zaoszczędzonych miesięcznie z progiem gwarancji (minimum 70% czasu bazowego klienta).",
-    entry: "System działa na produkcji od co najmniej 30 dni na realnych zleceniach.",
-    exit: "Próg spełniony: Retainer. Próg niespełniony: 2 tygodnie na poprawki, potem druga 30-dniowa weryfikacja (SZKIC_UMOWA_AUTORISE.md §4 ust. 7) — dopiero drugi negatywny wynik uprawnia klienta do zwrotu.",
+      "Porównanie godzin zaoszczędzonych miesięcznie (logi systemu) z progiem gwarancji: minimum 70% czasu bazowego potwierdzonego na Kickoffie. Może się częściowo pokrywać z Odbiorem — oba liczone od innych punktów startu (Odbiór od Live, Weryfikacja od zebrania dostępów).",
+    entry: "30 dni minęło od potwierdzenia kompletu dostępów, na realnych zleceniach klienta.",
+    exit:
+      "Pozytywny (próg 70% osiągnięty, LUB niespełnienie wynika z winy klienta — np. brak dostarczenia danych, ingerencja w konfigurację — liczone automatycznie jako pozytywny): Retainer. Negatywny (przyczyna po stronie systemu): 2 tygodnie naprawcze.",
+    ref: "§3 ust. 1-6",
+    refStatus: "stale",
+    refNote:
+      'UMOWA_AUTORISE_FINAL.md §3 ust. 1 mówi dosłownie "minimum 80 godzin miesięcznie" (liczba bezwzględna), nie 70% czasu bazowego. Produkt (prompty agentów, prezentacja, kalkulatory, tabela Kickoff) przeszedł na próg procentowy 2026-07-25 (commit 98d95cf, "usunięcie rozjazdu ceny/gwarancji między systemami") — decyzja Michała z tej sesji: mapa pokazuje AKTUALNE 70%, tekst umowy wymaga osobnej aktualizacji prawnej żeby dogonić produkt. §3 ust. 5: niespełnienie warunków klienta (§3 ust. 4 a-e: dostępy w terminie, kontakt 48h, udział w Kickoff, brak ingerencji w konfigurację, ciągłość systemów zewnętrznych) zwalnia Wykonawcę ze zobowiązania zwrotu — stąd "wina klienta = automatycznie pozytywny".',
+    branches: [
+      {
+        label: "Pozytywny",
+        targetId: "retainer",
+        tone: "neutral",
+        note: "Próg 70% osiągnięty, albo niespełnienie z winy klienta (§3 ust. 4-5).",
+      },
+      {
+        label: "Negatywny",
+        targetId: "naprawa",
+        tone: "accent",
+        note: "Przyczyna niespełnienia progu leży po stronie systemu, nie klienta.",
+      },
+    ],
+  },
+  {
+    id: "naprawa",
+    nr: "08b",
+    title: "Działania naprawcze",
+    subtitle: "2 tygodnie",
+    tone: "accent",
+    agent: "Zespół wdrożeniowy: poprawki w konfiguracji/automatyzacjach zidentyfikowane jako przyczyna niespełnienia progu.",
+    entry: "Pierwsza weryfikacja: wynik negatywny z winy systemu.",
+    exit: "Po 2 tygodniach: druga, niezależna 30-dniowa runda weryfikacji.",
+    ref: "Dawny SZKIC_UMOWA §4 ust. 7 (plik usunięty)",
+    refStatus: "stale",
+    refNote:
+      'Istniejąca wcześniej wersja tej mapy cytowała "SZKIC_UMOWA_AUTORISE.md §4 ust. 7" dla mechanizmu "2 tygodnie + druga weryfikacja" — ten plik już nie istnieje (zastąpiony przez UMOWA_AUTORISE_FINAL.md, commit cbc7287), a §4 w finalnej umowie to "Obowiązki Wykonawcy", nie ma tam nic o drugiej rundzie. Mechanizm dwurundowy jest realną praktyką produktu (patrz węzeł Weryfikacja gwarancji), ale wymaga przeniesienia do aktualnego tekstu umowy — dziś to martwe odwołanie do usuniętego dokumentu.',
+  },
+  {
+    id: "weryfikacja-druga",
+    nr: "08c",
+    title: "Druga weryfikacja",
+    subtitle: "30 dni",
+    tone: "accent",
+    isBranch: true,
+    agent: "Ta sama metodologia co pierwsza weryfikacja, na danych z okresu po naprawie.",
+    entry: "2 tygodnie działań naprawczych zakończone.",
+    exit: "Pozytywny: Retainer. Negatywny (drugi raz z rzędu): klientowi przysługuje prawo odstąpienia.",
+    branches: [
+      {
+        label: "Pozytywny",
+        targetId: "retainer",
+        tone: "neutral",
+        note: "Próg 70% osiągnięty po poprawkach.",
+      },
+      {
+        label: "Negatywny (drugi raz)",
+        targetId: "prawo-odstapienia",
+        tone: "negative",
+        note: "Dopiero DRUGI negatywny wynik z rzędu uprawnia klienta do odstąpienia — pierwszy negatywny sam w sobie nie daje tego prawa.",
+      },
+    ],
+  },
+  {
+    id: "prawo-odstapienia",
+    nr: "08d",
+    title: "Prawo odstąpienia",
+    subtitle: "Miesiąc na skorzystanie",
+    tone: "negative",
+    isBranch: true,
+    agent: "Klient decyduje, czy skorzystać z prawa odstąpienia w ciągu miesiąca od drugiego negatywnego wyniku.",
+    entry: "Druga weryfikacja: wynik negatywny.",
+    exit: "Skorzystał w terminie: zwrot całości wpłaconej kwoty w 14 dni. Nie skorzystał: uznaje się że cel osiągnięty, umowa trwa dalej na Retainer.",
+    ref: "Brak w umowie/Karcie Produktu",
+    refStatus: "missing",
+    refNote:
+      'Nie znaleziono tego mechanizmu (miesięczny termin na odstąpienie, 14 dni na zwrot, domniemanie "cel osiągnięty" przy braku skorzystania w terminie) w UMOWA_AUTORISE_FINAL.md ani w Karcie Produktu — umowa dziś opisuje wyłącznie prosty zwrot w 14 dni po JEDNEJ 30-dniowej weryfikacji (§3 ust. 6), bez drugiej rundy i bez terminu na skorzystanie z prawa. Ten węzeł odzwierciedla wyłącznie brief tej przebudowy mapy — potwierdź z Michałem/prawnikiem przed traktowaniem jako wiążące.',
+    branches: [
+      {
+        label: "Skorzystał z prawa",
+        targetId: "zakonczona",
+        tone: "negative",
+        note: "Zwrot całości wpłaconej kwoty w terminie 14 dni.",
+      },
+      {
+        label: "Nie skorzystał w terminie",
+        targetId: "retainer",
+        tone: "neutral",
+        note: "Domniemanie: cel uznany za osiągnięty, umowa trwa dalej normalnym trybem.",
+      },
+    ],
   },
   {
     id: "retainer",
     nr: "09",
     title: "Retainer",
+    subtitle: "Min. 12 miesięcy",
     tone: "success",
-    agent: "Opieka stała: monitoring wykorzystania, kontakt cykliczny, wsparcie bieżące.",
-    entry:
-      "Gwarancja potwierdzona: minimum 70% czasu bazowego zaoszczędzone (pierwsza lub druga weryfikacja).",
-    exit: "Ciągła współpraca. Wyzwalacz rozszerzenia zakresu przenosi klienta do Upsell.",
+    isBranch: true,
+    agent:
+      "Opieka stała: monitoring wykorzystania, naprawa usterek do 48h roboczych, drabinka eskalacji przy braku kontaktu klienta (0 / 3-4 / 7 / 14 / 30 dni — /utrzymanie, ta sama metodologia progów co przy ciszy w trakcie wdrożenia, Karta Produktu pkt 14).",
+    entry: "Odbiór systemu podpisany (albo uznany za odebrany) I gwarancja potwierdzona (weryfikacja pierwsza, druga, albo nieskorzystanie z prawa odstąpienia) — start retainera liczy się od dnia Odbioru, weryfikacja może się z nim częściowo pokrywać w czasie.",
+    exit:
+      "Trwa min. 12 miesięcy, potem automatyczne przedłużenie na czas nieokreślony (30-dniowy okres wypowiedzenia, nie \"3 miesiące wcześniej\"). Wyzwalacz rozszerzenia zakresu przenosi klienta do Upsell. Trzy ścieżki wyjścia w trakcie trwania: patrz gałęzie.",
     statusKey: "Retainer",
+    ref: "§6 ust. 2-3, §5 ust. 2",
+    refStatus: "stale",
+    refNote:
+      '§6 ust. 3: "Po upływie 12-miesięcznego okresu retainera, umowa przedłuża się automatycznie na czas nieokreślony, z okresem wypowiedzenia 30 dni." Brief tej mapy podawał "chyba że któraś Strona zgłosi brak woli przedłużenia 3 miesiące wcześniej" — to NIE jest to co mówi umowa: nie ma wymogu zgłoszenia PRZED upływem 12 miesięcy, jest 30-dniowy okres wypowiedzenia w dowolnym momencie PO automatycznym przedłużeniu. Poprawiono na mapie do dosłownego brzmienia §6 ust. 3.',
+    branches: [
+      {
+        label: "Rażące naruszenie przez Wykonawcę",
+        targetId: "zakonczona",
+        tone: "negative",
+        note: "Klient wychodzi bez kary finansowej.",
+        ref: "Wywnioskowane pośrednio",
+        refStatus: "missing",
+        refNote:
+          'Umowa nie używa dosłownie zwrotu "rażące naruszenie przez Wykonawcę" z takim skutkiem — §4 ust. 7 mówi tylko, że obowiązek zapłaty pozostałych miesięcy przy wcześniejszym zakończeniu NIE dotyczy sytuacji, gdy przyczyną jest rażące naruszenie umowy przez Wykonawcę (czyli brak kary jest wnioskiem przez wykluczenie, nie osobnym, wprost zapisanym prawem). Potwierdź z prawnikiem przed cytowaniem klientowi.',
+      },
+      {
+        label: "Rażące naruszenie przez Zamawiającego",
+        targetId: "zakonczona",
+        tone: "negative",
+        note: "Wykonawca wychodzi, klient płaci pozostałe miesiące.",
+        ref: "Brak dosłownego zapisu",
+        refStatus: "missing",
+        refNote:
+          'Nie znaleziono w umowie symetrycznego, wprost nazwanego prawa Wykonawcy do wyjścia z tytułu "rażącego naruszenia przez Zamawiającego" z obowiązkiem zapłaty reszty miesięcy. Najbliższe rzeczywiste mechanizmy: §5 ust. 6 (brak płatności retainera → zawieszenie Systemu, bez zwolnienia z zapłaty) i §2 ust. 4-5 (opóźnienie dostępów/30 dni ciszy → prawo odstąpienia bez zwrotu, w fazie wdrożenia). Potwierdź z prawnikiem przed cytowaniem klientowi.',
+      },
+      {
+        label: "Dobrowolne wcześniejsze zakończenie przez klienta",
+        targetId: "zakonczona",
+        tone: "accent",
+        note: "Klient płaci jednorazowo za pozostałe, niewykorzystane miesiące minimalnego okresu.",
+        ref: "§4 ust. 7",
+        refStatus: "confirmed",
+        refNote:
+          '"Jeśli Zamawiający chce zakończyć współpracę przed upływem minimalnego 12-miesięcznego okresu retainera z przyczyn innych niż rażące naruszenie umowy przez Wykonawcę, zobowiązany jest do zapłaty pozostałych, niewykorzystanych miesięcy tego okresu jednorazowo."',
+      },
+    ],
   },
   {
     id: "upsell",
@@ -940,6 +1233,75 @@ function funnelToneColor(tone: FunnelTone): string {
     default:
       return LJ_ASPHALT;
   }
+}
+
+// Kolor/etykieta statusu odniesienia prawnego — zielony potwierdzony dosłownie w umowie/produkcie,
+// żółty zgodny z produktem ale nieaktualny w tekście umowy, czerwony brak w jakimkolwiek
+// dokumencie Autorise (wymaga potwierdzenia z Michałem/prawnikiem przed użyciem jako wiążące).
+function refStatusColor(status?: RefStatus): string {
+  switch (status) {
+    case "confirmed":
+      return LJ_SUCCESS;
+    case "stale":
+      return LJ_ACCENT;
+    case "missing":
+      return LJ_RED;
+    default:
+      return LJ_BORDER_STRONG;
+  }
+}
+
+function refStatusLabel(status?: RefStatus): string {
+  switch (status) {
+    case "confirmed":
+      return "Potwierdzone";
+    case "stale":
+      return "Umowa nieaktualna";
+    case "missing":
+      return "Brak w dokumentach";
+    default:
+      return "";
+  }
+}
+
+function RefBadge({
+  refText,
+  status,
+  compact,
+}: {
+  refText: string;
+  status?: RefStatus;
+  compact?: boolean;
+}) {
+  const color = refStatusColor(status);
+  return (
+    <div
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 4,
+        padding: compact ? "1px 6px" : "2px 7px",
+        borderRadius: 4,
+        border: `1px solid ${color}`,
+        background: "#fff",
+        marginTop: compact ? 3 : 6,
+      }}
+      title={refStatusLabel(status)}
+    >
+      <span style={{ width: 6, height: 6, borderRadius: "50%", background: color, flexShrink: 0 }} />
+      <span
+        style={{
+          fontFamily: "var(--font-jetbrains-mono)",
+          fontSize: compact ? 9.5 : 10.5,
+          fontWeight: 700,
+          color: "var(--text-secondary)",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {refText}
+      </span>
+    </div>
+  );
 }
 
 function FunnelStamp({ nr, tone }: { nr: string; tone: FunnelTone }) {
@@ -1031,6 +1393,9 @@ function FunnelCard({ node, count, active, onClick, compact }: FunnelCardProps) 
             {node.subtitle}
           </div>
         )}
+        {node.ref && (
+          <RefBadge refText={node.ref} status={node.refStatus} compact={compact} />
+        )}
         {count !== null && (
           <div
             style={{
@@ -1096,11 +1461,12 @@ function BranchPillRow({
     <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8, marginLeft: 44 }}>
       {branches.map((b) => {
         const color = funnelToneColor(b.tone);
+        const tooltip = b.ref ? `${b.note}\n\n${b.ref}${b.refNote ? ` — ${b.refNote}` : ""}` : b.note;
         return (
           <button
             key={b.label}
             onClick={() => onSelect(b.targetId)}
-            title={b.note}
+            title={tooltip}
             style={{
               display: "flex",
               alignItems: "center",
@@ -1118,6 +1484,17 @@ function BranchPillRow({
           >
             <Split size={9} />
             {b.label}
+            {b.ref && (
+              <span
+                style={{
+                  width: 5,
+                  height: 5,
+                  borderRadius: "50%",
+                  background: refStatusColor(b.refStatus),
+                  flexShrink: 0,
+                }}
+              />
+            )}
           </button>
         );
       })}
@@ -1234,6 +1611,44 @@ function NodeDetail({ node, count }: { node: FunnelNode; count: number | null })
       <DetailRow label="Warunek wejścia" value={node.entry} />
       <DetailRow label="Warunek wyjścia" value={node.exit} />
 
+      {node.ref && (
+        <div
+          style={{
+            marginTop: 14,
+            padding: "10px 12px",
+            border: `1px solid ${refStatusColor(node.refStatus)}`,
+            borderRadius: 6,
+            background: "#fff",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: node.refNote ? 6 : 0 }}>
+            <RefBadge refText={node.ref} status={node.refStatus} />
+            <span
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 10.5,
+                fontWeight: 700,
+                color: refStatusColor(node.refStatus),
+              }}
+            >
+              {refStatusLabel(node.refStatus)}
+            </span>
+          </div>
+          {node.refNote && (
+            <div
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 11.5,
+                color: "var(--text-secondary)",
+                lineHeight: 1.5,
+              }}
+            >
+              {node.refNote}
+            </div>
+          )}
+        </div>
+      )}
+
       {node.branches && (
         <div style={{ marginTop: 14 }}>
           <SectionLabel>Rozgałęzienie</SectionLabel>
@@ -1249,13 +1664,23 @@ function NodeDetail({ node, count }: { node: FunnelNode; count: number | null })
             >
               <div
                 style={{
-                  fontFamily: "var(--font-sans)",
-                  fontSize: 12,
-                  fontWeight: 600,
-                  color: funnelToneColor(b.tone),
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 8,
                 }}
               >
-                {b.label}
+                <span
+                  style={{
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: funnelToneColor(b.tone),
+                  }}
+                >
+                  {b.label}
+                </span>
+                {b.ref && <RefBadge refText={b.ref} status={b.refStatus} compact />}
               </div>
               <div
                 style={{
@@ -1267,6 +1692,19 @@ function NodeDetail({ node, count }: { node: FunnelNode; count: number | null })
               >
                 {b.note}
               </div>
+              {b.refNote && (
+                <div
+                  style={{
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 10.5,
+                    color: refStatusColor(b.refStatus),
+                    marginTop: 4,
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {b.refNote}
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -1477,15 +1915,53 @@ function LejekView({ clients }: { clients: PipelineClientDetailed[] }) {
           <Connector />
           {renderCard("finalizacja")}
           <Connector />
+          {renderCard("platnosc")}
+          <BranchPillRow
+            branches={nodeById("platnosc").branches ?? []}
+            onSelect={setSelectedNodeId}
+          />
+          <Connector />
           {renderCard("kickoff")}
           <Connector />
           {renderCard("zebranie-dostepow")}
+          <BranchPillRow
+            branches={nodeById("zebranie-dostepow").branches ?? []}
+            onSelect={setSelectedNodeId}
+          />
           <Connector />
           {renderCard("wdrozenie")}
           <Connector />
+          {renderCard("odbior")}
+          <BranchPillRow
+            branches={nodeById("odbior").branches ?? []}
+            onSelect={setSelectedNodeId}
+          />
+          <Connector />
           {renderCard("weryfikacja")}
+          <BranchPillRow
+            branches={nodeById("weryfikacja").branches ?? []}
+            onSelect={setSelectedNodeId}
+          />
+          <Connector />
+          {renderCard("naprawa")}
+          <Connector />
+          {renderCard("weryfikacja-druga")}
+          <BranchPillRow
+            branches={nodeById("weryfikacja-druga").branches ?? []}
+            onSelect={setSelectedNodeId}
+          />
+          <Connector />
+          {renderCard("prawo-odstapienia")}
+          <BranchPillRow
+            branches={nodeById("prawo-odstapienia").branches ?? []}
+            onSelect={setSelectedNodeId}
+          />
           <Connector />
           {renderCard("retainer")}
+          <BranchPillRow
+            branches={nodeById("retainer").branches ?? []}
+            onSelect={setSelectedNodeId}
+          />
           <Connector />
           {renderCard("upsell")}
           <Connector />
@@ -1515,7 +1991,7 @@ export default function MapaPage() {
   const [clients, setClients] = useState<PipelineClientDetailed[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string>("");
-  const [view, setView] = useState<"etapy" | "drzewo" | "blueprint" | "lejek">("etapy");
+  const [view, setView] = useState<"etapy" | "drzewo" | "blueprint" | "lejek">("lejek");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -1566,7 +2042,7 @@ export default function MapaPage() {
             gap: 2,
           }}
         >
-          {(["etapy", "drzewo", "blueprint", "lejek"] as const).map((v) => (
+          {(["lejek", "etapy", "drzewo", "blueprint"] as const).map((v) => (
             <button
               key={v}
               onClick={() => setView(v)}
@@ -1590,7 +2066,7 @@ export default function MapaPage() {
                   ? "Drzewo kroków"
                   : v === "blueprint"
                     ? "Blueprint danych"
-                    : "Pełny lejek"}
+                    : "Cykl życia klienta"}
             </button>
           ))}
         </div>
@@ -1739,7 +2215,7 @@ export default function MapaPage() {
       {/* Script tree view */}
       {view === "drzewo" && <ScriptTreeView />}
 
-      {/* Pełny lejek */}
+      {/* Cykl życia klienta */}
       {view === "lejek" && <LejekView clients={clients} />}
 
       {/* Stages */}
