@@ -29,7 +29,7 @@ export const STEPS_K: Step[] = [
         t: "say",
         text: [
           "Dzień dobry, mówi {IMIĘ_SPRZEDAWCY} z Autorise.",
-          "Zostawił Pan kontakt w sprawie odzyskania czasu jaki biuro traci na ręczne wpisywanie zleceń i pilnowanie dokumentów.",
+          "Panie {IMIĘ}, widziałem w systemie że wypełnił Pan nasz formularz dotyczący oszczędności czasu w biurze — chciałem zapytać, czy ten temat jest u Was jeszcze aktualny?",
         ],
       },
       {
@@ -285,7 +285,7 @@ export const STEPS_K: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Pierwsza rzecz: zlecenie transportowe, dokument w którym zleceniodawca zamawia przewóz. Jak dokładnie takie zlecenie do Was trafia, i co się z nim dzieje zanim trafi do systemu lub kalendarza kierowców?",
+        text: "Powie mi Pan, jak te zlecenia do Was trafiają? Ktoś to musi ręcznie przepisywać z maili czy PDF-ów do systemu?",
         cel: "Sprawdzić czy pierwszy etap (przyjęcie zlecenia) generuje pracę ręczną",
       },
       { t: "client", text: "[opis]" },
@@ -323,15 +323,12 @@ export const STEPS_K: Step[] = [
     lines: [
       {
         t: "say",
-        text: [
-          "Druga rzecz: list przewozowy CMR, dokument potwierdzający że towar został przyjęty i dostarczony.",
-          "Po kursie, jak CMR wraca do Was?",
-        ],
+        text: "A jak to wygląda z listami przewozowymi, czyli CMR-ami? Po kursie, jak to do Was wraca?",
         cel: "Sprawdzić czy dokumenty po kursie wymagają ręcznego przepisywania — automatyczne odczytywanie dokumentów (CMR, faktury)",
       },
       {
         t: "say",
-        text: "A potwierdzenie dostawy, czyli podpis odbiorcy że towar dotarł w porządku — to ten sam dokument co CMR, czy osobny formularz, na przykład od dużej sieci handlowej?",
+        text: "A potwierdzenie dostawy, czyli podpis że towar dotarł, to ten sam dokument co CMR, czy osobny druk, na przykład z jakiejś sieci handlowej?",
         cel: "Sprawdzić czy klient rozróżnia CMR i osobne potwierdzenie dostawy — u większości nie, ale trafiają się wyjątki",
       },
       {
@@ -368,7 +365,7 @@ export const STEPS_K: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Czwarta rzecz: faktury, te które wystawiacie i te które dostajecie. Kto to sprawdza i wpisuje do księgowości?",
+        text: "A z fakturami jak to wygląda, tymi które wystawiacie i tymi które dostajecie — kto to ogarnia i wpisuje do księgowości?",
         cel: "Sprawdzić skalę pracy manualnej przy fakturach",
       },
       { t: "client", text: "[odpowiedź]" },
@@ -402,7 +399,7 @@ export const STEPS_K: Step[] = [
     lines: [
       {
         t: "say",
-        text: "A czy ktoś systematycznie pilnuje które faktury od klientów są opłacone, czy to sprawdzanie od czasu do czasu w systemie bankowym?",
+        text: "A pilnowanie, czy klienci zapłacili — ktoś to na bieżąco ogarnia, czy raczej sprawdza się to od czasu do czasu w banku?",
         cel: "Sprawdzić czy istnieje systematyczna kontrola płatności",
       },
     ],
@@ -435,7 +432,7 @@ export const STEPS_K: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Piąta rzecz, ostatnia: jak Pan sam, jako właściciel, sprawdza dziś status konkretnego zlecenia — trzeba zadzwonić do spedytora, czy widać to w systemie?",
+        text: "I ostatnia rzecz — jak Pan sam sprawdza dziś status jakiegoś zlecenia? Trzeba zadzwonić do spedytora, czy widać to od razu w systemie?",
         cel: "Sprawdzić czy właściciel ma widoczność operacyjną bez dzwonienia — kandydat na alerty i widoczność statusu na WhatsApp",
       },
     ],
@@ -557,8 +554,8 @@ export const STEPS_K: Step[] = [
       {
         t: "say",
         text: [
-          "Na podstawie tego co Pan powiedział — Pana biuro traci [WYNIK Z KALKULATORA] godzin miesięcznie na ręcznej pracy.",
-          "To wartość [WARTOŚĆ PLN] złotych miesięcznie.",
+          "No dobra, jak tak na to patrzę, to przy tej skali robi się z tego całkiem sporo...",
+          "Z moich wyliczeń na szybko wychodzi, że przy tym co Pan opisał, Wasz zespół traci miesięcznie coś w okolicach [WYNIK Z KALKULATORA] godzin, co przy przeliczeniu na roboczogodziny to koszt rzędu [WARTOŚĆ PLN] złotych miesięcznie.",
         ],
       },
       {

@@ -1,3 +1,9 @@
+// Przypomnienie stylu prowadzenia rozmowy (2026-07-27, obserwacja Michała po przesłuchaniu
+// własnych nagrań) — nie zmienia treści pytań poniżej, tylko sposób ich zadawania: kroki
+// diagnostyczne (proces krok po kroku, poprzednie próby, cele) mają wynikać naturalnie z tego co
+// klient właśnie powiedział, nie być czytane po kolei jak ankieta. Jeśli klient już coś powiedział
+// przy okazji wcześniejszego pytania, nie pytaj o to drugi raz tym samym sformułowaniem.
+
 import type { Objection, Step } from "./types";
 
 export const STEPS_D: Step[] = [
