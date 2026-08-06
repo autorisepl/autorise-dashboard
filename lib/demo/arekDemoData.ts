@@ -104,3 +104,36 @@ export const ALERTY = [
   "Zlecenie ZL/2026/08/1155: brak potwierdzenia CMR od 3 godzin.",
   "Pojazd PO 4821W: przegląd techniczny za 5 dni.",
 ] as const;
+
+// Rozbicie różnicy godzin (bazowyCzasGodzinyMc - celCzasGodzinyMc = 698h) na moduły, żeby
+// pokazać Arkowi że oszczędność nie jest jedną wyliczoną liczbą, tylko sumą trzech realnych
+// obszarów automatyzacji z tego samego demo. Udziały procentowe są ilustracyjnym podziałem
+// (moduł TMS/zlecenia odpowiada za największą część, bo to najczęstsza czynność manualna
+// przy 1300-1600 zleceniach/mc), suma godzin zawsze zgadza się z roznicaGodzin z dashboardu.
+const ROZNICA_GODZIN = KLIENT.bazowyCzasGodzinyMc - KLIENT.celCzasGodzinyMc;
+export const OSZCZEDNOSC_PER_MODUL = [
+  {
+    modul: "TMS, zapis zleceń",
+    udzialProcent: 0.5,
+    zrodlo: "z modułu Integracja TMS",
+  },
+  {
+    modul: "Dokumenty i pliki, CMR/faktury",
+    udzialProcent: 0.35,
+    zrodlo: "z modułu Dokumenty i pliki",
+  },
+  {
+    modul: "Powiadomienia do kontrahentów",
+    udzialProcent: 0.15,
+    zrodlo: "z modułu Powiadomienia",
+  },
+].map((row) => ({ ...row, godzinyMc: Math.round(ROZNICA_GODZIN * row.udzialProcent) }));
+
+// Podgląd aktywności per spedytor (moduł monitorowania) — fikcyjne, ilustracyjne imiona,
+// pokazuje rozliczalność (kto potwierdził ile operacji), nie inwigilację: brak śledzenia
+// czasu pracy, wyłącznie licznik jednoklikowych potwierdzeń z kroków 4/5/6.
+export const AKTYWNOSC_SPEDYTOROW = [
+  { imie: "Kasia Nowicka", potwierdzeniaDzis: 14, ostatnie: "3 min temu" },
+  { imie: "Marek Lis", potwierdzeniaDzis: 9, ostatnie: "17 min temu" },
+  { imie: "Ola Wiśniewska", potwierdzeniaDzis: 6, ostatnie: "42 min temu" },
+] as const;

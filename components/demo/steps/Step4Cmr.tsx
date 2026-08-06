@@ -57,9 +57,7 @@ function OcrFieldRow({ label, value }: { label: string; value: string }) {
         </div>
       ) : (
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <span
-            style={{ fontFamily: demoFont.mono, fontSize: 12, color: demoColors.textPrimary }}
-          >
+          <span style={{ fontFamily: demoFont.mono, fontSize: 12, color: demoColors.textPrimary }}>
             {draft}
           </span>
           <button

@@ -1,6 +1,28 @@
-import { AlertTriangle, Truck } from "lucide-react";
+import { AlertTriangle, Truck, UserCheck } from "lucide-react";
 import { demoColors, demoFont } from "@/components/demo/demoTheme";
-import { AKTYWNE_ZLECENIA, ALERTY, KLIENT, STAN_FLOTY } from "@/lib/demo/arekDemoData";
+import {
+  AKTYWNE_ZLECENIA,
+  AKTYWNOSC_SPEDYTOROW,
+  ALERTY,
+  KLIENT,
+  OSZCZEDNOSC_PER_MODUL,
+  STAN_FLOTY,
+} from "@/lib/demo/arekDemoData";
+
+function SourceNote({ text }: { text: string }) {
+  return (
+    <div
+      style={{
+        fontFamily: demoFont.sans,
+        fontSize: 10,
+        color: demoColors.textTertiary,
+        marginTop: 2,
+      }}
+    >
+      {text}
+    </div>
+  );
+}
 
 function fmtPln(n: number): string {
   return `${n.toLocaleString("pl-PL")} zł`;
@@ -60,6 +82,8 @@ function StatTile({ label, value, sub }: StatTileProps) {
     </div>
   );
 }
+
+const ALERT_ZRODLO = ["z modułu Dokumenty i pliki", "z modułu Integracja TMS"] as const;
 
 const statusColor: Record<string, string> = {
   Zrealizowane: demoColors.success,
@@ -231,7 +255,7 @@ export function ManagementDashboard() {
           <div>
             <SectionLabel text="Alerty" />
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {ALERTY.map((alert) => (
+              {ALERTY.map((alert, i) => (
                 <div
                   key={alert}
                   style={{
@@ -249,18 +273,74 @@ export function ManagementDashboard() {
                     color={demoColors.warning}
                     style={{ flexShrink: 0, marginTop: 1 }}
                   />
-                  <span
-                    style={{
-                      fontFamily: demoFont.sans,
-                      fontSize: 12,
-                      color: demoColors.textSecondary,
-                    }}
-                  >
-                    {alert}
-                  </span>
+                  <div>
+                    <span
+                      style={{
+                        fontFamily: demoFont.sans,
+                        fontSize: 12,
+                        color: demoColors.textSecondary,
+                      }}
+                    >
+                      {alert}
+                    </span>
+                    <SourceNote text={ALERT_ZRODLO[i] ?? "z modułu monitorowania"} />
+                  </div>
                 </div>
               ))}
             </div>
+          </div>
+
+          <div>
+            <SectionLabel text="Aktywność spedytorów, dziś" />
+            <SurfaceCard>
+              {AKTYWNOSC_SPEDYTOROW.map((s, i) => (
+                <div
+                  key={s.imie}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 10,
+                    padding: "10px 14px",
+                    borderTop: i === 0 ? "none" : `1px solid ${demoColors.border}`,
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                    <UserCheck size={14} color={demoColors.textTertiary} style={{ flexShrink: 0 }} />
+                    <span
+                      style={{
+                        fontFamily: demoFont.sans,
+                        fontSize: 12,
+                        color: demoColors.textPrimary,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {s.imie}
+                    </span>
+                  </div>
+                  <div style={{ textAlign: "right", flexShrink: 0 }}>
+                    <div
+                      style={{
+                        fontFamily: demoFont.mono,
+                        fontSize: 12,
+                        fontWeight: 700,
+                        color: demoColors.textPrimary,
+                      }}
+                    >
+                      {s.potwierdzeniaDzis} potwierdzeń
+                    </div>
+                    <div
+                      style={{ fontFamily: demoFont.sans, fontSize: 10, color: demoColors.textTertiary }}
+                    >
+                      {s.ostatnie}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </SurfaceCard>
+            <SourceNote text="Licznik jednoklikowych potwierdzeń, moduł monitorowania. Rozliczalność, nie inwigilacja: bez śledzenia czasu pracy." />
           </div>
         </div>
       </div>
@@ -376,6 +456,72 @@ export function ManagementDashboard() {
             sub="maksymalny czas manualny"
           />
         </div>
+      </div>
+
+      {/* Rozbicie oszczędności per moduł — pełna szerokość */}
+      <div>
+        <SectionLabel text="Oszczędność czasu, w rozbiciu na moduł" />
+        <SurfaceCard>
+          {OSZCZEDNOSC_PER_MODUL.map((row, i) => (
+            <div
+              key={row.modul}
+              style={{
+                padding: "14px 18px",
+                borderTop: i === 0 ? "none" : `1px solid ${demoColors.border}`,
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "baseline",
+                  marginBottom: 6,
+                }}
+              >
+                <div>
+                  <span
+                    style={{
+                      fontFamily: demoFont.sans,
+                      fontSize: 12,
+                      color: demoColors.textPrimary,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {row.modul}
+                  </span>
+                  <SourceNote text={row.zrodlo} />
+                </div>
+                <span
+                  style={{
+                    fontFamily: demoFont.mono,
+                    fontSize: 14,
+                    fontWeight: 700,
+                    color: demoColors.textPrimary,
+                  }}
+                >
+                  {row.godzinyMc} h/mc
+                </span>
+              </div>
+              <div
+                style={{
+                  height: 8,
+                  borderRadius: 4,
+                  background: "rgba(255,255,255,0.06)",
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    height: "100%",
+                    width: `${Math.round(row.udzialProcent * 100)}%`,
+                    background: demoColors.accent,
+                    borderRadius: 4,
+                  }}
+                />
+              </div>
+            </div>
+          ))}
+        </SurfaceCard>
       </div>
     </div>
   );
