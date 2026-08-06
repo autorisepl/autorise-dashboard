@@ -306,7 +306,11 @@ export function ManagementDashboard() {
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-                    <UserCheck size={14} color={demoColors.textTertiary} style={{ flexShrink: 0 }} />
+                    <UserCheck
+                      size={14}
+                      color={demoColors.textTertiary}
+                      style={{ flexShrink: 0 }}
+                    />
                     <span
                       style={{
                         fontFamily: demoFont.sans,
@@ -332,7 +336,11 @@ export function ManagementDashboard() {
                       {s.potwierdzeniaDzis} potwierdzeń
                     </div>
                     <div
-                      style={{ fontFamily: demoFont.sans, fontSize: 10, color: demoColors.textTertiary }}
+                      style={{
+                        fontFamily: demoFont.sans,
+                        fontSize: 10,
+                        color: demoColors.textTertiary,
+                      }}
                     >
                       {s.ostatnie}
                     </div>

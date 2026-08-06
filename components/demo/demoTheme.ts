@@ -21,7 +21,7 @@ export const demoColors = {
   successBorder: "rgba(95, 191, 143, 0.3)",
   terminalBg: "#0d1117",
   terminalGreen: "#7ee787",
-  terminalDim: "#8b949e",
+  terminalDim: "#99a2ac",
   terminalText: "#c9d1d9",
   warning: "#c98a3a",
   warningBg: "rgba(201, 138, 58, 0.1)",
