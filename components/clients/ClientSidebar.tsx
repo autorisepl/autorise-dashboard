@@ -88,7 +88,10 @@ export function ClientSidebar({
         position: "relative",
         transition:
           "width 240ms cubic-bezier(0.4, 0, 0.2, 1), min-width 240ms cubic-bezier(0.4, 0, 0.2, 1)",
-        overflow: "hidden",
+        // Bez overflow:hidden na TYM poziomie — inaczej przycisk zwijania poniżej (celowo
+        // wystający poza krawędź przy right:-15px, ten sam wzorzec co .sidebar-toggle-btn
+        // głównego menu) jest przez to obcinany. Przycinanie treści listy podczas animacji
+        // szerokości robi wewnętrzny wrapper niżej.
       }}
     >
       {/* Ten sam wzorzec co .sidebar-toggle-btn głównego menu (DashboardShell/globals.css) —
@@ -133,201 +136,222 @@ export function ClientSidebar({
         )}
       </button>
 
-      {collapsed ? (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            paddingTop: 48,
-            gap: 6,
-          }}
-        >
-          <Users size={14} color="var(--text-tertiary)" />
-          <span
+      {/* Wewnętrzny wrapper: overflow:hidden tu (nie na kontenerze głównym), żeby przycinać
+          treść listy podczas animacji szerokości bez obcinania wystającego przycisku wyżej. */}
+      <div
+        style={{
+          flex: 1,
+          minHeight: 0,
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+        }}
+      >
+        {collapsed ? (
+          <div
             style={{
-              fontFamily: "var(--font-sans)",
-              fontSize: 11,
-              fontWeight: 700,
-              color: "var(--text-tertiary)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              paddingTop: 48,
+              gap: 6,
             }}
           >
-            {filtered.length}
-          </span>
-        </div>
-      ) : (
-        <>
-          <div
-            style={{ padding: "12px 12px 8px", borderBottom: "1px solid #E5E5EA", flexShrink: 0 }}
-          >
-            <div
+            <Users size={14} color="var(--text-tertiary)" />
+            <span
               style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: 8,
+                fontFamily: "var(--font-sans)",
+                fontSize: 11,
+                fontWeight: 700,
+                color: "var(--text-tertiary)",
               }}
             >
-              <span
-                style={{
-                  fontFamily: "var(--font-sans)",
-                  fontSize: 11,
-                  fontWeight: 700,
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
-                  color: "var(--text-tertiary)",
-                }}
-              >
-                {groupByStatus ? "Klienci" : `${headerLabel} (${filtered.length})`}
-              </span>
-              <button
-                onClick={onRefresh}
-                disabled={loading}
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  cursor: loading ? "not-allowed" : "pointer",
-                  color: "var(--text-tertiary)",
-                  padding: 4,
-                  display: "flex",
-                  alignItems: "center",
-                }}
-              >
-                <RefreshCw
-                  size={12}
-                  style={{ animation: loading ? "spin 1s linear infinite" : "none" }}
-                />
-              </button>
-            </div>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                height: 32,
-                background: "#F5F5F7",
-                borderRadius: 8,
-                padding: "0 10px",
-              }}
-            >
-              <Search size={12} color="var(--text-tertiary)" />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Szukaj klienta..."
-                style={{
-                  flex: 1,
-                  background: "transparent",
-                  border: "none",
-                  outline: "none",
-                  fontFamily: "var(--font-sans)",
-                  fontSize: 12,
-                  color: "var(--text-primary)",
-                }}
-              />
-            </div>
+              {filtered.length}
+            </span>
           </div>
-
-          <div style={{ flex: 1, overflowY: "auto", padding: "6px 8px" }}>
-            {groupByStatus && grouped
-              ? (filterStatuses ?? []).map((status) => {
-                  const group = grouped[status] ?? [];
-                  if (!group.length) return null;
-                  const color = statusColors[status] ?? "var(--text-tertiary)";
-                  return (
-                    <div key={status} style={{ marginBottom: 8 }}>
-                      <div
-                        style={{
-                          fontSize: 9,
-                          fontWeight: 800,
-                          letterSpacing: "0.1em",
-                          textTransform: "uppercase",
-                          color,
-                          padding: "3px 8px 4px",
-                        }}
-                      >
-                        {status} ({group.length})
-                      </div>
-                      {group.map((c) => (
-                        <ClientRow key={c.id} client={c} selected={selected} onSelect={onSelect} />
-                      ))}
-                    </div>
-                  );
-                })
-              : filtered.map((c) => (
-                  <ClientRow key={c.id} client={c} selected={selected} onSelect={onSelect} />
-                ))}
-            {filtered.length === 0 && (
+        ) : (
+          <>
+            <div
+              style={{
+                padding: "12px 12px 8px",
+                borderBottom: "1px solid var(--border)",
+                flexShrink: 0,
+              }}
+            >
               <div
                 style={{
-                  padding: "20px 8px",
-                  textAlign: "center",
-                  color: "var(--text-tertiary)",
-                  fontSize: 12,
-                  fontFamily: "var(--font-sans)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: 8,
                 }}
               >
-                {emptyLabel}
+                <span
+                  style={{
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                    color: "var(--text-tertiary)",
+                  }}
+                >
+                  {groupByStatus ? "Klienci" : `${headerLabel} (${filtered.length})`}
+                </span>
+                <button
+                  onClick={onRefresh}
+                  disabled={loading}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    cursor: loading ? "not-allowed" : "pointer",
+                    color: "var(--text-tertiary)",
+                    padding: 4,
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  <RefreshCw
+                    size={12}
+                    style={{ animation: loading ? "spin 1s linear infinite" : "none" }}
+                  />
+                </button>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  height: 32,
+                  background: "var(--bg-hover)",
+                  borderRadius: 8,
+                  padding: "0 10px",
+                }}
+              >
+                <Search size={12} color="var(--text-tertiary)" />
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Szukaj klienta..."
+                  style={{
+                    flex: 1,
+                    background: "transparent",
+                    border: "none",
+                    outline: "none",
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 12,
+                    color: "var(--text-primary)",
+                  }}
+                />
+              </div>
+            </div>
+
+            <div style={{ flex: 1, overflowY: "auto", padding: "6px 8px" }}>
+              {groupByStatus && grouped
+                ? (filterStatuses ?? []).map((status) => {
+                    const group = grouped[status] ?? [];
+                    if (!group.length) return null;
+                    const color = statusColors[status] ?? "var(--text-tertiary)";
+                    return (
+                      <div key={status} style={{ marginBottom: 8 }}>
+                        <div
+                          style={{
+                            fontSize: 9,
+                            fontWeight: 800,
+                            letterSpacing: "0.1em",
+                            textTransform: "uppercase",
+                            color,
+                            padding: "3px 8px 4px",
+                          }}
+                        >
+                          {status} ({group.length})
+                        </div>
+                        {group.map((c) => (
+                          <ClientRow
+                            key={c.id}
+                            client={c}
+                            selected={selected}
+                            onSelect={onSelect}
+                          />
+                        ))}
+                      </div>
+                    );
+                  })
+                : filtered.map((c) => (
+                    <ClientRow key={c.id} client={c} selected={selected} onSelect={onSelect} />
+                  ))}
+              {filtered.length === 0 && (
+                <div
+                  style={{
+                    padding: "20px 8px",
+                    textAlign: "center",
+                    color: "var(--text-tertiary)",
+                    fontSize: 12,
+                    fontFamily: "var(--font-sans)",
+                  }}
+                >
+                  {emptyLabel}
+                </div>
+              )}
+            </div>
+
+            {selected && (
+              <div
+                style={{
+                  padding: "10px 12px",
+                  borderTop: "1px solid var(--border)",
+                  flexShrink: 0,
+                  background: "var(--bg-hover)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 6,
+                }}
+              >
+                <a
+                  href={`/prezentacja.html?id=${encodeURIComponent(selected.id)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 5,
+                    background: "var(--accent-muted)",
+                    border: "1px solid var(--accent-border)",
+                    borderRadius: 8,
+                    padding: "6px 8px",
+                    cursor: "pointer",
+                    color: "var(--accent)",
+                    fontSize: 11,
+                    fontWeight: 600,
+                    fontFamily: "var(--font-sans)",
+                    textDecoration: "none",
+                  }}
+                >
+                  <ExternalLink size={11} />
+                  Otwórz prezentację
+                </a>
+                <button
+                  onClick={() => onSelect(null)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 5,
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "var(--text-tertiary)",
+                    fontSize: 11,
+                    fontFamily: "var(--font-sans)",
+                  }}
+                >
+                  <X size={11} />
+                  Odznacz klienta
+                </button>
               </div>
             )}
-          </div>
-
-          {selected && (
-            <div
-              style={{
-                padding: "10px 12px",
-                borderTop: "1px solid #E5E5EA",
-                flexShrink: 0,
-                background: "#F5F5F7",
-                display: "flex",
-                flexDirection: "column",
-                gap: 6,
-              }}
-            >
-              <a
-                href={`/prezentacja.html?id=${encodeURIComponent(selected.id)}`}
-                target="_blank"
-                rel="noreferrer"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 5,
-                  background: "var(--accent-muted)",
-                  border: "1px solid var(--accent-border)",
-                  borderRadius: 8,
-                  padding: "6px 8px",
-                  cursor: "pointer",
-                  color: "var(--accent)",
-                  fontSize: 11,
-                  fontWeight: 600,
-                  fontFamily: "var(--font-sans)",
-                  textDecoration: "none",
-                }}
-              >
-                <ExternalLink size={11} />
-                Otwórz prezentację
-              </a>
-              <button
-                onClick={() => onSelect(null)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 5,
-                  background: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "var(--text-tertiary)",
-                  fontSize: 11,
-                  fontFamily: "var(--font-sans)",
-                }}
-              >
-                <X size={11} />
-                Odznacz klienta
-              </button>
-            </div>
-          )}
-        </>
-      )}
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -386,7 +410,7 @@ function ClientRow({
               style={{
                 fontSize: 9,
                 fontWeight: 700,
-                color: "var(--error)",
+                color: "var(--error-text)",
                 textTransform: "uppercase",
                 letterSpacing: "0.04em",
                 marginLeft: 2,

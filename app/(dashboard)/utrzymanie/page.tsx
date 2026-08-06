@@ -458,7 +458,7 @@ export default function UtrzymanieePage() {
                               marginTop: 6,
                               fontFamily: "var(--font-sans)",
                               fontSize: 11,
-                              color: "var(--warning)",
+                              color: "var(--warning-text)",
                             }}
                           >
                             {taskWarning}

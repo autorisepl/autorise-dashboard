@@ -516,7 +516,7 @@ export function AnalizaPrzedkontraktowaPanel({
           </>
         )}
         {status === "error" && (
-          <span style={{ fontSize: 11, color: "var(--error)" }}>
+          <span style={{ fontSize: 11, color: "var(--error-text)" }}>
             Błąd zapisu, spróbuj ponownie.
           </span>
         )}

@@ -392,7 +392,7 @@ function GroupRow({
             borderRadius: 8,
             border: "1px solid #E5E5EA",
             background: "#fff",
-            color: "var(--error)",
+            color: "var(--error-text)",
             cursor: "pointer",
             display: "flex",
             alignItems: "center",
@@ -770,7 +770,7 @@ function BrakOdbioruBanner({ onOpenSms }: { onOpenSms: () => void }) {
           borderRadius: 7,
           border: "1px solid var(--warning)",
           background: "#fff",
-          color: "var(--warning)",
+          color: "var(--warning-text)",
           fontFamily: "var(--font-sans)",
           fontSize: 11,
           fontWeight: 700,
@@ -1059,7 +1059,7 @@ function ScriptStep({
                       borderRadius: 6,
                       border: "1px solid var(--warning)",
                       background: "#fff",
-                      color: "var(--warning)",
+                      color: "var(--warning-text)",
                       fontFamily: "var(--font-sans)",
                       fontSize: 11,
                       fontWeight: 700,
@@ -1572,7 +1572,7 @@ function IcpPanel() {
               style={{
                 fontSize: 11,
                 fontWeight: 700,
-                color: rule.ok ? "var(--success-text)" : "var(--error)",
+                color: rule.ok ? "var(--success-text)" : "var(--error-text)",
                 marginBottom: 1,
               }}
             >
@@ -1861,7 +1861,9 @@ function DalszeKroki({ client }: { client: PipelineClientDetailed | null }) {
             </div>
           )}
           {taskError && (
-            <div style={{ fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--error)" }}>
+            <div
+              style={{ fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--error-text)" }}
+            >
               {taskError}
             </div>
           )}
@@ -2392,7 +2394,7 @@ export default function KwalifikacjaPage() {
                 borderRadius: 7,
                 border: "1px solid var(--warning)",
                 background: "var(--warning-bg)",
-                color: "var(--warning)",
+                color: "var(--warning-text)",
                 fontSize: 11,
                 fontWeight: 700,
                 cursor: "pointer",
@@ -2408,7 +2410,7 @@ export default function KwalifikacjaPage() {
             </button>
           )}
         </div>
-        <div style={{ height: 20, width: 1, background: "#E5E5EA", marginLeft: 4 }} />
+        <div style={{ height: 20, width: 1, background: "var(--border)", marginLeft: 4 }} />
         <span
           style={{ fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--text-tertiary)" }}
         >
@@ -2432,11 +2434,11 @@ export default function KwalifikacjaPage() {
               height: 32,
               padding: "0 10px",
               borderRadius: 8,
-              border: "1px solid #E5E5EA",
+              border: "1px solid var(--border)",
               fontFamily: "var(--font-sans)",
               fontSize: 13,
               color: "var(--text-primary)",
-              background: "#F5F5F7",
+              background: "var(--bg-hover)",
               outline: "none",
               width: 110,
             }}

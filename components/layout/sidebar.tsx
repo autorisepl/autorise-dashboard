@@ -4,8 +4,7 @@ import { motion } from "framer-motion";
 import {
   BarChart2,
   BookOpen,
-  Calendar,
-  CheckSquare,
+  CalendarDays,
   GitBranch,
   Kanban,
   LayoutDashboard,
@@ -125,8 +124,7 @@ const NAV: {
     items: [
       { href: "/pipeline", label: "Pipeline", icon: Kanban },
       { href: "/statystyki", label: "Statystyki", icon: TrendingUp },
-      { href: "/harmonogram", label: "Harmonogram", icon: Calendar },
-      { href: "/zadania", label: "Zadania", icon: CheckSquare },
+      { href: "/planowanie", label: "Planowanie", icon: CalendarDays, exact: true },
       { href: "/kontrola", label: "Kontrola", icon: Monitor },
       { href: "/brand-book", label: "Brand Book", icon: BookOpen, exact: true },
     ],
@@ -242,7 +240,7 @@ function NavItem({
 function isActive(pathname: string, href: string, exact?: boolean): boolean {
   if (exact) return pathname === href;
   if (href === "/agenci") return pathname === "/agenci" || pathname.startsWith("/agenci/");
-  return pathname === href || pathname.startsWith(href + "/");
+  return pathname === href || pathname.startsWith(`${href}/`);
 }
 
 export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNavigate?: () => void }) {
@@ -390,7 +388,7 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
                 fontWeight: 700,
                 letterSpacing: "0.04em",
                 textTransform: "uppercase",
-                color: role === "admin" ? "var(--accent)" : "var(--warning)",
+                color: role === "admin" ? "var(--accent)" : "var(--warning-text)",
                 width: "fit-content",
               }}
             >

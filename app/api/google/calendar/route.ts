@@ -14,6 +14,9 @@ export interface CalendarEvent {
   htmlLink?: string;
   colorId?: string;
   allDay: boolean;
+  // Ręczne potwierdzenie odbycia przeszłego wydarzenia, trwałe (extendedProperties.private w
+  // Google Calendar), bo API nie ma pola "attended". Domyślnie brak = nieoznaczone.
+  attendanceStatus?: "odbyto" | "nieodbyto";
 }
 
 export interface CalendarResponse {
@@ -83,6 +86,9 @@ export async function GET(req: NextRequest) {
 
     const events: CalendarEvent[] = (data.items ?? []).map((e) => {
       const allDay = !e.start?.dateTime;
+      const rawAttendance = e.extendedProperties?.private?.attendanceStatus;
+      const attendanceStatus =
+        rawAttendance === "odbyto" || rawAttendance === "nieodbyto" ? rawAttendance : undefined;
       return {
         id: e.id ?? "",
         summary: e.summary ?? "(bez tytułu)",
@@ -104,6 +110,7 @@ export async function GET(req: NextRequest) {
         htmlLink: e.htmlLink ?? undefined,
         colorId: e.colorId ?? undefined,
         allDay,
+        attendanceStatus,
       };
     });
 

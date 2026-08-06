@@ -51,7 +51,7 @@ export function ContactAttemptsBadge({
           fontFamily: "var(--font-sans)",
           fontSize: 10,
           fontWeight: 600,
-          color: proby >= 3 ? "var(--error)" : "var(--text-tertiary)",
+          color: proby >= 3 ? "var(--error-text)" : "var(--text-tertiary)",
         }}
       >
         {proby >= 3 ? "Wyślij SMS" : `Próba ${proby}`}

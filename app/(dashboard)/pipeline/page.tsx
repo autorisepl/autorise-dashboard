@@ -55,16 +55,16 @@ function estimateModulePricing(moduleCount: number): number | null {
 
 const STATUS_COLORS: Record<string, string> = {
   "Nowy lead": "var(--accent)",
-  Kwalifikacja: "#7c3aed",
-  "Discovery umówione": "#0d9488",
+  Kwalifikacja: "#a379ec",
+  "Discovery umówione": "#14b8a7",
   Finalizacja: "#d97706",
   Kickoff: "#16a34a",
-  Wdrożenie: "#15803d",
-  Retainer: "#166534",
+  Wdrożenie: "#34b262",
+  Retainer: "#3fa676",
   Niekwalifikowany: "var(--text-tertiary)",
   "Nieaktywny (follow up)": "var(--warning)",
   Upsell: "#0ea5e9",
-  "Zakończona współpraca": "#64748b",
+  "Zakończona współpraca": "#7c8a9c",
 };
 
 // ── Helpers ──────────────────────────────────────────────────────────
@@ -138,7 +138,7 @@ function ClientCard({
               fontWeight: 700,
               letterSpacing: "0.04em",
               textTransform: "uppercase",
-              color: "var(--error)",
+              color: "var(--error-text)",
               background: "var(--error-bg)",
               border: "1px solid var(--error-border)",
               borderRadius: "var(--radius-xs)",
@@ -502,7 +502,7 @@ function ClientPanel({
                 style={{
                   fontSize: 12,
                   fontWeight: 600,
-                  color: "var(--error)",
+                  color: "var(--error-text)",
                   fontFamily: "var(--font-sans)",
                 }}
               >
@@ -984,7 +984,7 @@ export default function PipelinePage() {
                 border: `1px solid ${showUtracone ? "var(--error-border)" : "var(--border)"}`,
                 borderRadius: "var(--radius-xs)",
                 cursor: "pointer",
-                color: showUtracone ? "var(--error)" : "var(--text-secondary)",
+                color: showUtracone ? "var(--error-text)" : "var(--text-secondary)",
                 fontSize: 12,
                 fontFamily: "var(--font-sans)",
               }}
@@ -1093,7 +1093,9 @@ export default function PipelinePage() {
                 gap: 12,
               }}
             >
-              <span style={{ fontSize: 13, color: "var(--error)", fontFamily: "var(--font-sans)" }}>
+              <span
+                style={{ fontSize: 13, color: "var(--error-text)", fontFamily: "var(--font-sans)" }}
+              >
                 {error}
               </span>
               <Button variant="secondary" size="sm" onClick={() => void load()}>

@@ -351,7 +351,7 @@ function SaveModal({
               borderRadius: 9,
               fontFamily: f.system,
               fontSize: 12,
-              color: "var(--error)",
+              color: "var(--error-text)",
             }}
           >
             {error}
@@ -1119,7 +1119,7 @@ export function KalkulatorRoi({ embedded = false, initialClientName }: Kalkulato
                     max={8}
                   />
                   {Number(godzinyWpisywania) > 8 && (
-                    <div style={{ color: "var(--error)", fontSize: 11, marginTop: 2 }}>
+                    <div style={{ color: "var(--error-text)", fontSize: 11, marginTop: 2 }}>
                       Maksymalnie 8 godzin dziennie na osobę. Wpisałeś {godzinyWpisywania}h — czy
                       chodziło o h/mc?
                     </div>

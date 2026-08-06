@@ -138,7 +138,7 @@ export function AgentFieldsCard({ agentNumber, health, healthLoading }: AgentFie
               style={{
                 fontFamily: "var(--font-mono)",
                 fontSize: "11px",
-                color: "var(--warning)",
+                color: "var(--warning-text)",
                 margin: "4px 0 0",
                 lineHeight: 1.5,
               }}

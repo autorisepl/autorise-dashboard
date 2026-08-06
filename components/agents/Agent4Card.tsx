@@ -459,7 +459,7 @@ export function Agent4Card({ output }: { output: Agent4Output }) {
                               fontFamily: "var(--font-sans)",
                               fontSize: 11,
                               fontWeight: 600,
-                              color: isZbita ? "var(--success-text)" : "var(--error)",
+                              color: isZbita ? "var(--success-text)" : "var(--error-text)",
                             }}
                           >
                             {isZbita ? <CheckCircle2 size={11} /> : <XCircle size={11} />}
@@ -566,7 +566,7 @@ export function Agent4Card({ output }: { output: Agent4Output }) {
                 >
                   <Calendar size={11} />
                   Re-engagement:{" "}
-                  <strong style={{ color: "var(--warning)" }}>{output.data_reengagement}</strong>
+                  <strong style={{ color: "var(--warning-text)" }}>{output.data_reengagement}</strong>
                 </div>
               )}
             </div>
@@ -589,7 +589,7 @@ export function Agent4Card({ output }: { output: Agent4Output }) {
                     borderRadius: 7,
                     fontFamily: "var(--font-sans)",
                     fontSize: 13,
-                    color: "var(--warning)",
+                    color: "var(--warning-text)",
                     lineHeight: 1.5,
                   }}
                 >

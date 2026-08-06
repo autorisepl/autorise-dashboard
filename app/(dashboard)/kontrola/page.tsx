@@ -1,9 +1,20 @@
 "use client";
 
-import { AlertTriangle, CheckCircle2, Database, Loader2, Monitor, RefreshCw } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Database,
+  FolderTree,
+  Loader2,
+  Monitor,
+  PenLine,
+  RefreshCw,
+  Workflow,
+} from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import type { EnvCheckResponse } from "@/app/api/env-check/route";
 import type { HealthResponse } from "@/app/api/health/route";
+import type { McpToolsResponse, ToolCategory } from "@/app/api/mcp-tools/route";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Panel } from "@/components/ui/Panel";
 import { SectionLabel } from "@/components/ui/SectionLabel";
@@ -47,6 +58,38 @@ const SUBPROJECTS = [
   },
 ];
 
+const MCP_CLIENTS = [
+  { name: "Claude.ai", note: "MCP Streamable HTTP + OAuth 2.0" },
+  { name: "Claude Code", note: "SSE legacy — /sse + /messages" },
+] as const;
+
+const CATEGORY_META: Record<
+  ToolCategory,
+  { label: string; color: string; bg: string; border: string; target: string }
+> = {
+  read: {
+    label: "Odczyt",
+    color: "var(--success-text)",
+    bg: "var(--success-bg)",
+    border: "var(--success-border)",
+    target: "Workspace (odczyt)",
+  },
+  write: {
+    label: "Zapis",
+    color: "var(--warning-text)",
+    bg: "var(--warning-bg)",
+    border: "var(--warning-border)",
+    target: "Workspace (zapis) / dziennik decyzji",
+  },
+  notion: {
+    label: "Notion",
+    color: "var(--accent)",
+    bg: "rgba(10,132,255,0.1)",
+    border: "rgba(10,132,255,0.3)",
+    target: "Notion — baza Pipeline",
+  },
+};
+
 const API_ITEMS = [
   { key: "anthropic", label: "Anthropic API", sublabel: "claude-sonnet-4-6" },
   { key: "notion", label: "Notion", sublabel: "Pipeline · CRM" },
@@ -58,6 +101,8 @@ const API_ITEMS = [
 export default function KontrolaPage() {
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [envVars, setEnvVars] = useState<EnvCheckResponse["vars"]>([]);
+  const [mcpTools, setMcpTools] = useState<McpToolsResponse | null>(null);
+  const [selectedTool, setSelectedTool] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<string>("");
   const [migrating, setMigrating] = useState(false);
@@ -95,16 +140,19 @@ export default function KontrolaPage() {
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [healthRes, envRes] = await Promise.all([
+      const [healthRes, envRes, mcpToolsRes] = await Promise.all([
         fetch("/api/health"),
         fetch("/api/env-check"),
+        fetch("/api/mcp-tools"),
       ]);
-      const [healthData, envData] = await Promise.all([
+      const [healthData, envData, mcpToolsData] = await Promise.all([
         healthRes.json() as Promise<HealthResponse>,
         envRes.json() as Promise<EnvCheckResponse>,
+        mcpToolsRes.json() as Promise<McpToolsResponse>,
       ]);
       setHealth(healthData);
       setEnvVars(envData.vars ?? []);
+      setMcpTools(mcpToolsData);
       setLastUpdated(
         new Date().toLocaleTimeString("pl-PL", {
           hour: "2-digit",
@@ -451,6 +499,219 @@ export default function KontrolaPage() {
           </Panel>
         </div>
 
+        {/* Row 2b — Wizualizacja MCP: żywy diagram, źródłem prawdy jest /health autorise-mcp-server */}
+        <Panel style={{ padding: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <Workflow size={13} color="var(--text-tertiary)" />
+              <SectionLabel>Wizualizacja MCP</SectionLabel>
+            </div>
+            <div
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 10,
+                color: "var(--text-tertiary)",
+              }}
+            >
+              {mcpTools?.ok
+                ? `${mcpTools.toolsCatalog.length} narzędzi · odświeżanie co 20s`
+                : mcpTools
+                  ? "Serwer MCP niedostępny"
+                  : "Ładowanie..."}
+            </div>
+          </div>
+
+          <div
+            style={{
+              marginTop: 12,
+              display: "grid",
+              gridTemplateColumns: "0.7fr 1.6fr 1fr",
+              gap: 14,
+              alignItems: "start",
+            }}
+          >
+            {/* Kolumna 1 — Kto łączy się (statyczne) */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {MCP_CLIENTS.map((c) => (
+                <div
+                  key={c.name}
+                  style={{
+                    padding: "8px 10px",
+                    background: "var(--bg-elevated)",
+                    border: "1px solid var(--border)",
+                    borderRadius: "var(--radius-xs)",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: "var(--text-primary)",
+                    }}
+                  >
+                    {c.name}
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 10,
+                      color: "var(--text-tertiary)",
+                      marginTop: 2,
+                    }}
+                  >
+                    {c.note}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Kolumna 2 — Narzędzia MCP (żywe z /health) */}
+            <div>
+              {!mcpTools?.ok ? (
+                <div
+                  style={{
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 11,
+                    color: "var(--text-tertiary)",
+                    padding: "8px 0",
+                  }}
+                >
+                  {mcpTools
+                    ? (mcpTools.error ?? "Brak połączenia z mcp.autorise.pl")
+                    : "Sprawdzam..."}
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {mcpTools.toolsCatalog.map((tool) => {
+                    const meta = CATEGORY_META[tool.category];
+                    const isSelected = selectedTool === tool.name;
+                    return (
+                      <button
+                        key={tool.name}
+                        type="button"
+                        onClick={() => setSelectedTool(isSelected ? null : tool.name)}
+                        title={tool.description}
+                        style={{
+                          padding: "5px 9px",
+                          background: meta.bg,
+                          border: `1px solid ${isSelected ? meta.color : meta.border}`,
+                          borderRadius: "var(--radius-xs)",
+                          cursor: "pointer",
+                          fontFamily: "var(--font-sans)",
+                          fontSize: 11,
+                          fontWeight: 600,
+                          color: meta.color,
+                          textAlign: "left",
+                        }}
+                      >
+                        {tool.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {selectedTool && mcpTools?.ok && (
+                <div
+                  style={{
+                    marginTop: 10,
+                    padding: "8px 10px",
+                    background: "var(--bg-elevated)",
+                    border: "1px solid var(--border)",
+                    borderRadius: "var(--radius-xs)",
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 11,
+                    color: "var(--text-secondary)",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {mcpTools.toolsCatalog.find((t) => t.name === selectedTool)?.description}
+                </div>
+              )}
+
+              <div style={{ display: "flex", gap: 12, marginTop: 10 }}>
+                {(Object.keys(CATEGORY_META) as ToolCategory[]).map((cat) => (
+                  <div key={cat} style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                    <div
+                      style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: "50%",
+                        background: CATEGORY_META[cat].color,
+                      }}
+                    />
+                    <span
+                      style={{
+                        fontFamily: "var(--font-sans)",
+                        fontSize: 10,
+                        color: "var(--text-tertiary)",
+                      }}
+                    >
+                      {CATEGORY_META[cat].label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Kolumna 3 — Co czyta/zapisuje (wywnioskowane z kategorii) */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {[
+                {
+                  icon: FolderTree,
+                  label: "Workspace",
+                  note: "read_file, list_dir, search_files, project_stats",
+                },
+                {
+                  icon: PenLine,
+                  label: "Snapshoty / dziennik",
+                  note: "write_snapshot, append_journal",
+                },
+                {
+                  icon: Database,
+                  label: "Notion — Pipeline",
+                  note: "notion_get_schema, notion_get_pipeline_stats",
+                },
+              ].map(({ icon: Icon, label, note }) => (
+                <div
+                  key={label}
+                  style={{
+                    padding: "8px 10px",
+                    background: "var(--bg-elevated)",
+                    border: "1px solid var(--border)",
+                    borderRadius: "var(--radius-xs)",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <Icon size={11} color="var(--text-tertiary)" />
+                    <span
+                      style={{
+                        fontFamily: "var(--font-sans)",
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: "var(--text-primary)",
+                      }}
+                    >
+                      {label}
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 9,
+                      color: "var(--text-tertiary)",
+                      marginTop: 3,
+                    }}
+                  >
+                    {note}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Panel>
+
         {/* USUNIĘTE (2026-07-26): karta "Claude Code — konfiguracja" pokazywała statyczne
             "Modele: Główny/Reasoning/Worker" które nigdy nie odpowiadało realnej architekturze
             (agenci mają modele konfigurowane indywidualnie w prompts.ts, nie trzy stałe warstwy),
@@ -554,7 +815,7 @@ export default function KontrolaPage() {
               >
                 {migrateResult.message}
                 {migrateResult.errors && migrateResult.errors.length > 0 && (
-                  <div style={{ marginTop: 4, color: "var(--error)" }}>
+                  <div style={{ marginTop: 4, color: "var(--error-text)" }}>
                     {migrateResult.errors.join(" · ")}
                   </div>
                 )}

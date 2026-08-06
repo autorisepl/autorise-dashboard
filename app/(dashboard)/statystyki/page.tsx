@@ -52,9 +52,9 @@ const TONES: Record<Tone, { bg: string; color: string; border: string }> = {
     color: "var(--success-text)",
     border: "var(--success-border)",
   },
-  amber: { bg: "var(--warning-bg)", color: "var(--warning)", border: "var(--warning-border)" },
+  amber: { bg: "var(--warning-bg)", color: "var(--warning-text)", border: "var(--warning-border)" },
   purple: { bg: "rgba(124,58,237,0.10)", color: "#7c3aed", border: "rgba(124,58,237,0.22)" },
-  error: { bg: "var(--error-bg)", color: "var(--error)", border: "var(--error-border)" },
+  error: { bg: "var(--error-bg)", color: "var(--error-text)", border: "var(--error-border)" },
 };
 
 function HeroCard({
@@ -486,7 +486,7 @@ export default function StatystykiPage() {
       <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px" }}>
         {error && (
           <Panel style={{ padding: 16, marginBottom: 16, background: "var(--error-bg)" }}>
-            <div style={{ fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--error)" }}>
+            <div style={{ fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--error-text)" }}>
               {error}
             </div>
           </Panel>

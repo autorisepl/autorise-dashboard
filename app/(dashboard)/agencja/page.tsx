@@ -44,7 +44,7 @@ const STAGE_TONES: Record<StageTone, { bg: string; color: string; border: string
     border: "var(--success-border)",
   },
   purple: { bg: "rgba(124,58,237,0.10)", color: "#7c3aed", border: "rgba(124,58,237,0.22)" },
-  amber: { bg: "var(--warning-bg)", color: "var(--warning)", border: "var(--warning-border)" },
+  amber: { bg: "var(--warning-bg)", color: "var(--warning-text)", border: "var(--warning-border)" },
   accent: { bg: "var(--accent-muted)", color: "var(--accent)", border: "var(--accent-border)" },
   neutral: { bg: "var(--bg-hover)", color: "var(--text-secondary)", border: "var(--border)" },
 };
@@ -656,7 +656,7 @@ export default function AgencjaPage() {
               style={{
                 fontFamily: "var(--font-sans)",
                 fontSize: 11,
-                color: syncResult.errors.length > 0 ? "var(--error)" : "var(--text-tertiary)",
+                color: syncResult.errors.length > 0 ? "var(--error-text)" : "var(--text-tertiary)",
                 flexShrink: 0,
               }}
             >
@@ -707,7 +707,7 @@ export default function AgencjaPage() {
               cursor: resettingStages || loading ? "default" : "pointer",
               fontFamily: "var(--font-sans)",
               fontSize: 12,
-              color: "var(--error)",
+              color: "var(--error-text)",
               opacity: resettingStages || loading ? 0.5 : 0.75,
             }}
           >
@@ -733,7 +733,7 @@ export default function AgencjaPage() {
               cursor: resettingAll || loading ? "default" : "pointer",
               fontFamily: "var(--font-sans)",
               fontSize: 12,
-              color: "var(--error)",
+              color: "var(--error-text)",
               opacity: resettingAll || loading ? 0.5 : 0.85,
             }}
           >
@@ -745,7 +745,7 @@ export default function AgencjaPage() {
           </button>
 
           {resetError && (
-            <span style={{ fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--error)" }}>
+            <span style={{ fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--error-text)" }}>
               {resetError}
             </span>
           )}

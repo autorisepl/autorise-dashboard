@@ -125,7 +125,7 @@ function LoginForm() {
             style={{
               fontFamily: "var(--font-sans)",
               fontSize: 12,
-              color: "var(--error)",
+              color: "var(--error-text)",
               marginTop: 8,
             }}
           >

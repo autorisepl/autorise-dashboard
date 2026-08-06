@@ -298,7 +298,7 @@ export function KartaKlienta({ clientName, phone, email, company }: KartaKlienta
             background: "none",
             border: "none",
             cursor: "pointer",
-            color: "var(--error)",
+            color: "var(--error-text)",
             display: "flex",
             padding: 3,
             opacity: resetPending ? 0.4 : 0.6,
@@ -465,7 +465,7 @@ function Banner({ kind, text }: { kind: "error" | "info"; text: string }) {
         fontSize: 12,
         background: isError ? "var(--error-bg)" : "var(--bg-elevated)",
         border: `1px solid ${isError ? "var(--error-border)" : "var(--border)"}`,
-        color: isError ? "var(--error)" : "var(--text-secondary)",
+        color: isError ? "var(--error-text)" : "var(--text-secondary)",
       }}
     >
       <AlertTriangle size={12} />

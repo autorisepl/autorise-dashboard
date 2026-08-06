@@ -21,7 +21,7 @@ function CopyBtn({ value }: { value: string }) {
       style={{
         padding: "3px 8px",
         borderRadius: 5,
-        border: "1px solid #E5E5EA",
+        border: "1px solid var(--border)",
         background: "transparent",
         cursor: "pointer",
         color: copied ? "var(--success-text)" : "var(--text-tertiary)",
@@ -52,7 +52,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
         color: "var(--text-tertiary)",
         margin: "28px 0 12px",
         paddingBottom: 8,
-        borderBottom: "1px solid #E5E5EA",
+        borderBottom: "1px solid var(--border)",
       }}
     >
       {children}
@@ -63,17 +63,17 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 // ── Color swatch ──────────────────────────────────────────────────────
 
 const COLORS: { name: string; var: string; value: string }[] = [
-  { name: "Accent", var: "--accent", value: "#0a84ff" },
-  { name: "Accent hover", var: "--accent-hover", value: "#0071e3" },
-  { name: "Success", var: "--success", value: "#34c759" },
-  { name: "Error", var: "--error", value: "#ff3b30" },
-  { name: "Warning", var: "--warning", value: "#ff9500" },
-  { name: "Text primary", var: "--text-primary", value: "#1d1d1f" },
-  { name: "Text secondary", var: "--text-secondary", value: "#3a3a3c" },
-  { name: "Text tertiary", var: "--text-tertiary", value: "#6e6e73" },
-  { name: "BG", var: "--bg", value: "#f5f5f7" },
-  { name: "BG elevated", var: "--bg-elevated", value: "#ffffff" },
-  { name: "Border", var: "--border", value: "rgba(0,0,0,0.08)" },
+  { name: "Accent", var: "--accent", value: "#4379b1" },
+  { name: "Accent hover", var: "--accent-hover", value: "#5588be" },
+  { name: "Success", var: "--success", value: "#2fa262" },
+  { name: "Error", var: "--error", value: "#c8483f" },
+  { name: "Warning", var: "--warning", value: "#9e6a2e" },
+  { name: "Text primary", var: "--text-primary", value: "#eeeae4" },
+  { name: "Text secondary", var: "--text-secondary", value: "#b8b4ad" },
+  { name: "Text tertiary", var: "--text-tertiary", value: "#8d8a84" },
+  { name: "BG", var: "--bg", value: "#17181b" },
+  { name: "BG elevated", var: "--bg-elevated", value: "#201f23" },
+  { name: "Border", var: "--border", value: "rgba(255,255,255,0.08)" },
 ];
 
 function ColorSwatches() {
@@ -83,8 +83,8 @@ function ColorSwatches() {
         <div
           key={c.var}
           style={{
-            background: "#fff",
-            border: "1px solid #E5E5EA",
+            background: "var(--bg-card)",
+            border: "1px solid var(--border)",
             borderRadius: 10,
             overflow: "hidden",
             width: 140,
@@ -94,7 +94,7 @@ function ColorSwatches() {
             style={{
               height: 60,
               background: c.value,
-              borderBottom: "1px solid #E5E5EA",
+              borderBottom: "1px solid var(--border)",
             }}
           />
           <div style={{ padding: "8px 10px" }}>
@@ -167,8 +167,8 @@ function TypographyShowcase() {
             alignItems: "center",
             gap: 16,
             padding: "10px 14px",
-            background: "#fff",
-            border: "1px solid #E5E5EA",
+            background: "var(--bg-card)",
+            border: "1px solid var(--border)",
             borderRadius: 8,
           }}
         >
@@ -393,8 +393,8 @@ function ButtonVariants() {
           height: 36,
           padding: "0 16px",
           borderRadius: 8,
-          border: "1px solid #E5E5EA",
-          background: "#fff",
+          border: "1px solid var(--border)",
+          background: "var(--bg-card)",
           color: "var(--text-primary)",
           fontFamily: "var(--font-sans)",
           fontSize: 13,
@@ -426,8 +426,8 @@ function ButtonVariants() {
           height: 36,
           padding: "0 16px",
           borderRadius: 8,
-          border: "1px solid #E5E5EA",
-          background: "#F5F5F7",
+          border: "1px solid var(--border)",
+          background: "var(--bg-hover)",
           color: "var(--text-tertiary)",
           fontFamily: "var(--font-sans)",
           fontSize: 13,
@@ -442,15 +442,23 @@ function ButtonVariants() {
 
 // ── Status badges ─────────────────────────────────────────────────────
 
+// Zgodne 1:1 z ROW1/ROW2/ROW3 i STATUS_COLORS w app/(dashboard)/pipeline/page.tsx — ten sam
+// zestaw 11 statusów w tej samej kolejności, żeby Brand Book nie rozjeżdżał się z realnym
+// Pipeline Kanbanem (wcześniej brakowało Wdrożenie/Upsell/Zakończona współpraca, a Nowy
+// lead/Niekwalifikowany/Nieaktywny (follow up) miały twarde hexy sprzed redesignu palety
+// zamiast var(--accent)/var(--text-tertiary)/var(--warning), więc nie śledziły motywu).
 const STATUSES: { label: string; color: string; bg: string }[] = [
-  { label: "Nowy lead", color: "#0a84ff", bg: "rgba(10,132,255,0.08)" },
-  { label: "Kwalifikacja", color: "#7c3aed", bg: "rgba(124,58,237,0.08)" },
-  { label: "Discovery umówione", color: "#0d9488", bg: "rgba(13,148,136,0.08)" },
+  { label: "Nowy lead", color: "var(--accent)", bg: "var(--accent-muted)" },
+  { label: "Kwalifikacja", color: "#a379ec", bg: "rgba(163,121,236,0.08)" },
+  { label: "Discovery umówione", color: "#14b8a7", bg: "rgba(20,184,167,0.08)" },
   { label: "Finalizacja", color: "#d97706", bg: "rgba(217,119,6,0.08)" },
   { label: "Kickoff", color: "#16a34a", bg: "rgba(22,163,74,0.08)" },
-  { label: "Retainer", color: "#166534", bg: "rgba(22,101,52,0.08)" },
-  { label: "Niekwalifikowany", color: "#6e6e73", bg: "rgba(0,0,0,0.04)" },
-  { label: "Nieaktywny (follow up)", color: "#ff9500", bg: "rgba(255,149,0,0.08)" },
+  { label: "Wdrożenie", color: "#34b262", bg: "rgba(52,178,98,0.08)" },
+  { label: "Retainer", color: "#3fa676", bg: "rgba(63,166,118,0.08)" },
+  { label: "Niekwalifikowany", color: "var(--text-tertiary)", bg: "var(--bg-hover)" },
+  { label: "Nieaktywny (follow up)", color: "var(--warning)", bg: "var(--warning-bg)" },
+  { label: "Upsell", color: "#0ea5e9", bg: "rgba(14,165,233,0.08)" },
+  { label: "Zakończona współpraca", color: "#7c8a9c", bg: "rgba(124,138,156,0.08)" },
 ];
 
 function StatusBadges() {
@@ -511,7 +519,7 @@ function ShadowShowcase() {
             style={{
               width: 80,
               height: 80,
-              background: "#fff",
+              background: "var(--bg-card)",
               borderRadius: 12,
               boxShadow: s.value,
               marginBottom: 8,
@@ -549,32 +557,34 @@ const CSS_VARS_GROUPS: { title: string; vars: { name: string; desc: string }[] }
   {
     title: "Tła",
     vars: [
-      { name: "--bg", desc: "#f5f5f7 — tło strony" },
-      { name: "--bg-elevated", desc: "#ffffff — karty, panele" },
-      { name: "--bg-sidebar", desc: "rgba(246,246,248,0.94) — sidebar" },
-      { name: "--bg-hover", desc: "rgba(0,0,0,0.04) — hover" },
-      { name: "--bg-active", desc: "rgba(10,132,255,0.08) — aktywny element" },
+      { name: "--bg", desc: "#17181b — tło strony (grafit)" },
+      { name: "--bg-elevated", desc: "#201f23 — karty, panele" },
+      { name: "--bg-sidebar", desc: "rgba(23,24,27,0.94) — sidebar" },
+      { name: "--bg-hover", desc: "rgba(255,255,255,0.06) — hover" },
+      { name: "--bg-active", desc: "rgba(67,121,177,0.14) — aktywny element" },
     ],
   },
   {
     title: "Akcent",
     vars: [
-      { name: "--accent", desc: "#0a84ff — iOS Blue" },
-      { name: "--accent-hover", desc: "#0071e3 — hover stanu" },
-      { name: "--accent-muted", desc: "rgba(10,132,255,0.10) — tło akcentu" },
-      { name: "--accent-border", desc: "rgba(10,132,255,0.25) — obramowanie akcentu" },
+      { name: "--accent", desc: "#4379b1 — stonowany stalowy niebieski" },
+      { name: "--accent-hover", desc: "#5588be — hover stanu" },
+      { name: "--accent-muted", desc: "rgba(67,121,177,0.16) — tło akcentu" },
+      { name: "--accent-border", desc: "rgba(67,121,177,0.35) — obramowanie akcentu" },
     ],
   },
   {
     title: "Statusy",
     vars: [
-      { name: "--success", desc: "#34c759 — iOS Green" },
-      { name: "--success-text", desc: "#1a7f37 — kontrast AA na jasnym tle" },
-      { name: "--success-bg", desc: "rgba(52,199,89,0.12)" },
-      { name: "--error", desc: "#ff3b30 — iOS Red" },
-      { name: "--error-bg", desc: "rgba(255,59,48,0.10)" },
-      { name: "--warning", desc: "#ff9500 — iOS Orange" },
-      { name: "--warning-bg", desc: "rgba(255,149,0,0.10)" },
+      { name: "--success", desc: "#2fa262 — zielony" },
+      { name: "--success-text", desc: "#6bdb9c — kontrast AA na ciemnym tle" },
+      { name: "--success-bg", desc: "rgba(47,162,98,0.16)" },
+      { name: "--error", desc: "#c8483f — czerwony" },
+      { name: "--error-text", desc: "#ff9992 — kontrast AA na ciemnym tle" },
+      { name: "--error-bg", desc: "rgba(200,72,63,0.16)" },
+      { name: "--warning", desc: "#9e6a2e — bursztynowy" },
+      { name: "--warning-text", desc: "#f2bd70 — kontrast AA na ciemnym tle" },
+      { name: "--warning-bg", desc: "rgba(158,106,46,0.16)" },
     ],
   },
 ];
@@ -604,8 +614,8 @@ function CssVarReference() {
                   alignItems: "center",
                   gap: 12,
                   padding: "6px 10px",
-                  background: "#fff",
-                  border: "1px solid #E5E5EA",
+                  background: "var(--bg-card)",
+                  border: "1px solid var(--border)",
                   borderRadius: 7,
                 }}
               >
@@ -693,8 +703,8 @@ function PlaceholderySkryptow() {
   return (
     <div
       style={{
-        background: "#fff",
-        border: "1px solid #E5E5EA",
+        background: "var(--bg-card)",
+        border: "1px solid var(--border)",
         borderRadius: 12,
         overflow: "hidden",
       }}
@@ -702,8 +712,8 @@ function PlaceholderySkryptow() {
       <div
         style={{
           padding: "12px 18px",
-          borderBottom: "1px solid #E5E5EA",
-          background: "rgba(10,132,255,0.03)",
+          borderBottom: "1px solid var(--border)",
+          background: "rgba(67,121,177,0.05)",
           fontFamily: "var(--font-sans)",
           fontSize: 11,
           fontWeight: 700,
@@ -734,7 +744,7 @@ function PlaceholderySkryptow() {
                 color: "var(--accent)",
                 minWidth: 180,
                 flexShrink: 0,
-                background: "rgba(10,132,255,0.07)",
+                background: "rgba(67,121,177,0.12)",
                 borderRadius: 6,
                 padding: "4px 10px",
                 letterSpacing: "0.01em",
@@ -768,7 +778,7 @@ function PlaceholderySkryptow() {
                   fontFamily: "var(--font-sans)",
                   fontSize: 11,
                   color: "var(--text-tertiary)",
-                  background: "#F5F5F7",
+                  background: "var(--bg-hover)",
                   borderRadius: 5,
                   padding: "4px 8px",
                   lineHeight: 1.5,
@@ -800,7 +810,9 @@ export default function BrandBookPage() {
       </PageHeader>
 
       {/* Scrollable content */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "8px 24px 40px", background: "#F5F5F7" }}>
+      <div
+        style={{ flex: 1, overflowY: "auto", padding: "8px 24px 40px", background: "var(--bg)" }}
+      >
         <div style={{ maxWidth: 900 }}>
           <SectionTitle>Kolory</SectionTitle>
           <ColorSwatches />
@@ -836,8 +848,8 @@ export default function BrandBookPage() {
           <SectionTitle>Roboto — próbka fontowa</SectionTitle>
           <div
             style={{
-              background: "#fff",
-              border: "1px solid #E5E5EA",
+              background: "var(--bg-card)",
+              border: "1px solid var(--border)",
               borderRadius: 12,
               padding: "24px",
             }}

@@ -63,7 +63,7 @@ function StatusPill({ status, labelOverride }: StatusPillProps) {
         borderRadius: 99,
         background: done ? "var(--success-bg)" : "var(--warning-bg)",
         border: `1px solid ${done ? "var(--success-border)" : "var(--warning-border)"}`,
-        color: done ? "var(--success-text)" : "var(--warning)",
+        color: done ? "var(--success-text)" : "var(--warning-text)",
         fontFamily: "var(--font-sans)",
         fontSize: 10,
         fontWeight: 700,

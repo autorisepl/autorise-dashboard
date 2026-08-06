@@ -23,10 +23,16 @@
 
 ## Design System
 
-- macOS/Apple light theme — single theme, no dark mode toggle, no exceptions
+- Ciemny motyw grafitowy (2026-08-05, zastąpił poprzedni jasny iOS-owy) — nadal single theme,
+  bez przełącznika, bez wyjątków. Zmiana tylko WARTOŚCI zmiennych w `:root` w `app/globals.css`,
+  nazwy tokenów niezmienione.
 - Font: Roboto (next/font/google)
 - CSS custom properties w `app/globals.css`: `var(--bg)`, `var(--accent)`, `var(--border)`, `var(--text-primary)`, etc.
-- Accent: `#0a84ff`; SUCCESS `#34c759`, ERROR `#ff3b30`, WARNING `#ff9500`
+- Accent: `#4379b1` (stonowany stalowy niebieski, świadomie niejaskrawy); SUCCESS `#2fa262`,
+  ERROR `#c8483f`, WARNING `#9e6a2e` — każdy ma teraz dedykowany token `-text` (`--success-text`,
+  `--error-text`, `--warning-text`) do użycia jako kolor TEKSTU (nie mylić z rawem, który służy
+  jako kolor kropek/obramowań/wypełnień przycisków). Wszystkie pary bg/text zweryfikowane
+  programowo pod kątem WCAG AA (>=4.5:1) względem `--bg-elevated`.
 - Text: `--text-secondary`, `--text-tertiary`
 - UI components: `Panel`, `Button`, `StatusDiode`, `SectionLabel` w `components/ui/`
 - Model names: "Claude Sonnet 4.6", "Claude Opus 4.8" — nigdy z myślnikami, nigdy lowercase
@@ -40,8 +46,7 @@
 ORGANIZACJA
   /pipeline        → Pipeline Kanban (3 rzędy: ROW1/ROW2/ROW3 z "Nieaktywny follow up" + "Upsell")
   /statystyki      → panelowy redesign (2026-07-18): Wynik/Lejek sprzedażowy/Aktywność telefoniczna/Jakość rozmów, realny No-Show
-  /harmonogram     → Harmonogram (Google Calendar + Tasks)
-  /zadania         → Zadania (Google Tasks, 4 listy)
+  /planowanie      → Planowanie (Google Calendar + Tasks, zastąpiło /harmonogram i /zadania 2026-08-05, oba przekierowują tutaj)
   /kontrola        → Kontrola obszaru roboczego (v6)
   /brand-book      → Design system live preview
 
@@ -53,6 +58,8 @@ KLIENCI
   /agenci          → Agenci wspomagania sprzedaży (6 tabów, agent0 ukryty)
   /prezentacja     → link do prezentacja.html
   /narzedzia       → Transkrypcja (AudioRecorder + Drive picker + Groq Whisper)
+  /demo-arek       → Demo sprzedażowe (2026-08-02): interaktywny przepływ jednego zlecenia dla
+                      Arka Burkowskiego, zobacz sekcję niżej
 
 WIEDZA I PROCES
   /agencja         → Karta (Agency Leaders) — Sheets sync
@@ -72,6 +79,31 @@ Zakładka `/pliki` usunięta z nawigacji (A2, 2026-07-16) — strona zostaje w k
 - Nowe pola Notion Pipeline (Batch 4 w `migrateNotionSchema()`, **migracja uruchomiona 2026-07-18** przez nowy przycisk "Migruj schemat" w `/kontrola`, patrz sekcja "Kontrola page" niżej): "Data potwierdzenia dostępów" (date), "Czas bazowy potwierdzony h/mc" (number, na razie niewykorzystane w UI, zarezerwowane dla Panelu Pomiar bazowy), "Dostępy zebrane" (rich_text, comma-separated klucze checkboxów), "Ostatni kontakt (retainer)" (date), "Historia zgłoszeń (retainer)" (rich_text, serializacja "data | opis" per linia). `PipelineClientDetailed` (`app/api/notion/pipeline/route.ts`) i `PATCH /api/notion/pipeline-update` rozszerzone o te pola plus istniejące `Retainer PLN/mc` (wcześniej pobierane tylko przez `/api/notion/prezentacja-dane`, teraz też przez główny endpoint Pipeline).
 
 UWAGA: `/narzedzia/kalkulator` to osierocona strona z wcześniejszej sesji, bez linku w nawigacji. Kalkulator ROI właściwy żyje inline w `/kwalifikacja` (krok 2.6) i `/sprzedaz`. Jeśli osierocona strona nie jest jeszcze usunięta, usuń ją przy najbliższej okazji, żeby uniknąć dwóch wersji tego samego narzędzia.
+
+## Demo sprzedażowe /demo-arek (2026-08-02)
+
+Zbudowane pod jedną konkretną rozmowę sprzedażową (Arek Burkowski, firma transportowa, ok. 80
+pojazdów), do pokazania na żywo, nie jako generyczny szablon. **Osobna zakładka od
+`/wdrozenie`, świadomie**: `/wdrozenie` to operacyjny panel zespołu Autorise do zarządzania
+już podpisanym wdrożeniem (checklisty, tabele modułów, zapis do Notion); `/demo-arek` to
+interaktywna prezentacja jednego przepływu pracy (zlecenie z giełdy do zaoszczędzonego czasu)
+dla jednego prospekta, czysto frontendowa, bez żadnego zapisu do Notion ani wywołań agentów.
+
+Scenariusz (5 kroków, `DemoStepTimeline` + Poprzedni/Następny/Odtwórz od nowa z opcjonalnym
+autoplay): giełda transportowa (Trans.eu) → automatyczny zapis zlecenia w HMSoft (wejście przez
+panel przeglądarki, bo HMSoft/Subic nie ma API) → trasa do kierowcy przez WebFleet → odbiór CMR
+z WhatsApp i automatyczny odczyt dokumentu → dashboard zaoszczędzonego czasu w skali miesiąca.
+
+`lib/demo/arekDemoData.ts` rozdziela świadomie dwie kategorie danych: `KLIENT` to WYŁĄCZNIE
+fakty potwierdzone przez Arka na nagranej rozmowie (788h/mc dziś, cel 90h/mc, gwarancja min
+80h/mc, 472,5 tys. PLN/rok nieefektywności, 1300-1600 faktur/mc); `ZLECENIE` to ilustracyjny,
+fikcyjny scenariusz jednego zlecenia (zleceniodawca "Nordkern Logistics" nie istnieje, format
+dokumentów CMR/POD/numeru giełdy realistyczny dla branży TSL, ale nie jest kopią żadnego
+realnego zlecenia). Jeśli trzeba podmienić dane tuż przed rozmową, edytuj wyłącznie ten plik.
+
+Widoczne w nawigacji wyłącznie dla roli `admin` (nie dodane do `SETTER_VISIBLE_HREFS` w
+`proxy.ts` ani `SETTER_VISIBLE_HREFS` w `sidebar.tsx`) — to narzędzie prezentacyjne Michała,
+nie codzienne narzędzie settera.
 
 ## Skrypty sprzedażowe — struktura danych
 
@@ -199,20 +231,33 @@ Trzy niezależne zmiany w jednej sesji, żeby /statystyki było wiarygodne i czy
 - Polling: 20s + focus listener
 - Claude-config: max 20 agentów i 20 skills, filtr RELEVANT_KEYWORDS
 
-## Harmonogram (v5)
+## Finanse osobiste w /planowanie (2026-08-05)
 
-- Sticky headers w jednym scrollable container (eliminuje misalignment kolumn)
-- All-day section: NA GÓRZE (przed siatką godzinową)
-- Google Tasks zintegrowane: zadania z terminem w all-day, bez terminu w pomarańczowym pasku
-- TaskChip: amber border-left, circle dot (odróżnia od EventChip)
-- Polling: 30s + focus listener
+Panel finansowy (przychody/wydatki) osadzony w `/planowanie` pod głównym widokiem tygodnia, świadomie oddzielony od zadań/wydarzeń wizualnym separatorem, własna baza Notion `data_source_id: 2c5f037e-6673-4af0-8ae7-18a7e192d353`.
 
-## Zadania (v5)
+**BLOKER przy budowie, nierozwiązany**: integracja "autorise-dashboard" NIE MA dostępu do tej bazy w Notion (`notion.dataSources.retrieve` zwraca `object_not_found`, `notion.search` też jej nie widzi). Cały kod napisany na ślepo wg nazw property z treści zadania, zero odczytu realnego schematu, zero testu na żywych danych. **Michał musi w Notion: baza "Finanse osobiste" → Share → Connections → dodać "autorise-dashboard"**, dopiero wtedy endpointy zaczną cokolwiek zwracać zamiast błędu 500.
 
-- Pełne nazwy dni: "Poniedziałek 22.06.2026"
-- Badge'y terminów: fontSize 11, fontWeight 700, padding 3×10px
-- 4-tier: overdue(red), today(orange), week(green), future(gray)
-- Filtr: wszystkie listy poza "Pomysły i inspiracje"
+Założone nazwy property (`lib/notion/finance.ts`, stała `PROP`): `Nazwa` (title), `Typ` (select: "Przychód"/"Wydatek"), `Kwota` (number), `Kategoria` (multi_select), `Data` (date), `Notatka` (rich_text), `Przypisane do przychodu` (relation, self-referencing, wyłącznie dla wydatków). Jeśli realne nazwy się różnią, Notion API zwróci `"... is not a property that exists"` — ten błąd leci 1:1 do UI (ten sam wzorzec co `/api/notion/pipeline-update`), więc niezgodność będzie widoczna od razu przy pierwszym użyciu, nie ukryta cichym zerem.
+
+- `lib/notion/finance.ts` — warstwa dostępu Notion: `listFinanceEntries`/`createFinanceEntry`/`updateFinanceEntry`/`deleteFinanceEntry`/`getFinanceSchemaOptions`. Tworzenie strony przez `parent: { data_source_id }` (SDK `@notionhq/client` v5.22 wspiera ten kształt bezpośrednio, bez potrzeby osobnego `database_id` jak w Pipeline).
+- **Czyszczenie relacji przy usuwaniu przychodu** (premortem z treści zadania): `deleteFinanceEntry` NAJPIERW odpytuje wszystkie wydatki z `Przypisane do przychodu` zawierającym usuwany id (filter `relation.contains`), czyści im tę relację, DOPIERO POTEM wrzuca stronę przychodu do kosza (`in_trash: true`). Notion nie czyści relacji po drugiej stronie automatycznie dopóki strona jest tylko w koszu (nie trwale usunięta) — bez tego kroku zostałyby martwe odnośniki, dokładnie ryzyko opisane w treści zadania.
+- **Nowe kategorie z UI** (drugi premortem): `Kategoria` to multi_select, `CategoryTagInput` w `FinanceEntryForm.tsx` przyjmuje dowolny tekst, nie tylko istniejące opcje — Notion API sam dopisuje nową opcję do property przy zapisie, nie trzeba osobnej migracji schematu.
+- `app/api/notion/finanse/route.ts` (GET listuje + zwraca opcje kategorii, POST tworzy) i `app/api/notion/finanse/[id]/route.ts` (PATCH/DELETE) — wzorzec 1:1 z `/api/notion/pipeline` + `/api/notion/pipeline-update` (zod walidacja, `NextResponse.json({success, error})`).
+- `components/finance/` — `FinancePanel.tsx` (orchestracja + fetch), `FinanceEntryForm.tsx` (modal create/edit, ten sam chrom wizualny co `EventEditor.tsx` z `/planowanie`), `FinanceList.tsx` (filtr typ/kategoria + edycja/usuwanie), `FinanceDonutChart.tsx` (CSS `conic-gradient`, zero nowej zależności), `FinanceIncomeSummary.tsx` (proste paski, suma przychodów wg kategorii).
+- `lib/finance/summary.ts` — `monthRange`/`categoryTotals`/`isWithinRange`. Wpis z wieloma kategoriami dolicza PEŁNĄ kwotę do każdej (tagowanie, nie podział) — świadome uproszczenie, nie ukryty błąd zaokrągleń.
+- Statystyki (donut wydatków + paski przychodów) mają własną nawigację miesięczną (domyślnie bieżący miesiąc), niezależną od listy wpisów powyżej (lista pokazuje wszystko, filtrowane ręcznie typ/kategoria, bez ograniczenia do miesiąca).
+
+## Planowanie (zastąpiło Harmonogram + Zadania, 2026-08-05)
+
+`/harmonogram` i `/zadania` usunięte jako osobne strony, oba pliki są teraz `redirect("/planowanie")`. Jedna zakładka do zarządzania czasem i zadaniami, tydzień jako główny widok (widoki Miesiąc/Dzień z dawnego `/harmonogram` NIE przeniesione, świadomie, do potwierdzenia z Michałem czy potrzebne).
+
+- `lib/schedule/dateHelpers.ts` — wspólne helpery dat/statusów terminu, `relativeEventLabel` (powyżej 24h etykieta dni+godzin razem, np. "za 1 dzień 4 godz.", nie surowa liczba godzin)
+- `components/schedule/EventEditor.tsx` — modal create/edit/delete wydarzenia (tytuł/data/godziny/lokalizacja/opis), plus read-only uczestnicy + link "Otwórz w Google Calendar" przez prop `sourceEvent`
+- `components/schedule/DayPanel.tsx` — panel dnia, STAŁA wysokość (480px) z wewnętrznym scrollem (nie rośnie z liczbą zadań), dodawanie/usuwanie zadań i wydarzeń wprost z widoku dnia, edycja notatki zadania
+- `components/schedule/PlanningSidebar.tsx` — Nieprzypisane + Strefa priorytetyzacji (priorytet WYŁĄCZNIE lokalny w `localStorage`, Tasks API nie ma tego pola), dodawanie zadania bez przeciągania
+- Layout: stały lewy panel 300px (Nieprzypisane/Priorytetyzacja) + siatka 7 dni w jednym rzędzie (bez podziału dni robocze/weekend jak w poprzedniku)
+- Backend bez zmian: `/api/google/tasks` i `/api/google/calendar` + `/api/google/calendar/[eventId]` już miały pełny CRUD przed tą sesją
+- `/planowanie` nie jest w `SETTER_VISIBLE_HREFS`/`SETTER_ALLOWED_PREFIXES` — ten sam zakres uprawnień co miały `/harmonogram`/`/zadania` (obie admin-only)
 
 ## Dev Tools
 
@@ -262,8 +307,18 @@ app/(dashboard)/brand-book/page.tsx       — design system live preview
 app/(dashboard)/narzedzia/page.tsx        — Transkrypcja (AudioRecorder + Drive)
 app/(dashboard)/narzedzia/kalkulator/page.tsx — OSIEROCONA strona, do usunięcia
 app/(dashboard)/kontrola/page.tsx         — Kontrola (v6 redesign)
-app/(dashboard)/harmonogram/page.tsx      — Calendar + Google Tasks
-app/(dashboard)/zadania/page.tsx          — Google Tasks (4 listy)
+app/(dashboard)/planowanie/page.tsx       — Planowanie: Calendar + Google Tasks + Panel finansowy, zastąpiło harmonogram+zadania
+app/api/notion/finanse/route.ts           — GET listuje + POST tworzy wpis finansowy
+app/api/notion/finanse/[id]/route.ts      — PATCH/DELETE wpisu finansowego (DELETE czyści relacje)
+lib/notion/finance.ts                     — warstwa dostępu Notion dla bazy Finanse osobiste
+lib/finance/summary.ts                    — okres miesięczny, sumy wg kategorii dla panelu finansowego
+components/finance/                       — FinancePanel/FinanceEntryForm/FinanceList/FinanceDonutChart/FinanceIncomeSummary
+app/(dashboard)/harmonogram/page.tsx      — redirect("/planowanie")
+app/(dashboard)/zadania/page.tsx          — redirect("/planowanie")
+components/schedule/EventEditor.tsx       — modal create/edit/delete wydarzenia (uzywany w /planowanie)
+components/schedule/DayPanel.tsx          — panel dnia (stała wysokość, scroll) w /planowanie
+components/schedule/PlanningSidebar.tsx   — Nieprzypisane + Strefa priorytetyzacji w /planowanie
+lib/schedule/dateHelpers.ts               — wspólne helpery dat/statusów dla /planowanie
 app/(dashboard)/agencja/page.tsx          — Nasza karta + Sheets sync
 app/api/agents/agent[0-6]/route.ts        — agent API routes (agent1/2/3 fallback, nieużywane z UI od 2026-07-13)
 app/api/agents/kwalifikacja/route.ts      — scalony Agent 1+2+3, jedyny wywoływany z /agenci "01 Kwalifikacja"
@@ -275,6 +330,10 @@ app/api/notion/pipeline/route.ts          — Pipeline clients
 app/api/notion/sheets-sync/route.ts       — Sheets → Notion sync
 app/(dashboard)/wdrozenie/page.tsx        — PROTOTYP: jednorazowy proces wdrożenia (Tydzień 0 do Dzień 30)
 app/(dashboard)/utrzymanie/page.tsx       — PROTOTYP: stały retainer po zamknięciu wdrożenia
+app/(dashboard)/demo-arek/page.tsx        — Demo sprzedażowe dla Arka Burkowskiego (5 kroków, bez zapisu do Notion)
+components/demo/DemoStepTimeline.tsx      — klikalny wskaźnik kroków demo
+components/demo/steps/                    — Step1Gielda/Step2Tms/Step3WebFleet/Step4Cmr/Step5Dashboard
+lib/demo/arekDemoData.ts                  — dane demo: KLIENT (fakty z rozmowy) vs ZLECENIE (ilustracyjny scenariusz)
 components/clients/ContactAttemptsBadge.tsx — licznik prób kontaktu, wydzielony z /pipeline
 components/clients/ClientSidebar.tsx      — wspólny panel wyboru klienta, używany w /kwalifikacja, /sprzedaz, /wdrozenie, /utrzymanie
 app/(dashboard)/baza-wiedzy/page.tsx      — placeholder, czeka na sesję z Michałem (blok A3)
@@ -318,7 +377,12 @@ Usunięte 2026-07-16 (B10) jako zdublowane/przestarzałe wobec powyższego: `AUT
 | 2026-07-13 | Duży patch /kwalifikacja (22 punkty, pkt 20 odłożony za zgodą Michała): banner "Brak odbioru", obiekcja M365 klikalna (linkObjectionId), DecisionOption.sayAfter (fraza do powiedzenia oddzielona od action), kalkulator ROI wielogrupowy (CalculatorGroup[], role z osobnymi stawkami), captureField inline (osoby/stawka wpisywane w treści kroku), textSetter dla trybu Founder/Setter, karty modułów w języku klienta, licznik dials/rozmowy/sms z cofnięciem (delta w Notion). Szczegóły: context/AUTORISE_SESSION_LOG.md |
 | 2026-07-13 | Scalenie Agent 1+2+3 → agentKwalifikacja (etapowo, z obowiązkową weryfikacją na 2 realnych transkryptach przed podłączeniem UI). 3 regresje znalezione i naprawione w Etapie 3 (icp boolean vs "TAK", meet_data/meet_godzina sklejone, aktywne_szukanie_ok błędny). Stare agent1/2/3 route'y + karty zostają jako nieusuwany fallback. Redesign wizualny Agent4Card (tokeny var(--accent)/var(--font-sans) zamiast starej hardcodowanej palety). PILNE do zrobienia po doładowaniu Anthropic API: retest Arka na finalnej wersji prompta — patrz context/AUTORISE_PRIORYTETY_v1.md. Szczegóły: context/AUTORISE_SESSION_LOG.md |
 | 2026-07-18 | A1 rozdzielone na dwie zakładki (decyzja Michała): `/wdrozenie` (PROTOTYP, jednorazowy proces Tydzień 0 do Dzień 30, Panel Dostępy + oś czasu żywe) i `/utrzymanie` (PROTOTYP, stały retainer: Co obejmuje retainer/Metryki miesięczne/Drabinka eskalacji/Historia zgłoszeń). `ContactAttemptsBadge` wydzielony z /pipeline do współdzielonego komponentu. Nowe pola Notion Batch 4 (migracja NIE uruchomiona, do zrobienia w /kontrola). Diagnoza INP: patrz sekcja niżej |
+| 2026-08-02 | Nowa zakładka `/demo-arek`: interaktywne demo sprzedażowe (5 kroków: giełda → HMSoft → WebFleet → CMR/WhatsApp → dashboard zaoszczędzonego czasu) zbudowane pod jedną konkretną rozmowę z Arkiem Burkowskim. Świadomie osobne od `/wdrozenie` (to narzędzie operacyjne zespołu, tamto prezentacyjne dla jednego prospekta, bez zapisu do Notion). Dane rozdzielone w `lib/demo/arekDemoData.ts`: `KLIENT` wyłącznie fakty z nagranej rozmowy, `ZLECENIE` ilustracyjny fikcyjny scenariusz. Widoczne w nawigacji tylko dla roli admin |
 | 2026-07-15/16 | Sesja autonomiczna nocna (Michał poza domem), 10 punktów z listy autonomicznej, każdy osobny commit + wpis SESSION_LOG: (1) usunięto VAT/netto z ceny wszędzie — Autorise ma zwolnienie podmiotowe; (2) nowa baza Notion Produkty (4 moduły standardowe) powiązana z kalkulatorem przez pole `code`; (3) metodologia braku dostępu do API spisana jako strona Notion; (4) `brief_discovery` rozszerzony o `system_transformacji`/`roznicowanie_zdanie`/`roi_dopowiedzenie` — naprawiony realny bug, sprzedawca czytał dosłowne nawiasy klientowi na żywo; (5) sekcja "Co obejmuje retainer" na slajdzie 6 prezentacji; (6) wyróżnik "ryzyko finansowe po naszej stronie" na slajd 4 i krok pitch; (7) naprawiony routing obiekcji "Niepewna, wymaga dopytania" (szedł do commitment zamiast parafrazy); (8) nowa obiekcja od18 "demo przed podpisem"; (9) licznik prób kontaktu dodany do Pipeline Kanban (nie istniał wcale), przypięty na górze karty; (10) ClientSidebar zwijanie ujednolicone z głównym menu. Nie ruszono Bloku 2.2/5/9/4.5 (wymóg prototypu/decyzji Michała) zgodnie z instrukcją. Szczegóły każdego punktu: context/AUTORISE_SESSION_LOG.md |
+| 2026-08-05 | `/planowanie` zastępuje `/harmonogram` i `/zadania` jako jedyna zakładka zarządzania czasem/zadaniami (dawny prototyp `/prototyp-dzien` przestał być prototypem). Backend miał już pełny CRUD (tasks + calendar), zero zmian API. Panel dnia dostał stałą wysokość + scroll, pełne dodawanie/usuwanie zadań i wydarzeń, poprawione etykiety czasu >24h. `/harmonogram` i `/zadania` to teraz `redirect("/planowanie")`. Świadomie NIE przeniesiono widoków Miesiąc/Dzień z dawnego harmonogramu — do potwierdzenia z Michałem. Szczegóły: context/AUTORISE_SESSION_LOG.md |
+| 2026-08-05 | Nowy panel finansowy w `/planowanie` (baza Notion "Finanse osobiste", `lib/notion/finance.ts` + `app/api/notion/finanse/`). Usuwanie przychodu czyści relację "Przypisane do przychodu" na powiązanych wydatkach PRZED wrzuceniem do kosza (Notion nie robi tego automatycznie dla stron w koszu), nowe kategorie dodawane dowolnie z UI (multi_select, Notion sam tworzy opcję). **Bloker dostępu z sesji budowy rozwiązany** (potwierdzone 2026-08-05 żywym zapytaniem do Notion API: `dataSources.retrieve`/`pages.create` działają, nazwy property zgadzają się z `PROP` 1:1) — patrz wpis niżej o naprawie bugów /planowanie. |
+| 2026-08-05 | Cztery bugi blokujące /planowanie naprawione i zweryfikowane żywo (agent-browser + bezpośrednie zapytania do Notion API): (1) dodawanie wpisu Finanse nie działało bo `FinanceEntryForm`'s `position:fixed` modal był zagnieżdżony wewnątrz `<Panel>` (ma `backdropFilter`, co tworzy nowy containing block dla fixed) — pozycjonował się względem małego bocznego panelu zamiast viewportu; fix: `createPortal(..., document.body)`; (2) zadanie z ustawionym w locie priorytetem znikało — race między optymistycznym tymczasowym ID a realnym z serwera nadpisywał lokalną notatkę; fix: `createTaskInList` scala notatkę optymistyczną z odpowiedzią serwera i dogrywa PATCH-em; (3) `ClientSidebar.tsx` (współdzielony przez 4 zakładki) miał `overflow:hidden` na tym samym boxie co celowo wystający przycisk zwijania — obcinał sam siebie; fix: `overflow:hidden` przeniesiony na wewnętrzny wrapper; (4) layout przy zwiniętym menu sprawdzony na ~12 zakładkach, bez dodatkowych błędów poza (3). Szczegóły: context/AUTORISE_SESSION_LOG.md |
+| 2026-08-05 | **Redesign palety: ciemny motyw grafitowy zastąpił jasny iOS-owy** (decyzja Michała, patrz sekcja "Design System" wyżej — nazwy tokenów niezmienione, tylko wartości w `:root`). Audyt wykazał: `--success` miał już dedykowany `--success-text` (poprawny wzorzec bg/text), ale `--error`/`--warning` nie miały — wszystkie miejsca używające ich jako `color:` (43+17 wystąpień w ~30 plikach) przepięte mechanicznie na nowe `--error-text`/`--warning-text`. Wszystkie pary bg/text zweryfikowane programowo pod WCAG AA. Naprawione też: `ClientSidebar.tsx` i lokalny `Card` w `/sprzedaz` (hardkodowane `#E5E5EA`/`#fff` zamiast tokenów), `/kwalifikacja` (input "Imię sprzedawcy" + separator), oraz **cała strona `/brand-book`** (swatche kolorów i referencja CSS variables pokazywały stare hexy zamiast żywych wartości — teraz zgodne). Status Pipeline: Brand Book brakowało 3 statusów (Wdrożenie/Upsell/Zakończona współpraca) — dodane w tej samej kolejności co `ROW1/ROW2/ROW3` w `pipeline/page.tsx`. Przy okazji wykryto i poprawiono, że dekoracyjne kolory statusów Pipeline (Kwalifikacja/Discovery/Wdrożenie/Retainer/Zakończona współpraca) były dobrane pod jasny motyw i miały złamany kontrast na nowym ciemnym tle — rozjaśnione. **Znany, nieukończony zakres**: `/kwalifikacja` (70) i `/sprzedaz` (37, częściowo) mają jeszcze pojedyncze hardkodowane hexy z okresu przed systemem tokenów, nieobjęte tą sesją — większość strony renderuje się poprawnie, ale pełny sweep tych dwóch plików to osobna sesja. |
 
 ## LOGI SESJI (OBOWIĄZKOWE)
 

@@ -218,7 +218,7 @@ export function AudioRecorder() {
               marginLeft: "auto",
               fontSize: 12,
               fontWeight: 700,
-              color: "var(--error)",
+              color: "var(--error-text)",
               fontVariantNumeric: "tabular-nums",
               display: "flex",
               alignItems: "center",

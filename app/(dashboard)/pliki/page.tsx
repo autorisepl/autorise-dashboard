@@ -460,7 +460,7 @@ export default function PlikiPage() {
                     gap: 6,
                     fontFamily: "var(--font-sans)",
                     fontSize: 11,
-                    color: driveAuthNeeded ? "var(--warning)" : "var(--error)",
+                    color: driveAuthNeeded ? "var(--warning-text)" : "var(--error-text)",
                     lineHeight: 1.5,
                   }}
                 >
@@ -623,7 +623,7 @@ export default function PlikiPage() {
                     style={{
                       fontFamily: "var(--font-sans)",
                       fontSize: 10,
-                      color: "var(--warning)",
+                      color: "var(--warning-text)",
                       background: "rgba(255,159,10,0.08)",
                       padding: "2px 8px",
                       borderRadius: "var(--radius-xs)",
@@ -732,7 +732,7 @@ export default function PlikiPage() {
                       borderRadius: "var(--radius-xs)",
                       fontFamily: "var(--font-sans)",
                       fontSize: 12,
-                      color: "var(--error)",
+                      color: "var(--error-text)",
                     }}
                   >
                     <AlertCircle size={14} />

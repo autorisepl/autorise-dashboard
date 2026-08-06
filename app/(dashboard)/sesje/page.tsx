@@ -366,7 +366,7 @@ export default function SesjaPage() {
                   fontFamily: "var(--font-sans)",
                   fontSize: 12,
                   fontWeight: 600,
-                  color: "var(--error)",
+                  color: "var(--error-text)",
                   marginBottom: 4,
                 }}
               >
@@ -376,7 +376,7 @@ export default function SesjaPage() {
                 style={{
                   fontFamily: "var(--font-mono)",
                   fontSize: 11,
-                  color: "var(--error)",
+                  color: "var(--error-text)",
                   lineHeight: 1.5,
                 }}
               >

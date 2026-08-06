@@ -98,8 +98,8 @@ function Card({
   return (
     <div
       style={{
-        background: "#ffffff",
-        border: "1px solid #E5E5EA",
+        background: "var(--bg-card)",
+        border: "1px solid var(--border)",
         borderRadius: 12,
         overflow: "hidden",
         marginBottom: 12,
@@ -109,7 +109,7 @@ function Card({
         onClick={collapsible ? () => setOpen((p) => !p) : undefined}
         style={{
           padding: "12px 16px",
-          borderBottom: open ? "1px solid #E5E5EA" : "none",
+          borderBottom: open ? "1px solid var(--border)" : "none",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -219,7 +219,7 @@ function NoShowBanner({
           borderRadius: 7,
           border: `1px solid ${isNoShow ? "var(--error)" : "var(--warning)"}`,
           background: "#fff",
-          color: isNoShow ? "var(--error)" : "var(--warning)",
+          color: isNoShow ? "var(--error-text)" : "var(--warning-text)",
           fontFamily: "var(--font-sans)",
           fontSize: 11,
           fontWeight: 700,
@@ -504,7 +504,7 @@ function BriefSection({ client }: { client: PipelineClientDetailed | null }) {
             border: "1px solid var(--warning-border)",
             borderRadius: 8,
             fontSize: 13,
-            color: "var(--warning)",
+            color: "var(--warning-text)",
             fontFamily: "var(--font-sans)",
           }}
         >
@@ -667,7 +667,7 @@ function BriefSection({ client }: { client: PipelineClientDetailed | null }) {
               margin: 0,
               fontSize: 13,
               lineHeight: 1.65,
-              color: "var(--warning)",
+              color: "var(--warning-text)",
               fontFamily: "var(--font-sans)",
               whiteSpace: "pre-wrap",
             }}
@@ -1488,7 +1488,9 @@ function DalszeKrokiDiscovery({ client }: { client: PipelineClientDetailed | nul
             </div>
           )}
           {taskError && (
-            <div style={{ fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--error)" }}>
+            <div
+              style={{ fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--error-text)" }}
+            >
               {taskError}
             </div>
           )}
@@ -1858,7 +1860,7 @@ export default function SprzedazPage() {
                 borderRadius: 7,
                 border: "1px solid var(--warning)",
                 background: "var(--warning-bg)",
-                color: "var(--warning)",
+                color: "var(--warning-text)",
                 fontSize: 11,
                 fontWeight: 700,
                 cursor: "pointer",

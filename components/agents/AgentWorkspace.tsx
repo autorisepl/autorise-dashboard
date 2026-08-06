@@ -990,7 +990,7 @@ function DriveAttachments({
             alignItems: "center",
             gap: 6,
             fontSize: 11,
-            color: "var(--error)",
+            color: "var(--error-text)",
           }}
         >
           <AlertTriangle size={11} />
@@ -1129,7 +1129,7 @@ function DriveAttachments({
               cursor: "pointer",
               fontFamily: "var(--font-sans)",
               fontSize: 12,
-              color: "var(--warning)",
+              color: "var(--warning-text)",
             }}
           >
             <AlertTriangle size={13} />
@@ -1285,7 +1285,7 @@ function OutputPanel({
             fontFamily: "var(--font-sans)",
             fontSize: 12,
             fontWeight: 600,
-            color: "var(--error)",
+            color: "var(--error-text)",
             marginBottom: 4,
           }}
         >
@@ -1295,7 +1295,7 @@ function OutputPanel({
           style={{
             fontFamily: "var(--font-sans)",
             fontSize: 11,
-            color: "var(--error)",
+            color: "var(--error-text)",
             lineHeight: 1.5,
           }}
         >
@@ -1454,7 +1454,7 @@ function OutputPanel({
                 fontFamily: "var(--font-sans)",
                 fontSize: 11,
                 fontWeight: 500,
-                color: "var(--error)",
+                color: "var(--error-text)",
               }}
             >
               Błąd zapisu karty
@@ -1497,7 +1497,7 @@ function OutputPanel({
             borderRadius: "var(--radius-xs)",
           }}
         >
-          <span style={{ fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--error)" }}>
+          <span style={{ fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--error-text)" }}>
             {state.notionError}
           </span>
         </div>

@@ -26,6 +26,8 @@ export async function PATCH(
     endDateTime?: string;
     description?: string;
     location?: string;
+    // null czyści potwierdzenie (usuwa klucz extendedProperties.private), string ustawia je
+    attendanceStatus?: "odbyto" | "nieodbyto" | null;
   };
 
   try {
@@ -37,6 +39,10 @@ export async function PATCH(
     if (body.location !== undefined) requestBody.location = body.location;
     if (body.startDateTime) requestBody.start = { dateTime: body.startDateTime };
     if (body.endDateTime) requestBody.end = { dateTime: body.endDateTime };
+    if (body.attendanceStatus !== undefined) {
+      // Wartość null w extendedProperties.private usuwa klucz (semantyka Google Calendar API).
+      requestBody.extendedProperties = { private: { attendanceStatus: body.attendanceStatus } };
+    }
 
     const { data } = await cal.events.patch({
       calendarId: "primary",

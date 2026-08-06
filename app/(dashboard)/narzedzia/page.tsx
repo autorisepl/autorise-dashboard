@@ -778,13 +778,13 @@ export default function NarzedziaPage() {
                           </span>
                         )}
                         {item.status === "done" && item.driveStatus === "error" && (
-                          <span style={{ color: "var(--error)" }} title={item.driveError}>
+                          <span style={{ color: "var(--error-text)" }} title={item.driveError}>
                             {" "}
                             · Błąd Drive
                           </span>
                         )}
                         {item.status === "error" && (
-                          <span style={{ color: "var(--error)" }}> · Błąd</span>
+                          <span style={{ color: "var(--error-text)" }}> · Błąd</span>
                         )}
                       </div>
                     </div>
@@ -847,7 +847,7 @@ export default function NarzedziaPage() {
                       borderRadius: 99,
                       background: "var(--warning-bg)",
                       border: "1px solid var(--warning-border)",
-                      color: "var(--warning)",
+                      color: "var(--warning-text)",
                       fontSize: 10,
                       fontWeight: 800,
                     }}
@@ -1351,7 +1351,7 @@ export default function NarzedziaPage() {
                           title={selectedItem.driveError ?? "Błąd zapisu na Drive"}
                         >
                           <AlertCircle size={11} color="var(--error)" />
-                          <span style={{ fontSize: 11, color: "var(--error)", fontWeight: 500 }}>
+                          <span style={{ fontSize: 11, color: "var(--error-text)", fontWeight: 500 }}>
                             Błąd Drive
                           </span>
                         </div>
@@ -1381,7 +1381,7 @@ export default function NarzedziaPage() {
                       }}
                     >
                       <AlertCircle size={12} color="var(--error)" />
-                      <span style={{ fontSize: 11, color: "var(--error)", flex: 1 }}>
+                      <span style={{ fontSize: 11, color: "var(--error-text)", flex: 1 }}>
                         Zapis na Google Drive nie powiódł się:{" "}
                         {selectedItem.driveError ?? "nieznany błąd"}
                       </span>
@@ -1448,7 +1448,7 @@ export default function NarzedziaPage() {
                     <div
                       style={{
                         fontSize: 12,
-                        color: "var(--error)",
+                        color: "var(--error-text)",
                         fontFamily: "var(--font-mono)",
                         padding: "8px 14px",
                         borderRadius: "var(--radius-sm)",
@@ -1596,7 +1596,7 @@ function DrivePicker({
                 borderRadius: 99,
                 background: todoCount > 0 ? "var(--warning-bg)" : "var(--success-bg)",
                 border: `1px solid ${todoCount > 0 ? "var(--warning-border)" : "var(--success-border)"}`,
-                color: todoCount > 0 ? "var(--warning)" : "var(--success-text)",
+                color: todoCount > 0 ? "var(--warning-text)" : "var(--success-text)",
               }}
             >
               {todoCount > 0 ? `${todoCount} do transkrypcji` : "wszystko gotowe"}
@@ -1651,7 +1651,7 @@ function DrivePicker({
                 alignItems: "center",
                 gap: 6,
                 padding: "12px",
-                color: "var(--error)",
+                color: "var(--error-text)",
               }}
             >
               <AlertCircle size={13} />

@@ -182,7 +182,7 @@ export function WarunkiUmowyForm({ client, onSaved }: WarunkiUmowyFormProps) {
           </>
         )}
         {status === "error" && (
-          <span style={{ color: "var(--error)" }}>Błąd zapisu, spróbuj ponownie.</span>
+          <span style={{ color: "var(--error-text)" }}>Błąd zapisu, spróbuj ponownie.</span>
         )}
         {status === "idle" && (
           <span style={{ color: "var(--text-tertiary)" }}>
