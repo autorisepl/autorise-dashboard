@@ -1,6 +1,6 @@
 "use client";
 
-import { Play, RotateCcw, Truck } from "lucide-react";
+import { Play, RotateCcw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DemoStepTimeline } from "@/components/demo/DemoStepTimeline";
 import { demoColors, demoFont } from "@/components/demo/demoTheme";
@@ -124,22 +124,7 @@ export default function DemoArekPage() {
     >
       <div style={{ maxWidth: 1320, margin: "0 auto", padding: "48px 32px 96px" }}>
         {/* Wordmark produktu */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 28 }}>
-          <div
-            style={{
-              width: 30,
-              height: 30,
-              borderRadius: 8,
-              background: demoColors.accentSoft,
-              border: `1px solid ${demoColors.accentBorder}`,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-            }}
-          >
-            <Truck size={16} color={demoColors.accent} />
-          </div>
+        <div style={{ marginBottom: 28 }}>
           <div style={{ fontFamily: demoFont.sans, fontSize: 16, lineHeight: 1.3 }}>
             <span style={{ fontWeight: 800, color: demoColors.textPrimary }}>Autorise</span>
             <span style={{ color: demoColors.textTertiary }}>
@@ -246,8 +231,12 @@ export default function DemoArekPage() {
                     Następny krok
                   </button>
                 ) : (
-                  <button type="button" disabled style={{ ...primaryButtonStyle, opacity: 0.4 }}>
-                    Koniec przepływu
+                  <button
+                    type="button"
+                    onClick={() => setView("dashboard")}
+                    style={{ ...primaryButtonStyle, display: "flex", alignItems: "center", gap: 6 }}
+                  >
+                    Koniec przepływu, zobacz dashboard zarządczy
                   </button>
                 )}
               </div>

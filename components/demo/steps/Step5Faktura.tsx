@@ -132,7 +132,7 @@ export function Step5Faktura({ active, confirmed, onConfirm }: Step5FakturaProps
             <span
               style={{ fontFamily: demoFont.sans, fontSize: 12, color: demoColors.textSecondary }}
             >
-              Generowanie dokumentu...
+              Odczyt dokumentu faktury...
             </span>
           </div>
         )}
@@ -151,7 +151,8 @@ export function Step5Faktura({ active, confirmed, onConfirm }: Step5FakturaProps
               }}
             >
               <Hourglass size={13} />
-              System wygenerował fakturę. Oczekuje potwierdzenia spedytora przed zaksięgowaniem.
+              System odczytał i przypisał fakturę do zlecenia. Oczekuje potwierdzenia spedytora
+              przed zaksięgowaniem.
             </div>
             <button type="button" onClick={onConfirm} style={confirmButtonStyle}>
               Potwierdź i zapisz

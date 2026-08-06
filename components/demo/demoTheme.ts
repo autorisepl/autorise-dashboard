@@ -15,7 +15,7 @@ export const demoColors = {
   accentBorder: "rgba(240, 151, 59, 0.35)",
   textPrimary: "#f5f2ec",
   textSecondary: "#b6b0a5",
-  textTertiary: "#79746b",
+  textTertiary: "#8f8a7d",
   success: "#5fbf8f",
   successBg: "rgba(95, 191, 143, 0.12)",
   successBorder: "rgba(95, 191, 143, 0.3)",
