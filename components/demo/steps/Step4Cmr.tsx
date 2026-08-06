@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ArrowRight,
   CheckCircle2,
   FileCheck2,
   Hourglass,
@@ -80,6 +81,59 @@ function CmrDocumentSheet({ scanning }: { scanning: boolean }) {
   );
 }
 
+function TrackLabel({ text }: { text: string }) {
+  return (
+    <span
+      style={{
+        fontFamily: demoFont.sans,
+        fontSize: 9,
+        fontWeight: 700,
+        letterSpacing: "0.06em",
+        textTransform: "uppercase",
+        color: demoColors.textTertiary,
+      }}
+    >
+      {text}
+    </span>
+  );
+}
+
+// Łącznik między torem kierowcy a torem systemu — ma pokazać że to jeden zsynchronizowany
+// proces (kierowca wysyła w tym samym momencie, w którym system zaczyna czytać), nie dwa
+// oderwane bloki obok siebie.
+function SyncConnector() {
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 4,
+        padding: "0 2px",
+        flex: "0 0 auto",
+        alignSelf: "center",
+      }}
+    >
+      <ArrowRight
+        size={14}
+        color={demoColors.accent}
+        style={{ animation: "demoPulse 1.6s ease-in-out infinite" }}
+      />
+      <span
+        style={{
+          fontFamily: demoFont.sans,
+          fontSize: 9,
+          color: demoColors.textTertiary,
+          whiteSpace: "nowrap",
+        }}
+      >
+        jednocześnie
+      </span>
+    </div>
+  );
+}
+
 function OcrFieldRow({ label, value }: { label: string; value: string }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
@@ -143,7 +197,7 @@ export function Step4Cmr({ active, confirmed, onConfirm }: Step4CmrProps) {
   }, [active]);
 
   return (
-    <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+    <div style={{ display: "flex", alignItems: "stretch", gap: 10, flexWrap: "wrap" }}>
       <div
         style={{
           flex: "1 1 220px",
@@ -153,7 +207,16 @@ export function Step4Cmr({ active, confirmed, onConfirm }: Step4CmrProps) {
           boxShadow: demoColors.cardShadow,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+        <TrackLabel text="Kierowca" />
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            marginTop: 4,
+            marginBottom: 10,
+          }}
+        >
           <MessageSquare size={15} color="#25a244" />
           <span
             style={{ fontFamily: demoFont.sans, fontSize: 12, fontWeight: 700, color: "#128c3f" }}
@@ -167,6 +230,8 @@ export function Step4Cmr({ active, confirmed, onConfirm }: Step4CmrProps) {
         </div>
       </div>
 
+      <SyncConnector />
+
       <div
         style={{
           flex: "1 1 220px",
@@ -177,7 +242,16 @@ export function Step4Cmr({ active, confirmed, onConfirm }: Step4CmrProps) {
           boxShadow: demoColors.cardShadow,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+        <TrackLabel text="System" />
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            marginTop: 4,
+            marginBottom: 10,
+          }}
+        >
           <FileCheck2 size={15} color={demoColors.accent} />
           <span
             style={{

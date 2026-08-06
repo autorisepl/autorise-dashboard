@@ -218,9 +218,7 @@ function AutomatedFill({
       {!filled && (
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <CheckCircle2 size={13} color={demoColors.terminalDim} style={{ flexShrink: 0 }} />
-          <span
-            style={{ fontFamily: demoFont.mono, fontSize: 12, color: demoColors.textTertiary }}
-          >
+          <span style={{ fontFamily: demoFont.mono, fontSize: 12, color: demoColors.textTertiary }}>
             {`Wypełnianie formularza w ${KLIENT.tms}...`}
           </span>
         </div>
@@ -251,9 +249,7 @@ function AutomatedFill({
       {filled && confirmed && (
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <CheckCircle2 size={13} color={demoColors.terminalGreen} style={{ flexShrink: 0 }} />
-          <span
-            style={{ fontFamily: demoFont.mono, fontSize: 12, color: demoColors.textTertiary }}
-          >
+          <span style={{ fontFamily: demoFont.mono, fontSize: 12, color: demoColors.textTertiary }}>
             {`Zlecenie ${ZLECENIE.numerZleceniaTms} zapisane.`}
           </span>
         </div>

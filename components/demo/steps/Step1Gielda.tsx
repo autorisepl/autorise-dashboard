@@ -43,8 +43,7 @@ const MARQUEE_ITEMS = [
   "Timocom, nowa oferta, Katowice, FR",
 ] as const;
 
-const MARQUEE_MASK =
-  "linear-gradient(to right, transparent, black 8%, black 92%, transparent)";
+const MARQUEE_MASK = "linear-gradient(to right, transparent, black 8%, black 92%, transparent)";
 
 export function Step1Gielda() {
   return (
