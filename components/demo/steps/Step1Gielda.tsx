@@ -15,6 +15,26 @@ const valueStyle = {
   color: demoColors.textPrimary,
   fontWeight: 500,
 } as const;
+const cargoChipStyle = {
+  display: "flex",
+  flexDirection: "column",
+  gap: 2,
+  background: demoColors.bg,
+  border: `1px solid ${demoColors.border}`,
+  borderRadius: 8,
+  padding: "6px 10px",
+} as const;
+const cargoChipLabelStyle = {
+  fontFamily: demoFont.sans,
+  fontSize: 10,
+  color: demoColors.textTertiary,
+} as const;
+const cargoChipValueStyle = {
+  fontFamily: demoFont.sans,
+  fontSize: 12,
+  fontWeight: 600,
+  color: demoColors.textPrimary,
+} as const;
 
 export function Step1Gielda() {
   return (
@@ -52,6 +72,7 @@ export function Step1Gielda() {
           borderRadius: 14,
           padding: 16,
           boxShadow: demoColors.cardShadow,
+          animation: "demoCardEnter 0.42s cubic-bezier(0.16, 1, 0.3, 1) both",
         }}
       >
         <div
@@ -105,9 +126,22 @@ export function Step1Gielda() {
 
           <div style={rowStyle}>
             <Package size={15} color={demoColors.textTertiary} style={{ marginTop: 1 }} />
-            <div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, flex: 1 }}>
               <div style={labelStyle}>Ładunek</div>
-              <div style={valueStyle}>{ZLECENIE.ladunek}</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                <div style={cargoChipStyle}>
+                  <span style={cargoChipLabelStyle}>Typ towaru</span>
+                  <span style={cargoChipValueStyle}>{ZLECENIE.ladunekTyp}</span>
+                </div>
+                <div style={cargoChipStyle}>
+                  <span style={cargoChipLabelStyle}>Palety</span>
+                  <span style={cargoChipValueStyle}>{ZLECENIE.ladunekPalety}</span>
+                </div>
+                <div style={cargoChipStyle}>
+                  <span style={cargoChipLabelStyle}>Waga</span>
+                  <span style={cargoChipValueStyle}>{ZLECENIE.ladunekWagaKg}</span>
+                </div>
+              </div>
             </div>
           </div>
 

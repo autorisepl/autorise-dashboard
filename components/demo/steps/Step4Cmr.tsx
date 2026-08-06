@@ -1,6 +1,14 @@
 "use client";
 
-import { Camera, CheckCircle2, FileCheck2, Hourglass, Loader2, MessageSquare } from "lucide-react";
+import {
+  Camera,
+  CheckCircle2,
+  FileCheck2,
+  Hourglass,
+  Loader2,
+  MessageSquare,
+  Pencil,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { demoColors, demoFont } from "@/components/demo/demoTheme";
 import { ZLECENIE } from "@/lib/demo/arekDemoData";
@@ -9,6 +17,64 @@ interface Step4CmrProps {
   active: boolean;
   confirmed: boolean;
   onConfirm: () => void;
+}
+
+const OCR_FIELDS = [
+  { key: "cmr", label: "Numer CMR", value: ZLECENIE.cmrNumer },
+  { key: "pod", label: "Potwierdzenie odbioru", value: ZLECENIE.podPotwierdzenie },
+  { key: "waga", label: "Waga potwierdzona", value: ZLECENIE.ladunekWagaKg },
+] as const;
+
+function OcrFieldRow({ label, value }: { label: string; value: string }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      <span style={{ fontFamily: demoFont.sans, fontSize: 10, color: demoColors.textTertiary }}>
+        {label}
+      </span>
+      {editing ? (
+        <div style={{ display: "flex", gap: 6 }}>
+          <input
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            style={{
+              flex: 1,
+              fontFamily: demoFont.mono,
+              fontSize: 12,
+              color: demoColors.textPrimary,
+              background: demoColors.bg,
+              border: `1px solid ${demoColors.accentBorder}`,
+              borderRadius: 6,
+              padding: "4px 8px",
+              height: 26,
+            }}
+          />
+          <button type="button" onClick={() => setEditing(false)} style={saveFieldButtonStyle}>
+            Zapisz
+          </button>
+        </div>
+      ) : (
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span
+            style={{ fontFamily: demoFont.mono, fontSize: 12, color: demoColors.textPrimary }}
+          >
+            {draft}
+          </span>
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            aria-label={`Popraw pole: ${label}`}
+            style={editFieldButtonStyle}
+          >
+            <Pencil size={11} />
+            Popraw
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function Step4Cmr({ active, confirmed, onConfirm }: Step4CmrProps) {
@@ -117,10 +183,10 @@ export function Step4Cmr({ active, confirmed, onConfirm }: Step4CmrProps) {
               <Hourglass size={13} />
               System odczytał dokument. Oczekuje potwierdzenia spedytora przed zapisaniem na stałe.
             </div>
-            <div
-              style={{ fontFamily: demoFont.mono, fontSize: 11, color: demoColors.textTertiary }}
-            >
-              Numer CMR: {ZLECENIE.cmrNumer}
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {OCR_FIELDS.map((field) => (
+                <OcrFieldRow key={field.key} label={field.label} value={field.value} />
+              ))}
             </div>
             <button type="button" onClick={onConfirm} style={confirmButtonStyle}>
               Potwierdź i zapisz
@@ -169,6 +235,33 @@ const confirmButtonStyle = {
   height: 32,
   padding: "0 14px",
   borderRadius: 8,
+  background: demoColors.accent,
+  border: "none",
+  color: "#1a1207",
+  cursor: "pointer",
+} as const;
+
+const editFieldButtonStyle = {
+  display: "flex",
+  alignItems: "center",
+  gap: 4,
+  fontFamily: demoFont.sans,
+  fontSize: 10,
+  fontWeight: 600,
+  color: demoColors.accent,
+  background: "transparent",
+  border: "none",
+  cursor: "pointer",
+  padding: 0,
+} as const;
+
+const saveFieldButtonStyle = {
+  fontFamily: demoFont.sans,
+  fontSize: 11,
+  fontWeight: 600,
+  height: 26,
+  padding: "0 10px",
+  borderRadius: 6,
   background: demoColors.accent,
   border: "none",
   color: "#1a1207",

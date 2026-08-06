@@ -116,6 +116,18 @@ function FieldRow({
         >
           {state === "empty" ? "..." : value}
         </span>
+        {state === "filling" && (
+          <span
+            style={{
+              width: 2,
+              height: 14,
+              marginLeft: 2,
+              flexShrink: 0,
+              background: demoColors.accent,
+              animation: "demoCursorBlink 0.9s steps(1) infinite",
+            }}
+          />
+        )}
       </div>
     </div>
   );
@@ -199,12 +211,40 @@ function FallbackScenario() {
         </span>
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <ListChecks size={14} color={demoColors.accent} style={{ flexShrink: 0 }} />
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+        <ListChecks size={14} color={demoColors.accent} style={{ flexShrink: 0, marginTop: 1 }} />
         <span style={{ fontFamily: demoFont.sans, fontSize: 12, color: demoColors.textSecondary }}>
-          Zlecenie przekazane do kolejki ręcznej weryfikacji, z gotowym, wstępnie wypełnionym
-          formularzem.
+          Zlecenie od razu trafia do kolejki ręcznej weryfikacji, z gotowym, wstępnie wypełnionym
+          formularzem, więc nic nie stoi. Spedytor widzi dokładnie te same dane, tylko zatwierdza
+          je jednym kliknięciem zamiast wpisywać ręcznie od zera.
         </span>
+      </div>
+
+      <div
+        style={{
+          background: demoColors.accentSoft,
+          border: `1px solid ${demoColors.accentBorder}`,
+          borderRadius: 10,
+          padding: "10px 12px",
+        }}
+      >
+        <div
+          style={{
+            fontFamily: demoFont.sans,
+            fontSize: 11,
+            fontWeight: 700,
+            color: demoColors.accent,
+            marginBottom: 4,
+          }}
+        >
+          To standardowa procedura, opisana wprost w umowie, nie wyjątek awaryjny
+        </div>
+        <div style={{ fontFamily: demoFont.sans, fontSize: 12, color: demoColors.textSecondary }}>
+          Michał ma do 2 godzin roboczych na kontakt od wykrycia zmiany panelu. W tym czasie
+          zlecenia z tego dostawcy nie zatrzymują się, tylko czekają w kolejce ręcznej
+          weryfikacji opisanej wyżej, więc żadne zlecenie nie ginie i żaden termin nie jest
+          zagrożony.
+        </div>
       </div>
 
       <PanelWindow>
