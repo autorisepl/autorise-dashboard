@@ -1,12 +1,21 @@
 "use client";
 
-import { AlertTriangle, CheckCircle2, ListChecks, MonitorSmartphone } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowDown,
+  CheckCircle2,
+  Hourglass,
+  ListChecks,
+  MonitorSmartphone,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { demoColors, demoFont } from "@/components/demo/demoTheme";
 import { KLIENT, ZLECENIE } from "@/lib/demo/arekDemoData";
 
 interface Step2TmsProps {
   active: boolean;
+  confirmed: boolean;
+  onConfirm: () => void;
 }
 
 const FIELDS = [
@@ -133,7 +142,40 @@ function FieldRow({
   );
 }
 
-function AutomatedFill({ active }: { active: boolean }) {
+function DataFlowBadge() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+      <span
+        style={{
+          fontFamily: demoFont.mono,
+          fontSize: 10,
+          color: demoColors.textTertiary,
+          background: demoColors.surfaceRaised,
+          border: `1px solid ${demoColors.border}`,
+          borderRadius: 6,
+          padding: "3px 8px",
+        }}
+      >
+        Dane z {ZLECENIE.gielda}, krok 1
+      </span>
+      <ArrowDown
+        size={13}
+        color={demoColors.accent}
+        style={{ animation: "demoPulse 1.4s ease-in-out infinite" }}
+      />
+    </div>
+  );
+}
+
+function AutomatedFill({
+  active,
+  confirmed,
+  onConfirm,
+}: {
+  active: boolean;
+  confirmed: boolean;
+  onConfirm: () => void;
+}) {
   const [visibleCount, setVisibleCount] = useState(0);
 
   useEffect(() => {
@@ -148,10 +190,12 @@ function AutomatedFill({ active }: { active: boolean }) {
     return () => timers.forEach(clearTimeout);
   }, [active]);
 
-  const done = visibleCount >= FIELDS.length;
+  const filled = visibleCount >= FIELDS.length;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <DataFlowBadge />
+
       <PanelWindow>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
           <MonitorSmartphone size={14} color={demoColors.terminalGreen} />
@@ -171,18 +215,49 @@ function AutomatedFill({ active }: { active: boolean }) {
         </div>
       </PanelWindow>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <CheckCircle2
-          size={13}
-          color={done ? demoColors.terminalGreen : demoColors.terminalDim}
-          style={{ flexShrink: 0 }}
-        />
-        <span style={{ fontFamily: demoFont.mono, fontSize: 12, color: demoColors.textTertiary }}>
-          {done
-            ? `Zlecenie ${ZLECENIE.numerZleceniaTms} zapisane.`
-            : `Wypełnianie formularza w ${KLIENT.tms}...`}
-        </span>
-      </div>
+      {!filled && (
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <CheckCircle2 size={13} color={demoColors.terminalDim} style={{ flexShrink: 0 }} />
+          <span
+            style={{ fontFamily: demoFont.mono, fontSize: 12, color: demoColors.textTertiary }}
+          >
+            {`Wypełnianie formularza w ${KLIENT.tms}...`}
+          </span>
+        </div>
+      )}
+
+      {filled && !confirmed && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              fontFamily: demoFont.sans,
+              fontSize: 12,
+              color: demoColors.warning,
+              fontWeight: 600,
+            }}
+          >
+            <Hourglass size={13} />
+            Formularz wypełniony. Oczekuje potwierdzenia spedytora przed zapisaniem na stałe.
+          </div>
+          <button type="button" onClick={onConfirm} style={confirmButtonStyle}>
+            Potwierdź i zapisz
+          </button>
+        </div>
+      )}
+
+      {filled && confirmed && (
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <CheckCircle2 size={13} color={demoColors.terminalGreen} style={{ flexShrink: 0 }} />
+          <span
+            style={{ fontFamily: demoFont.mono, fontSize: 12, color: demoColors.textTertiary }}
+          >
+            {`Zlecenie ${ZLECENIE.numerZleceniaTms} zapisane.`}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
@@ -273,7 +348,7 @@ function FallbackScenario() {
   );
 }
 
-export function Step2Tms({ active }: Step2TmsProps) {
+export function Step2Tms({ active, confirmed, onConfirm }: Step2TmsProps) {
   const [tab, setTab] = useState<Tab>("auto");
 
   useEffect(() => {
@@ -295,7 +370,25 @@ export function Step2Tms({ active }: Step2TmsProps) {
         </button>
       </div>
 
-      {tab === "auto" ? <AutomatedFill active={active} /> : <FallbackScenario />}
+      {tab === "auto" ? (
+        <AutomatedFill active={active} confirmed={confirmed} onConfirm={onConfirm} />
+      ) : (
+        <FallbackScenario />
+      )}
     </div>
   );
 }
+
+const confirmButtonStyle = {
+  alignSelf: "flex-start",
+  fontFamily: demoFont.sans,
+  fontSize: 12,
+  fontWeight: 600,
+  height: 32,
+  padding: "0 14px",
+  borderRadius: 8,
+  background: demoColors.accent,
+  border: "none",
+  color: "#1a1207",
+  cursor: "pointer",
+} as const;

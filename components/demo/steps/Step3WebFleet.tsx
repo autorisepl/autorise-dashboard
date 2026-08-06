@@ -15,7 +15,11 @@ const valueStyle = {
   fontWeight: 500,
 } as const;
 
-const LOG_LINES = ["Trasa wysłana do kierowcy.", "WebFleet zsynchronizowany."];
+const LOG_LINES = [
+  "Zlecenie dopasowane po numerze rejestracyjnym PO 4821W do pozycji GPS pojazdu w WebFleet.",
+  "Do aplikacji WebFleet Driver wysłano: adresy załadunku i rozładunku, okna czasowe, numer zlecenia, trasę nawigacji.",
+  "Pozycja pojazdu aktualizowana automatycznie z GPS WebFleet, bez ręcznego odpytywania kierowcy.",
+];
 
 export function Step3WebFleet() {
   return (

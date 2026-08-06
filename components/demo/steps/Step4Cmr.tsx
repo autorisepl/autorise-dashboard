@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Camera,
   CheckCircle2,
   FileCheck2,
   Hourglass,
@@ -24,6 +23,62 @@ const OCR_FIELDS = [
   { key: "pod", label: "Potwierdzenie odbioru", value: ZLECENIE.podPotwierdzenie },
   { key: "waga", label: "Waga potwierdzona", value: ZLECENIE.ladunekWagaKg },
 ] as const;
+
+// Naśladuje kartkę dokumentu CMR (nagłówek + linie tekstu o różnej szerokości), nie ikonę
+// aparatu — ma wyglądać jak faktycznie zeskanowany dokument, który system czyta.
+function CmrDocumentSheet({ scanning }: { scanning: boolean }) {
+  return (
+    <div
+      style={{
+        position: "relative",
+        background: "#f4f2ec",
+        borderRadius: 8,
+        padding: "12px 14px",
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          fontFamily: demoFont.sans,
+          fontSize: 9,
+          fontWeight: 700,
+          letterSpacing: "0.06em",
+          color: "#6b6558",
+          marginBottom: 8,
+        }}
+      >
+        CMR, MIĘDZYNARODOWY LIST PRZEWOZOWY
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+        <div style={{ height: 5, width: "55%", background: "#d8d3c6", borderRadius: 2 }} />
+        <div style={{ height: 4, width: "80%", background: "#e3dfd3", borderRadius: 2 }} />
+        <div style={{ height: 4, width: "40%", background: "#e3dfd3", borderRadius: 2 }} />
+        <div
+          style={{ height: 4, width: "70%", background: "#e3dfd3", borderRadius: 2, marginTop: 4 }}
+        />
+        <div style={{ height: 4, width: "85%", background: "#e3dfd3", borderRadius: 2 }} />
+        <div style={{ height: 4, width: "50%", background: "#e3dfd3", borderRadius: 2 }} />
+        <div
+          style={{ height: 4, width: "60%", background: "#e3dfd3", borderRadius: 2, marginTop: 4 }}
+        />
+        <div style={{ height: 4, width: "35%", background: "#e3dfd3", borderRadius: 2 }} />
+      </div>
+      {scanning && (
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            height: 2,
+            background: demoColors.accent,
+            boxShadow: `0 0 8px 2px ${demoColors.accentSoft}`,
+            animation: "demoScanline 1.3s linear infinite",
+          }}
+        />
+      )}
+    </div>
+  );
+}
 
 function OcrFieldRow({ label, value }: { label: string; value: string }) {
   const [editing, setEditing] = useState(false);
@@ -106,21 +161,7 @@ export function Step4Cmr({ active, confirmed, onConfirm }: Step4CmrProps) {
             WhatsApp, {ZLECENIE.kierowca}
           </span>
         </div>
-        <div
-          style={{
-            background: "#fff",
-            borderRadius: 10,
-            padding: "10px 12px",
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-          }}
-        >
-          <Camera size={22} color="#6b6b6b" style={{ flexShrink: 0 }} />
-          <span style={{ fontFamily: demoFont.sans, fontSize: 12, color: "#1f1f1f" }}>
-            [zdjęcie] CMR {ZLECENIE.cmrNumer}
-          </span>
-        </div>
+        <CmrDocumentSheet scanning={active && !ocrDone} />
         <div style={{ marginTop: 6, fontFamily: demoFont.sans, fontSize: 11, color: "#3d6b3d" }}>
           Rozładunek zakończony, wysyłam dokument
         </div>

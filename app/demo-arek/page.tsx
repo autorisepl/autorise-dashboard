@@ -30,10 +30,36 @@ const STEP_TITLES = [
   "Krok 6. Powiadomienie automatyczne.",
 ] as const;
 
-// §10 ust. 3 umowy: zaksięgowanie faktury i wysłanie powiadomienia do kontrahenta wymagają
-// tego samego jednoklikowego potwierdzenia spedytora co odczyt CMR — kroki 4, 5, 6 (indeksy
-// 3, 4, 5) blokują automatyczne przejście dalej (ręczne i autoplay) do czasu potwierdzenia.
-const GATE_STEP_INDEXES = new Set([3, 4, 5]);
+// Trzy moduły produktu (te same co rozbicie oszczędności w Dashboardzie zarządczym,
+// OSZCZEDNOSC_PER_MODUL w arekDemoData.ts) rozłożone na 6 kroków przepływu: kroki 1-3 to
+// automatyzacja panelu TMS (od nasłuchu giełdy po wysyłkę trasy), 4-5 to moduł Dokumenty
+// i pliki, 6 to moduł Powiadomienia.
+const STEP_MODULE = [
+  "Automatyzacja TMS",
+  "Automatyzacja TMS",
+  "Automatyzacja TMS",
+  "Dokumenty i pliki",
+  "Dokumenty i pliki",
+  "Powiadomienia automatyczne",
+] as const;
+
+// Jedno konkretne zdanie na krok, pokazywane nad kartą zanim zacznie się animacja/zawartość
+// kroku — ma odpowiadać na "co system teraz robi", nie sprzedawać.
+const STEP_SYSTEM_ACTION = [
+  "System nasłuchuje giełd transportowych i wykrywa zlecenia pasujące do wolnych pojazdów floty.",
+  "System zapisuje dane zlecenia w panelu HMSoft, dokładnie tak jak zrobiłby to spedytor ręcznie.",
+  "System wysyła trasę i dane zlecenia do aplikacji kierowcy przez WebFleet.",
+  "System odczytuje dane z przesłanego zdjęcia dokumentu CMR.",
+  "System odczytuje dane zlecenia i przypisuje je do właściwej faktury.",
+  "System przygotowuje i wysyła powiadomienie do kontrahenta o zrealizowanym zleceniu.",
+] as const;
+
+// §10 ust. 3 umowy: zapis zlecenia w TMS, zaksięgowanie faktury i wysłanie powiadomienia do
+// kontrahenta wymagają tego samego jednoklikowego potwierdzenia spedytora co odczyt CMR —
+// kroki 2, 4, 5, 6 (indeksy 1, 3, 4, 5) blokują automatyczne przejście dalej (ręczne i
+// autoplay) do czasu potwierdzenia. Krok 2 dołączony w tej rundzie, żeby przekaz "człowiek
+// zawsze potwierdza" był spójny od pierwszego zapisu danych, nie tylko przy dokumentach.
+const GATE_STEP_INDEXES = new Set([1, 3, 4, 5]);
 
 const AUTOPLAY_INTERVAL_MS = 4200;
 
@@ -82,7 +108,13 @@ export default function DemoArekPage() {
       case 0:
         return <Step1Gielda />;
       case 1:
-        return <Step2Tms active={step === 1} />;
+        return (
+          <Step2Tms
+            active={step === 1}
+            confirmed={confirmedGates.has(1)}
+            onConfirm={() => confirmGate(1)}
+          />
+        );
       case 2:
         return <Step3WebFleet />;
       case 3:
@@ -189,6 +221,42 @@ export default function DemoArekPage() {
                   marginBottom: 16,
                 }}
               >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    marginBottom: 14,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily: demoFont.sans,
+                      fontSize: 10,
+                      fontWeight: 700,
+                      letterSpacing: "0.04em",
+                      textTransform: "uppercase",
+                      color: demoColors.accent,
+                      background: demoColors.accentSoft,
+                      border: `1px solid ${demoColors.accentBorder}`,
+                      borderRadius: 6,
+                      padding: "3px 8px",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {STEP_MODULE[step]}
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: demoFont.sans,
+                      fontSize: 12,
+                      color: demoColors.textSecondary,
+                    }}
+                  >
+                    {STEP_SYSTEM_ACTION[step]}
+                  </span>
+                </div>
                 {stepContent}
               </div>
 

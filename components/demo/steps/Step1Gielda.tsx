@@ -36,33 +36,65 @@ const cargoChipValueStyle = {
   color: demoColors.textPrimary,
 } as const;
 
+const MARQUEE_ITEMS = [
+  "Trans.eu, nowa oferta, Poznań, DE",
+  "Timocom, nowa oferta, Wrocław, NL",
+  "Trans.eu, nowa oferta, Gdańsk, DE",
+  "Timocom, nowa oferta, Katowice, FR",
+] as const;
+
+const MARQUEE_MASK =
+  "linear-gradient(to right, transparent, black 8%, black 92%, transparent)";
+
 export function Step1Gielda() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       <div
         style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
           background: demoColors.successBg,
           border: `1px solid ${demoColors.successBorder}`,
           borderRadius: 10,
           padding: "8px 12px",
+          overflow: "hidden",
         }}
       >
-        <span
-          style={{
-            width: 7,
-            height: 7,
-            borderRadius: "50%",
-            background: demoColors.success,
-            flexShrink: 0,
-            animation: "demoPulse 1.6s ease-in-out infinite",
-          }}
-        />
-        <span style={{ fontFamily: demoFont.sans, fontSize: 12, color: demoColors.textSecondary }}>
-          Nasłuch giełd: Trans.eu, Timocom — aktywny
-        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+          <span
+            style={{
+              width: 7,
+              height: 7,
+              borderRadius: "50%",
+              background: demoColors.success,
+              flexShrink: 0,
+              animation: "demoPulse 1.6s ease-in-out infinite",
+            }}
+          />
+          <span
+            style={{ fontFamily: demoFont.sans, fontSize: 12, color: demoColors.textSecondary }}
+          >
+            Nasłuch giełd aktywny, ciągłe skanowanie ofert
+          </span>
+        </div>
+        <div style={{ overflow: "hidden", maskImage: MARQUEE_MASK, WebkitMaskImage: MARQUEE_MASK }}>
+          <div
+            style={{
+              display: "flex",
+              gap: 20,
+              whiteSpace: "nowrap",
+              width: "max-content",
+              animation: "demoMarquee 9s linear infinite",
+            }}
+          >
+            {[...MARQUEE_ITEMS, ...MARQUEE_ITEMS].map((item, i) => (
+              <span
+                key={`${item}-${i}`}
+                style={{ fontFamily: demoFont.mono, fontSize: 10, color: demoColors.textTertiary }}
+              >
+                {item}
+              </span>
+            ))}
+          </div>
+        </div>
       </div>
 
       <div
@@ -161,23 +193,45 @@ export function Step1Gielda() {
             borderTop: `1px solid ${demoColors.border}`,
             display: "flex",
             alignItems: "center",
-            gap: 6,
+            gap: 10,
           }}
         >
-          <span
+          <div
             style={{
-              fontFamily: demoFont.sans,
-              fontSize: 11,
-              fontWeight: 600,
-              color: demoColors.accent,
+              width: 28,
+              height: 28,
+              borderRadius: 8,
               background: demoColors.accentSoft,
               border: `1px solid ${demoColors.accentBorder}`,
-              borderRadius: 6,
-              padding: "3px 8px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
             }}
           >
-            Dopasowanie do floty: naczepa chłodnia
-          </span>
+            <Truck size={14} color={demoColors.accent} />
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            <span
+              style={{
+                fontFamily: demoFont.sans,
+                fontSize: 10,
+                color: demoColors.textTertiary,
+              }}
+            >
+              Dopasowanie do floty
+            </span>
+            <span
+              style={{
+                fontFamily: demoFont.sans,
+                fontSize: 12,
+                fontWeight: 600,
+                color: demoColors.textPrimary,
+              }}
+            >
+              {ZLECENIE.pojazd}
+            </span>
+          </div>
         </div>
       </div>
 

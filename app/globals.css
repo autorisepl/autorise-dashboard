@@ -168,6 +168,18 @@ html, body {
   50%, 100% { opacity: 0; }
 }
 
+@keyframes demoMarquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@keyframes demoScanline {
+  0% { top: 0%; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
 /* ──────────────────────────────────────────────────────────────────
    Responsywność — shell (sidebar/treść) + wysuwane menu na telefonie
    Breakpoint mobilny: ≤ 768px. Desktop bez zmian.
