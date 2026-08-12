@@ -30,7 +30,10 @@
   /* Tekst — ciepła biel/jasny szary, nie czysta biel */
   --text-primary:    #eeeae4;
   --text-secondary:  #b8b4ad;
-  --text-tertiary:   #8d8a84;
+  /* Podniesione z #8d8a84 (audyt kontrastu /planowanie, 2026-08-07) — dawna wartość dawała
+     ~4.76:1 na --bg-elevated, matematycznie AA, ale zbyt blisko progu przy 9-11px, gdzie
+     realnie czytane jako "wyblakłe". Nowa wartość: ~5.6:1 na --bg-elevated. */
+  --text-tertiary:   #9a968f;
   --text-placeholder:#5c5955;
   --text-on-accent:  #ffffff;
 
@@ -43,8 +46,18 @@
      się w progu WCAG dla elementów UI/dużego tekstu, więc świadomie przyjęty tradeoff. */
   --accent:          #4379b1;
   --accent-hover:    #5588be;
+  /* Tekst na tle --accent-muted (chipy/etykiety, 9-11px) — --accent samo (3.6:1) nie
+     wystarcza dla MAŁEGO tekstu (próg AA to 4.5:1, 3.6:1 jest tylko dla UI/dużego tekstu,
+     patrz komentarz wyżej). Dedykowany token, ten sam wzorzec co --success-text/--error-text/
+     --warning-text niżej. ~7.8:1 na --bg-elevated, zweryfikowane programowo. */
+  --accent-text:     #7db8f0;
   --accent-muted:    rgba(67, 121, 177, 0.16);
   --accent-border:   rgba(67, 121, 177, 0.35);
+  /* Wersja NIEPRZEZROCZYSTA --accent-muted (blend 16% nad --bg-elevated) — dla elementów
+     position:sticky (np. nagłówek dzisiejszej kolumny w /planowanie). Półprzezroczyste tło pod
+     sticky elementem przy scrollu przebija treścią zza niego (widoczny "ghosting" tekstu
+     przewijanego pod spodem) — to musi być w pełni nieprzezroczyste, żeby faktycznie zasłaniać. */
+  --accent-tint-opaque: #262d3a;
 
   /* Statusy — para bg/text dla każdego z realnym kontrastem AA (>=4.5:1), zweryfikowane
      programowo (formuła WCAG relative luminance) względem --bg-elevated jako tła kart.

@@ -17,6 +17,10 @@ export interface CalendarEvent {
   // Ręczne potwierdzenie odbycia przeszłego wydarzenia, trwałe (extendedProperties.private w
   // Google Calendar), bo API nie ma pola "attended". Domyślnie brak = nieoznaczone.
   attendanceStatus?: "odbyto" | "nieodbyto";
+  // Obecne WYŁĄCZNIE na rozwiniętych wystąpieniach cyklu (singleEvents:true w GET niżej) —
+  // wskazuje id wydarzenia-mistrza. Używane w UI do pokazania że to wystąpienie cyklu i że
+  // edycja/przeciąganie dotyczy TYLKO tego jednego dnia, nie całej serii.
+  recurringEventId?: string;
 }
 
 export interface CalendarResponse {
@@ -111,6 +115,7 @@ export async function GET(req: NextRequest) {
         colorId: e.colorId ?? undefined,
         allDay,
         attendanceStatus,
+        recurringEventId: e.recurringEventId ?? undefined,
       };
     });
 
@@ -135,9 +140,12 @@ export async function POST(req: NextRequest) {
     description?: string;
     location?: string;
     timeZone?: string;
+    // Tablica RRULE (np. ["RRULE:FREQ=WEEKLY"]) — natywna powtarzalność Google Calendar,
+    // budowana przez recurrenceToRRule() w lib/schedule/dateHelpers.ts. Tylko przy tworzeniu.
+    recurrence?: string[];
   };
 
-  const { summary, startDateTime, endDateTime, description, location, timeZone } = body;
+  const { summary, startDateTime, endDateTime, description, location, timeZone, recurrence } = body;
   if (!summary || !startDateTime || !endDateTime) {
     return NextResponse.json(
       { error: "summary, startDateTime i endDateTime są wymagane" },
@@ -156,6 +164,7 @@ export async function POST(req: NextRequest) {
         end: { dateTime: endDateTime, timeZone: timeZone || undefined },
         description: description || undefined,
         location: location || undefined,
+        recurrence: recurrence && recurrence.length > 0 ? recurrence : undefined,
       },
     });
 

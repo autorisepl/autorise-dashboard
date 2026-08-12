@@ -486,7 +486,9 @@ export default function StatystykiPage() {
       <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px" }}>
         {error && (
           <Panel style={{ padding: 16, marginBottom: 16, background: "var(--error-bg)" }}>
-            <div style={{ fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--error-text)" }}>
+            <div
+              style={{ fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--error-text)" }}
+            >
               {error}
             </div>
           </Panel>

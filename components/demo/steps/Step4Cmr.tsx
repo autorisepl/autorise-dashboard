@@ -174,6 +174,7 @@ function OcrFieldRow({ label, value }: { label: string; value: string }) {
             onClick={() => setEditing(true)}
             aria-label={`Popraw pole: ${label}`}
             style={editFieldButtonStyle}
+            title="Kontrola przed zapisem"
           >
             <Pencil size={11} />
             Popraw
@@ -185,16 +186,27 @@ function OcrFieldRow({ label, value }: { label: string; value: string }) {
 }
 
 export function Step4Cmr({ active, confirmed, onConfirm }: Step4CmrProps) {
-  const [ocrDone, setOcrDone] = useState(false);
+  const [ocrCount, setOcrCount] = useState(0);
 
   useEffect(() => {
     if (!active) {
-      setOcrDone(false);
+      setOcrCount(0);
       return;
     }
-    const t = setTimeout(() => setOcrDone(true), 1400);
+    const t = setTimeout(() => {
+      // Simulate sequential field appearance
+      let count = 0;
+      const interval = setInterval(() => {
+        count++;
+        setOcrCount(count);
+        if (count >= OCR_FIELDS.length) clearInterval(interval);
+      }, 500);
+      return () => clearInterval(interval);
+    }, 1400);
     return () => clearTimeout(t);
   }, [active]);
+
+  const ocrDone = ocrCount >= OCR_FIELDS.length;
 
   return (
     <div style={{ display: "flex", alignItems: "stretch", gap: 10, flexWrap: "wrap" }}>
@@ -297,7 +309,7 @@ export function Step4Cmr({ active, confirmed, onConfirm }: Step4CmrProps) {
               System odczytał dokument. Oczekuje potwierdzenia spedytora przed zapisaniem na stałe.
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {OCR_FIELDS.map((field) => (
+              {OCR_FIELDS.slice(0, ocrCount).map((field) => (
                 <OcrFieldRow key={field.key} label={field.label} value={field.value} />
               ))}
             </div>
@@ -332,6 +344,16 @@ export function Step4Cmr({ active, confirmed, onConfirm }: Step4CmrProps) {
               style={{ fontFamily: demoFont.sans, fontSize: 12, color: demoColors.textSecondary }}
             >
               Zlecenie {ZLECENIE.numerZleceniaTms} zapisane na stałe, status: Dostarczone
+            </div>
+            <div
+              style={{
+                fontFamily: demoFont.sans,
+                fontSize: 11,
+                color: demoColors.textSecondary,
+                marginTop: 4,
+              }}
+            >
+              Spedytor: jedno kliknięcie zamiast ręcznego przepisywania
             </div>
           </div>
         )}

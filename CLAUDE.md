@@ -21,6 +21,10 @@
 - **Animation**: framer-motion, lucide-react icons
 - **Validation**: Zod on all API routes
 
+## Plan: mono/czarno-biały kierunek wizualny (zdecydowane 2026-08-07, jeszcze nie wykonane poza /planowanie)
+
+Michał potwierdził kierunek: odejście od niebieskiego akcentu jako dominującego koloru odznak/teł na rzecz neutralnego szaro-białego języka (wzór: przyciski "Poprzedni tydzień"/"Następny tydzień" w /planowanie — transparentne tło, biała/szara ramka, `--text-secondary` tekst). **Na razie wdrożone WYŁĄCZNIE w `/planowanie`** (nowy `components/ui/Badge.tsx`, `Panel solid`, ikony nagłówków paneli na `--text-secondary`). Michał explicite powiedział że **to samo trafi do CAŁEGO dashboardu w kolejnej rundzie** — nie zakładaj że reszta stron (Pipeline, Statystyki, Agenci itd.) ma zostać przy niebieskim akcencie na stałe, to survives tylko do czasu tamtej rundy.
+
 ## Design System
 
 - Ciemny motyw grafitowy (2026-08-05, zastąpił poprzedni jasny iOS-owy) — nadal single theme,
@@ -243,7 +247,15 @@ Założone nazwy property (`lib/notion/finance.ts`, stała `PROP`): `Nazwa` (tit
 - **Czyszczenie relacji przy usuwaniu przychodu** (premortem z treści zadania): `deleteFinanceEntry` NAJPIERW odpytuje wszystkie wydatki z `Przypisane do przychodu` zawierającym usuwany id (filter `relation.contains`), czyści im tę relację, DOPIERO POTEM wrzuca stronę przychodu do kosza (`in_trash: true`). Notion nie czyści relacji po drugiej stronie automatycznie dopóki strona jest tylko w koszu (nie trwale usunięta) — bez tego kroku zostałyby martwe odnośniki, dokładnie ryzyko opisane w treści zadania.
 - **Nowe kategorie z UI** (drugi premortem): `Kategoria` to multi_select, `CategoryTagInput` w `FinanceEntryForm.tsx` przyjmuje dowolny tekst, nie tylko istniejące opcje — Notion API sam dopisuje nową opcję do property przy zapisie, nie trzeba osobnej migracji schematu.
 - `app/api/notion/finanse/route.ts` (GET listuje + zwraca opcje kategorii, POST tworzy) i `app/api/notion/finanse/[id]/route.ts` (PATCH/DELETE) — wzorzec 1:1 z `/api/notion/pipeline` + `/api/notion/pipeline-update` (zod walidacja, `NextResponse.json({success, error})`).
-- `components/finance/` — `FinancePanel.tsx` (orchestracja + fetch), `FinanceEntryForm.tsx` (modal create/edit, ten sam chrom wizualny co `EventEditor.tsx` z `/planowanie`), `FinanceList.tsx` (filtr typ/kategoria + edycja/usuwanie), `FinanceDonutChart.tsx` (CSS `conic-gradient`, zero nowej zależności), `FinanceIncomeSummary.tsx` (proste paski, suma przychodów wg kategorii).
+- `components/finance/` — `FinancePanel.tsx` (orchestracja + fetch), `FinanceEntryForm.tsx` (modal create/edit, ten sam chrom wizualny co `EventEditor.tsx` z `/planowanie`), `FinanceList.tsx` (filtr typ/kategoria + edycja/usuwanie), `FinanceDonutChart.tsx` (CSS `conic-gradient`, zero nowej zależności, reużyty dla WYDATKÓW i PRZYCHODÓW — `FinanceIncomeSummary.tsx`, dawny osobny wariant z paskami, usunięty 2026-08-07 jako martwy po ujednoliceniu), `SubscriptionsSummary.tsx` (pasek subskrypcji: liczniki + miesięczny odpowiednik kosztu/przychodu + najbliższe odnowienie, 2026-08-07 — patrz sekcja "Subskrypcje" niżej).
+
+### Subskrypcje w panelu finansowym (2026-08-07)
+
+Wpis (przychód LUB wydatek) można oznaczyć jako subskrypcję z cyklem odnawiania (Tydzień/Miesiąc/Kwartał/Rok, `RENEWAL_INTERVALS` w `lib/notion/finance.ts`). Dwa nowe property Notion ("Subskrypcja" checkbox, "Cykl odnawiania" select) tworzone idempotentnie przy każdym `GET /api/notion/finanse` przez `ensureFinanceSubscriptionSchema()` — bezpieczne do wywoływania powtarzalnie, bo zawsze wysyła tę samą, pełną, stałą listę 4 opcji (nie częściową, więc nie ryzykuje ubocznego skasowania opcji przy select.options, patrz znany gotcha Notion API opisany wyżej w tym pliku). Jeśli integracja nie ma uprawnień do zmiany schematu, błąd jest połykany świadomie — panel działa dalej bez pól subskrypcji zamiast się wywalać.
+
+`lib/finance/summary.ts`: `monthlyEquivalent()` normalizuje kwotę cyklu do miesięcznego odpowiednika (Tydzień×52/12, Kwartał÷3, Rok÷12) do porównywalności; `nextRenewalDate()` liczy najbliższy termin przez przesuwanie miesięcy (nie ×30 dni, żeby data dnia miesiąca nie dryfowała); `subscriptionsStats()` zwraca `{personal, retainer}` — dwie osobne grupy (subskrypcje osobiste vs retainer klienta Autorise, pole Notion "Rodzaj cyklu"), każda z liczników + sum miesięcznych + najbliższego odnowienia, agregowane ze WSZYSTKICH wpisów (nie tylko bieżący miesiąc). `SubscriptionsSummary.tsx` renderuje obie grupy osobno (accent dla subskrypcji, success dla retainerów), całość znika gdy brak żadnej. `FinanceList.tsx` dokłada małą odznakę "cykl · odnowienie za X dni" przy każdym wpisie-subskrypcji. Wpis może mieć `data: ""` ("Data jeszcze nieznana" w formularzu) — `buildProperties` w `lib/notion/finance.ts` mapuje pusty string na `{date: null}` w Notion.
+
+**Panel `solid` prop (2026-08-07)**: `components/ui/Panel.tsx` domyślnie renderuje `--glass` + `backdrop-filter: blur(20px)`. Kosztowne przy scrollu wielu jednoczesnych paneli (kolumny dni w /planowanie) i powodowało "ghosting" (przebijanie treści zza siebie) na elementach `position:sticky` z półprzezroczystym tłem. `<Panel solid>` renderuje opaque `--bg-elevated` bez blura — użyte we WSZYSTKICH panelach `/planowanie` (DayPanel/PlanningSidebar/FinancePanel/WeekStatsBar). Sticky nagłówek dzisiejszej kolumny dnia używa dedykowanego `--accent-tint-opaque` (nie `--accent-muted`, półprzezroczyste) z tego samego powodu. `components/schedule/TimeInput.tsx` (dwa selecty HH/MM) zastępuje natywny `<input type="time">` we wszystkich edytorach zadania/wydarzenia — `lang="pl-PL"` na natywnym polu miało niespójne wsparcie między przeglądarkami dla wymuszenia formatu 24h.
 - `lib/finance/summary.ts` — `monthRange`/`categoryTotals`/`isWithinRange`. Wpis z wieloma kategoriami dolicza PEŁNĄ kwotę do każdej (tagowanie, nie podział) — świadome uproszczenie, nie ukryty błąd zaokrągleń.
 - Statystyki (donut wydatków + paski przychodów) mają własną nawigację miesięczną (domyślnie bieżący miesiąc), niezależną od listy wpisów powyżej (lista pokazuje wszystko, filtrowane ręcznie typ/kategoria, bez ograniczenia do miesiąca).
 
@@ -258,6 +270,13 @@ Założone nazwy property (`lib/notion/finance.ts`, stała `PROP`): `Nazwa` (tit
 - Layout: stały lewy panel 300px (Nieprzypisane/Priorytetyzacja) + siatka 7 dni w jednym rzędzie (bez podziału dni robocze/weekend jak w poprzedniku)
 - Backend bez zmian: `/api/google/tasks` i `/api/google/calendar` + `/api/google/calendar/[eventId]` już miały pełny CRUD przed tą sesją
 - `/planowanie` nie jest w `SETTER_VISIBLE_HREFS`/`SETTER_ALLOWED_PREFIXES` — ten sam zakres uprawnień co miały `/harmonogram`/`/zadania` (obie admin-only)
+
+**Runda dopracowania 2026-08-07** (audyt spójności + kontrast + statystyki, szczegóły w `context/AUTORISE_SESSION_LOG.md`): `TaskEditor.tsx` ma teraz tryb tworzenia (`item: TaskWithList | null`, `onCreate` obok `onSave`) — jedyny, wspólny formularz dla WSZYSTKICH przycisków "Dodaj zadanie" (nagłówek nie miał odpowiednika, panel dnia i Nieprzypisane miały osobne, ubogie inline-inputy z samym tytułem, naprawione). `DayTimeAxis.tsx` eksportuje `AttendanceDot`/`nextAttendance` (trójstanowy checkbox wydarzenia: brak/odbyto/nieodbyto, zawsze widoczny, dawniej ukryty warunkiem wysokości bloku) reużywane w `DayPanel.tsx` dla wydarzeń całodniowych. Checkboxy/okręgi mają obwódkę `var(--text-tertiary)` w stanie odznaczonym (nie `var(--border)`, praktycznie niewidoczne na ciemnym tle). Tytuły zadań/wydarzeń zawijają się (`overflowWrap`/`wordBreak`), nie obcinają `...`. Wszystkie `<input type="date">` mają `lang="pl-PL"` (bez tego przeglądarka może renderować segmenty w kolejności locale systemu, np. mm/dd zamiast dd/mm — mylące wpisywanie).
+
+**Powtarzalność zadań i wydarzeń 2026-08-07** — Google Tasks API NIE MA pola powtarzalności (w przeciwieństwie do Google Calendar z pełnym RRULE), więc dwa różne mechanizmy, oba zapisywane realnie u Google, zero danych lokalnych:
+- **Wydarzenia**: natywne RRULE Google Calendar. `POST /api/google/calendar` przyjmuje `recurrence: string[]`, budowane przez `recurrenceToRRule()` w `lib/schedule/dateHelpers.ts`. `EventEditor.tsx` ma selektor powtarzalności WYŁĄCZNIE przy tworzeniu nowego wydarzenia — edycja reguły istniejącego cyklu ma inną semantykę Google (this/this-and-following/all), świadomie poza zakresem. `CalendarEvent.recurringEventId` (z `singleEvents:true` w GET) oznacza że to wystąpienie cyklu; edytor pokazuje wtedy informacyjny baner że zmiana dotyczy tylko tego dnia.
+- **Zadania**: tag `[powtarzaj:codziennie|tydzien|miesiac|rok]` w polu `notes` realnego Google Task (4. tag obok `[priorytet:...]`/`[godz:...]`, ten sam mechanizm, `buildNotes`/`composeTaskNotes` w `dateHelpers.ts`). Silnik żyje w `toggleDone` (`page.tsx`): ukończenie zadania z tym tagiem od razu tworzy PRAWDZIWE kolejne zadanie przez `createTaskInList` (POST do Google Tasks) z terminem przesuniętym o `advanceRecurrenceDate()` — bo Tasks API samo tego nie zrobi. Odznaczenie ukończonego zadania świadomie NIE cofa już utworzonego następnego wystąpienia.
+- Odznaki `Repeat` (lucide) na kartach zadań (`DayNoTimeTask`/`DayTimeAxis`) i blokach wydarzeń wskazują cykliczność wizualnie.
 
 ## Dev Tools
 
@@ -312,12 +331,13 @@ app/api/notion/finanse/route.ts           — GET listuje + POST tworzy wpis fin
 app/api/notion/finanse/[id]/route.ts      — PATCH/DELETE wpisu finansowego (DELETE czyści relacje)
 lib/notion/finance.ts                     — warstwa dostępu Notion dla bazy Finanse osobiste
 lib/finance/summary.ts                    — okres miesięczny, sumy wg kategorii dla panelu finansowego
-components/finance/                       — FinancePanel/FinanceEntryForm/FinanceList/FinanceDonutChart/FinanceIncomeSummary
+components/finance/                       — FinancePanel/FinanceEntryForm/FinanceList/FinanceDonutChart (wydatki i przychody)/SubscriptionsSummary
 app/(dashboard)/harmonogram/page.tsx      — redirect("/planowanie")
 app/(dashboard)/zadania/page.tsx          — redirect("/planowanie")
 components/schedule/EventEditor.tsx       — modal create/edit/delete wydarzenia (uzywany w /planowanie)
 components/schedule/DayPanel.tsx          — panel dnia (stała wysokość, scroll) w /planowanie
 components/schedule/PlanningSidebar.tsx   — Nieprzypisane + Strefa priorytetyzacji w /planowanie
+components/schedule/WeekStatsBar.tsx      — pasek statystyk tygodnia (wykonane/zaplanowane + regularność zadań powtarzalnych) w /planowanie
 lib/schedule/dateHelpers.ts               — wspólne helpery dat/statusów dla /planowanie
 app/(dashboard)/agencja/page.tsx          — Nasza karta + Sheets sync
 app/api/agents/agent[0-6]/route.ts        — agent API routes (agent1/2/3 fallback, nieużywane z UI od 2026-07-13)
@@ -346,6 +366,7 @@ components/sprzedaz/AnalizaPrzedkontraktowaPanel.tsx — panel skryptu Analiza p
 lib/notion/client.ts                      — Notion API client
 context/AUTORISE_SESSION_LOG.md           — log sesji, czytaj na starcie każdej sesji
 context/PLAN_CLAUDE_CODE.md               — bieżący plan wykonawczy dla Claude Code, czytaj na starcie każdej sesji obok SESSION_LOG
+context/PRODUKT_ZRODLO_PRAWDY.md          — kanoniczne źródło prawdy o produkcie (moduły/granice/cennik/wzór gwarancji), 08.08.2026: przy sprzeczności z Notion "Produkty" lub starymi plikami SOP wygrywa ten plik
 ```
 
 ## Hierarchia plików kontekstowych (B10, 2026-07-16)

@@ -161,19 +161,30 @@ export function Step5Faktura({ active, confirmed, onConfirm }: Step5FakturaProps
         )}
 
         {ready && confirmed && (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              fontFamily: demoFont.sans,
-              fontSize: 12,
-              color: demoColors.success,
-              fontWeight: 600,
-            }}
-          >
-            <CheckCircle2 size={13} />
-            Faktura zaksięgowana i przypisana do zlecenia {ZLECENIE.numerZleceniaTms}.
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                fontFamily: demoFont.sans,
+                fontSize: 12,
+                color: demoColors.success,
+                fontWeight: 600,
+              }}
+            >
+              <CheckCircle2 size={13} />
+              Faktura zaksięgowana i przypisana do zlecenia {ZLECENIE.numerZleceniaTms}.
+            </div>
+            <div
+              style={{
+                fontFamily: demoFont.sans,
+                fontSize: 11,
+                color: demoColors.textSecondary,
+              }}
+            >
+              Spedytor: jedno kliknięcie zamiast ręcznego przepisywania
+            </div>
           </div>
         )}
       </div>

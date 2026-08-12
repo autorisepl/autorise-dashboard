@@ -1,14 +1,26 @@
 "use client";
 
-import { Link2, Pencil, Trash2 } from "lucide-react";
+import { Link2, Pencil, Repeat, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { colorForCategory, formatPLN } from "@/lib/finance/summary";
+import { Badge } from "@/components/ui/Badge";
+import { daysUntil, formatPLN, nextRenewalDate } from "@/lib/finance/summary";
 import type { FinanceEntry } from "@/lib/notion/finance";
 
+function renewalLabel(e: FinanceEntry): string | null {
+  if (!e.subskrypcja || !e.cyklOdnawiania) return null;
+  const kind = e.rodzajCyklu === "Retainer klienta" ? "Retainer" : e.cyklOdnawiania;
+  if (!e.data) return `${kind} · data nieznana`;
+  const renewal = nextRenewalDate(e.data, e.cyklOdnawiania);
+  if (!renewal) return kind;
+  const days = daysUntil(renewal);
+  const dniLabel = days <= 0 ? "dziś" : days === 1 ? "za 1 dzień" : `za ${days} dni`;
+  return `${kind} · odnowienie ${dniLabel}`;
+}
+
 function formatDate(iso: string): string {
-  if (!iso) return "—";
+  if (!iso) return "Data nieznana";
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
+  if (Number.isNaN(d.getTime())) return "Data nieznana";
   return d.toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
@@ -146,20 +158,9 @@ export function FinanceList({ entries, categoryOptions, onEdit, onDelete }: Fina
                     {formatDate(e.data)}
                   </span>
                   {e.kategoria.map((cat) => (
-                    <span
-                      key={cat}
-                      style={{
-                        fontFamily: "var(--font-sans)",
-                        fontSize: 10,
-                        fontWeight: 700,
-                        color: colorForCategory(cat),
-                        background: `${colorForCategory(cat)}1a`,
-                        borderRadius: "var(--radius-xs)",
-                        padding: "1px 6px",
-                      }}
-                    >
+                    <Badge key={cat} size="xs">
                       {cat}
-                    </span>
+                    </Badge>
                   ))}
                   {e.przypisaneDoPrzychoduNazwa && (
                     <span
@@ -175,6 +176,11 @@ export function FinanceList({ entries, categoryOptions, onEdit, onDelete }: Fina
                     >
                       <Link2 size={10} /> {e.przypisaneDoPrzychoduNazwa}
                     </span>
+                  )}
+                  {renewalLabel(e) && (
+                    <Badge size="xs" icon={<Repeat size={9} />}>
+                      {renewalLabel(e)}
+                    </Badge>
                   )}
                 </div>
               </div>

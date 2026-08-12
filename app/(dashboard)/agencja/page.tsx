@@ -745,7 +745,9 @@ export default function AgencjaPage() {
           </button>
 
           {resetError && (
-            <span style={{ fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--error-text)" }}>
+            <span
+              style={{ fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--error-text)" }}
+            >
               {resetError}
             </span>
           )}

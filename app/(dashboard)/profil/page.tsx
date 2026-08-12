@@ -558,7 +558,9 @@ function ProfilContent() {
                         lineHeight: 1.6,
                       }}
                     >
-                      <div style={{ fontWeight: 700, color: "var(--warning-text)", marginBottom: 4 }}>
+                      <div
+                        style={{ fontWeight: 700, color: "var(--warning-text)", marginBottom: 4 }}
+                      >
                         Połączenie z Google wygasło
                       </div>
                       Token dostępu stracił ważność (Google odświeża go co kilka dni w trybie

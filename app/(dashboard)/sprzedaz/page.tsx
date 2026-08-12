@@ -51,14 +51,16 @@ function findStepLabelD(stepId: string): string {
   return step ? `${step.nr} ${step.label}` : stepId;
 }
 
+// Te same wartości co STATUS_COLORS w /pipeline (rozjaśnione pod ciemny motyw, audyt WCAG AA
+// 2026-08-05) — jedno źródło prawdy o kolorach statusów, nie osobno dobierane per strona.
 const STATUS_COLORS: Record<string, string> = {
-  Kwalifikacja: "#7c3aed",
-  "Discovery umówione": "#0d9488",
+  Kwalifikacja: "#a379ec",
+  "Discovery umówione": "#14b8a7",
   Finalizacja: "#d97706",
   Kickoff: "#16a34a",
-  Wdrożenie: "#15803d",
-  Retainer: "#166534",
-  Upsell: "#8b5cf6",
+  Wdrożenie: "#34b262",
+  Retainer: "#3fa676",
+  Upsell: "#0ea5e9",
 };
 
 // ── Line styles ───────────────────────────────────────────────────────
@@ -218,7 +220,7 @@ function NoShowBanner({
           padding: "0 12px",
           borderRadius: 7,
           border: `1px solid ${isNoShow ? "var(--error)" : "var(--warning)"}`,
-          background: "#fff",
+          background: "var(--bg-elevated)",
           color: isNoShow ? "var(--error-text)" : "var(--warning-text)",
           fontFamily: "var(--font-sans)",
           fontSize: 11,
@@ -264,22 +266,12 @@ function ScriptStep({
 }) {
   const [open, setOpen] = useState(true);
 
-  const tagColors: Record<string, string> = {
-    AKCJA: "var(--accent)",
-    MÓWISZ: "var(--text-primary)",
-    PYTASZ: "#7c3aed",
-    UWAGA: "var(--warning)",
-    GAŁĘZIE: "var(--success-text)",
-    ZAMKNIĘCIE: "#16a34a",
-    PARAFRAZA: "#0d9488",
-  };
-
   return (
     <div
       id={`step-${step.id}`}
       style={{
         marginBottom: 8,
-        border: "1px solid #E5E5EA",
+        border: "1px solid var(--border)",
         borderRadius: 10,
         overflow: "hidden",
       }}
@@ -291,8 +283,8 @@ function ScriptStep({
             fontSize: 10,
             color: "var(--text-tertiary)",
             padding: "5px 14px",
-            background: "#FAFAFA",
-            borderBottom: "1px solid #E5E5EA",
+            background: "var(--bg-hover)",
+            borderBottom: "1px solid var(--border)",
             display: "flex",
             alignItems: "center",
             gap: 4,
@@ -306,7 +298,7 @@ function ScriptStep({
         onClick={() => setOpen((p) => !p)}
         style={{
           padding: "10px 14px",
-          background: open ? "rgba(10,132,255,0.03)" : "#fff",
+          background: open ? "rgba(67, 121, 177, 0.03)" : "var(--bg-elevated)",
           display: "flex",
           alignItems: "center",
           gap: 10,
@@ -319,7 +311,7 @@ function ScriptStep({
             fontFamily: "var(--font-sans)",
             fontSize: 10,
             fontWeight: 800,
-            color: "#AEAEB2",
+            color: "var(--text-tertiary)",
             minWidth: 20,
           }}
         >
@@ -346,13 +338,10 @@ function ScriptStep({
         <span
           style={{
             fontFamily: "var(--font-sans)",
-            fontSize: 9,
-            fontWeight: 700,
-            letterSpacing: "0.08em",
-            color: tagColors[step.tag] ?? "var(--text-tertiary)",
-            padding: "2px 7px",
-            borderRadius: 4,
-            background: `${tagColors[step.tag] ?? "var(--text-tertiary)"}15`,
+            fontSize: 8,
+            fontWeight: 600,
+            letterSpacing: "0.06em",
+            color: "var(--text-tertiary)",
           }}
         >
           {step.tag}
@@ -412,11 +401,11 @@ function ScriptStep({
                     style={{
                       fontFamily: "var(--font-sans)",
                       fontSize: 11,
-                      color: "var(--text-tertiary)",
+                      color: "var(--text-secondary)",
                       fontStyle: "italic",
                       marginTop: 2,
                       paddingLeft: 8,
-                      borderLeft: "2px solid var(--border)",
+                      borderLeft: "2px solid var(--text-tertiary)",
                     }}
                   >
                     Cel: {line.cel}
@@ -436,7 +425,7 @@ function ScriptStep({
                     flexShrink: 0,
                     padding: "3px 7px",
                     borderRadius: 5,
-                    border: "1px solid #E5E5EA",
+                    border: "1px solid var(--border)",
                     background: "transparent",
                     cursor: "pointer",
                     color:
@@ -521,7 +510,7 @@ function BriefSection({ client }: { client: PipelineClientDetailed | null }) {
             borderRadius: 8,
             border: "1px solid var(--accent-border)",
             background: "var(--accent-muted)",
-            color: "var(--accent)",
+            color: "var(--accent-text)",
             textDecoration: "none",
             fontFamily: "var(--font-sans)",
             fontSize: 13,
@@ -586,8 +575,8 @@ function BriefSection({ client }: { client: PipelineClientDetailed | null }) {
                 style={{
                   padding: "10px 14px",
                   borderRadius: 8,
-                  background: "#FAFAFA",
-                  border: "1px solid #E5E5EA",
+                  background: "var(--bg-hover)",
+                  border: "1px solid var(--border)",
                   borderLeft: "3px solid var(--accent)",
                 }}
               >
@@ -712,7 +701,7 @@ function BriefSection({ client }: { client: PipelineClientDetailed | null }) {
           gap: 6,
           padding: "7px 12px",
           borderRadius: 7,
-          border: "1px solid #E5E5EA",
+          border: "1px solid var(--border)",
           background: "transparent",
           color: "var(--text-secondary)",
           textDecoration: "none",
@@ -756,11 +745,11 @@ function renderObjectionD(
       key={obj.id}
       id={`objection-${obj.id}`}
       style={{
-        border: "1px solid #E5E5EA",
+        border: "1px solid var(--border)",
         borderLeft: `3px solid ${oc.accent}`,
         borderRadius: 8,
         overflow: "hidden",
-        background: isOpen ? oc.bg : "#fff",
+        background: isOpen ? oc.bg : "var(--bg-elevated)",
         transition: "background-color 200ms, box-shadow 250ms",
       }}
     >
@@ -778,11 +767,11 @@ function renderObjectionD(
         <div style={{ flex: 1 }}>
           <div
             style={{
-              fontSize: 9,
-              fontWeight: 700,
-              letterSpacing: "0.1em",
+              fontSize: 8,
+              fontWeight: 600,
+              letterSpacing: "0.06em",
               textTransform: "uppercase",
-              color: oc.accent,
+              color: "var(--text-tertiary)",
               marginBottom: 1,
             }}
           >
@@ -817,7 +806,7 @@ function renderObjectionD(
                 style={{
                   margin: 0,
                   fontSize: 13,
-                  lineHeight: 1.6,
+                  lineHeight: 1.55,
                   color: "var(--text-primary)",
                   fontFamily: "var(--font-sans)",
                   flex: 1,
@@ -831,7 +820,7 @@ function renderObjectionD(
                   flexShrink: 0,
                   padding: "3px 7px",
                   borderRadius: 5,
-                  border: "1px solid #E5E5EA",
+                  border: "1px solid var(--border)",
                   background: "transparent",
                   cursor: "pointer",
                   color:
@@ -854,13 +843,10 @@ function renderObjectionD(
             <p
               style={{
                 margin: 0,
-                fontSize: 12,
+                fontSize: 13,
                 lineHeight: 1.55,
-                color: "var(--accent)",
+                color: "var(--text-primary)",
                 fontFamily: "var(--font-sans)",
-                fontStyle: "italic",
-                borderTop: "1px solid #E5E5EA",
-                paddingTop: 8,
               }}
             >
               {fill(obj.followup)}
@@ -901,7 +887,7 @@ function renderObjectionD(
                 style={{
                   fontSize: 9,
                   fontWeight: 700,
-                  color: "var(--accent)",
+                  color: "var(--accent-text)",
                   letterSpacing: "0.08em",
                   textTransform: "uppercase",
                   marginBottom: 4,
@@ -947,18 +933,6 @@ function ObjectionsPanel({
 }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      <div
-        style={{
-          fontFamily: "var(--font-sans)",
-          fontSize: 11,
-          fontWeight: 700,
-          color: "var(--text-primary)",
-          letterSpacing: "0.04em",
-          textTransform: "uppercase",
-        }}
-      >
-        Obiekcje w Discovery
-      </div>
       {STAGE_ORDER_D.map((stage) => {
         const items = OBJECTIONS_D.filter((o) => o.stage === stage);
         if (items.length === 0) return null;
@@ -1036,7 +1010,7 @@ function SmsPanel({
               <div
                 key={item.id}
                 style={{
-                  background: "#F5F5F7",
+                  background: "var(--bg)",
                   borderRadius: 8,
                   padding: "10px 12px",
                   marginBottom: 6,
@@ -1071,8 +1045,8 @@ function SmsPanel({
                     gap: 4,
                     padding: "4px 10px",
                     borderRadius: 6,
-                    border: "1px solid #E5E5EA",
-                    background: "#fff",
+                    border: "1px solid var(--border)",
+                    background: "var(--bg-elevated)",
                     cursor: "pointer",
                     fontSize: 11,
                     color:
@@ -1108,7 +1082,7 @@ function SmsPanel({
             <div
               key={item.id}
               style={{
-                background: "#F5F5F7",
+                background: "var(--bg)",
                 borderRadius: 8,
                 padding: "10px 12px",
                 marginBottom: 6,
@@ -1143,8 +1117,8 @@ function SmsPanel({
                   gap: 4,
                   padding: "4px 10px",
                   borderRadius: 6,
-                  border: "1px solid #E5E5EA",
-                  background: "#fff",
+                  border: "1px solid var(--border)",
+                  background: "var(--bg-elevated)",
                   cursor: "pointer",
                   fontSize: 11,
                   color:
@@ -1171,7 +1145,7 @@ function PrezentacjaSection({ client }: { client: PipelineClientDetailed | null 
       <div
         style={{
           padding: "10px 12px",
-          background: "#F5F5F7",
+          background: "var(--bg)",
           borderRadius: 8,
           display: "flex",
           alignItems: "center",
@@ -1204,7 +1178,7 @@ function PrezentacjaSection({ client }: { client: PipelineClientDetailed | null 
             borderRadius: 7,
             border: "1px solid var(--accent-border)",
             background: "var(--accent-muted)",
-            color: "var(--accent)",
+            color: "var(--accent-text)",
             textDecoration: "none",
             fontSize: 11,
             fontFamily: "var(--font-sans)",
@@ -1219,7 +1193,7 @@ function PrezentacjaSection({ client }: { client: PipelineClientDetailed | null 
       <div
         style={{
           padding: "10px 12px",
-          background: "#F5F5F7",
+          background: "var(--bg)",
           borderRadius: 8,
           display: "flex",
           alignItems: "center",
@@ -1250,7 +1224,7 @@ function PrezentacjaSection({ client }: { client: PipelineClientDetailed | null 
             gap: 4,
             padding: "6px 10px",
             borderRadius: 7,
-            border: "1px solid #E5E5EA",
+            border: "1px solid var(--border)",
             background: "transparent",
             color: "var(--text-secondary)",
             textDecoration: "none",
@@ -1381,8 +1355,8 @@ function DalszeKrokiDiscovery({ client }: { client: PipelineClientDetailed | nul
             marginBottom: 8,
             padding: "10px 12px",
             borderRadius: 8,
-            background: "#F5F5F7",
-            border: "1px solid #E5E5EA",
+            background: "var(--bg)",
+            border: "1px solid var(--border)",
           }}
         >
           <p
@@ -1410,8 +1384,8 @@ function DalszeKrokiDiscovery({ client }: { client: PipelineClientDetailed | nul
               gap: 4,
               padding: "4px 10px",
               borderRadius: 6,
-              border: "1px solid #E5E5EA",
-              background: "#fff",
+              border: "1px solid var(--border)",
+              background: "var(--bg-elevated)",
               cursor: "pointer",
               fontFamily: "var(--font-sans)",
               fontSize: 11,
@@ -1469,7 +1443,7 @@ function DalszeKrokiDiscovery({ client }: { client: PipelineClientDetailed | nul
               background: "var(--accent)",
               cursor: savingTask ? "not-allowed" : "pointer",
               fontSize: 13,
-              color: "#fff",
+              color: "var(--text-on-accent)",
               fontFamily: "var(--font-sans)",
               fontWeight: 600,
             }}
@@ -1550,13 +1524,13 @@ function RightPanel({
         width: 320,
         minWidth: 320,
         height: "100%",
-        borderLeft: "1px solid #E5E5EA",
+        borderLeft: "1px solid var(--border)",
         overflowY: "auto",
         padding: "12px 12px",
-        background: "#fff",
+        background: "var(--bg-elevated)",
       }}
     >
-      <Card title="Obiekcje Discovery">
+      <Card title="Obiekcje w Discovery">
         <ObjectionsPanel
           fill={fill}
           onCopy={onCopy}
@@ -1784,7 +1758,7 @@ export default function SprzedazPage() {
     el.scrollIntoView({ behavior: "smooth", block: "start" });
     el.style.transition = "box-shadow 250ms, background-color 250ms";
     el.style.boxShadow = "0 0 0 2px var(--accent)";
-    el.style.backgroundColor = "rgba(10,132,255,0.08)";
+    el.style.backgroundColor = "rgba(67, 121, 177, 0.08)";
     setTimeout(() => {
       el.style.boxShadow = "";
       el.style.backgroundColor = "";
@@ -1834,8 +1808,8 @@ export default function SprzedazPage() {
               height: 28,
               padding: "0 10px",
               borderRadius: 7,
-              border: "1px solid #E5E5EA",
-              background: rozmowaFlash ? "var(--success-bg)" : "#F5F5F7",
+              border: "1px solid var(--border)",
+              background: rozmowaFlash ? "var(--success-bg)" : "var(--bg)",
               color: rozmowaFlash ? "var(--success-text)" : "var(--text-secondary)",
               fontSize: 11,
               fontWeight: 600,
@@ -1874,81 +1848,97 @@ export default function SprzedazPage() {
         </div>
         {selected && (
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: "auto" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              <span
-                style={{
-                  fontSize: 12,
-                  color: "var(--text-secondary)",
-                  fontFamily: "var(--font-sans)",
-                }}
-              >
-                Zwrot:
-              </span>
-              {(["Pan", "Pani"] as const).map((f) => (
-                <button
-                  key={f}
-                  onClick={() => setFormaOverride(f)}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "4px 10px 4px 4px",
+                borderRadius: 8,
+                border: "1px solid var(--border)",
+                background: "var(--bg)",
+              }}
+              title="Jak setter ma zwracać się do klienta w tej rozmowie"
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <span
                   style={{
-                    height: 32,
-                    padding: "0 10px",
-                    borderRadius: 8,
-                    border: `1px solid ${forma === f ? "var(--accent)" : "#E5E5EA"}`,
-                    background: forma === f ? "rgba(10,132,255,0.08)" : "#F5F5F7",
-                    color: forma === f ? "var(--accent)" : "var(--text-secondary)",
                     fontSize: 12,
-                    fontWeight: forma === f ? 600 : 400,
-                    cursor: "pointer",
+                    color: "var(--text-secondary)",
                     fontFamily: "var(--font-sans)",
                   }}
                 >
-                  {f}
-                </button>
-              ))}
-              {formaOverride !== "auto" && (
-                <button
-                  onClick={() => setFormaOverride("auto")}
-                  title="Wróć do automatycznego wykrywania"
+                  Zwrot do klienta:
+                </span>
+                {(["Pan", "Pani"] as const).map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => setFormaOverride(f)}
+                    style={{
+                      height: 28,
+                      padding: "0 10px",
+                      borderRadius: 8,
+                      border: `1px solid ${forma === f ? "var(--accent)" : "var(--border)"}`,
+                      background: forma === f ? "rgba(67, 121, 177, 0.08)" : "var(--bg-elevated)",
+                      color: forma === f ? "var(--accent)" : "var(--text-secondary)",
+                      fontSize: 12,
+                      fontWeight: forma === f ? 600 : 400,
+                      cursor: "pointer",
+                      fontFamily: "var(--font-sans)",
+                    }}
+                  >
+                    {f}
+                  </button>
+                ))}
+                {formaOverride !== "auto" && (
+                  <button
+                    onClick={() => setFormaOverride("auto")}
+                    title="Wróć do automatycznego wykrywania"
+                    style={{
+                      height: 28,
+                      padding: "0 8px",
+                      borderRadius: 8,
+                      border: "1px solid var(--border)",
+                      background: "transparent",
+                      color: "var(--text-tertiary)",
+                      fontSize: 11,
+                      cursor: "pointer",
+                    }}
+                  >
+                    auto
+                  </button>
+                )}
+              </div>
+              <div style={{ height: 20, width: 1, background: "var(--border)" }} />
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span
                   style={{
-                    height: 32,
-                    padding: "0 8px",
-                    borderRadius: 8,
-                    border: "1px solid #E5E5EA",
-                    background: "transparent",
-                    color: "var(--text-tertiary)",
-                    fontSize: 11,
-                    cursor: "pointer",
+                    fontSize: 12,
+                    color: "var(--text-secondary)",
+                    fontFamily: "var(--font-sans)",
                   }}
                 >
-                  auto
-                </button>
-              )}
+                  Jak się zwracać:
+                </span>
+                <input
+                  value={vocative}
+                  onChange={(e) => setVocative(e.target.value)}
+                  placeholder="wołacz imienia"
+                  style={{
+                    height: 28,
+                    padding: "0 10px",
+                    borderRadius: 8,
+                    border: "1px solid var(--border)",
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 13,
+                    color: "var(--text-primary)",
+                    background: "var(--bg-elevated)",
+                    outline: "none",
+                    width: 140,
+                  }}
+                />
+              </div>
             </div>
-            <span
-              style={{
-                fontSize: 12,
-                color: "var(--text-secondary)",
-                fontFamily: "var(--font-sans)",
-              }}
-            >
-              Forma grzecznościowa:
-            </span>
-            <input
-              value={vocative}
-              onChange={(e) => setVocative(e.target.value)}
-              placeholder="wołacz imienia"
-              style={{
-                height: 32,
-                padding: "0 10px",
-                borderRadius: 8,
-                border: "1px solid #E5E5EA",
-                fontFamily: "var(--font-sans)",
-                fontSize: 13,
-                color: "var(--text-primary)",
-                background: "#F5F5F7",
-                outline: "none",
-                width: 140,
-              }}
-            />
           </div>
         )}
       </PageHeader>
@@ -1969,7 +1959,7 @@ export default function SprzedazPage() {
         />
 
         {/* Main: brief + script + roi + dalsze kroki */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px", background: "#F5F5F7" }}>
+        <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px", background: "var(--bg)" }}>
           <Card title="Brief Agenta 02" collapsible defaultOpen={true}>
             <BriefSection client={selected} />
           </Card>
@@ -2051,10 +2041,10 @@ export default function SprzedazPage() {
                 fontFamily: "var(--font-sans)",
                 fontSize: 13,
                 color: "var(--text-primary)",
-                border: "1px solid #E5E5EA",
+                border: "1px solid var(--border)",
                 borderRadius: 8,
                 padding: "10px 12px",
-                background: "#fff",
+                background: "var(--bg-elevated)",
                 outline: "none",
                 lineHeight: 1.55,
                 boxSizing: "border-box",

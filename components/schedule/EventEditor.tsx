@@ -1,9 +1,28 @@
 "use client";
 
-import { AlignLeft, Calendar, Clock, ExternalLink, Loader2, MapPin, Trash2, X } from "lucide-react";
+import {
+  AlignLeft,
+  Calendar,
+  Clock,
+  ExternalLink,
+  Loader2,
+  MapPin,
+  Repeat,
+  Trash2,
+  X,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import type { CalendarEvent } from "@/app/api/google/calendar/route";
-import { pad2 } from "@/lib/schedule/dateHelpers";
+import { TimeInput } from "@/components/schedule/TimeInput";
+import {
+  addMinutesWrapped,
+  DURATION_PRESETS_MIN,
+  formatDurationLabel,
+  pad2,
+  RECURRENCE_LABEL,
+  RECURRENCE_LEVELS,
+  type RecurrenceInterval,
+} from "@/lib/schedule/dateHelpers";
 
 export interface EventDraft {
   id?: string;
@@ -13,6 +32,10 @@ export interface EventDraft {
   endTime: string; // HH:MM
   location: string;
   description: string;
+  // Wyłącznie przy tworzeniu nowego wydarzenia (patrz UI niżej) — zmiana reguły powtarzalności
+  // istniejącego cyklu w Google Calendar ma osobną, dużo bardziej złożoną semantykę
+  // ("to wystąpienie" vs "to i kolejne" vs "cała seria"), świadomie poza zakresem tego edytora.
+  recurrence: RecurrenceInterval | null;
 }
 
 function getEventStart(e: CalendarEvent): Date {
@@ -34,6 +57,7 @@ export function eventToDraft(e: CalendarEvent): EventDraft {
     endTime: `${pad2(end.getHours())}:${pad2(end.getMinutes())}`,
     location: e.location ?? "",
     description: (e.description ?? "").replace(/<[^>]+>/g, "").trim(),
+    recurrence: null,
   };
 }
 
@@ -46,6 +70,7 @@ export function newDraftAt(date: Date, hour?: number): EventDraft {
     endTime: `${pad2(Math.min(h + 1, 23))}:00`,
     location: "",
     description: "",
+    recurrence: null,
   };
 }
 
@@ -196,6 +221,7 @@ export function EventEditor({
               <Label icon={<Calendar size={11} />}>Data</Label>
               <input
                 type="date"
+                lang="pl-PL"
                 value={d.date}
                 onChange={(e) => set({ date: e.target.value })}
                 style={fieldStyle}
@@ -203,23 +229,133 @@ export function EventEditor({
             </div>
             <div style={{ flex: 1 }}>
               <Label icon={<Clock size={11} />}>Od</Label>
-              <input
-                type="time"
-                value={d.startTime}
-                onChange={(e) => set({ startTime: e.target.value })}
-                style={fieldStyle}
-              />
+              <TimeInput value={d.startTime} onChange={(startTime) => set({ startTime })} />
             </div>
             <div style={{ flex: 1 }}>
               <Label icon={<Clock size={11} />}>Do</Label>
-              <input
-                type="time"
-                value={d.endTime}
-                onChange={(e) => set({ endTime: e.target.value })}
-                style={fieldStyle}
-              />
+              <TimeInput value={d.endTime} onChange={(endTime) => set({ endTime })} />
             </div>
           </div>
+
+          {/* Szybki wybór czasu trwania — ustawia "Do" wprost od "Od", z zawinięciem przez
+              północ (addMinutesWrapped), więc działa też blisko końca doby. */}
+          <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+            {DURATION_PRESETS_MIN.map((min) => (
+              <button
+                key={min}
+                onClick={() => set({ endTime: addMinutesWrapped(d.startTime, min) })}
+                disabled={!d.startTime}
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 10,
+                  fontWeight: 600,
+                  color: "var(--text-secondary)",
+                  background: "var(--bg-hover)",
+                  border: "1px solid var(--border)",
+                  borderRadius: "var(--radius-xs)",
+                  padding: "3px 8px",
+                  cursor: d.startTime ? "pointer" : "default",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {formatDurationLabel(min)}
+              </button>
+            ))}
+          </div>
+
+          {/* Wydarzenie przez północ (np. impreza 18:30-01:00) — dawniej blokowane błędem
+              "godzina zakończenia musi być po rozpoczęciu". Teraz wykrywane automatycznie
+              (koniec ląduje na kolejnym dniu, patrz saveEvent w page.tsx), tylko z jawną
+              informacją co się faktycznie zapisze. */}
+          {d.startTime && d.endTime && d.endTime <= d.startTime && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                fontFamily: "var(--font-sans)",
+                fontSize: 11,
+                color: "var(--accent-text)",
+                background: "var(--accent-muted)",
+                border: "1px solid var(--accent-border)",
+                borderRadius: "var(--radius-sm)",
+                padding: "7px 10px",
+              }}
+            >
+              <Clock size={11} style={{ flexShrink: 0 }} />
+              Wydarzenie kończy się następnego dnia o {d.endTime}.
+            </div>
+          )}
+
+          {isEdit && sourceEvent?.recurringEventId ? (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                fontFamily: "var(--font-sans)",
+                fontSize: 11,
+                color: "var(--text-tertiary)",
+                background: "var(--bg-hover)",
+                border: "1px solid var(--border)",
+                borderRadius: "var(--radius-sm)",
+                padding: "7px 10px",
+              }}
+            >
+              <Repeat size={11} color="var(--accent)" style={{ flexShrink: 0 }} />
+              To wystąpienie cyklu — zmiany dotyczą tylko tego dnia, nie całej serii.
+            </div>
+          ) : (
+            !isEdit && (
+              <div>
+                <Label icon={<Repeat size={11} />}>Powtarzalność</Label>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  <button
+                    onClick={() => set({ recurrence: null })}
+                    style={{
+                      flex: "1 1 auto",
+                      whiteSpace: "nowrap",
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      padding: "6px 10px",
+                      borderRadius: "var(--radius-sm)",
+                      cursor: "pointer",
+                      color: d.recurrence === null ? "var(--text-primary)" : "var(--text-tertiary)",
+                      background: d.recurrence === null ? "var(--bg-hover)" : "var(--bg)",
+                      border: "1px solid var(--border)",
+                    }}
+                  >
+                    Nie powtarza się
+                  </button>
+                  {RECURRENCE_LEVELS.map((level) => {
+                    const active = d.recurrence === level;
+                    return (
+                      <button
+                        key={level}
+                        onClick={() => set({ recurrence: level })}
+                        style={{
+                          flex: "1 1 auto",
+                          whiteSpace: "nowrap",
+                          fontFamily: "var(--font-sans)",
+                          fontSize: 11,
+                          fontWeight: 700,
+                          padding: "6px 10px",
+                          borderRadius: "var(--radius-sm)",
+                          cursor: "pointer",
+                          color: active ? "var(--accent-text)" : "var(--text-tertiary)",
+                          background: active ? "var(--accent-muted)" : "var(--bg)",
+                          border: `1px solid ${active ? "var(--accent)" : "var(--border)"}`,
+                        }}
+                      >
+                        {RECURRENCE_LABEL[level]}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )
+          )}
 
           <div>
             <Label icon={<MapPin size={11} />}>Lokalizacja</Label>

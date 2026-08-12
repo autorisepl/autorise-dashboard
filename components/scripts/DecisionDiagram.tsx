@@ -2,6 +2,7 @@
 
 import { Check } from "lucide-react";
 import type { CSSProperties } from "react";
+import { useEffect, useState } from "react";
 import type { Decision, DecisionOption } from "@/lib/scripts/types";
 
 interface DecisionDiagramProps {
@@ -10,51 +11,63 @@ interface DecisionDiagramProps {
   selectedTrigger?: string;
 }
 
-const TONE_ACCENT: Record<"neutral" | "positive" | "warning", string> = {
-  neutral: "var(--text-secondary)",
-  positive: "var(--success)",
-  warning: "var(--warning)",
+type Tone = "neutral" | "positive" | "warning";
+
+// Para tekst/obramowanie/tło per ton, zweryfikowane programowo WCAG AA (>=4.5:1) na
+// --bg-card — ten sam wzorzec bg/text co --success-text/--warning-text w globals.css.
+// Neutral używa akcentu aplikacji (nie szarości), żeby zaznaczona opcja realnie się wyróżniała.
+const TONE: Record<Tone, { text: string; border: string; bg: string }> = {
+  neutral: { text: "var(--accent-text)", border: "var(--accent)", bg: "var(--accent-muted)" },
+  positive: { text: "var(--success-text)", border: "var(--success)", bg: "var(--success-bg)" },
+  warning: { text: "var(--warning-text)", border: "var(--warning)", bg: "var(--warning-bg)" },
 };
 
-const OPTION_BASE: CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  gap: 6,
-  width: "100%",
-  padding: "16px 18px",
-  borderRadius: 14,
-  border: "1px solid var(--border)",
-  background: "var(--bg-card, #ffffff)",
-  cursor: "pointer",
-  textAlign: "left",
-  transition:
-    "transform 160ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 160ms ease, background 160ms ease",
-  boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
-};
-
-const OPTION_HOVER: CSSProperties = {
-  transform: "translateY(-1px) scale(1.008)",
-  boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
-};
-
-function selectedStyle(accent: string): CSSProperties {
+function buildOptionStyle(isSelected: boolean, isHovered: boolean, tone: Tone): CSSProperties {
+  const t = TONE[tone];
   return {
-    borderColor: accent,
-    background: "linear-gradient(180deg, rgba(10,132,255,0.06), rgba(10,132,255,0.03))",
-    boxShadow: `0 0 0 1px ${accent}, 0 4px 16px rgba(10,132,255,0.12)`,
+    display: "flex",
+    flexDirection: "column",
+    gap: 6,
+    width: "100%",
+    padding: "16px 18px",
+    borderRadius: 14,
+    border: `1px solid ${isSelected ? t.border : isHovered ? "var(--border-hover)" : "var(--border)"}`,
+    background: isSelected ? t.bg : isHovered ? "var(--bg-hover)" : "var(--bg-card)",
+    cursor: "pointer",
+    textAlign: "left",
+    transition:
+      "transform 160ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 160ms ease, background 160ms ease, border-color 160ms ease",
+    boxShadow: isSelected
+      ? `0 0 0 1px ${t.border}, var(--shadow-card)`
+      : isHovered
+        ? "var(--shadow-card)"
+        : "var(--shadow-sm)",
+    transform: isHovered && !isSelected ? "translateY(-1px) scale(1.008)" : "none",
   };
 }
 
 export function DecisionDiagram({ decision, onSelect, selectedTrigger }: DecisionDiagramProps) {
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
+  // Po wyborze opcji z tekstem do powiedzenia (`sayAfter`), tekst ma być od razu
+  // widoczny na samej górze widocznego obszaru, nie wymagać przewijania w trakcie
+  // żywej rozmowy — realny problem operacyjny zgłoszony przez Michała, nie kosmetyczny.
+  useEffect(() => {
+    if (!selectedTrigger) return;
+    const el = document.getElementById(`sayafter-${selectedTrigger}`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [selectedTrigger]);
+
   return (
     <div
       style={{
-        background: "rgba(245,245,247,0.7)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
+        background: "var(--glass)",
+        backdropFilter: "var(--glass-blur)",
+        WebkitBackdropFilter: "var(--glass-blur)",
         borderRadius: 16,
         padding: 14,
-        border: "1px solid rgba(0,0,0,0.06)",
+        border: "1px solid var(--glass-border)",
         marginTop: 8,
         marginBottom: 8,
       }}
@@ -73,20 +86,18 @@ export function DecisionDiagram({ decision, onSelect, selectedTrigger }: Decisio
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {decision.options.map((opt, i) => {
-          const accent = TONE_ACCENT[opt.tone ?? "neutral"];
+          const tone: Tone = opt.tone ?? "neutral";
+          const accent = TONE[tone].text;
           const isSelected = opt.trigger === selectedTrigger;
-          const restingStyle = isSelected ? selectedStyle(accent) : OPTION_BASE;
+          const isHovered = hoveredIndex === i;
           return (
             <button
-              key={i}
+              key={opt.trigger}
+              type="button"
               onClick={() => onSelect(opt)}
-              style={{ ...OPTION_BASE, ...restingStyle }}
-              onMouseEnter={(e) => {
-                Object.assign(e.currentTarget.style, OPTION_HOVER);
-              }}
-              onMouseLeave={(e) => {
-                Object.assign(e.currentTarget.style, { ...OPTION_BASE, ...restingStyle });
-              }}
+              onMouseEnter={() => setHoveredIndex(i)}
+              onMouseLeave={() => setHoveredIndex(null)}
+              style={buildOptionStyle(isSelected, isHovered, tone)}
             >
               <div
                 style={{
@@ -130,8 +141,8 @@ export function DecisionDiagram({ decision, onSelect, selectedTrigger }: Decisio
                     marginTop: 4,
                     fontSize: 10,
                     fontWeight: 700,
-                    color: "var(--accent)",
-                    background: "rgba(10,132,255,0.1)",
+                    color: "var(--accent-text)",
+                    background: "var(--accent-muted)",
                     padding: "3px 8px",
                     borderRadius: 6,
                     textTransform: "uppercase",
@@ -143,12 +154,13 @@ export function DecisionDiagram({ decision, onSelect, selectedTrigger }: Decisio
               )}
               {isSelected && opt.sayAfter && (
                 <div
+                  id={`sayafter-${opt.trigger}`}
                   style={{
                     marginTop: 4,
                     padding: "8px 10px",
                     borderRadius: 8,
-                    background: "rgba(255,255,255,0.75)",
-                    border: `1px solid ${accent}`,
+                    background: "var(--bg)",
+                    border: `1px solid ${TONE[tone].border}`,
                     fontFamily: "var(--font-sans)",
                     fontSize: 12,
                     lineHeight: 1.5,

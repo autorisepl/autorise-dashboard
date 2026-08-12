@@ -98,21 +98,24 @@ export async function PATCH(req: NextRequest) {
     status?: "needsAction" | "completed";
     title?: string;
     notes?: string;
-    due?: string;
+    // "yyyy-mm-dd" ustawia termin, null czyści go (zadanie wraca do Nieprzypisanych),
+    // klucz nieobecny w ogóle (undefined po JSON.parse) = nie dotykaj pola.
+    due?: string | null;
   };
   const { listId, taskId, status, title, notes, due } = body;
 
   try {
     const tasks = getTasksClient(token);
-    const requestBody: Record<string, string | undefined> = {};
+    const requestBody: Record<string, string | null | undefined> = {};
     if (status) {
       requestBody.status = status;
       requestBody.completed = status === "completed" ? new Date().toISOString() : undefined;
     }
     if (title !== undefined) requestBody.title = title;
     if (notes !== undefined) requestBody.notes = notes || undefined;
-    if (due !== undefined)
-      requestBody.due = due ? new Date(due + "T00:00:00").toISOString() : undefined;
+    if (due !== undefined) {
+      requestBody.due = due ? new Date(`${due}T00:00:00`).toISOString() : null;
+    }
     await tasks.tasks.patch({ tasklist: listId, task: taskId, requestBody });
     return NextResponse.json({ success: true });
   } catch {

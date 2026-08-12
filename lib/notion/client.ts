@@ -1109,10 +1109,13 @@ export async function migrateNotionSchema(): Promise<{ added: string[]; errors: 
   }
 
   // Batch 6 (2026-07-26) — "Moduły wdrażane" na karcie klienta w /pipeline. Wcześniej NIE
-  // istniało żadne pole trzymające które z 4 standardowych modułów (baza Produkty, Blok
+  // istniało żadne pole trzymające które z modułów standardowych (baza Produkty, Blok
   // "Arek" pkt 11) faktycznie wdraża się dla danego klienta — tylko rekomendacja liczona
-  // lokalnie w kalkulatorze /kwalifikacja (nigdy niezapisywana). Opcje = te same 4 kody co w
-  // Produkty/"Kod modułu": email-parser/document-ocr/payment-monitor/whatsapp-alerts.
+  // lokalnie w kalkulatorze /kwalifikacja (nigdy niezapisywana). Opcje = te same kody co w
+  // Produkty/"Kod modułu" (lib/scripts/moduleCatalog.ts).
+  // "payment-monitor" USUNIĘTY z opcji 2026-08-08 (Cel A) — audyt SQL potwierdził 0 kart
+  // Pipeline z tym kodem w polu "Moduły wdrażane" przed usunięciem, bezpieczne do wykreślenia
+  // z listy opcji bez ryzyka utraty żywych danych klientów.
   try {
     await notion.dataSources.update({
       data_source_id: PIPELINE_DATA_SOURCE_ID,
@@ -1122,7 +1125,6 @@ export async function migrateNotionSchema(): Promise<{ added: string[]; errors: 
             options: [
               { name: "email-parser" },
               { name: "document-ocr" },
-              { name: "payment-monitor" },
               { name: "whatsapp-alerts" },
             ],
           },

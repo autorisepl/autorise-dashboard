@@ -17,7 +17,8 @@ const valueStyle = {
 
 const LOG_LINES = [
   "Zlecenie dopasowane po numerze rejestracyjnym PO 4821W do pozycji GPS pojazdu w WebFleet.",
-  "Do aplikacji WebFleet Driver wysłano: adresy załadunku i rozładunku, okna czasowe, numer zlecenia, trasę nawigacji.",
+  "Do aplikacji WebFleet Driver wysłano: adresy, okna czasowe, numer zlecenia i trasę nawigacji.",
+  "Kierowca dostaje powiadomienie na terminal i potwierdza OK (tak jak dziś - bez zmiany nawyków kierowców).",
   "Pozycja pojazdu aktualizowana automatycznie z GPS WebFleet, bez ręcznego odpytywania kierowcy.",
 ];
 

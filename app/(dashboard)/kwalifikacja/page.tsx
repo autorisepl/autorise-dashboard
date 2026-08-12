@@ -23,7 +23,6 @@ import { useCallback, useEffect, useState } from "react";
 import type { GoogleTaskList } from "@/app/api/google/tasks/route";
 import type { PipelineClientDetailed } from "@/app/api/notion/pipeline/route";
 import { ClientSidebar } from "@/components/clients/ClientSidebar";
-import { GlobalClientSelector } from "@/components/clients/GlobalClientSelector";
 import { ProgressBar, SectionLabelSmall, StepCard } from "@/components/dalsze-kroki/DalszeKrokiUI";
 import { DecisionDiagram } from "@/components/scripts/DecisionDiagram";
 import { NextStepArrow } from "@/components/scripts/NextStepArrow";
@@ -39,7 +38,6 @@ import {
 import { GROUP_COLORS, MESSAGES_DATA } from "@/lib/scripts/messages";
 import { getRecommendedModules } from "@/lib/scripts/moduleRecommendation";
 import type { CalculatorGroup, DecisionOption, Objection, ScriptLine } from "@/lib/scripts/types";
-import { objectionColor } from "@/lib/scripts/types";
 
 // ── Helpers ──────────────────────────────────────────────────────────
 
@@ -102,8 +100,8 @@ function Card({
   return (
     <div
       style={{
-        background: "#ffffff",
-        border: "1px solid #E5E5EA",
+        background: "var(--bg-elevated)",
+        border: "1px solid var(--border)",
         borderRadius: 12,
         overflow: "hidden",
         marginBottom: 12,
@@ -113,7 +111,7 @@ function Card({
         onClick={collapsible ? () => setOpen((p) => !p) : undefined}
         style={{
           padding: "12px 16px",
-          borderBottom: open ? "1px solid #E5E5EA" : "none",
+          borderBottom: open ? "1px solid var(--border)" : "none",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -174,8 +172,8 @@ function CalculatorFlagsBar({ flags }: { flags: Record<string, boolean> }) {
         padding: "8px 12px",
         marginBottom: 8,
         borderRadius: 8,
-        border: "1px solid rgba(10,132,255,0.18)",
-        background: "rgba(10,132,255,0.05)",
+        border: "1px solid rgba(67, 121, 177,0.18)",
+        background: "rgba(67, 121, 177,0.05)",
       }}
     >
       <span
@@ -183,7 +181,7 @@ function CalculatorFlagsBar({ flags }: { flags: Record<string, boolean> }) {
           fontFamily: "var(--font-sans)",
           fontSize: 10,
           fontWeight: 700,
-          color: "var(--accent)",
+          color: "var(--accent-text)",
           textTransform: "uppercase",
           letterSpacing: "0.06em",
         }}
@@ -201,8 +199,8 @@ function CalculatorFlagsBar({ flags }: { flags: Record<string, boolean> }) {
               color: "var(--text-primary)",
               padding: "3px 8px",
               borderRadius: 20,
-              background: "#fff",
-              border: "1px solid #E5E5EA",
+              background: "var(--bg-elevated)",
+              border: "1px solid var(--border)",
             }}
           >
             {src?.label ?? k}
@@ -230,7 +228,7 @@ function RecommendedModulesPanel({
           fontFamily: "var(--font-sans)",
           fontSize: 10,
           fontWeight: 700,
-          color: "var(--success-text, #248a3d)",
+          color: "var(--success-text)",
           textTransform: "uppercase",
           letterSpacing: "0.06em",
           marginBottom: 8,
@@ -245,8 +243,8 @@ function RecommendedModulesPanel({
             style={{
               padding: "12px 14px",
               borderRadius: 12,
-              background: "rgba(52,199,89,0.05)",
-              border: "1px solid rgba(52,199,89,0.18)",
+              background: "rgba(47, 162, 98,0.05)",
+              border: "1px solid rgba(47, 162, 98,0.18)",
               display: "flex",
               flexDirection: "column",
               gap: 3,
@@ -283,12 +281,29 @@ function RecommendedModulesPanel({
 // ── Inline kalkulator wbudowany w skrypt ─────────────────────────────
 
 const PRACA_TYPES = [
-  { id: "zlecenia", label: "Zlecenia — automatyczne wczytywanie z maila" },
-  { id: "cmr", label: "Dokumenty transportowe — skan i odczyt" },
-  { id: "faktury_recznie", label: "Faktury i płatności — pilnowanie terminów" },
-  { id: "komunikacja", label: "Status zleceń — bez dzwonienia do spedytora" },
-  { id: "inne", label: "Inne — do doprecyzowania ręcznie" },
+  { id: "zlecenia", label: "Automatyzacja TMS: wczytywanie zleceń z maila" },
+  { id: "cmr", label: "Dokumenty i pliki: CMR i potwierdzenia dostawy" },
+  { id: "faktury_recznie", label: "Dokumenty i pliki: faktury" },
+  { id: "komunikacja", label: "Powiadomienia automatyczne: status bez dzwonienia" },
+  { id: "inne", label: "Inne: do doprecyzowania ręcznie" },
 ] as const;
+
+// Presety ról jednym kliknięciem (punkt "KALKULATOR ROI" przebudowy 2026-08-08) —
+// zero wpisywania nazw ręcznie w trakcie rozmowy, wartości domyślne to orientacyjny
+// punkt startowy do skorygowania na podstawie tego co powie klient.
+const ROLE_PRESETS: {
+  id: string;
+  label: string;
+  osoby: number;
+  godziny: number;
+  stawka: number;
+}[] = [
+  { id: "spedytor", label: "Spedytor", osoby: 1, godziny: 2, stawka: 50 },
+  { id: "faktury", label: "Fakturzystka / księgowość", osoby: 1, godziny: 1.5, stawka: 45 },
+  { id: "dyspozytor", label: "Dyspozytor", osoby: 1, godziny: 1.5, stawka: 50 },
+  { id: "wlasciciel", label: "Właściciel", osoby: 1, godziny: 1, stawka: 80 },
+  { id: "inne", label: "Inne", osoby: 1, godziny: 1, stawka: 50 },
+];
 
 let groupIdCounter = 0;
 function newGroupId(): string {
@@ -310,13 +325,13 @@ function GroupRow({
   const fieldStyle: React.CSSProperties = {
     height: 36,
     borderRadius: 8,
-    border: "1px solid #E5E5EA",
+    border: "1px solid var(--border)",
     padding: "0 10px",
     fontFamily: "var(--font-sans)",
     fontSize: 13,
     fontWeight: 600,
     color: "var(--text-primary)",
-    background: "#F5F5F7",
+    background: "var(--bg)",
     outline: "none",
     width: "100%",
   };
@@ -336,8 +351,8 @@ function GroupRow({
         gap: 8,
         padding: "8px",
         borderRadius: 8,
-        background: "#FAFAFA",
-        border: "1px solid #EFEFEF",
+        background: "var(--bg-hover)",
+        border: "1px solid var(--border)",
       }}
     >
       <label style={{ flex: 1.4, display: "flex", flexDirection: "column", gap: 4 }}>
@@ -390,8 +405,8 @@ function GroupRow({
             height: 36,
             width: 34,
             borderRadius: 8,
-            border: "1px solid #E5E5EA",
-            background: "#fff",
+            border: "1px solid var(--border)",
+            background: "var(--bg-elevated)",
             color: "var(--error-text)",
             cursor: "pointer",
             display: "flex",
@@ -439,10 +454,18 @@ function ScriptKalkulator({
   const updateGroup = (id: string, patch: Partial<CalculatorGroup>) => {
     onGroupsChange(groups.map((g) => (g.id === id ? { ...g, ...patch } : g)));
   };
-  const addGroup = () => {
+  const addGroup = (preset?: (typeof ROLE_PRESETS)[number]) => {
     onGroupsChange([
       ...groups,
-      { id: newGroupId(), label: "Nowa rola", osoby: 1, godziny: 2, stawka: 50 },
+      preset
+        ? {
+            id: newGroupId(),
+            label: preset.label,
+            osoby: preset.osoby,
+            godziny: preset.godziny,
+            stawka: preset.stawka,
+          }
+        : { id: newGroupId(), label: "Nowa rola", osoby: 1, godziny: 2, stawka: 50 },
     ]);
   };
   const removeGroup = (id: string) => {
@@ -452,9 +475,13 @@ function ScriptKalkulator({
   const miesiecznieH = groups.reduce((sum, g) => sum + g.osoby * g.godziny * 22, 0);
   const miesieczniePLN = groups.reduce((sum, g) => sum + g.osoby * g.godziny * 22 * g.stawka, 0);
   const rocznie = miesieczniePLN * 12;
-  // 70% czasu bazowego (nowa umowa §4, 2026-07-24) — było 0.8, ten sam mechanizm procentowy
-  // co [gwarancja godzin] w sprzedaz.ts i gwar w prezentacja-dane/route.ts.
-  const gwarancjaH = Math.round(miesiecznieH * 0.7);
+  // 70% czasu bazowego, punkt startowy zgodny z domyślnym celem efektywności z
+  // context/PRODUKT_ZRODLO_PRAWDY.md (min. 70%) — to WSTĘPNY szacunek na etapie
+  // kwalifikacji, nie wiążąca gwarancja. Wiążąca liczba jest mierzona dopiero na
+  // spotkaniu wdrożeniowym (Załącznik 1 umowy), z realnie zmierzonych czasów, nie
+  // z deklaracji klienta na telefonie — dlatego etykieta niżej mówi "wstępny
+  // potencjał", nigdy "gwarancja", na tym etapie rozmowy.
+  const potencjalH = Math.round(miesiecznieH * 0.7);
 
   const fmt = (n: number) =>
     n.toLocaleString("pl-PL", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
@@ -467,17 +494,17 @@ function ScriptKalkulator({
   return (
     <div
       style={{
-        border: "1px solid #E5E5EA",
+        border: "1px solid var(--border)",
         borderRadius: 10,
         overflow: "hidden",
-        background: "#fff",
+        background: "var(--bg-elevated)",
       }}
     >
       <div
         style={{
           padding: "10px 14px",
-          background: "rgba(10,132,255,0.04)",
-          borderBottom: "1px solid #E5E5EA",
+          background: "rgba(67, 121, 177,0.04)",
+          borderBottom: "1px solid var(--border)",
           display: "flex",
           alignItems: "center",
           gap: 8,
@@ -490,7 +517,7 @@ function ScriptKalkulator({
             fontWeight: 700,
             letterSpacing: "0.07em",
             textTransform: "uppercase",
-            color: "var(--accent)",
+            color: "var(--accent-text)",
           }}
         >
           Kalkulator ROI
@@ -509,6 +536,47 @@ function ScriptKalkulator({
       </div>
 
       <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 12 }}>
+        {/* Presety ról jednym kliknięciem — zero wpisywania nazw ręcznie w trakcie rozmowy */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <span
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 10,
+              fontWeight: 600,
+              color: "var(--text-tertiary)",
+              textTransform: "uppercase",
+              letterSpacing: "0.07em",
+            }}
+          >
+            Dodaj rolę
+          </span>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {ROLE_PRESETS.map((preset) => (
+              <button
+                key={preset.id}
+                onClick={() => addGroup(preset)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                  padding: "5px 10px",
+                  borderRadius: 20,
+                  border: "1px solid var(--border)",
+                  background: "var(--bg)",
+                  color: "var(--text-secondary)",
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 11,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                <Plus size={11} />
+                {preset.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Grupy ról — każda ma własną liczbę osób, godzin i stawkę */}
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {groups.map((g) => (
@@ -521,7 +589,7 @@ function ScriptKalkulator({
             />
           ))}
           <button
-            onClick={addGroup}
+            onClick={() => addGroup()}
             style={{
               display: "flex",
               alignItems: "center",
@@ -529,9 +597,9 @@ function ScriptKalkulator({
               gap: 6,
               padding: "7px 10px",
               borderRadius: 8,
-              border: "1px dashed #C7C7CC",
+              border: "1px dashed var(--text-tertiary)",
               background: "transparent",
-              color: "var(--accent)",
+              color: "var(--accent-text)",
               fontFamily: "var(--font-sans)",
               fontSize: 12,
               fontWeight: 600,
@@ -539,7 +607,7 @@ function ScriptKalkulator({
             }}
           >
             <Plus size={13} />
-            Dodaj grupę (np. inna rola, inna stawka)
+            Dodaj rolę niestandardową
           </button>
         </div>
         <div
@@ -550,8 +618,8 @@ function ScriptKalkulator({
             fontStyle: "italic",
           }}
         >
-          Stawka domyślna 50 zł/h to szacunek kosztu pracy z narzutami — dostosuj dla każdej roli
-          jeśli klient poda inną wartość.
+          Stawki w presetach to szacunek kosztu pracy z narzutami. Dostosuj godziny dziennie i
+          stawkę dla każdej roli, jeśli klient poda inną wartość.
         </div>
 
         {/* Typy pracy */}
@@ -583,8 +651,8 @@ function ScriptKalkulator({
                     gap: 4,
                     padding: "5px 10px",
                     borderRadius: 20,
-                    border: on ? "1px solid var(--accent)" : "1px solid #E5E5EA",
-                    background: on ? "rgba(10,132,255,0.08)" : "#F5F5F7",
+                    border: on ? "1px solid var(--accent)" : "1px solid var(--border)",
+                    background: on ? "rgba(67, 121, 177, 0.08)" : "var(--bg)",
                     color: on ? "var(--accent)" : "var(--text-secondary)",
                     fontFamily: "var(--font-sans)",
                     fontSize: 11,
@@ -616,88 +684,25 @@ function ScriptKalkulator({
           )}
         </div>
 
-        {/* Wynik */}
+        {/* Wynik — jedna, jasna prezentacja, bez duplikowania tych samych liczb dwa razy */}
         <div
           style={{
-            background: "rgba(10,132,255,0.05)",
-            border: "1px solid rgba(10,132,255,0.18)",
+            background: "rgba(67, 121, 177,0.05)",
+            border: "1px solid rgba(67, 121, 177,0.18)",
             borderRadius: 8,
             padding: "10px 14px",
             display: "flex",
             flexDirection: "column",
-            gap: 6,
+            gap: 8,
           }}
         >
-          <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-            <div>
-              <div
-                style={{
-                  fontFamily: "var(--font-sans)",
-                  fontSize: 10,
-                  color: "var(--text-tertiary)",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.07em",
-                  fontWeight: 600,
-                }}
-              >
-                Miesięcznie
-              </div>
-              <div
-                style={{
-                  fontFamily: "var(--font-sans)",
-                  fontSize: 20,
-                  fontWeight: 700,
-                  color: "var(--accent)",
-                  lineHeight: 1.2,
-                }}
-              >
-                {fmt(miesieczniePLN)} zł
-              </div>
-              <div
-                style={{
-                  fontFamily: "var(--font-sans)",
-                  fontSize: 11,
-                  color: "var(--text-tertiary)",
-                }}
-              >
-                {fmt(miesiecznieH)} h łącznie
-              </div>
-            </div>
-            <div>
-              <div
-                style={{
-                  fontFamily: "var(--font-sans)",
-                  fontSize: 10,
-                  color: "var(--text-tertiary)",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.07em",
-                  fontWeight: 600,
-                }}
-              >
-                Rocznie
-              </div>
-              <div
-                style={{
-                  fontFamily: "var(--font-sans)",
-                  fontSize: 20,
-                  fontWeight: 700,
-                  color: "var(--text-primary)",
-                  lineHeight: 1.2,
-                }}
-              >
-                {fmt(rocznie)} zł
-              </div>
-            </div>
-          </div>
-
-          {/* Gotowe zdanie do wypowiedzenia */}
+          {/* Gotowe zdanie do wypowiedzenia — jedyne miejsce z liczbami miesięcznie/rocznie */}
           <div
             style={{
-              marginTop: 4,
               padding: "8px 10px",
               borderRadius: 6,
-              background: "#fff",
-              border: "1px solid #E5E5EA",
+              background: "var(--bg-elevated)",
+              border: "1px solid var(--border)",
               fontFamily: "var(--font-sans)",
               fontSize: 12,
               lineHeight: 1.55,
@@ -707,20 +712,31 @@ function ScriptKalkulator({
             {wynikZdanie}
           </div>
 
-          {/* Gwarancja na żywo */}
+          {/* Wstępny potencjał, nie wiążąca gwarancja na tym etapie */}
           <div
             style={{
               padding: "8px 10px",
               borderRadius: 6,
-              background: "rgba(52,199,89,0.08)",
-              border: "1px solid rgba(52,199,89,0.25)",
+              background: "rgba(47, 162, 98,0.08)",
+              border: "1px solid rgba(47, 162, 98,0.25)",
               fontFamily: "var(--font-sans)",
               fontSize: 12,
               fontWeight: 600,
               color: "var(--success-text)",
             }}
           >
-            Gwarancja dla tego klienta: minimum {fmt(gwarancjaH)} godzin miesięcznie
+            Wstępny potencjał oszczędności: około {fmt(potencjalH)} h miesięcznie
+          </div>
+          <div
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 10,
+              color: "var(--text-tertiary)",
+              fontStyle: "italic",
+            }}
+          >
+            To szacunek na etapie kwalifikacji, nie gwarancja. Wiążąca liczba jest mierzona ze
+            zmierzonych czasów przed podpisaniem umowy, na spotkaniu wdrożeniowym (Załącznik 1).
           </div>
         </div>
       </div>
@@ -769,7 +785,7 @@ function BrakOdbioruBanner({ onOpenSms }: { onOpenSms: () => void }) {
           padding: "0 12px",
           borderRadius: 7,
           border: "1px solid var(--warning)",
-          background: "#fff",
+          background: "var(--bg-elevated)",
           color: "var(--warning-text)",
           fontFamily: "var(--font-sans)",
           fontSize: 11,
@@ -805,8 +821,8 @@ function InlineCaptureInput({
         gap: 10,
         padding: "8px 12px",
         borderRadius: 8,
-        background: "rgba(10,132,255,0.05)",
-        border: "1px solid rgba(10,132,255,0.18)",
+        background: "rgba(67, 121, 177,0.05)",
+        border: "1px solid rgba(67, 121, 177,0.18)",
         width: "fit-content",
       }}
     >
@@ -815,7 +831,7 @@ function InlineCaptureInput({
           fontFamily: "var(--font-sans)",
           fontSize: 12,
           fontWeight: 600,
-          color: "var(--accent)",
+          color: "var(--accent-text)",
         }}
       >
         {label}
@@ -829,13 +845,13 @@ function InlineCaptureInput({
           height: 36,
           width: 70,
           borderRadius: 8,
-          border: "1px solid #E5E5EA",
+          border: "1px solid var(--border)",
           padding: "0 8px",
           fontFamily: "var(--font-sans)",
           fontSize: 14,
           fontWeight: 700,
           color: "var(--text-primary)",
-          background: "#fff",
+          background: "var(--bg-elevated)",
           outline: "none",
         }}
       />
@@ -872,22 +888,12 @@ function ScriptStep({
 }) {
   const [open, setOpen] = useState(true);
 
-  const tagColors: Record<string, string> = {
-    AKCJA: "var(--accent)",
-    MÓWISZ: "var(--text-primary)",
-    PYTASZ: "#7c3aed",
-    UWAGA: "var(--warning)",
-    GAŁĘZIE: "var(--success-text)",
-    ZAMKNIĘCIE: "#16a34a",
-    KALKULATOR: "#0d9488",
-  };
-
   return (
     <div
       id={`step-${step.id}`}
       style={{
         marginBottom: 8,
-        border: "1px solid #E5E5EA",
+        border: "1px solid var(--border)",
         borderRadius: 10,
         overflow: "hidden",
       }}
@@ -899,8 +905,8 @@ function ScriptStep({
             fontSize: 10,
             color: "var(--text-tertiary)",
             padding: "5px 14px",
-            background: "#FAFAFA",
-            borderBottom: "1px solid #E5E5EA",
+            background: "var(--bg-hover)",
+            borderBottom: "1px solid var(--border)",
             display: "flex",
             alignItems: "center",
             gap: 4,
@@ -914,7 +920,7 @@ function ScriptStep({
         onClick={() => setOpen((p) => !p)}
         style={{
           padding: "10px 14px",
-          background: open ? "rgba(10,132,255,0.03)" : "#fff",
+          background: open ? "rgba(67, 121, 177, 0.03)" : "var(--bg-elevated)",
           display: "flex",
           alignItems: "center",
           gap: 10,
@@ -928,7 +934,7 @@ function ScriptStep({
             height: 22,
             borderRadius: "50%",
             background: "var(--accent)",
-            color: "#fff",
+            color: "var(--text-on-accent)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -954,13 +960,10 @@ function ScriptStep({
         <span
           style={{
             fontFamily: "var(--font-sans)",
-            fontSize: 9,
-            fontWeight: 700,
-            letterSpacing: "0.08em",
-            color: tagColors[step.tag] ?? "var(--text-tertiary)",
-            padding: "2px 7px",
-            borderRadius: 4,
-            background: `${tagColors[step.tag] ?? "var(--text-tertiary)"}15`,
+            fontSize: 8,
+            fontWeight: 600,
+            letterSpacing: "0.06em",
+            color: "var(--text-tertiary)",
           }}
         >
           {step.tag}
@@ -1037,11 +1040,11 @@ function ScriptStep({
                     style={{
                       fontFamily: "var(--font-sans)",
                       fontSize: 11,
-                      color: "var(--text-tertiary)",
+                      color: "var(--text-secondary)",
                       fontStyle: "italic",
                       marginTop: 2,
                       paddingLeft: 8,
-                      borderLeft: "2px solid var(--border)",
+                      borderLeft: "2px solid var(--text-tertiary)",
                     }}
                   >
                     Cel: {line.cel}
@@ -1058,7 +1061,7 @@ function ScriptStep({
                       padding: "5px 10px",
                       borderRadius: 6,
                       border: "1px solid var(--warning)",
-                      background: "#fff",
+                      background: "var(--bg-elevated)",
                       color: "var(--warning-text)",
                       fontFamily: "var(--font-sans)",
                       fontSize: 11,
@@ -1083,7 +1086,7 @@ function ScriptStep({
                     flexShrink: 0,
                     padding: "3px 7px",
                     borderRadius: 5,
-                    border: "1px solid #E5E5EA",
+                    border: "1px solid var(--border)",
                     background: "transparent",
                     cursor: "pointer",
                     color:
@@ -1116,7 +1119,7 @@ function ScriptStep({
             <NextStepArrow label="Dalej" onJump={() => onJump(step.nextStepId!)} />
           )}
           {children && (
-            <div style={{ borderTop: "1px solid #E5E5EA", marginTop: 4, paddingTop: 10 }}>
+            <div style={{ borderTop: "1px solid var(--border)", marginTop: 4, paddingTop: 10 }}>
               {children}
             </div>
           )}
@@ -1133,10 +1136,38 @@ const STAGE_LABELS: Partial<Record<Objection["stage"], string>> = {
   icp: "Weryfikacja ICP",
   diagnoza: "Diagnoza dokumentów",
   kalkulator: "Kalkulator ROI",
+  closing: "Umówienie spotkania",
   wszedzie: "Obiekcje ogólne (mogą wystąpić wszędzie)",
 };
 
-const STAGE_ORDER: Objection["stage"][] = ["opening", "icp", "diagnoza", "kalkulator", "wszedzie"];
+const STAGE_ORDER: Objection["stage"][] = [
+  "opening",
+  "icp",
+  "diagnoza",
+  "kalkulator",
+  "closing",
+  "wszedzie",
+];
+
+// Kategoria obiekcji = etap rozmowy w której pada (zamiast zgadywania kategorii
+// z treści etykiety) — pole `stage` jest obowiązkowe i ma pełne pokrycie dla
+// każdej obiekcji, w przeciwieństwie do dopasowania po słowach kluczowych w
+// `objectionColor()` (lib/scripts/types.ts), które dla tego skryptu zostawiało
+// większość obiekcji w nieopisującym niczego kolorze "Inne". Sześć odrębnych,
+// nasyconych barw, żadna nie powtarza odcienia używanego gdzie indziej w UI
+// (np. --text-tertiary) — kategoria ma się wizualnie wyróżniać, nie zlewać.
+const STAGE_BADGE: Record<Objection["stage"], { accent: string; short: string }> = {
+  opening: { accent: "#3b82f6", short: "Otwarcie" },
+  icp: { accent: "#8b5cf6", short: "ICP" },
+  diagnoza: { accent: "#14b8a6", short: "Diagnoza" },
+  kalkulator: { accent: "#f59e0b", short: "Kalkulator" },
+  pitch: { accent: "#f59e0b", short: "Kalkulator" },
+  cena: { accent: "#ef4444", short: "Cena" },
+  closing: { accent: "#34d399", short: "Umówienie" },
+  wszedzie: { accent: "#f43f5e", short: "Ogólne" },
+  kickoff: { accent: "#34d399", short: "Kickoff" },
+  przedkontraktowa: { accent: "#f59e0b", short: "Przedkontraktowa" },
+};
 
 function renderObjection(
   obj: Objection,
@@ -1145,19 +1176,20 @@ function renderObjection(
   fill: (t: string) => string,
   onCopy: (id: string, text: string) => void,
   copiedId: string | null,
+  onJumpStep: (stepId: string) => void,
 ) {
-  const oc = objectionColor(obj.label);
+  const badge = STAGE_BADGE[obj.stage];
   const isOpen = openId === obj.id;
   return (
     <div
       key={obj.id}
       id={`objection-${obj.id}`}
       style={{
-        border: "1px solid #E5E5EA",
-        borderLeft: `3px solid ${oc.accent}`,
+        border: "1px solid var(--border)",
+        borderLeft: `3px solid ${badge.accent}`,
         borderRadius: 8,
         overflow: "hidden",
-        background: isOpen ? oc.bg : "#fff",
+        background: "var(--bg-elevated)",
         transition: "background-color 200ms, box-shadow 250ms",
       }}
     >
@@ -1175,15 +1207,15 @@ function renderObjection(
         <div style={{ flex: 1 }}>
           <div
             style={{
-              fontSize: 9,
-              fontWeight: 700,
-              letterSpacing: "0.1em",
+              fontSize: 8,
+              fontWeight: 600,
+              letterSpacing: "0.06em",
               textTransform: "uppercase",
-              color: oc.accent,
+              color: "var(--text-tertiary)",
               marginBottom: 1,
             }}
           >
-            {oc.category}
+            {badge.short}
           </div>
           <div
             style={{
@@ -1214,7 +1246,7 @@ function renderObjection(
                 style={{
                   margin: 0,
                   fontSize: 13,
-                  lineHeight: 1.6,
+                  lineHeight: 1.55,
                   color: "var(--text-primary)",
                   fontFamily: "var(--font-sans)",
                   flex: 1,
@@ -1228,7 +1260,7 @@ function renderObjection(
                   flexShrink: 0,
                   padding: "3px 7px",
                   borderRadius: 5,
-                  border: "1px solid #E5E5EA",
+                  border: "1px solid var(--border)",
                   background: "transparent",
                   cursor: "pointer",
                   color:
@@ -1251,13 +1283,10 @@ function renderObjection(
             <p
               style={{
                 margin: 0,
-                fontSize: 12,
+                fontSize: 13,
                 lineHeight: 1.55,
-                color: "var(--accent)",
+                color: "var(--text-primary)",
                 fontFamily: "var(--font-sans)",
-                fontStyle: "italic",
-                borderTop: "1px solid #E5E5EA",
-                paddingTop: 8,
               }}
             >
               {fill(obj.followup)}
@@ -1271,13 +1300,16 @@ function renderObjection(
                 lineHeight: 1.5,
                 color: "var(--text-secondary)",
                 fontFamily: "var(--font-sans)",
-                background: "var(--warning-bg)",
-                padding: "6px 8px",
-                borderRadius: 6,
               }}
             >
               {obj.note}
             </p>
+          )}
+          {obj.nextStepId && (
+            <NextStepArrow
+              label={`Dalej: ${findStepLabel(obj.nextStepId)}`}
+              onJump={() => onJumpStep(obj.nextStepId!)}
+            />
           )}
           {obj.sms && (
             <div
@@ -1291,7 +1323,7 @@ function renderObjection(
                 style={{
                   fontSize: 9,
                   fontWeight: 700,
-                  color: "var(--accent)",
+                  color: "var(--accent-text)",
                   letterSpacing: "0.08em",
                   textTransform: "uppercase",
                   marginBottom: 4,
@@ -1351,27 +1383,17 @@ function ObjectionsPanel({
   copiedId,
   openId,
   setOpenId,
+  onJumpStep,
 }: {
   fill: (t: string) => string;
   onCopy: (id: string, text: string) => void;
   copiedId: string | null;
   openId: string | null;
   setOpenId: (id: string | null) => void;
+  onJumpStep: (stepId: string) => void;
 }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      <div
-        style={{
-          fontFamily: "var(--font-sans)",
-          fontSize: 11,
-          fontWeight: 700,
-          color: "var(--text-primary)",
-          letterSpacing: "0.04em",
-          textTransform: "uppercase",
-        }}
-      >
-        Obiekcje w kwalifikacji
-      </div>
       {STAGE_ORDER.map((stage) => {
         const items = OBJECTIONS_K.filter((o) => o.stage === stage);
         if (items.length === 0) return null;
@@ -1390,7 +1412,9 @@ function ObjectionsPanel({
               {STAGE_LABELS[stage]}
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              {items.map((obj) => renderObjection(obj, openId, setOpenId, fill, onCopy, copiedId))}
+              {items.map((obj) =>
+                renderObjection(obj, openId, setOpenId, fill, onCopy, copiedId, onJumpStep),
+              )}
             </div>
           </div>
         );
@@ -1433,7 +1457,7 @@ function SmsPanel({
         <div
           key={item.id}
           id={`sms-${item.id}`}
-          style={{ background: "#F5F5F7", borderRadius: 8, padding: "10px 12px" }}
+          style={{ background: "var(--bg)", borderRadius: 8, padding: "10px 12px" }}
         >
           <div
             style={{
@@ -1467,8 +1491,8 @@ function SmsPanel({
               gap: 4,
               padding: "4px 10px",
               borderRadius: 6,
-              border: "1px solid #E5E5EA",
-              background: "#fff",
+              border: "1px solid var(--border)",
+              background: "var(--bg-elevated)",
               cursor: "pointer",
               fontSize: 11,
               color:
@@ -1495,7 +1519,10 @@ function SmsPanel({
         Facebook
       </div>
       {fbItems.map((item) => (
-        <div key={item.id} style={{ background: "#F5F5F7", borderRadius: 8, padding: "10px 12px" }}>
+        <div
+          key={item.id}
+          style={{ background: "var(--bg)", borderRadius: 8, padding: "10px 12px" }}
+        >
           <div
             style={{
               fontSize: 11,
@@ -1525,8 +1552,8 @@ function SmsPanel({
               gap: 4,
               padding: "4px 10px",
               borderRadius: 6,
-              border: "1px solid #E5E5EA",
-              background: "#fff",
+              border: "1px solid var(--border)",
+              background: "var(--bg-elevated)",
               cursor: "pointer",
               fontSize: 11,
               color: copiedId === `fb-${item.id}` ? "var(--success-text)" : "var(--text-secondary)",
@@ -1702,8 +1729,8 @@ function DalszeKroki({ client }: { client: PipelineClientDetailed | null }) {
             marginBottom: 8,
             padding: "10px 12px",
             borderRadius: 8,
-            background: "#F5F5F7",
-            border: "1px solid #E5E5EA",
+            background: "var(--bg)",
+            border: "1px solid var(--border)",
           }}
         >
           <p
@@ -1731,8 +1758,8 @@ function DalszeKroki({ client }: { client: PipelineClientDetailed | null }) {
               gap: 4,
               padding: "4px 10px",
               borderRadius: 6,
-              border: "1px solid #E5E5EA",
-              background: "#fff",
+              border: "1px solid var(--border)",
+              background: "var(--bg-elevated)",
               cursor: "pointer",
               fontFamily: "var(--font-sans)",
               fontSize: 11,
@@ -1758,8 +1785,8 @@ function DalszeKroki({ client }: { client: PipelineClientDetailed | null }) {
             marginBottom: 8,
             padding: "10px 12px",
             borderRadius: 8,
-            background: "#F5F5F7",
-            border: "1px solid #E5E5EA",
+            background: "var(--bg)",
+            border: "1px solid var(--border)",
           }}
         >
           <p
@@ -1787,8 +1814,8 @@ function DalszeKroki({ client }: { client: PipelineClientDetailed | null }) {
               gap: 4,
               padding: "4px 10px",
               borderRadius: 6,
-              border: "1px solid #E5E5EA",
-              background: "#fff",
+              border: "1px solid var(--border)",
+              background: "var(--bg-elevated)",
               cursor: "pointer",
               fontFamily: "var(--font-sans)",
               fontSize: 11,
@@ -1846,7 +1873,7 @@ function DalszeKroki({ client }: { client: PipelineClientDetailed | null }) {
               background: "var(--accent)",
               cursor: savingTask ? "not-allowed" : "pointer",
               fontSize: 13,
-              color: "#fff",
+              color: "var(--text-on-accent)",
               fontFamily: "var(--font-sans)",
               fontWeight: 600,
             }}
@@ -1918,7 +1945,7 @@ function PrzypadkiSpecjalne() {
       {SPECIAL_CASES.map((c) => (
         <div
           key={c.id}
-          style={{ border: "1px solid #E5E5EA", borderRadius: 8, overflow: "hidden" }}
+          style={{ border: "1px solid var(--border)", borderRadius: 8, overflow: "hidden" }}
         >
           <div
             onClick={() => setOpenId(openId === c.id ? null : c.id)}
@@ -1929,7 +1956,7 @@ function PrzypadkiSpecjalne() {
               justifyContent: "space-between",
               cursor: "pointer",
               userSelect: "none",
-              background: openId === c.id ? "#F5F5F7" : "#fff",
+              background: openId === c.id ? "var(--bg)" : "var(--bg-elevated)",
             }}
           >
             <span
@@ -1969,7 +1996,7 @@ function PrzypadkiSpecjalne() {
                         height: 20,
                         borderRadius: "50%",
                         background: "var(--accent)",
-                        color: "#fff",
+                        color: "var(--text-on-accent)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -1982,7 +2009,9 @@ function PrzypadkiSpecjalne() {
                       {i + 1}
                     </span>
                     {i < c.content.length - 1 && (
-                      <div style={{ width: 1, flex: 1, background: "#E5E5EA", minHeight: 10 }} />
+                      <div
+                        style={{ width: 1, flex: 1, background: "var(--border)", minHeight: 10 }}
+                      />
                     )}
                   </div>
                   <p
@@ -2027,8 +2056,8 @@ function PhrasesPanel({
             gap: 8,
             padding: "7px 10px",
             borderRadius: 8,
-            border: "1px solid #E5E5EA",
-            background: "#F5F5F7",
+            border: "1px solid var(--border)",
+            background: "var(--bg)",
           }}
         >
           <span
@@ -2047,7 +2076,7 @@ function PhrasesPanel({
               flexShrink: 0,
               padding: "3px 7px",
               borderRadius: 5,
-              border: "1px solid #E5E5EA",
+              border: "1px solid var(--border)",
               background: "transparent",
               cursor: "pointer",
               color: copiedId === `phrase-${i}` ? "var(--success-text)" : "var(--text-tertiary)",
@@ -2073,6 +2102,7 @@ function RightPanel({
   setOpenObjectionId,
   smsForceOpen,
   onSmsCopy,
+  onJumpStep,
 }: {
   fill: (t: string) => string;
   onCopy: (id: string, text: string) => void;
@@ -2081,6 +2111,7 @@ function RightPanel({
   setOpenObjectionId: (id: string | null) => void;
   smsForceOpen: boolean;
   onSmsCopy: () => void;
+  onJumpStep: (stepId: string) => void;
 }) {
   return (
     <div
@@ -2088,19 +2119,20 @@ function RightPanel({
         width: 320,
         minWidth: 320,
         height: "100%",
-        borderLeft: "1px solid #E5E5EA",
+        borderLeft: "1px solid var(--border)",
         overflowY: "auto",
         padding: "12px 12px",
-        background: "#fff",
+        background: "var(--bg-elevated)",
       }}
     >
-      <Card title="Obiekcje kwalifikacja">
+      <Card title="Obiekcje w kwalifikacji">
         <ObjectionsPanel
           fill={fill}
           onCopy={onCopy}
           copiedId={copiedId}
           openId={openObjectionId}
           setOpenId={setOpenObjectionId}
+          onJumpStep={onJumpStep}
         />
       </Card>
       <Card title="Frazy potwierdzające" collapsible defaultOpen={false}>
@@ -2212,12 +2244,15 @@ export default function KwalifikacjaPage() {
     if (vocative.trim()) out = out.replace(/\{IMIĘ\}/g, vocative.trim());
     if (sprzedawcaImie.trim()) out = out.replace(/\{IMIĘ_SPRZEDAWCY\}/g, sprzedawcaImie.trim());
 
-    const wynikGodziny = totalGodzinyH;
-    const wynikPln = totalPln;
-    out = out.replace(/\[WYNIK Z KALKULATORA\]/g, String(wynikGodziny));
-    out = out.replace(/\[WARTOŚĆ PLN\]/g, `${fmtPln(wynikPln)} zł`);
-    out = out.replace(/\[WYNIK × 0\.8\]/g, String(Math.round(wynikGodziny * 0.8)));
-    out = out.replace(/\[LICZBA Z KALKULATORA\]/g, String(Math.round(wynikGodziny * 0.8)));
+    // Liczby w ustach settera zaokrąglone (zasada języka mówionego 2026-08-08) —
+    // dokładne wartości zostają wyłącznie w kalkulatorze, klient słyszy "około X".
+    const roundTo = (n: number, step: number) => Math.round(n / step) * step;
+    const roundedGodziny = roundTo(totalGodzinyH, 5);
+    const roundedPln = roundTo(totalPln, 100);
+    const potencjalH = roundTo(totalGodzinyH * 0.7, 5);
+    out = out.replace(/\[WYNIK Z KALKULATORA\]/g, String(roundedGodziny));
+    out = out.replace(/\[WARTOŚĆ PLN\]/g, `${fmtPln(roundedPln)} zł`);
+    out = out.replace(/\[POTENCJAL_H\]/g, String(potencjalH));
     return out;
   };
 
@@ -2257,7 +2292,7 @@ export default function KwalifikacjaPage() {
     el.scrollIntoView({ behavior: "smooth", block: "start" });
     el.style.transition = "box-shadow 250ms, background-color 250ms";
     el.style.boxShadow = "0 0 0 2px var(--accent)";
-    el.style.backgroundColor = "rgba(10,132,255,0.08)";
+    el.style.backgroundColor = "rgba(67, 121, 177, 0.08)";
     setTimeout(() => {
       el.style.boxShadow = "";
       el.style.backgroundColor = "";
@@ -2309,6 +2344,12 @@ export default function KwalifikacjaPage() {
     }, 100);
   }, []);
 
+  // Scalenie dawnych osobnych przycisków "Wykręcono" (dzienna statystyka wykręceń,
+  // sesyjna) i "Próba N" (licznik prób kontaktu per klient w Notion) w jedno
+  // działanie "Nie odebrał" — to fizycznie ten sam moment (wykręcasz numer, nikt
+  // nie odbiera), nie dwa osobne kliknięcia. Przebudowa 2026-08-08, patrz raport
+  // sesji: przed zmianą "Wykręcono" i "Próba" trzeba było klikać osobno mimo że
+  // opisywały to samo zdarzenie dla wybranego klienta.
   const incrementCallAttempt = useCallback(async () => {
     if (!selected) return;
     const newCount = (selected.liczbaProb ?? 0) + 1;
@@ -2319,6 +2360,11 @@ export default function KwalifikacjaPage() {
     });
     setSelected((prev) => (prev ? { ...prev, liczbaProb: newCount } : prev));
     void fetchClients();
+    void postTally("dial", 1);
+    setTallyFlash("dial");
+    setTallyUndo("dial");
+    setTimeout(() => setTallyFlash((prev) => (prev === "dial" ? null : prev)), 1800);
+    setTimeout(() => setTallyUndo((prev) => (prev === "dial" ? null : prev)), 5000);
     if (newCount >= 3) {
       jumpToSmsTemplate("m1");
     }
@@ -2328,45 +2374,19 @@ export default function KwalifikacjaPage() {
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
       {/* Header */}
       <PageHeader icon={<Phone size={15} color="var(--accent)" />} title="Kwalifikacja">
-        {/* Blok 2, punkt 2.2 — PROTOTYP globalnego selektora klienta, do oceny obok
-            istniejącego ClientSidebar zanim zastąpi selektory na wszystkich stronach. */}
-        <GlobalClientSelector
-          clients={clients}
-          selectedId={selected?.id ?? ""}
-          onSelect={(id) => setSelected(clients.find((c) => c.id === id) ?? null)}
-        />
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <button
-            onClick={() => tally("dial")}
-            style={{
-              height: 28,
-              padding: "0 10px",
-              borderRadius: 7,
-              border: "1px solid #E5E5EA",
-              background: tallyFlash === "dial" ? "var(--success-bg)" : "#F5F5F7",
-              color: tallyFlash === "dial" ? "var(--success-text)" : "var(--text-secondary)",
-              fontSize: 11,
-              fontWeight: 600,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 5,
-              fontFamily: "var(--font-sans)",
-              transition: "background 150ms, color 150ms",
-            }}
-            title="Zlicz wykręcony numer (statystyki dzienne)"
-          >
-            {tallyFlash === "dial" ? <Check size={11} /> : <Phone size={11} />}
-            Wykręcono
-          </button>
+          {/* Dawne osobne "Wykręcono" scalone w przycisk "Nie odebrał" niżej, przy
+              wybranym kliencie — to ten sam moment (wykręcasz numer, brak odbioru),
+              nie dwa osobne kliknięcia. Ten przycisk zostaje wyłącznie dla realnie
+              nawiązanej rozmowy. */}
           <button
             onClick={() => tally("rozmowa_kwalifikacja")}
             style={{
               height: 28,
               padding: "0 10px",
               borderRadius: 7,
-              border: "1px solid #E5E5EA",
-              background: tallyFlash === "rozmowa_kwalifikacja" ? "var(--success-bg)" : "#F5F5F7",
+              border: "1px solid var(--border)",
+              background: tallyFlash === "rozmowa_kwalifikacja" ? "var(--success-bg)" : "var(--bg)",
               color:
                 tallyFlash === "rozmowa_kwalifikacja"
                   ? "var(--success-text)"
@@ -2380,10 +2400,10 @@ export default function KwalifikacjaPage() {
               fontFamily: "var(--font-sans)",
               transition: "background 150ms, color 150ms",
             }}
-            title="Zlicz nawiązaną rozmowę (statystyki dzienne)"
+            title="Zlicz nawiązaną rozmowę (ogólna statystyka dzienna, niezależna od wybranego klienta)"
           >
             {tallyFlash === "rozmowa_kwalifikacja" ? <Check size={11} /> : <PhoneCall size={11} />}
-            Rozmowa
+            Rejestruj odbycie rozmowy
           </button>
           {tallyUndo && (
             <button
@@ -2448,98 +2468,116 @@ export default function KwalifikacjaPage() {
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: "auto" }}>
             <button
               onClick={incrementCallAttempt}
+              title="Wykręciłeś numer i nikt nie odebrał — liczy się do statystyk dziennych i do licznika prób kontaktu tego klienta"
               style={{
                 height: 32,
                 padding: "0 12px",
                 borderRadius: 8,
                 border: "1px solid var(--border)",
-                background: "#F5F5F7",
+                background: tallyFlash === "dial" ? "var(--success-bg)" : "var(--bg)",
                 fontSize: 12,
-                color: "var(--text-secondary)",
+                color: tallyFlash === "dial" ? "var(--success-text)" : "var(--text-secondary)",
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
                 gap: 6,
+                transition: "background 150ms, color 150ms",
               }}
             >
-              <Phone size={12} />
-              Próba {(selected.liczbaProb ?? 0) + 1}
+              {tallyFlash === "dial" ? <Check size={12} /> : <PhoneMissed size={12} />}
+              Rejestruj brak odbioru połączenia ({(selected.liczbaProb ?? 0) + 1})
             </button>
-            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              <span
-                style={{
-                  fontSize: 12,
-                  color: "var(--text-secondary)",
-                  fontFamily: "var(--font-sans)",
-                }}
-              >
-                Zwrot:
-              </span>
-              {(["Pan", "Pani"] as const).map((f) => (
-                <button
-                  key={f}
-                  onClick={() => setFormaOverride(f)}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "4px 10px 4px 4px",
+                borderRadius: 8,
+                border: "1px solid var(--border)",
+                background: "var(--bg)",
+              }}
+              title="Jak setter ma zwracać się do klienta w tej rozmowie"
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <span
                   style={{
-                    height: 32,
-                    padding: "0 10px",
-                    borderRadius: 8,
-                    border: `1px solid ${forma === f ? "var(--accent)" : "#E5E5EA"}`,
-                    background: forma === f ? "rgba(10,132,255,0.08)" : "#F5F5F7",
-                    color: forma === f ? "var(--accent)" : "var(--text-secondary)",
                     fontSize: 12,
-                    fontWeight: forma === f ? 600 : 400,
-                    cursor: "pointer",
+                    color: "var(--text-secondary)",
                     fontFamily: "var(--font-sans)",
                   }}
                 >
-                  {f}
-                </button>
-              ))}
-              {formaOverride !== "auto" && (
-                <button
-                  onClick={() => setFormaOverride("auto")}
-                  title="Wróć do automatycznego wykrywania"
+                  Zwrot do klienta:
+                </span>
+                {(["Pan", "Pani"] as const).map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => setFormaOverride(f)}
+                    style={{
+                      height: 28,
+                      padding: "0 10px",
+                      borderRadius: 8,
+                      border: `1px solid ${forma === f ? "var(--accent)" : "var(--border)"}`,
+                      background: forma === f ? "rgba(67, 121, 177, 0.08)" : "var(--bg-elevated)",
+                      color: forma === f ? "var(--accent)" : "var(--text-secondary)",
+                      fontSize: 12,
+                      fontWeight: forma === f ? 600 : 400,
+                      cursor: "pointer",
+                      fontFamily: "var(--font-sans)",
+                    }}
+                  >
+                    {f}
+                  </button>
+                ))}
+                {formaOverride !== "auto" && (
+                  <button
+                    onClick={() => setFormaOverride("auto")}
+                    title="Wróć do automatycznego wykrywania"
+                    style={{
+                      height: 28,
+                      padding: "0 8px",
+                      borderRadius: 8,
+                      border: "1px solid var(--border)",
+                      background: "transparent",
+                      color: "var(--text-tertiary)",
+                      fontSize: 11,
+                      cursor: "pointer",
+                    }}
+                  >
+                    auto
+                  </button>
+                )}
+              </div>
+              <div style={{ height: 20, width: 1, background: "var(--border)" }} />
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span
                   style={{
-                    height: 32,
-                    padding: "0 8px",
-                    borderRadius: 8,
-                    border: "1px solid #E5E5EA",
-                    background: "transparent",
-                    color: "var(--text-tertiary)",
-                    fontSize: 11,
-                    cursor: "pointer",
+                    fontSize: 12,
+                    color: "var(--text-secondary)",
+                    fontFamily: "var(--font-sans)",
                   }}
                 >
-                  auto
-                </button>
-              )}
+                  Jak się zwracać:
+                </span>
+                <input
+                  value={vocative}
+                  onChange={(e) => setVocative(e.target.value)}
+                  placeholder="wołacz imienia"
+                  style={{
+                    height: 28,
+                    padding: "0 10px",
+                    borderRadius: 8,
+                    border: "1px solid var(--border)",
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 13,
+                    color: "var(--text-primary)",
+                    background: "var(--bg-elevated)",
+                    outline: "none",
+                    width: 140,
+                  }}
+                />
+              </div>
             </div>
-            <span
-              style={{
-                fontSize: 12,
-                color: "var(--text-secondary)",
-                fontFamily: "var(--font-sans)",
-              }}
-            >
-              Forma grzecznościowa:
-            </span>
-            <input
-              value={vocative}
-              onChange={(e) => setVocative(e.target.value)}
-              placeholder="wołacz imienia"
-              style={{
-                height: 32,
-                padding: "0 10px",
-                borderRadius: 8,
-                border: "1px solid #E5E5EA",
-                fontFamily: "var(--font-sans)",
-                fontSize: 13,
-                color: "var(--text-primary)",
-                background: "#F5F5F7",
-                outline: "none",
-                width: 140,
-              }}
-            />
           </div>
         )}
       </PageHeader>
@@ -2559,7 +2597,7 @@ export default function KwalifikacjaPage() {
         />
 
         {/* Main: script + roi + dalsze kroki */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px", background: "#F5F5F7" }}>
+        <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px", background: "var(--bg)" }}>
           <Card title="Skrypt kwalifikacyjny">
             <BrakOdbioruBanner onOpenSms={() => jumpToSmsTemplate("m1")} />
             <CalculatorFlagsBar flags={calculatorFlags} />
@@ -2634,10 +2672,10 @@ export default function KwalifikacjaPage() {
                 fontFamily: "var(--font-sans)",
                 fontSize: 13,
                 color: "var(--text-primary)",
-                border: "1px solid #E5E5EA",
+                border: "1px solid var(--border)",
                 borderRadius: 8,
                 padding: "10px 12px",
-                background: "#fff",
+                background: "var(--bg-elevated)",
                 outline: "none",
                 lineHeight: 1.55,
                 boxSizing: "border-box",
@@ -2667,6 +2705,7 @@ export default function KwalifikacjaPage() {
           setOpenObjectionId={setOpenObjectionId}
           smsForceOpen={smsForceOpen}
           onSmsCopy={() => tally("sms")}
+          onJumpStep={jumpToStep}
         />
       </div>
     </div>

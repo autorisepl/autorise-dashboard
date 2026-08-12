@@ -50,7 +50,6 @@ const ACCESS_ITEMS: AccessItem[] = [
     label: (c) => `TMS${c.tms ? `: ${c.tms}` : " (nie ustalono, potwierdzić na Kickoff)"}`,
   },
   { key: "poczta", label: () => "Poczta firmowa (moduł email-parser)" },
-  { key: "ksiegowosc", label: () => "System księgowy / KSeF (moduł payment-monitor)" },
   {
     key: "kontakty",
     label: () => "Kontakty operacyjne (osoba techniczna u dostawcy TMS, spedytorzy, księgowość)",

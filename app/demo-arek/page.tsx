@@ -13,7 +13,7 @@ import { Step5Faktura } from "@/components/demo/steps/Step5Faktura";
 import { Step6Powiadomienie } from "@/components/demo/steps/Step6Powiadomienie";
 
 const STEP_LABELS = [
-  "Giełda",
+  "Mail",
   "HMSoft",
   "WebFleet",
   "CMR / POD",
@@ -22,7 +22,7 @@ const STEP_LABELS = [
 ] as const;
 
 const STEP_TITLES = [
-  "Krok 1. Nowe zlecenie z giełdy.",
+  "Krok 1. Zlecenie z maila.",
   "Krok 2. Zapis w HMSoft.",
   "Krok 3. Trasa do kierowcy przez WebFleet.",
   "Krok 4. Odczyt CMR.",
@@ -46,12 +46,12 @@ const STEP_MODULE = [
 // Jedno konkretne zdanie na krok, pokazywane nad kartą zanim zacznie się animacja/zawartość
 // kroku — ma odpowiadać na "co system teraz robi", nie sprzedawać.
 const STEP_SYSTEM_ACTION = [
-  "System nasłuchuje giełd transportowych i wykrywa zlecenia pasujące do wolnych pojazdów floty.",
-  "System zapisuje dane zlecenia w panelu HMSoft, dokładnie tak jak zrobiłby to spedytor ręcznie.",
-  "System wysyła trasę i dane zlecenia do aplikacji kierowcy przez WebFleet.",
-  "System odczytuje dane z przesłanego zdjęcia dokumentu CMR.",
-  "System odczytuje dane zlecenia i przypisuje je do właściwej faktury.",
-  "System przygotowuje i wysyła powiadomienie do kontrahenta o zrealizowanym zleceniu.",
+  "System odbiera maila z załącznikiem PDF od Nordkern Logistics i odczytuje z niego dane zlecenia.",
+  "System loguje się do panelu HMSoft i wypełnia formularz danymi odczytanymi z maila.",
+  "System tworzy trasę w WebFleet dla przypisanego pojazdu i wysyła ją na terminal kierowcy.",
+  "System analizuje zdjęcie dokumentu CMR i odczytuje z niego dane ładunku oraz pieczątki.",
+  "System pobiera dane zlecenia i automatycznie przypisuje do nich odpowiednią fakturę kosztową.",
+  "System generuje i wysyła powiadomienie e-mail do kontrahenta z informacją o zrealizowanym zleceniu.",
 ] as const;
 
 // §10 ust. 3 umowy: zapis zlecenia w TMS, zaksięgowanie faktury i wysłanie powiadomienia do
@@ -59,7 +59,7 @@ const STEP_SYSTEM_ACTION = [
 // kroki 2, 4, 5, 6 (indeksy 1, 3, 4, 5) blokują automatyczne przejście dalej (ręczne i
 // autoplay) do czasu potwierdzenia. Krok 2 dołączony w tej rundzie, żeby przekaz "człowiek
 // zawsze potwierdza" był spójny od pierwszego zapisu danych, nie tylko przy dokumentach.
-const GATE_STEP_INDEXES = new Set([1, 3, 4, 5]);
+const GATE_STEP_INDEXES = new Set([0, 1, 3, 4, 5]);
 
 const AUTOPLAY_INTERVAL_MS = 4200;
 
@@ -106,7 +106,13 @@ export default function DemoArekPage() {
   const stepContent = useMemo(() => {
     switch (step) {
       case 0:
-        return <Step1Gielda />;
+        return (
+          <Step1Gielda
+            active={step === 0}
+            confirmed={confirmedGates.has(0)}
+            onConfirm={() => confirmGate(0)}
+          />
+        );
       case 1:
         return (
           <Step2Tms

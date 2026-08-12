@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { deleteFinanceEntry, updateFinanceEntry } from "@/lib/notion/finance";
+import {
+  deleteFinanceEntry,
+  RENEWAL_INTERVALS,
+  RENEWAL_KINDS,
+  updateFinanceEntry,
+} from "@/lib/notion/finance";
 
 export const dynamic = "force-dynamic";
 
@@ -9,9 +14,12 @@ const patchSchema = z.object({
   typ: z.enum(["Przychód", "Wydatek"]).optional(),
   kwota: z.number().optional(),
   kategoria: z.array(z.string()).optional(),
-  data: z.string().min(1).optional(),
+  data: z.string().optional(), // "" = data nieznana
   notatka: z.string().optional(),
   przypisaneDoPrzychoduId: z.string().nullable().optional(),
+  subskrypcja: z.boolean().optional(),
+  cyklOdnawiania: z.enum(RENEWAL_INTERVALS).nullable().optional(),
+  rodzajCyklu: z.enum(RENEWAL_KINDS).nullable().optional(),
 });
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {

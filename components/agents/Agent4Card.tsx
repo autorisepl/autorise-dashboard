@@ -566,7 +566,9 @@ export function Agent4Card({ output }: { output: Agent4Output }) {
                 >
                   <Calendar size={11} />
                   Re-engagement:{" "}
-                  <strong style={{ color: "var(--warning-text)" }}>{output.data_reengagement}</strong>
+                  <strong style={{ color: "var(--warning-text)" }}>
+                    {output.data_reengagement}
+                  </strong>
                 </div>
               )}
             </div>

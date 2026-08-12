@@ -1,85 +1,116 @@
 "use client";
 
-import { Flag, Inbox, Plus } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Check, Inbox, Plus } from "lucide-react";
+import { useState } from "react";
+import { Badge } from "@/components/ui/Badge";
 import { Panel } from "@/components/ui/Panel";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import {
-  DRAG_TYPE_PRIORITIZED,
-  DRAG_TYPE_UNASSIGNED,
+  DRAG_TYPE_TASK,
   type DragPayload,
-  PRIORITY_LABEL,
-  PRIORITY_LEVELS,
   PRIORITY_STYLE,
   type Priority,
   type TaskWithList,
 } from "@/lib/schedule/dateHelpers";
 
-function UnassignedChip({ item }: { item: TaskWithList }) {
+// Ten sam kontrakt interakcji co karty w kolumnach dnia: klik otwiera wspólny popover
+// edycji (TaskEditor), karta jest przeciągalna, priorytet to statyczny znacznik (edycja
+// priorytetu żyje wyłącznie w popoverze, nie w osobnym cyklowaniu na chipie).
+
+function UnassignedChip({
+  item,
+  priority,
+  toggleDone,
+  onOpen,
+}: {
+  item: TaskWithList;
+  priority: Priority | null;
+  toggleDone: (item: TaskWithList) => void;
+  onOpen: (item: TaskWithList) => void;
+}) {
+  const [dragging, setDragging] = useState(false);
+  const s = priority ? PRIORITY_STYLE[priority] : null;
+  const done = item.task.status === "completed";
   return (
     <div
       draggable
       onDragStart={(e) => {
         const payload: DragPayload = { taskId: item.task.id };
-        e.dataTransfer.setData(DRAG_TYPE_UNASSIGNED, JSON.stringify(payload));
+        e.dataTransfer.setData(DRAG_TYPE_TASK, JSON.stringify(payload));
         e.dataTransfer.effectAllowed = "move";
+        setDragging(true);
       }}
+      onDragEnd={() => setDragging(false)}
+      onClick={() => onOpen(item)}
       style={{
         display: "flex",
-        alignItems: "center",
-        gap: 6,
+        alignItems: "flex-start",
+        gap: 8,
         padding: "7px 10px",
         borderRadius: "var(--radius-sm)",
         background: "var(--bg-elevated)",
         border: "1px solid var(--border)",
-        cursor: "grab",
+        cursor: "pointer",
         userSelect: "none",
+        opacity: dragging ? 0.4 : 1,
+        transform: dragging ? "scale(0.97)" : "scale(1)",
+        transition: "opacity 120ms, transform 120ms",
       }}
     >
-      <span style={{ fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--text-primary)" }}>
-        {item.task.title}
-      </span>
-      <span
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          toggleDone(item);
+        }}
         style={{
-          fontFamily: "var(--font-sans)",
-          fontSize: 9,
-          fontWeight: 700,
-          color: "var(--text-tertiary)",
-          background: "var(--bg-hover)",
-          borderRadius: "var(--radius-xs)",
-          padding: "1px 6px",
+          width: 15,
+          height: 15,
+          borderRadius: "50%",
+          border: done ? "2px solid var(--success)" : "2px solid #fff",
+          background: done ? "var(--success)" : "transparent",
+          flexShrink: 0,
+          marginTop: 2,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          cursor: "pointer",
+          padding: 0,
         }}
       >
-        {item.listTitle}
-      </span>
-    </div>
-  );
-}
-
-function PrioritizedChip({ item }: { item: TaskWithList }) {
-  return (
-    <div
-      draggable
-      onDragStart={(e) => {
-        const payload: DragPayload = { taskId: item.task.id };
-        e.dataTransfer.setData(DRAG_TYPE_PRIORITIZED, JSON.stringify(payload));
-        e.dataTransfer.effectAllowed = "move";
-      }}
-      style={{
-        padding: "6px 9px",
-        borderRadius: "var(--radius-sm)",
-        background: "var(--bg-elevated)",
-        border: "1px solid var(--border)",
-        cursor: "grab",
-        userSelect: "none",
-        fontFamily: "var(--font-sans)",
-        fontSize: 12,
-        color: "var(--text-primary)",
-      }}
-    >
-      {item.task.title}
-      <div style={{ fontSize: 9, fontWeight: 700, color: "var(--text-tertiary)", marginTop: 2 }}>
-        {item.listTitle}
+        {done && <Check size={9} color="#fff" strokeWidth={3} />}
+      </button>
+      <div style={{ minWidth: 0 }}>
+        {/* Etykieta listy NAD tytułem, wyraźnie odróżniona — dawniej obok tekstu na końcu wiersza,
+            zbyt łatwo tracona wizualnie. */}
+        <div style={{ marginBottom: 3 }}>
+          <Badge size="xs">{item.listTitle}</Badge>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+          {s && (
+            <span
+              title="Priorytet"
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                background: s.color,
+                flexShrink: 0,
+              }}
+            />
+          )}
+          <span
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 12,
+              color: "var(--text-primary)",
+              textDecoration: done ? "line-through" : "none",
+              opacity: done ? 0.6 : 1,
+              overflowWrap: "break-word",
+            }}
+          >
+            {item.task.title}
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -87,173 +118,131 @@ function PrioritizedChip({ item }: { item: TaskWithList }) {
 
 interface PlanningSidebarProps {
   unassigned: TaskWithList[];
-  prioritizedByLevel: Record<Priority, TaskWithList[]>;
+  priorityMap: Record<string, Priority>;
   loading: boolean;
+  toggleDone: (item: TaskWithList) => void;
+  onOpenNewTask: () => void;
+  onOpenTask: (item: TaskWithList) => void;
   dragOverZone: string | null;
   setDragOverZone: (v: string | null) => void;
-  onPriorityDrop: (e: React.DragEvent, level: Priority) => void;
-  onAddTask: (title: string) => void;
+  onDropUnassign: (taskId: string) => void;
 }
+
+const ZONE_KEY = "unassigned";
 
 export function PlanningSidebar({
   unassigned,
-  prioritizedByLevel,
+  priorityMap,
   loading,
+  toggleDone,
+  onOpenNewTask,
+  onOpenTask,
   dragOverZone,
   setDragOverZone,
-  onPriorityDrop,
-  onAddTask,
+  onDropUnassign,
 }: PlanningSidebarProps) {
-  const [adding, setAdding] = useState(false);
-  const [title, setTitle] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (adding) inputRef.current?.focus();
-  }, [adding]);
-
-  function submit() {
-    const t = title.trim();
-    if (t) onAddTask(t);
-    setTitle("");
-    setAdding(false);
-  }
+  const isOver = dragOverZone === ZONE_KEY;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 14, width: 300, flexShrink: 0 }}>
-      {/* Nieprzypisane */}
-      <Panel style={{ padding: 16 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-          <Inbox size={14} color="var(--text-tertiary)" />
+    <Panel
+      solid
+      style={{
+        padding: 16,
+        background: isOver ? "var(--accent-muted)" : undefined,
+        border: isOver ? "1.5px dashed var(--accent)" : undefined,
+        transition: "background 150ms ease, border-color 150ms ease",
+      }}
+    >
+      <div
+        onDragOver={(e) => {
+          if (e.dataTransfer.types.includes(DRAG_TYPE_TASK)) {
+            e.preventDefault();
+            setDragOverZone(ZONE_KEY);
+          }
+        }}
+        onDragLeave={() => setDragOverZone(dragOverZone === ZONE_KEY ? null : dragOverZone)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragOverZone(null);
+          const raw = e.dataTransfer.getData(DRAG_TYPE_TASK);
+          if (!raw) return;
+          const payload = JSON.parse(raw) as DragPayload;
+          onDropUnassign(payload.taskId);
+        }}
+      >
+        {/* Ikona w kwadratowym "module badge", ten sam wzorzec co Finanse osobiste — celowo
+            inny język wizualny niż nagłówek kolumny dnia, żeby to nie czytało się jak "8. dzień
+            tygodnia" tylko jako osobny panel/moduł. */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+          <div
+            style={{
+              width: 26,
+              height: 26,
+              borderRadius: "var(--radius-sm)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "var(--bg-hover)",
+              flexShrink: 0,
+            }}
+          >
+            <Inbox size={14} color="var(--text-secondary)" />
+          </div>
           <SectionLabel paddingX={0} style={{ padding: 0, fontSize: 11, fontWeight: 700 }}>
             Nieprzypisane ({unassigned.length})
           </SectionLabel>
         </div>
+        {/* Stała wysokość + wewnętrzny scroll (ten sam wzorzec co panel dnia) — lista pokazuje
+            ~5 zadań naraz zamiast rozciągać całą stronę w dół przy dużej liczbie wpisów. */}
         <div
-          style={{ display: "flex", flexWrap: "wrap", gap: 8, maxHeight: 220, overflowY: "auto" }}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 6,
+            minHeight: 40,
+            maxHeight: 320,
+            overflowY: "auto",
+            paddingRight: unassigned.length > 0 ? 2 : 0,
+          }}
         >
           {loading ? (
             <span style={{ fontSize: 12, color: "var(--text-tertiary)" }}>Ładowanie...</span>
           ) : unassigned.length === 0 ? (
             <span style={{ fontSize: 12, color: "var(--text-tertiary)" }}>
-              Brak zadań bez terminu.
+              Brak zadań bez terminu. Przeciągnij tu, żeby zdjąć termin.
             </span>
           ) : (
-            unassigned.map((item) => <UnassignedChip key={item.task.id} item={item} />)
+            unassigned.map((item) => (
+              <UnassignedChip
+                key={item.task.id}
+                item={item}
+                priority={priorityMap[item.task.id] ?? null}
+                toggleDone={toggleDone}
+                onOpen={onOpenTask}
+              />
+            ))
           )}
         </div>
 
-        {adding ? (
-          <input
-            ref={inputRef}
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") submit();
-              if (e.key === "Escape") {
-                setAdding(false);
-                setTitle("");
-              }
-            }}
-            onBlur={submit}
-            placeholder="Nazwa zadania..."
-            style={{
-              width: "100%",
-              boxSizing: "border-box",
-              marginTop: 10,
-              fontFamily: "var(--font-sans)",
-              fontSize: 12,
-              color: "var(--text-primary)",
-              background: "var(--bg)",
-              border: "1px solid var(--accent)",
-              borderRadius: "var(--radius-xs)",
-              padding: "6px 9px",
-              outline: "none",
-            }}
-          />
-        ) : (
-          <button
-            onClick={() => setAdding(true)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 5,
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: "8px 0 0",
-              fontFamily: "var(--font-sans)",
-              fontSize: 12,
-              fontWeight: 600,
-              color: "var(--text-tertiary)",
-            }}
-          >
-            <Plus size={13} /> Dodaj zadanie
-          </button>
-        )}
-      </Panel>
-
-      {/* Strefa priorytetyzacji */}
-      <Panel style={{ padding: 16 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-          <Flag size={14} color="var(--text-tertiary)" />
-          <SectionLabel paddingX={0} style={{ padding: 0, fontSize: 11, fontWeight: 700 }}>
-            Strefa priorytetyzacji
-          </SectionLabel>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {PRIORITY_LEVELS.map((level) => {
-            const zoneKey = `priority-${level}`;
-            const isOver = dragOverZone === zoneKey;
-            const s = PRIORITY_STYLE[level];
-            return (
-              <div
-                key={level}
-                onDragOver={(e) => {
-                  if (
-                    e.dataTransfer.types.includes(DRAG_TYPE_UNASSIGNED) ||
-                    e.dataTransfer.types.includes(DRAG_TYPE_PRIORITIZED)
-                  ) {
-                    e.preventDefault();
-                    setDragOverZone(zoneKey);
-                  }
-                }}
-                onDragLeave={() => setDragOverZone(dragOverZone === zoneKey ? null : dragOverZone)}
-                onDrop={(e) => onPriorityDrop(e, level)}
-                style={{
-                  minHeight: 60,
-                  padding: 9,
-                  borderRadius: "var(--radius-sm)",
-                  background: isOver ? s.bg : "var(--bg)",
-                  border: `1px dashed ${isOver ? s.color : "var(--border)"}`,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 6,
-                  transition: "background 100ms, border-color 100ms",
-                }}
-              >
-                <div
-                  style={{
-                    fontFamily: "var(--font-sans)",
-                    fontSize: 11,
-                    fontWeight: 700,
-                    color: s.color,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.04em",
-                  }}
-                >
-                  {PRIORITY_LABEL[level]} ({prioritizedByLevel[level].length})
-                </div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                  {prioritizedByLevel[level].map((item) => (
-                    <PrioritizedChip key={item.task.id} item={item} />
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </Panel>
-    </div>
+        <button
+          onClick={onOpenNewTask}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 5,
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            padding: "8px 0 0",
+            fontFamily: "var(--font-sans)",
+            fontSize: 12,
+            fontWeight: 600,
+            color: "var(--text-tertiary)",
+          }}
+        >
+          <Plus size={13} /> Dodaj zadanie
+        </button>
+      </div>
+    </Panel>
   );
 }

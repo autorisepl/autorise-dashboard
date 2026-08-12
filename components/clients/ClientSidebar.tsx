@@ -400,7 +400,7 @@ function ClientRow({
                 width: 14,
                 height: 14,
                 borderRadius: "50%",
-                border: `1.5px solid ${n <= client.liczbaProb ? "var(--warning)" : "var(--border)"}`,
+                border: `1.5px solid ${n <= client.liczbaProb ? "var(--warning)" : "var(--text-tertiary)"}`,
                 background: n <= client.liczbaProb ? "var(--warning)" : "transparent",
               }}
             />

@@ -503,7 +503,8 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
                 color: "var(--text-tertiary)",
               }}
             >
-              Deszcz: {weather.precipitationChance}% · Wiatr: {windText(weather.windMs)}
+              Deszcz: {weather.precipitationChance}% · Wiatr: {windText(weather.windMs)} · UV{" "}
+              {weather.uvIndex}
             </div>
           </>
         ) : (

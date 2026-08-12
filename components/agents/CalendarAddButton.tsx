@@ -134,7 +134,9 @@ export function CalendarAddButton({
         Dodaj do kalendarza
       </button>
       {status === "error" && error && (
-        <span style={{ fontSize: 11, color: "var(--error-text)", fontFamily: "var(--font-system)" }}>
+        <span
+          style={{ fontSize: 11, color: "var(--error-text)", fontFamily: "var(--font-system)" }}
+        >
           {error}
         </span>
       )}

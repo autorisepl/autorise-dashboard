@@ -1,350 +1,34 @@
 "use client";
 
-import { AlertTriangle, Calendar, Check, Plus, Trash2, X } from "lucide-react";
-import { Fragment, useEffect, useRef, useState } from "react";
+import { ChevronDown, ChevronUp, Plus, Repeat } from "lucide-react";
+import { useRef, useState } from "react";
 import type { CalendarEvent } from "@/app/api/google/calendar/route";
-import type { GoogleTask } from "@/app/api/google/tasks/route";
+import { NoTimeTaskCard } from "@/components/schedule/DayNoTimeTask";
+import {
+  AttendanceDot,
+  type AxisBlock,
+  DayTimeAxis,
+  nextAttendance,
+} from "@/components/schedule/DayTimeAxis";
 import { Panel } from "@/components/ui/Panel";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import {
-  combineDateAndTime,
-  DRAG_TYPE_PRIORITIZED,
-  DUE_STYLES,
-  dueToInputValue,
-  formatDue,
+  axisPxToMinutes,
+  computeAxisRange,
+  DRAG_TYPE_EVENT,
+  DRAG_TYPE_TASK,
+  type DragPayload,
+  type EventDragPayload,
   formatEventTime,
   localDateKey,
-  PRIORITY_LABEL,
-  PRIORITY_STYLE,
   type Priority,
-  relativeEventLabel,
-  stripPriorityTag,
+  parseTimeRangeFromNotes,
+  STICKY_ROW1_HEIGHT,
   type TaskWithList,
-  timeToInputValue,
-  updateNotesText,
+  timeStrToMinutes,
 } from "@/lib/schedule/dateHelpers";
 
-const timeInputStyle: React.CSSProperties = {
-  fontFamily: "var(--font-sans)",
-  fontSize: 11,
-  fontVariantNumeric: "tabular-nums",
-  color: "var(--text-secondary)",
-  border: "1px solid var(--border)",
-  background: "var(--bg)",
-  borderRadius: 4,
-  padding: "2px 4px",
-  width: 58,
-  boxSizing: "border-box",
-  flexShrink: 0,
-};
-
-// ── Editable inline text ──────────────────────────────────────────────
-
-function EditableText({
-  value,
-  onSave,
-  fontSize = 13,
-  fontWeight = 600,
-  strike = false,
-}: {
-  value: string;
-  onSave: (next: string) => void;
-  fontSize?: number;
-  fontWeight?: number;
-  strike?: boolean;
-}) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(value);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (!editing) setDraft(value);
-  }, [value, editing]);
-
-  useEffect(() => {
-    if (editing) inputRef.current?.focus();
-  }, [editing]);
-
-  function commit() {
-    setEditing(false);
-    const trimmed = draft.trim();
-    if (trimmed && trimmed !== value) onSave(trimmed);
-    else setDraft(value);
-  }
-
-  if (editing) {
-    return (
-      <input
-        ref={inputRef}
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={commit}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") commit();
-          if (e.key === "Escape") {
-            setDraft(value);
-            setEditing(false);
-          }
-        }}
-        style={{
-          width: "100%",
-          fontFamily: "var(--font-sans)",
-          fontSize,
-          fontWeight,
-          color: "var(--text-primary)",
-          background: "var(--bg)",
-          border: "1px solid var(--accent)",
-          borderRadius: 5,
-          padding: "2px 6px",
-          outline: "none",
-          boxSizing: "border-box",
-        }}
-      />
-    );
-  }
-
-  return (
-    <div
-      onClick={() => setEditing(true)}
-      title="Kliknij, żeby edytować"
-      style={{
-        fontFamily: "var(--font-sans)",
-        fontSize,
-        fontWeight,
-        color: "var(--text-primary)",
-        cursor: "text",
-        textDecoration: strike ? "line-through" : "none",
-        opacity: strike ? 0.6 : 1,
-        padding: "2px 6px",
-        marginLeft: -6,
-        borderRadius: 5,
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-        whiteSpace: "nowrap",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.background = "var(--bg-hover)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.background = "transparent";
-      }}
-    >
-      {value}
-    </div>
-  );
-}
-
-// ── Edytowalna notatka zadania (opis, jak w Google Tasks) ──────────────
-
-function TaskNotes({ value, onSave }: { value: string; onSave: (next: string) => void }) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(value);
-  const areaRef = useRef<HTMLTextAreaElement>(null);
-
-  useEffect(() => {
-    if (!editing) setDraft(value);
-  }, [value, editing]);
-
-  useEffect(() => {
-    if (editing) areaRef.current?.focus();
-  }, [editing]);
-
-  function commit() {
-    setEditing(false);
-    if (draft !== value) onSave(draft);
-  }
-
-  if (editing) {
-    return (
-      <textarea
-        ref={areaRef}
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={commit}
-        onKeyDown={(e) => {
-          if (e.key === "Escape") {
-            setDraft(value);
-            setEditing(false);
-          }
-        }}
-        placeholder="Notatka..."
-        rows={2}
-        style={{
-          width: "100%",
-          boxSizing: "border-box",
-          marginTop: 4,
-          fontFamily: "var(--font-sans)",
-          fontSize: 11,
-          color: "var(--text-secondary)",
-          background: "var(--bg)",
-          border: "1px solid var(--accent)",
-          borderRadius: "var(--radius-xs)",
-          padding: "5px 7px",
-          outline: "none",
-          resize: "vertical",
-        }}
-      />
-    );
-  }
-
-  if (value) {
-    return (
-      <div
-        onClick={() => setEditing(true)}
-        title="Kliknij, żeby edytować notatkę"
-        style={{
-          marginTop: 4,
-          fontFamily: "var(--font-sans)",
-          fontSize: 11,
-          color: "var(--text-tertiary)",
-          cursor: "text",
-          lineHeight: 1.4,
-        }}
-      >
-        {value}
-      </div>
-    );
-  }
-
-  return (
-    <button
-      onClick={() => setEditing(true)}
-      style={{
-        marginTop: 4,
-        background: "none",
-        border: "none",
-        cursor: "pointer",
-        padding: 0,
-        fontFamily: "var(--font-sans)",
-        fontSize: 10,
-        fontWeight: 600,
-        color: "var(--text-tertiary)",
-      }}
-    >
-      + notatka
-    </button>
-  );
-}
-
-// ── Priority badge (klik = cykl Wysoki -> Średni -> Niski -> brak) ─────
-
-function PriorityBadge({ priority, onCycle }: { priority: Priority | null; onCycle: () => void }) {
-  if (!priority) {
-    return (
-      <button
-        onClick={onCycle}
-        title="Nadaj priorytet"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 4,
-          fontFamily: "var(--font-sans)",
-          fontSize: 10,
-          fontWeight: 700,
-          color: "var(--text-tertiary)",
-          background: "transparent",
-          border: "1px dashed var(--border)",
-          borderRadius: "var(--radius-xs)",
-          padding: "2px 7px",
-          cursor: "pointer",
-          flexShrink: 0,
-        }}
-      >
-        priorytet
-      </button>
-    );
-  }
-  const s = PRIORITY_STYLE[priority];
-  return (
-    <button
-      onClick={onCycle}
-      title="Kliknij, żeby zmienić priorytet"
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 4,
-        fontFamily: "var(--font-sans)",
-        fontSize: 10,
-        fontWeight: 700,
-        color: s.color,
-        background: s.bg,
-        border: `1px solid ${s.border}`,
-        borderRadius: "var(--radius-xs)",
-        padding: "2px 7px",
-        cursor: "pointer",
-        flexShrink: 0,
-      }}
-    >
-      {PRIORITY_LABEL[priority]}
-    </button>
-  );
-}
-
-// ── Pozioma czerwona linia aktualnej godziny (widok dnia, tylko panel "dziś") ──────────
-
-function NowLine({ now }: { now: Date }) {
-  const label = now.toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" });
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 6, margin: "2px 0" }}>
-      <span
-        style={{
-          fontFamily: "var(--font-sans)",
-          fontSize: 9,
-          fontWeight: 700,
-          color: "var(--error-text)",
-          flexShrink: 0,
-        }}
-      >
-        {label}
-      </span>
-      <div style={{ flex: 1, height: 1.5, background: "var(--error)", borderRadius: 1 }} />
-    </div>
-  );
-}
-
-// ── Potwierdzenie odbycia przeszłego wydarzenia (odbyto / nie odbyto / nieoznaczone) ──
-
-function AttendanceControls({
-  status,
-  onSet,
-}: {
-  status: "odbyto" | "nieodbyto" | undefined;
-  onSet: (next: "odbyto" | "nieodbyto" | null) => void;
-}) {
-  const btnStyle: React.CSSProperties = {
-    display: "flex",
-    alignItems: "center",
-    gap: 3,
-    fontFamily: "var(--font-sans)",
-    fontSize: 9,
-    fontWeight: 700,
-    border: "1px solid var(--border)",
-    background: "transparent",
-    color: "var(--text-tertiary)",
-    borderRadius: "var(--radius-xs)",
-    padding: "1px 6px",
-    cursor: "pointer",
-  };
-
-  if (status) {
-    return (
-      <button onClick={() => onSet(null)} title="Cofnij potwierdzenie" style={btnStyle}>
-        <X size={8} /> Cofnij
-      </button>
-    );
-  }
-
-  return (
-    <>
-      <button onClick={() => onSet("odbyto")} title="Potwierdź, że się odbyło" style={btnStyle}>
-        <Check size={8} /> Odbyto
-      </button>
-      <button onClick={() => onSet("nieodbyto")} title="Oznacz jako nieodbyte" style={btnStyle}>
-        <X size={8} /> Nie odbyto
-      </button>
-    </>
-  );
-}
+const NO_TIME_VISIBLE_CAP = 4;
 
 interface DayPanelProps {
   day: Date;
@@ -354,20 +38,26 @@ interface DayPanelProps {
   now: Date;
   dragOverZone: string | null;
   setDragOverZone: (v: string | null) => void;
-  onDrop: (e: React.DragEvent, day: Date) => void;
-  patchTask: (listId: string, taskId: string, patch: Partial<GoogleTask>) => void;
-  deleteTask: (listId: string, taskId: string) => void;
-  toggleDone: (item: TaskWithList) => void;
   priorityMap: Record<string, Priority>;
-  cyclePriority: (taskId: string) => void;
-  onQuickAddTask: (day: Date, title: string) => void;
+  toggleDone: (item: TaskWithList) => void;
+  onOpenNewTask: (day: Date) => void;
   onOpenNewEvent: (day: Date) => void;
-  onEditEvent: (event: CalendarEvent) => void;
-  onDeleteEvent: (eventId: string) => void;
-  onPatchEvent: (eventId: string, patch: Record<string, string>) => void;
+  onOpenEvent: (event: CalendarEvent) => void;
+  onOpenTask: (item: TaskWithList) => void;
   onSetAttendance: (eventId: string, attendanceStatus: "odbyto" | "nieodbyto" | null) => void;
+  onResizeTask: (item: TaskWithList, newEndMin: number) => void;
+  onResizeEvent: (event: CalendarEvent, newEndMin: number) => void;
+  onDropTaskNoTime: (taskId: string, day: Date) => void;
+  onDropTaskTimed: (taskId: string, day: Date, startMin: number) => void;
+  onDropEvent: (eventId: string, day: Date) => void;
 }
 
+// Kolumna dnia: strefa "Bez godziny" (zwarta, capowana + "N więcej") nad osią czasu.
+// DayPanel jest wyłącznie prezentacyjny/koordynujący — mutacje danych idą przez
+// onOpenTask/onOpenEvent (wspólne popovery edycji) i onDrop*/onResize* (page.tsx trzyma
+// jedyne źródło prawdy). Cała kolumna to JEDNA strefa dropu: pozycja kursora względem
+// obszaru osi (mierzona przez axisWrapRef) decyduje czy zadanie ląduje bez godziny, czy
+// z konkretną godziną wyliczoną z pozycji Y.
 export function DayPanel({
   day,
   isToday,
@@ -376,74 +66,164 @@ export function DayPanel({
   now,
   dragOverZone,
   setDragOverZone,
-  onDrop,
-  patchTask,
-  deleteTask,
-  toggleDone,
   priorityMap,
-  cyclePriority,
-  onQuickAddTask,
+  toggleDone,
+  onOpenNewTask,
   onOpenNewEvent,
-  onEditEvent,
-  onDeleteEvent,
-  onPatchEvent,
+  onOpenEvent,
+  onOpenTask,
   onSetAttendance,
+  onResizeTask,
+  onResizeEvent,
+  onDropTaskNoTime,
+  onDropTaskTimed,
+  onDropEvent,
 }: DayPanelProps) {
   const zoneKey = `day-${localDateKey(day)}`;
   const isOver = dragOverZone === zoneKey;
-  const [adding, setAdding] = useState(false);
-  const [newTitle, setNewTitle] = useState("");
-  const addInputRef = useRef<HTMLInputElement>(null);
+  const [showAllNoTime, setShowAllNoTime] = useState(false);
+  const axisWrapRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (adding) addInputRef.current?.focus();
-  }, [adding]);
+  const noTimeTasksAll = tasks.filter((t) => !parseTimeRangeFromNotes(t.task.notes));
+  const timedTasks = tasks.filter((t) => parseTimeRangeFromNotes(t.task.notes));
+  const allDayEvents = events.filter((e) => e.allDay);
+  const timedEvents = events.filter((e) => !e.allDay && e.start.dateTime && e.end.dateTime);
+  const noTimeTasks = showAllNoTime ? noTimeTasksAll : noTimeTasksAll.slice(0, NO_TIME_VISIBLE_CAP);
+  const hiddenNoTimeCount = noTimeTasksAll.length - noTimeTasks.length;
 
-  function submitAdd() {
-    const t = newTitle.trim();
-    if (!t) {
-      setAdding(false);
+  const axisBlocks: AxisBlock[] = [
+    ...timedEvents.map((event) => {
+      const start = new Date(event.start.dateTime as string);
+      const end = new Date(event.end.dateTime as string);
+      const startMin = start.getHours() * 60 + start.getMinutes();
+      const endMin = Math.max(end.getHours() * 60 + end.getMinutes(), startMin + 15);
+      return { kind: "event" as const, id: event.id, startMin, endMin, event };
+    }),
+    ...timedTasks.map((item) => {
+      const range = parseTimeRangeFromNotes(item.task.notes)!;
+      const startMin = timeStrToMinutes(range.start);
+      const endMin = Math.max(timeStrToMinutes(range.end), startMin + 15);
+      return {
+        kind: "task" as const,
+        id: item.task.id,
+        startMin,
+        endMin,
+        item,
+        priority: priorityMap[item.task.id] ?? null,
+      };
+    }),
+  ];
+  const range = computeAxisRange(axisBlocks);
+
+  function handleContentDragOver(e: React.DragEvent) {
+    if (
+      e.dataTransfer.types.includes(DRAG_TYPE_TASK) ||
+      e.dataTransfer.types.includes(DRAG_TYPE_EVENT)
+    ) {
+      e.preventDefault();
+      setDragOverZone(zoneKey);
+    }
+  }
+
+  function handleContentDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragOverZone(null);
+    const taskRaw = e.dataTransfer.getData(DRAG_TYPE_TASK);
+    const eventRaw = e.dataTransfer.getData(DRAG_TYPE_EVENT);
+    const axisRect = axisWrapRef.current?.getBoundingClientRect();
+    const withinAxis =
+      Boolean(axisRect) && e.clientY >= axisRect!.top && e.clientY <= axisRect!.bottom;
+
+    if (taskRaw) {
+      const payload = JSON.parse(taskRaw) as DragPayload;
+      if (withinAxis && axisRect) {
+        const startMin = axisPxToMinutes(e.clientY - axisRect.top, range);
+        onDropTaskTimed(payload.taskId, day, startMin);
+      } else {
+        onDropTaskNoTime(payload.taskId, day);
+      }
       return;
     }
-    onQuickAddTask(day, t);
-    setNewTitle("");
-    setAdding(false);
+    if (eventRaw) {
+      const payload = JSON.parse(eventRaw) as EventDragPayload;
+      onDropEvent(payload.eventId, day);
+    }
   }
 
   return (
     <Panel
+      solid
       style={{
         padding: 0,
         minWidth: 0,
-        height: 640,
         display: "flex",
         flexDirection: "column",
-        overflow: "hidden",
-        background: isOver ? "var(--accent-muted)" : isToday ? "var(--bg-elevated)" : undefined,
+        overflow: "visible",
+        background: isOver ? "var(--accent-muted)" : undefined,
+        // Wyróżnienie dzisiejszej kolumny wzmocnione (zgłoszenie: sam cieńszy niebieski tekst
+        // nagłówka był za słaby) — obwódka 2px zamiast 1.5px na całej kolumnie.
         border: isOver
-          ? "1px dashed var(--accent)"
+          ? "1.5px dashed var(--accent)"
           : isToday
-            ? "1.5px solid var(--accent)"
-            : "1px solid var(--glass-border)",
+            ? "2px solid var(--accent)"
+            : "1px solid var(--border)",
+        boxShadow: isToday && !isOver ? "0 0 0 1px var(--accent-muted)" : undefined,
+        transition: "background 150ms ease, border-color 150ms ease",
       }}
     >
       <div
-        onDragOver={(e) => {
-          if (e.dataTransfer.types.includes(DRAG_TYPE_PRIORITIZED)) {
-            e.preventDefault();
-            setDragOverZone(zoneKey);
-          }
-        }}
+        onDragOver={handleContentDragOver}
         onDragLeave={() => setDragOverZone(dragOverZone === zoneKey ? null : dragOverZone)}
-        onDrop={(e) => onDrop(e, day)}
-        style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}
+        onDrop={handleContentDrop}
+        style={{ display: "flex", flexDirection: "column", minHeight: 0, position: "relative" }}
       >
-        {/* Header dnia */}
+        {isOver && (
+          <div
+            style={{
+              position: "absolute",
+              inset: 6,
+              zIndex: 5,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              pointerEvents: "none",
+              border: "1.5px dashed var(--accent)",
+              borderRadius: "var(--radius-sm)",
+              background: "var(--accent-muted)",
+              opacity: 0.92,
+              transition: "opacity 120ms ease",
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 11,
+                fontWeight: 700,
+                color: "var(--accent-text)",
+                background: "var(--bg-elevated)",
+                border: "1px solid var(--accent-border)",
+                borderRadius: "var(--radius-xs)",
+                padding: "4px 10px",
+              }}
+            >
+              Upuść, żeby zaplanować na ten dzień
+            </span>
+          </div>
+        )}
+
+        {/* Header dnia — sticky poniżej sticky Rzędu 1 */}
         <div
           style={{
+            position: "sticky",
+            top: STICKY_ROW1_HEIGHT,
+            zIndex: 8,
             padding: "10px 12px 8px",
-            borderBottom: "1px solid var(--border)",
-            flexShrink: 0,
+            borderBottom: isToday ? "1px solid var(--accent-border)" : "1px solid var(--border)",
+            // Nieprzezroczyste (nie --accent-muted) — to element sticky, półprzezroczyste tło
+            // przy scrollu przebijało treścią przewijaną pod spodem (ghosting).
+            background: isToday ? "var(--accent-tint-opaque)" : "var(--bg)",
+            borderTopLeftRadius: "var(--radius-lg)",
+            borderTopRightRadius: "var(--radius-lg)",
             display: "flex",
             alignItems: "center",
             gap: 6,
@@ -454,7 +234,7 @@ export function DayPanel({
               fontFamily: "var(--font-sans)",
               fontSize: 13,
               fontWeight: 700,
-              color: isToday ? "var(--accent)" : "var(--text-primary)",
+              color: "var(--text-primary)",
               letterSpacing: "-0.01em",
               overflow: "hidden",
               textOverflow: "ellipsis",
@@ -469,6 +249,24 @@ export function DayPanel({
           >
             {day.toLocaleDateString("pl-PL", { weekday: "long", day: "numeric", month: "long" })}
           </div>
+          {isToday && (
+            <span
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 9,
+                fontWeight: 700,
+                letterSpacing: "0.04em",
+                textTransform: "uppercase",
+                color: "#fff",
+                background: "var(--accent)",
+                borderRadius: "var(--radius-xs)",
+                padding: "2px 6px",
+                flexShrink: 0,
+              }}
+            >
+              Dziś
+            </span>
+          )}
           <button
             onClick={() => onOpenNewEvent(day)}
             title="Nowe wydarzenie tego dnia"
@@ -490,17 +288,71 @@ export function DayPanel({
           </button>
         </div>
 
-        {/* Treść przewijana */}
-        <div style={{ flex: 1, overflowY: "auto", minHeight: 0, padding: "10px 12px" }}>
+        {/* Strefa bez godziny: wydarzenia całodniowe + zadania bez zakresu godzin, capowane */}
+        <div style={{ padding: "8px 12px" }}>
+          {allDayEvents.length > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 6 }}>
+              {allDayEvents.map((ev) => (
+                <div
+                  key={ev.id}
+                  draggable
+                  onDragStart={(e) => {
+                    const payload: EventDragPayload = { eventId: ev.id };
+                    e.dataTransfer.setData(DRAG_TYPE_EVENT, JSON.stringify(payload));
+                    e.dataTransfer.effectAllowed = "move";
+                  }}
+                  onClick={() => onOpenEvent(ev)}
+                  title={ev.summary}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 5,
+                    padding: "5px 8px",
+                    borderRadius: "var(--radius-sm)",
+                    background: "var(--accent-muted)",
+                    border: "1px solid var(--accent-border)",
+                    cursor: "pointer",
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: "var(--text-primary)",
+                  }}
+                >
+                  <AttendanceDot
+                    status={ev.attendanceStatus}
+                    onCycle={() => onSetAttendance(ev.id, nextAttendance(ev.attendanceStatus))}
+                    size={13}
+                  />
+                  <span style={{ flex: 1, minWidth: 0, overflowWrap: "break-word" }}>
+                    {ev.summary}
+                  </span>
+                  {ev.recurringEventId && (
+                    <Repeat size={11} color="var(--accent-text)" style={{ flexShrink: 0 }} />
+                  )}
+                  <span
+                    style={{
+                      flexShrink: 0,
+                      marginLeft: "auto",
+                      color: "var(--text-tertiary)",
+                      fontWeight: 400,
+                    }}
+                  >
+                    {formatEventTime(ev)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
           <SectionLabel paddingX={0} style={{ fontSize: 10, fontWeight: 700 }}>
-            Zadania ({tasks.length})
+            Bez godziny ({noTimeTasksAll.length})
           </SectionLabel>
-          {tasks.length === 0 ? (
+          {noTimeTasksAll.length === 0 ? (
             <div
               style={{
-                fontSize: 12,
+                fontSize: 11,
                 color: "var(--text-tertiary)",
-                padding: "6px 0",
+                padding: "4px 0",
                 fontFamily: "var(--font-sans)",
               }}
             >
@@ -508,355 +360,81 @@ export function DayPanel({
             </div>
           ) : (
             <div>
-              {tasks.map((item) => {
-                const dueInfo = formatDue(item.task.due);
-                const done = item.task.status === "completed";
-                const priority = priorityMap[item.task.id] ?? null;
-                return (
-                  <div
-                    key={item.task.id}
-                    style={{
-                      display: "flex",
-                      alignItems: "flex-start",
-                      gap: 6,
-                      padding: "7px 0",
-                      borderBottom: "1px solid var(--border)",
-                    }}
-                  >
-                    <button
-                      onClick={() => toggleDone(item)}
-                      style={{
-                        width: 16,
-                        height: 16,
-                        borderRadius: "50%",
-                        border: done ? "1.5px solid var(--success)" : "1.5px solid var(--border)",
-                        background: done ? "var(--success)" : "transparent",
-                        flexShrink: 0,
-                        marginTop: 2,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        cursor: "pointer",
-                        padding: 0,
-                      }}
-                    >
-                      {done && <Check size={10} color="#fff" strokeWidth={3} />}
-                    </button>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <EditableText
-                        value={item.task.title}
-                        strike={done}
-                        fontSize={12}
-                        onSave={(next) => patchTask(item.listId, item.task.id, { title: next })}
-                      />
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 5,
-                          marginTop: 4,
-                          flexWrap: "wrap",
-                        }}
-                      >
-                        <PriorityBadge
-                          priority={priority}
-                          onCycle={() => cyclePriority(item.task.id)}
-                        />
-                        {dueInfo && (
-                          <label
-                            title="Kliknij, żeby zmienić termin"
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              fontFamily: "var(--font-sans)",
-                              fontSize: 10,
-                              fontWeight: 700,
-                              color: DUE_STYLES[dueInfo.status].color,
-                              background: DUE_STYLES[dueInfo.status].bg,
-                              border: `1px solid ${DUE_STYLES[dueInfo.status].border}`,
-                              borderRadius: "var(--radius-xs)",
-                              padding: "2px 6px",
-                              cursor: "pointer",
-                              position: "relative",
-                            }}
-                          >
-                            {dueInfo.label}
-                            <input
-                              type="date"
-                              value={dueToInputValue(item.task.due)}
-                              onChange={(e) =>
-                                patchTask(item.listId, item.task.id, {
-                                  due: e.target.value
-                                    ? new Date(`${e.target.value}T00:00:00`).toISOString()
-                                    : undefined,
-                                })
-                              }
-                              style={{
-                                position: "absolute",
-                                inset: 0,
-                                opacity: 0,
-                                cursor: "pointer",
-                                width: "100%",
-                              }}
-                            />
-                          </label>
-                        )}
-                      </div>
-                      <TaskNotes
-                        value={stripPriorityTag(item.task.notes)}
-                        onSave={(next) =>
-                          patchTask(item.listId, item.task.id, {
-                            notes: updateNotesText(item.task.notes, next) || undefined,
-                          })
-                        }
-                      />
-                    </div>
-                    <button
-                      onClick={() => deleteTask(item.listId, item.task.id)}
-                      title="Usuń zadanie"
-                      style={{
-                        background: "none",
-                        border: "none",
-                        cursor: "pointer",
-                        color: "var(--text-tertiary)",
-                        padding: 2,
-                        flexShrink: 0,
-                        display: "flex",
-                        marginTop: 1,
-                      }}
-                    >
-                      <Trash2 size={12} />
-                    </button>
-                  </div>
-                );
-              })}
+              {noTimeTasks.map((item) => (
+                <NoTimeTaskCard
+                  key={item.task.id}
+                  item={item}
+                  priority={priorityMap[item.task.id] ?? null}
+                  toggleDone={toggleDone}
+                  onOpen={onOpenTask}
+                />
+              ))}
+              {noTimeTasksAll.length > NO_TIME_VISIBLE_CAP && (
+                <button
+                  onClick={() => setShowAllNoTime((v) => !v)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 4,
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    padding: "3px 6px",
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 10,
+                    fontWeight: 700,
+                    color: "var(--accent-text)",
+                  }}
+                >
+                  {showAllNoTime ? (
+                    <>
+                      <ChevronUp size={11} /> Zwiń
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown size={11} /> +{hiddenNoTimeCount} więcej
+                    </>
+                  )}
+                </button>
+              )}
             </div>
           )}
 
-          {adding ? (
-            <div style={{ display: "flex", gap: 6, marginTop: 8, alignItems: "center" }}>
-              <input
-                ref={addInputRef}
-                value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") submitAdd();
-                  if (e.key === "Escape") {
-                    setAdding(false);
-                    setNewTitle("");
-                  }
-                }}
-                onBlur={submitAdd}
-                placeholder="Nazwa zadania..."
-                style={{
-                  flex: 1,
-                  fontFamily: "var(--font-sans)",
-                  fontSize: 12,
-                  color: "var(--text-primary)",
-                  background: "var(--bg)",
-                  border: "1px solid var(--accent)",
-                  borderRadius: "var(--radius-xs)",
-                  padding: "5px 8px",
-                  outline: "none",
-                  boxSizing: "border-box",
-                }}
-              />
-            </div>
-          ) : (
-            <button
-              onClick={() => setAdding(true)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 5,
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                padding: "6px 0",
-                fontFamily: "var(--font-sans)",
-                fontSize: 11,
-                fontWeight: 600,
-                color: "var(--text-tertiary)",
-                marginTop: 4,
-              }}
-            >
-              <Plus size={12} /> Dodaj zadanie na ten dzień
-            </button>
-          )}
-
-          <div style={{ marginTop: 14 }}>
-            <SectionLabel paddingX={0} style={{ fontSize: 10, fontWeight: 700 }}>
-              Wydarzenia ({events.length})
-            </SectionLabel>
-            {events.length === 0 ? (
-              <div
-                style={{
-                  fontSize: 12,
-                  color: "var(--text-tertiary)",
-                  padding: "6px 0",
-                  fontFamily: "var(--font-sans)",
-                }}
-              >
-                Brak.
-              </div>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                {(() => {
-                  let nowLineRendered = false;
-                  return events.map((ev) => {
-                    const rel = relativeEventLabel(ev, now);
-                    const startVal = timeToInputValue(ev.start.dateTime);
-                    const endVal = timeToInputValue(ev.end.dateTime);
-                    const start = ev.start.dateTime ? new Date(ev.start.dateTime) : null;
-                    const end = ev.end.dateTime ? new Date(ev.end.dateTime) : null;
-                    const isPast = !ev.allDay && end !== null && now > end;
-                    const showNowLineBefore =
-                      isToday &&
-                      !nowLineRendered &&
-                      start !== null &&
-                      start.getTime() > now.getTime();
-                    if (showNowLineBefore) nowLineRendered = true;
-                    return (
-                      <Fragment key={ev.id}>
-                        {showNowLineBefore && <NowLine now={now} />}
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "flex-start",
-                            gap: 6,
-                            padding: "7px 8px",
-                            borderRadius: "var(--radius-sm)",
-                            background: "var(--accent-muted)",
-                            border: "1px solid var(--accent-border)",
-                          }}
-                        >
-                          <Calendar
-                            size={12}
-                            color="var(--accent)"
-                            style={{ flexShrink: 0, marginTop: 2 }}
-                          />
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div
-                              onClick={() => onEditEvent(ev)}
-                              title="Kliknij, żeby edytować pełne wydarzenie"
-                              style={{
-                                fontFamily: "var(--font-sans)",
-                                fontSize: 12,
-                                fontWeight: 600,
-                                color: "var(--text-primary)",
-                                cursor: "pointer",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                whiteSpace: "nowrap",
-                              }}
-                            >
-                              {ev.summary}
-                            </div>
-                            <div
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 5,
-                                marginTop: 3,
-                                flexWrap: "wrap",
-                              }}
-                            >
-                              {!ev.allDay && ev.start.dateTime && ev.end.dateTime ? (
-                                <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
-                                  <input
-                                    type="time"
-                                    defaultValue={startVal}
-                                    onBlur={(e) => {
-                                      if (e.target.value && e.target.value !== startVal) {
-                                        onPatchEvent(ev.id, {
-                                          startDateTime: combineDateAndTime(
-                                            ev.start.dateTime as string,
-                                            e.target.value,
-                                          ),
-                                        });
-                                      }
-                                    }}
-                                    style={timeInputStyle}
-                                  />
-                                  <span style={{ fontSize: 10, color: "var(--text-tertiary)" }}>
-                                    –
-                                  </span>
-                                  <input
-                                    type="time"
-                                    defaultValue={endVal}
-                                    onBlur={(e) => {
-                                      if (e.target.value && e.target.value !== endVal) {
-                                        onPatchEvent(ev.id, {
-                                          endDateTime: combineDateAndTime(
-                                            ev.end.dateTime as string,
-                                            e.target.value,
-                                          ),
-                                        });
-                                      }
-                                    }}
-                                    style={timeInputStyle}
-                                  />
-                                </div>
-                              ) : (
-                                <span style={{ fontSize: 11, color: "var(--text-secondary)" }}>
-                                  {formatEventTime(ev)}
-                                </span>
-                              )}
-                              {rel.label && (
-                                <span
-                                  style={{
-                                    fontFamily: "var(--font-sans)",
-                                    fontSize: 9,
-                                    fontWeight: 700,
-                                    color: DUE_STYLES[rel.status].color,
-                                    background: DUE_STYLES[rel.status].bg,
-                                    border: `1px solid ${DUE_STYLES[rel.status].border}`,
-                                    borderRadius: "var(--radius-xs)",
-                                    padding: "1px 5px",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: 2,
-                                  }}
-                                >
-                                  <AlertTriangle size={7} />
-                                  {rel.label}
-                                </span>
-                              )}
-                              {isPast && (
-                                <AttendanceControls
-                                  status={ev.attendanceStatus}
-                                  onSet={(next) => onSetAttendance(ev.id, next)}
-                                />
-                              )}
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => onDeleteEvent(ev.id)}
-                            title="Usuń wydarzenie"
-                            style={{
-                              background: "none",
-                              border: "none",
-                              cursor: "pointer",
-                              color: "var(--text-tertiary)",
-                              padding: 2,
-                              flexShrink: 0,
-                              display: "flex",
-                            }}
-                          >
-                            <Trash2 size={12} />
-                          </button>
-                        </div>
-                      </Fragment>
-                    );
-                  });
-                })()}
-                {isToday &&
-                  events.every((ev) => !ev.start.dateTime || new Date(ev.start.dateTime) <= now) &&
-                  events.some((ev) => ev.start.dateTime) && <NowLine now={now} />}
-              </div>
-            )}
-          </div>
+          <button
+            onClick={() => onOpenNewTask(day)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: "6px 0 0",
+              fontFamily: "var(--font-sans)",
+              fontSize: 11,
+              fontWeight: 600,
+              color: "var(--text-tertiary)",
+            }}
+          >
+            <Plus size={12} /> Dodaj zadanie na ten dzień
+          </button>
         </div>
+
+        <div ref={axisWrapRef}>
+          <DayTimeAxis
+            range={range}
+            blocks={axisBlocks}
+            isToday={isToday}
+            now={now}
+            onOpenEvent={onOpenEvent}
+            onOpenTask={onOpenTask}
+            onSetAttendance={onSetAttendance}
+            toggleDone={toggleDone}
+            onResizeTask={onResizeTask}
+            onResizeEvent={onResizeEvent}
+          />
+        </div>
+        <div style={{ height: 12 }} />
       </div>
     </Panel>
   );

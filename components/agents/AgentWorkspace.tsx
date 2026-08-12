@@ -1497,7 +1497,9 @@ function OutputPanel({
             borderRadius: "var(--radius-xs)",
           }}
         >
-          <span style={{ fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--error-text)" }}>
+          <span
+            style={{ fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--error-text)" }}
+          >
             {state.notionError}
           </span>
         </div>

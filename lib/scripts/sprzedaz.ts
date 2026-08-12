@@ -126,7 +126,7 @@ export const STEPS_D: Step[] = [
         {
           trigger: "Głównie stałe zlecenia, powtarzalne trasy",
           action:
-            "Dopytaj: 'Skoro trasy są stałe, gdzie mimo to traci się czas — dokumenty, faktury, rozliczenia?' — kandydat na document-ocr i payment-monitor, nie email-parser",
+            "Dopytaj: 'Skoro trasy są stałe, gdzie mimo to traci się czas — dokumenty, faktury, rozliczenia?' — kandydat na document-ocr, nie email-parser",
           goToStepId: "info_czas",
           tone: "positive",
         },
@@ -416,35 +416,84 @@ export const STEPS_D: Step[] = [
       },
       {
         t: "say",
+        text: [
+          "Pomożemy Panu osiągnąć [WYNIK]. Jeśli tego nie osiągniemy, zwracamy całość wynagrodzenia za wdrożenie. Robimy to dzięki [MECHANIZM] - automatyzacji panelu, odczytowi dokumentów i jednoklikowym potwierdzeniom spedytora. Mamy to opisane w umowie, nie na słowo.",
+        ],
+      },
+      {
+        t: "say",
         text: ["To jest to co przygotowałem dla tej firmy.", "Jak {FORMA} to widzi?"],
       },
     ],
   },
   {
-    id: "temperatura",
-    nr: "5",
-    label: "TEMPERATURA",
+    id: "close_a",
+    nr: "4a",
+    label: "KROK A — POTWIERDZENIA W TRAKCIE PREZENTACJI",
     tag: "PYTASZ",
     lines: [
       {
+        t: "note",
+        text: "Krok a) sekwencji zamykania wartości. Zbierz 2-3 takie potwierdzenia na bieżąco w trakcie prezentacji (SLAJDY 2-7 w kroku 4), nie dopiero po jej zakończeniu — tu zapisane osobno dla jasności skryptu i jawnego bramkowania przed krokiem b.",
+      },
+      {
         t: "say",
-        text: "Jak to wygląda po tym co pokazałem — widzi {FORMA} w tym coś co faktycznie rozwiązuje problem, czy zostało coś co nie przekonuje?",
+        text: ["Czy to ma dla Pana sens?", "Czy to jest zrozumiałe?"],
+      },
+      { t: "client", text: "[potwierdza lub zgłasza wątpliwość]" },
+    ],
+    decision: {
+      question: "Czy klient potwierdził?",
+      options: [
+        {
+          trigger: "TAK, potwierdza",
+          action: "Przejdź do kroku b) — podsumowania i pytania o rezonans.",
+          goToStepId: "close_b",
+          tone: "positive",
+        },
+        {
+          trigger: "Zgłasza wątpliwość",
+          action:
+            "Znajdź pasującą obiekcję w prawym panelu i odpowiedz na NIĄ zanim wrócisz do sekwencji zamykania wartości. Nie przechodź do kroku b) z niezaadresowaną wątpliwością.",
+          goToStepId: "parafraza",
+          tone: "warning",
+        },
+      ],
+    },
+  },
+  {
+    id: "close_b",
+    nr: "4b",
+    label: "KROK B — PODSUMOWANIE I REZONANS",
+    tag: "PYTASZ",
+    lines: [
+      {
+        t: "note",
+        text: "Krok b) sekwencji zamykania wartości, wykonywany po potwierdzeniu z kroku a.",
+      },
+      {
+        t: "say",
+        text: [
+          "Podsumowując, moduły które Panu pokazałem przekładają się na [X godzin/zł miesięcznie].",
+          "Pytanie do Pana - jeżeli inwestycja, którą zaraz pokażę, będzie do przełknięcia, czy ten model współpracy z Panem rezonuje?",
+        ],
         cel: "Sprawdzić temperaturę bez sztywnej skali liczbowej, naturalniej niż 'gdzie jesteśmy 1-10'",
       },
+      { t: "client", text: "[TAK, rezonuje / niepewny / NIE]" },
     ],
     decision: {
       question: "Jaka odpowiedź?",
       options: [
         {
-          trigger: "Wyraźnie pozytywna reakcja",
-          action: "Gotowy na commitment",
+          trigger: "Wyraźnie pozytywna reakcja, rezonuje",
+          action: "Potwierdzenie kroku b uzyskane. Przejdź do ustalenia decydenta.",
           goToStepId: "commitment",
           tone: "positive",
         },
         {
           trigger: "Niepewna, wymaga dopytania",
           action:
-            "Powiedz: 'Co konkretnie budzi wątpliwość, zanim przejdziemy dalej?' Wysłuchaj odpowiedzi, znajdź pasującą obiekcję w prawym panelu i odpowiedz na NIĄ. Nie przechodź do commitmentu/decydenta zanim wątpliwość nie zostanie realnie zaadresowana — po odpowiedzi na obiekcję wróć do parafrazy, nie skacz od razu do pytania o decyzyjność.",
+            "Powiedz: 'Co konkretnie budzi wątpliwość, zanim przejdziemy dalej?' Wysłuchaj odpowiedzi, znajdź pasującą obiekcję w prawym panelu i odpowiedz na NIĄ. Nie przechodź do decydenta/ceny zanim wątpliwość nie zostanie realnie zaadresowana — po odpowiedzi na obiekcję wróć do parafrazy, nie skacz od razu do pytania o decyzyjność.",
           goToStepId: "parafraza",
           tone: "neutral",
         },
@@ -460,58 +509,44 @@ export const STEPS_D: Step[] = [
   },
   {
     id: "commitment",
-    nr: "5a",
+    nr: "5",
     label: "COMMITMENT — DECYDENT",
     tag: "PYTASZ",
     lines: [
       {
         t: "say",
         text: "Czy {FORMA} jest osobą która podejmuje tę decyzję, czy potrzebujemy kogoś jeszcze?",
-        cel: "Ustalić decyzyjność przed przejściem do Commitment Question — uniknąć pustego pitchu bez decydenta",
+        cel: "Ustalić decyzyjność przed przejściem do ceny — uniknąć pustego pitchu bez decydenta",
       },
       { t: "client", text: "[odpowiedź]" },
       {
         t: "note",
-        text: "Jeśli 'muszę z żoną / wspólnikiem' — użyj obiekcji od2 lub od2b. Nie przechodź dalej bez decydenta.",
+        text: "Jeśli 'muszę z żoną / wspólnikiem' — użyj obiekcji od1_partner. Nie przechodź dalej bez decydenta.",
       },
-      {
-        t: "say",
-        text: "Zanim przejdę do ceny, chcę zadać jedno pytanie. Jeżeli finanse okażą się akceptowalne, czy ten model współpracy rezonuje i widzi {FORMA} siebie w tym rozwiązaniu?",
-        cel: "To jest właściwe Commitment Question, obowiązkowe przed każdą ceną — klient sam sobie sprzedaje odpowiedzią na kolejne pytanie",
-      },
-      { t: "client", text: "[TAK / niepewny / NIE]" },
     ],
     decision: {
-      question: "Jak odpowiedział klient?",
+      question: "Czy {FORMA} jest decydentem?",
       options: [
         {
-          trigger: "TAK",
-          action:
-            "Zapytaj: 'A co spowodowało że Pan to powiedział?' Potem CISZA, czekasz, klient mówi sam. To najważniejszy moment całej rozmowy.",
-          goToStepId: "cena",
+          trigger: "TAK, jest decydentem",
+          action: "Przejdź do kroku c) — podania ceny.",
+          goToStepId: "close_c",
           tone: "positive",
         },
         {
-          trigger: "Niepewny, waha się",
+          trigger: "Potrzebuje kogoś jeszcze / musi skonsultować",
           action:
-            "Zapytaj: 'Co konkretnie budzi wątpliwość?' Wróć do wartości z pitchu zanim pójdziesz dalej, nie przechodź do ceny z niepewnym klientem.",
-          goToStepId: "pitch",
-          tone: "warning",
-        },
-        {
-          trigger: "NIE",
-          action:
-            "Zapytaj wprost co musiałoby być inne. Jeśli odpowiedź wskazuje na brak dopasowania produktu, nie naciskaj na cenę, umów follow-up.",
-          goToStepId: "pitch",
+            "Użyj obiekcji od1_partner. Kontynuuj do kroku c) dopiero gdy droga do wspólnej decyzji jest jasna.",
+          goToStepId: "close_c",
           tone: "warning",
         },
       ],
     },
   },
   {
-    id: "cena",
-    nr: "5b",
-    label: "CENA",
+    id: "close_c",
+    nr: "5a",
+    label: "KROK C — CENA",
     tag: "MÓWISZ",
     lines: [
       {
@@ -522,11 +557,31 @@ export const STEPS_D: Step[] = [
         t: "say",
         text: [
           "Za tę inwestycję odzyskuje {FORMA} minimum [gwarancja godzin] godzin miesięcznie, które dziś firma traci na ręcznej pracy.",
-          "Inwestycja to 18 000 zł, jednorazowo.",
-          "Plus 4 000 zł miesięcznie opieki.",
           "Gwarancja: minimum 70% obliczonego czasu bazowego Pana firmy, czyli [gwarancja godzin] miesięcznie, sprawdzane po 30 dniach — jeśli nie osiągniemy progu, zwrot 100%.",
         ],
-        cel: "Clear value proposition (Kacper Wierszewski) — jedno jasne zdanie łączące liczbę z wynikiem PRZED samą kwotą, żeby klient słyszał najpierw efekt, potem cenę. Potem podać konkretną liczbę i przetrzymać ciszę — pierwsza osoba która przerwie milczenie zwykle przegrywa negocjację",
+        cel: "Clear value proposition (Kacper Wierszewski) — jedno jasne zdanie łączące liczbę z wynikiem PRZED samą kwotą, żeby klient słyszał najpierw efekt, potem cenę",
+      },
+      {
+        t: "note",
+        text: "Krok c) sekwencji zamykania wartości, wykonywany po potwierdzeniu z kroku b i ustaleniu decydenta.",
+      },
+      {
+        t: "say",
+        text: "Inwestycja żeby skorzystać z tego systemu i osiągnąć ten cel to jest 18 000 złotych za wdrożenie i 4000 miesięcznie retainera. Czy to jest w ramach Pana możliwości firmowych?",
+        cel: "Podać konkretną liczbę i przetrzymać ciszę — pierwsza osoba która przerwie milczenie zwykle przegrywa negocjację",
+      },
+    ],
+    nextStepId: "close_d",
+  },
+  {
+    id: "close_d",
+    nr: "5b",
+    label: "KROK D — CISZA",
+    tag: "MÓWISZ",
+    lines: [
+      {
+        t: "note",
+        text: "Krok d) sekwencji zamykania wartości: cisza, brak dalszego tekstu, czekasz na odpowiedź klienta.",
       },
       { t: "action", text: "CISZA. Minimum 20 sekund. Nie wypełniaj jej niczym." },
       {
@@ -673,34 +728,20 @@ export const OBJECTIONS_D: Objection[] = [
     id: "od1_finanse",
     stage: "cena",
     label: "Zastanowienie: kwestia finansowa",
-    script:
-      "To częste, rozumiem. Mamy opcję rat, dwa razy 9000 zł zamiast 18000 zł jednorazowo — wdrożenie startuje po pierwszej wpłacie. Zmienia to sytuację?",
+    script: "Rozumiem. Co możemy wspólnie zrobić, żeby dało się to zagospodarować budżetowo?",
+    followup:
+      "Nie każdy ma od razu pełną kwotę na taką inwestycję. Czy pomogłoby, gdybyśmy rozbili to na raty - na przykład 50 procent teraz, 25 procent po odbiorze systemu, 25 procent po weryfikacji efektywności?",
+    note: "Followup zadawaj tylko jeśli klient nie widzi możliwości sfinansowania od razu.",
   },
   {
     id: "od1_partner",
     stage: "closing",
     label: "Zastanowienie: chce skonsultować z kimś",
     script:
-      "Jasne. Z kim chciałby Pan to skonsultować, to pomoże mi zrozumieć jak najlepiej pomóc.",
-    note: "Po odpowiedzi: przejdź do od2 (żona) lub od2b (wspólnik) zależnie od tego kogo klient wskazał.",
-  },
-  {
-    id: "od2",
-    stage: "closing",
-    label: "Muszę porozmawiać z żoną",
-    script:
-      "Gdyby Pana żona była dziś na tym spotkaniu i miała pełen kontekst tak jak Pan, co myśli Pan że by powiedziała?",
+      "Jak najbardziej rozumiem. Żeby wiedzieć jak najlepiej Panu pomóc - czy to jest wspólna decyzja pięćdziesiąt na pięćdziesiąt, czy bardziej Pan decyduje, a [osoba] jest informowana?",
     followup:
-      "A gdyby mimo pełnego kontekstu z jakiegoś powodu powiedziała nie, co Pan wtedy robi?",
-    note: "Anchor decision przed rozłączeniem: 'Kiedy rozmawia Pan z żoną — dziś wieczór czy jutro?' Zapisz konkretną datę follow-up.",
-  },
-  {
-    id: "od2b",
-    stage: "closing",
-    label: "Muszę porozmawiać ze wspólnikiem / partnerem biznesowym",
-    script:
-      "Rozumiem. Możemy umówić drugie spotkanie razem ze wspólnikiem, żeby miał ten sam kontekst co Pan?",
-    note: "Opcja A: umów 2. spotkanie z decydentem. Opcja B: reframing — 'Co musiałoby się wydarzyć żeby Pan mógł podjąć tę decyzję samodzielnie?'",
+      "Czy pomogłoby, gdybyśmy to wspólnie omówili na krótkim spotkaniu, żeby nie robić głuchego telefonu?",
+    note: "Followup, czyli propozycja krótkiego wspólnego spotkania, zadawaj po odpowiedzi klienta, zamiast przekazywania informacji z drugiej ręki.",
   },
   {
     id: "od3",
@@ -725,7 +766,7 @@ export const OBJECTIONS_D: Objection[] = [
     stage: "cena",
     label: "Za drogo: kwestia logistyki płatności",
     script:
-      "Rozumiem, to nie jest mała kwota jednorazowo. Mamy raty: dwa razy 9000 zł zamiast 18000 zł jednorazowo, wdrożenie startuje po pierwszej wpłacie. Retainer zostaje 4000 zł miesięcznie. Ułatwia to decyzję?",
+      "Rozumiem, to nie jest mała kwota jednorazowo. Możemy rozbić to na raty: 50 procent teraz, 25 procent po odbiorze systemu, 25 procent po weryfikacji efektywności. Retainer zostaje 4000 zł miesięcznie. Ułatwia to decyzję?",
   },
   {
     id: "od3_wartosc",
@@ -815,7 +856,7 @@ export const OBJECTIONS_D: Objection[] = [
     stage: "cena",
     label: "Mogę płacić w ratach?",
     script:
-      "Tak, mamy opcję 2 × 9 000 zł zamiast 18 000 zł jednorazowo. Retainer zostaje 4 000 zł/mc. Przy ratach wdrożenie startuje po pierwszej wpłacie. Pasuje Panu?",
+      "Tak, mamy opcję rat: 50 procent teraz, 25 procent po odbiorze systemu, 25 procent po weryfikacji efektywności. Retainer zostaje 4 000 zł/mc. Przy ratach wdrożenie startuje po pierwszej wpłacie. Pasuje Panu?",
   },
   {
     id: "od12",
@@ -887,6 +928,39 @@ export const OBJECTIONS_D: Objection[] = [
     followup:
       "Skoro wiemy co konkretnie stoi na przeszkodzie, sprawdźmy razem czy da się to rozwiązać już teraz, zamiast czekać miesiąc z tym samym kosztem który dalej biegnie.",
     note: "Wskazówka Agency Leaders: nie akceptować 'za miesiąc' biernie — dobry sprzedawca doradza, nie tylko czeka na 'tak'. Po poznaniu realnego powodu, spróbuj pokazać koszt dalszego zwlekania i sprawdź czy przeszkoda da się usunąć teraz, zanim zaakceptujesz odłożenie w czasie.",
+  },
+  {
+    id: "od22",
+    stage: "cena",
+    label: "Obiekcja ogólna (cokolwiek poza 'nie widzę wartości')",
+    script:
+      "Rozumiem, to normalne. Finanse na bok - czy to co Panu pokazałem mogłoby być odpowiedzią na to czego Pan szuka?",
+    followup: "Czemu Pan tak uważa?",
+    note: "Jeśli klient potwierdza, zadaj followup i czekaj na jego własne uzasadnienie, nie podpowiadaj.",
+  },
+  {
+    id: "od1_pozniej",
+    stage: "closing",
+    label: "Muszę się zastanowić (finanse i osoba trzecia już wyjaśnione)",
+    script:
+      "Rozumiem. Zgodzi się Pan, że decyzje biznesowe podejmujemy w oparciu o dotychczasowe doświadczenie?",
+    followup:
+      "To co powinien Pan teraz zrobić, żeby zmaksymalizować szansę na to, że to zadziała? Podjąć decyzję. Jaką decyzję?",
+    note: "Używać TYLKO gdy finanse i osoba trzecia decyzyjna są już wyjaśnione. Po pierwszym pytaniu czekaj na 'tak'. Po followup czekaj na odpowiedź klienta, nie podpowiadaj.",
+  },
+  {
+    id: "od23",
+    stage: "pitch",
+    label: "Brak case studies / referencji",
+    script:
+      "Powiem wprost - jesteśmy na etapie budowania portfolio w tej gałęzi, pierwsze wdrożenie ruszamy teraz. Dlatego dajemy gwarancję zwrotu całości, nie opieramy się tylko na zaufaniu. Mogę pokazać dokładne wyliczenie oszczędności na Pana danych, to jest twardszy dowód niż cudze referencje.",
+  },
+  {
+    id: "od24",
+    stage: "cena",
+    label: "Płatność z góry",
+    script:
+      "Rozumiem tę wątpliwość. Robimy tak, bo klient który się nie angażuje finansowo od początku, rzadziej angażuje się we współpracy po swojej stronie - a to jest kluczowe dla wyniku. Dlatego gwarancja zwrotu całej kwoty jest zapisana w umowie, nie na słowo.",
   },
 ];
 

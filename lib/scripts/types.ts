@@ -57,6 +57,10 @@ export interface Objection {
   type?: "sms" | "fb";
   note?: string;
   followup?: string;
+  // Krok skryptu do którego wraca rozmowa po tej obiekcji (np. "Po 'tak':
+  // przejdź do kroku 2 Otwarcie diagnozy") — renderowany jako NextStepArrow,
+  // nie jako gołe zdanie zmieszane z resztą instrukcji w `note`.
+  nextStepId?: string;
   stage:
     | "opening"
     | "icp"

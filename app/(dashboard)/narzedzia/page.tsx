@@ -1351,7 +1351,9 @@ export default function NarzedziaPage() {
                           title={selectedItem.driveError ?? "Błąd zapisu na Drive"}
                         >
                           <AlertCircle size={11} color="var(--error)" />
-                          <span style={{ fontSize: 11, color: "var(--error-text)", fontWeight: 500 }}>
+                          <span
+                            style={{ fontSize: 11, color: "var(--error-text)", fontWeight: 500 }}
+                          >
                             Błąd Drive
                           </span>
                         </div>

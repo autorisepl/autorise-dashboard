@@ -24,6 +24,12 @@ export async function PATCH(
     summary?: string;
     startDateTime?: string;
     endDateTime?: string;
+    // Data bez godziny (yyyy-mm-dd), wyłącznie dla przesuwania wydarzeń całodniowych między
+    // dniami (drag&drop w /planowanie) — Google Calendar reprezentuje wydarzenie całodniowe
+    // polem { date }, nie { dateTime }, więc to osobna para pól, nie alternatywny format tych
+    // samych startDateTime/endDateTime.
+    startDate?: string;
+    endDate?: string;
     description?: string;
     location?: string;
     // null czyści potwierdzenie (usuwa klucz extendedProperties.private), string ustawia je
@@ -39,6 +45,8 @@ export async function PATCH(
     if (body.location !== undefined) requestBody.location = body.location;
     if (body.startDateTime) requestBody.start = { dateTime: body.startDateTime };
     if (body.endDateTime) requestBody.end = { dateTime: body.endDateTime };
+    if (body.startDate) requestBody.start = { date: body.startDate };
+    if (body.endDate) requestBody.end = { date: body.endDate };
     if (body.attendanceStatus !== undefined) {
       // Wartość null w extendedProperties.private usuwa klucz (semantyka Google Calendar API).
       requestBody.extendedProperties = { private: { attendanceStatus: body.attendanceStatus } };

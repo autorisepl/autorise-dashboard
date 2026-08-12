@@ -130,11 +130,11 @@ function BigNumber({
         position: "relative",
         overflow: "hidden",
         background: accent
-          ? "linear-gradient(135deg, rgba(10,132,255,0.09) 0%, rgba(10,132,255,0.04) 100%)"
+          ? "linear-gradient(135deg, rgba(67, 121, 177, 0.14) 0%, rgba(67, 121, 177, 0.05) 100%)"
           : "var(--bg-elevated)",
         border: `1px solid ${accent ? "var(--accent-border)" : "var(--border)"}`,
         borderRadius: 14,
-        boxShadow: accent ? "0 4px 20px rgba(10,132,255,0.08)" : "0 1px 4px rgba(0,0,0,0.04)",
+        boxShadow: accent ? "0 4px 20px rgba(67, 121, 177, 0.14)" : "0 1px 4px rgba(0,0,0,0.04)",
       }}
     >
       {accent && (
@@ -145,7 +145,7 @@ function BigNumber({
             right: -16,
             width: 90,
             height: 90,
-            background: "radial-gradient(circle, rgba(10,132,255,0.10) 0%, transparent 70%)",
+            background: "radial-gradient(circle, rgba(67, 121, 177, 0.16) 0%, transparent 70%)",
             pointerEvents: "none",
           }}
         />
@@ -373,8 +373,8 @@ function ClientRow({
 }) {
   const [hovered, setHovered] = useState(false);
   const statusDot: Record<string, string> = {
-    Kwalifikacja: "#af52de",
-    "Discovery umówione": "#ff9500",
+    Kwalifikacja: "#a379ec",
+    "Discovery umówione": "#14b8a7",
   };
   const dot = statusDot[c.status] ?? ACCENT;
 
@@ -693,15 +693,15 @@ export function KalkulatorRoi({ embedded = false, initialClientName }: Kalkulato
                   width: 46,
                   height: 46,
                   borderRadius: 14,
-                  background: "linear-gradient(135deg, var(--accent) 0%, #4b7bff 100%)",
+                  background: "linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  boxShadow: "0 6px 22px rgba(10,132,255,0.28)",
+                  boxShadow: "0 6px 22px rgba(67, 121, 177, 0.35)",
                   flexShrink: 0,
                 }}
               >
-                <Calculator size={20} color="#fff" strokeWidth={1.8} />
+                <Calculator size={20} color="var(--text-on-accent)" strokeWidth={1.8} />
               </div>
               <div>
                 <h1
@@ -1068,7 +1068,7 @@ export function KalkulatorRoi({ embedded = false, initialClientName }: Kalkulato
                     transition: "all 0.15s",
                   }}
                 >
-                  {showMaile && <Check size={11} color="#fff" strokeWidth={3} />}
+                  {showMaile && <Check size={11} color="var(--text-on-accent)" strokeWidth={3} />}
                 </div>
                 <span
                   style={{
@@ -1165,7 +1165,7 @@ export function KalkulatorRoi({ embedded = false, initialClientName }: Kalkulato
                     transition: "all 0.15s",
                   }}
                 >
-                  {showFaktury && <Check size={11} color="#fff" strokeWidth={3} />}
+                  {showFaktury && <Check size={11} color="var(--text-on-accent)" strokeWidth={3} />}
                 </div>
                 <span
                   style={{
@@ -1255,7 +1255,7 @@ export function KalkulatorRoi({ embedded = false, initialClientName }: Kalkulato
                     transition: "all 0.15s",
                   }}
                 >
-                  {showIntegracja && <Check size={11} color="#fff" strokeWidth={3} />}
+                  {showIntegracja && <Check size={11} color="var(--text-on-accent)" strokeWidth={3} />}
                 </div>
                 <span
                   style={{
@@ -1331,7 +1331,7 @@ export function KalkulatorRoi({ embedded = false, initialClientName }: Kalkulato
                     transition: "all 0.15s",
                   }}
                 >
-                  {showInne && <Check size={11} color="#fff" strokeWidth={3} />}
+                  {showInne && <Check size={11} color="var(--text-on-accent)" strokeWidth={3} />}
                 </div>
                 <span
                   style={{
@@ -1425,7 +1425,7 @@ export function KalkulatorRoi({ embedded = false, initialClientName }: Kalkulato
                 background: "var(--bg-elevated)",
                 border: "1px solid var(--accent-border)",
                 borderRadius: 14,
-                boxShadow: "0 1px 4px rgba(10,132,255,0.07)",
+                boxShadow: "0 1px 4px rgba(67, 121, 177, 0.12)",
               }}
             >
               <div
@@ -1476,7 +1476,7 @@ export function KalkulatorRoi({ embedded = false, initialClientName }: Kalkulato
                 border: "none",
                 borderRadius: 12,
                 cursor: "pointer",
-                color: "#fff",
+                color: "var(--text-on-accent)",
                 fontFamily: f.system,
                 fontSize: 13,
                 fontWeight: 700,
@@ -1484,7 +1484,7 @@ export function KalkulatorRoi({ embedded = false, initialClientName }: Kalkulato
                 alignItems: "center",
                 justifyContent: "center",
                 gap: 8,
-                boxShadow: "0 4px 18px rgba(10,132,255,0.32)",
+                boxShadow: "0 4px 18px rgba(67, 121, 177, 0.40)",
                 transition: "opacity 0.12s",
               }}
             >

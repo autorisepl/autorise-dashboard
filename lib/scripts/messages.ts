@@ -82,13 +82,13 @@ export const MESSAGES_DATA: Record<"sms" | "telefon" | "fb", MsgItem[]> = {
       id: "fb2",
       group: "Pozyskanie",
       label: "Wiadomość prywatna po komentarzu",
-      text: "Dzień dobry Panie {IMIĘ}, piszę ponieważ zostawił Pan komentarz pod naszą reklamą w sprawie oszczędności czasu dla firm transportowych. Zanim opowiem więcej — chciałbym zadać kilka pytań. Czy mógłbym prosić o numer telefonu?",
+      text: "Dzień dobry Panie {IMIĘ}, piszę ponieważ zostawił Pan komentarz pod naszą reklamą w sprawie oszczędności czasu dla firm transportowych. Zanim opowiem więcej, chciałbym zadać kilka pytań. Czy mógłbym prosić o numer telefonu?",
     },
     {
       id: "fb3",
       group: "Pozyskanie",
       label: "DM po kliknięciu reklamy (bez komentarza)",
-      text: "Dzień dobry Panie {IMIĘ}, widzę że zainteresowała Pana nasza reklama. Zajmuję się firmami transportowymi — konkretnie tym, że biura tracą za dużo czasu na ręczną robotę. Czy to temat który dotyczy Pana firmy?",
+      text: "Dzień dobry Panie {IMIĘ}, widzę że zainteresowała Pana nasza reklama. Zajmujemy się firmami transportowymi, konkretnie tym, że biura tracą za dużo czasu na ręczną robotę. Czy to temat który dotyczy Pana firmy?",
     },
   ],
 };

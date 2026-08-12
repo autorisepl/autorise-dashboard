@@ -19,16 +19,24 @@ interface Step2TmsProps {
 }
 
 const FIELDS = [
-  { label: "Zleceniodawca", value: ZLECENIE.zleceniodawca },
-  { label: "Załadunek", value: `${ZLECENIE.zaladunek.miejsce}, ${ZLECENIE.zaladunek.data}` },
-  { label: "Rozładunek", value: `${ZLECENIE.rozladunek.miejsce}, ${ZLECENIE.rozladunek.data}` },
-  { label: "Ładunek", value: ZLECENIE.ladunek },
-  { label: "Stawka", value: ZLECENIE.stawka },
-  { label: "Kierowca", value: ZLECENIE.kierowca },
-  { label: "Pojazd", value: ZLECENIE.pojazd },
+  { label: "Zleceniodawca", value: ZLECENIE.zleceniodawca, source: "z maila: nadawca" },
+  {
+    label: "Załadunek",
+    value: `${ZLECENIE.zaladunek.miejsce}, ${ZLECENIE.zaladunek.data}`,
+    source: "z maila: załadunek",
+  },
+  {
+    label: "Rozładunek",
+    value: `${ZLECENIE.rozladunek.miejsce}, ${ZLECENIE.rozladunek.data}`,
+    source: "z maila: rozładunek",
+  },
+  { label: "Ładunek", value: ZLECENIE.ladunek, source: "z maila: towar/waga" },
+  { label: "Stawka", value: ZLECENIE.stawka, source: "z maila: kwota" },
+  { label: "Kierowca", value: ZLECENIE.kierowca, source: "baza: dyspozycja" },
+  { label: "Pojazd", value: ZLECENIE.pojazd, source: "baza: dyspozycja" },
 ] as const;
 
-const FIELD_STEP_MS = 420;
+const FIELD_STEP_MS = 600;
 
 type Tab = "auto" | "fallback";
 
@@ -85,55 +93,86 @@ function PanelWindow({ children }: { children: React.ReactNode }) {
 function FieldRow({
   label,
   value,
+  source,
   state,
 }: {
   label: string;
   value: string;
+  source: string;
   state: "empty" | "filling" | "done";
 }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-      <span style={{ fontFamily: demoFont.sans, fontSize: 10, color: demoColors.textTertiary }}>
-        {label}
-      </span>
+    <div style={{ display: "flex", flexDirection: "column", gap: 3, position: "relative" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+        <span style={{ fontFamily: demoFont.sans, fontSize: 10, color: demoColors.textTertiary }}>
+          {label}
+        </span>
+        {state === "done" && (
+          <span
+            style={{
+              fontFamily: demoFont.mono,
+              fontSize: 9,
+              color: demoColors.accent,
+              animation: "demoFadeIn 0.3s ease-out both",
+            }}
+          >
+            {source}
+          </span>
+        )}
+      </div>
       <div
         style={{
           height: 30,
           borderRadius: 6,
           display: "flex",
           alignItems: "center",
+          justifyContent: "space-between",
           padding: "0 10px",
           background: state === "empty" ? "rgba(255,255,255,0.03)" : demoColors.surfaceRaised,
           border:
             state === "filling"
               ? `1px solid ${demoColors.accent}`
-              : `1px solid ${state === "done" ? demoColors.border : "rgba(255,255,255,0.06)"}`,
+              : `1px solid ${state === "done" ? demoColors.accentBorder : "rgba(255,255,255,0.06)"}`,
           boxShadow: state === "filling" ? `0 0 0 3px ${demoColors.accentSoft}` : "none",
-          transition: "box-shadow 0.2s ease, border-color 0.2s ease",
+          transition: "box-shadow 0.2s ease, border-color 0.2s ease, background 0.3s ease",
         }}
       >
-        <span
-          style={{
-            fontFamily: demoFont.sans,
-            fontSize: 12,
-            color: state === "empty" ? demoColors.textTertiary : demoColors.textPrimary,
-            fontWeight: state === "done" ? 500 : 400,
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
-        >
-          {state === "empty" ? "..." : value}
-        </span>
-        {state === "filling" && (
+        <div style={{ display: "flex", alignItems: "center", overflow: "hidden" }}>
           <span
             style={{
-              width: 2,
-              height: 14,
-              marginLeft: 2,
+              fontFamily: demoFont.sans,
+              fontSize: 12,
+              color: state === "empty" ? demoColors.textTertiary : demoColors.textPrimary,
+              fontWeight: state === "done" ? 500 : 400,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              animation:
+                state === "done" ? "demoSlideUpIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both" : "none",
+            }}
+          >
+            {state === "empty" ? "..." : value}
+          </span>
+          {state === "filling" && (
+            <span
+              style={{
+                width: 2,
+                height: 14,
+                marginLeft: 2,
+                flexShrink: 0,
+                background: demoColors.accent,
+                animation: "demoCursorBlink 0.9s steps(1) infinite",
+              }}
+            />
+          )}
+        </div>
+        {state === "done" && (
+          <CheckCircle2
+            size={14}
+            color={demoColors.accent}
+            style={{
               flexShrink: 0,
-              background: demoColors.accent,
-              animation: "demoCursorBlink 0.9s steps(1) infinite",
+              animation: "demoScaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both",
             }}
           />
         )}
@@ -156,7 +195,7 @@ function DataFlowBadge() {
           padding: "3px 8px",
         }}
       >
-        Dane z {ZLECENIE.gielda}, krok 1
+        Dane z maila
       </span>
       <ArrowDown
         size={13}
@@ -209,7 +248,13 @@ function AutomatedFill({
           {FIELDS.map((field, i) => {
             const state = i < visibleCount ? "done" : i === visibleCount ? "filling" : "empty";
             return (
-              <FieldRow key={field.label} label={field.label} value={field.value} state={state} />
+              <FieldRow
+                key={field.label}
+                label={field.label}
+                value={field.value}
+                source={field.source}
+                state={state}
+              />
             );
           })}
         </div>
@@ -247,11 +292,24 @@ function AutomatedFill({
       )}
 
       {filled && confirmed && (
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <CheckCircle2 size={13} color={demoColors.terminalGreen} style={{ flexShrink: 0 }} />
-          <span style={{ fontFamily: demoFont.mono, fontSize: 12, color: demoColors.textTertiary }}>
-            {`Zlecenie ${ZLECENIE.numerZleceniaTms} zapisane.`}
-          </span>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <CheckCircle2 size={13} color={demoColors.terminalGreen} style={{ flexShrink: 0 }} />
+            <span
+              style={{ fontFamily: demoFont.mono, fontSize: 12, color: demoColors.textTertiary }}
+            >
+              {`Zlecenie ${ZLECENIE.numerZleceniaTms} zapisane.`}
+            </span>
+          </div>
+          <div
+            style={{
+              fontFamily: demoFont.sans,
+              fontSize: 11,
+              color: demoColors.textSecondary,
+            }}
+          >
+            Spedytor: jedno kliknięcie zamiast ręcznego przepisywania
+          </div>
         </div>
       )}
     </div>
@@ -336,7 +394,13 @@ function FallbackScenario() {
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
           {FIELDS.map((field) => (
-            <FieldRow key={field.label} label={field.label} value={field.value} state="done" />
+            <FieldRow
+              key={field.label}
+              label={field.label}
+              value={field.value}
+              source={field.source}
+              state="done"
+            />
           ))}
         </div>
       </PanelWindow>

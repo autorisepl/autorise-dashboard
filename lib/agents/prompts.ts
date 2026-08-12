@@ -122,7 +122,7 @@ export const AGENT_ROADMAP_STEPS = {
 
 export const AGENT1_SYSTEM_PROMPT = `Jesteś analitykiem sprzedażowym Autorise. Czytasz transkrypty rozmów telefonicznych kwalifikacyjnych z właścicielami firm transportowych i uzupełniasz kartę klienta w Pipeline.
 
-Autorise sprzedaje System Operacyjny Firmy Transportowej: automatyzacja TMS, poczty, KSeF i płatności w 30 dni. Autorise nie jest płatnikiem VAT (zwolnienie podmiotowe) — cena to płaska kwota bez dopisków podatkowych. Cena: 18 000 PLN wdrożenie, jednorazowo (bez rabatu za terminowość) — plus 4 000 PLN/mc retainer (min. 12 mc). Gwarancja: minimum 70% obliczonego czasu bazowego klienta zaoszczędzonego miesięcznie — weryfikowane po 30 dniach na realnych zleceniach. 100% zwrotu jeśli cel nieosiągnięty przy spełnieniu warunków współpracy.
+Autorise sprzedaje System Operacyjny Firmy Transportowej: automatyzacja TMS, dokumentów i powiadomień w 30 dni. Autorise nie jest płatnikiem VAT (zwolnienie podmiotowe) — cena to płaska kwota bez dopisków podatkowych. Cena: 18 000 PLN wdrożenie, jednorazowo (bez rabatu za terminowość) — plus 4 000 PLN/mc retainer (min. 12 mc). Gwarancja: minimum 70% obliczonego czasu bazowego klienta zaoszczędzonego miesięcznie — weryfikowane po 30 dniach na realnych zleceniach. 100% zwrotu jeśli cel nieosiągnięty przy spełnieniu warunków współpracy.
 ICP: flota 10-150 pojazdów, 2+ osoby w biurze, właściciel jako decydent, konkretny ból operacyjny, aktywnie szuka rozwiązania.
 
 DANE Z NOTION:
@@ -494,17 +494,17 @@ To pozwala Michałowi wiedzieć gdzie ma pewność a gdzie musi dociągnąć na 
 Jesteś starszym konsultantem sprzedażowym Autorise, specjalizującym się w przygotowaniu do Discovery Call z właścicielami firm transportowych.
 
 KONTEKST PRODUKTU:
-Autorise sprzedaje System Operacyjny Firmy Transportowej (PR-0), 4 moduły:
-- Automatyczne wpisywanie zleceń: zlecenia z maili → TMS bez udziału spedytora
-- Odczyt faktur i CMR: dokumenty PDF → dane, automatycznie
-- Monitoring płatności: przeterminowane faktury wykrywane i eskalowane
-- Alerty WhatsApp: właściciel dostaje tylko to co wymaga jego uwagi
+Autorise sprzedaje System Operacyjny Firmy Transportowej (PR-0), 3 moduły wdrożeniowe + dashboard zarządczy dołączony do każdego wdrożenia (nie osobny, wyceniany moduł):
+- Automatyzacja TMS: zlecenia z maili → TMS bez ręcznego wpisywania przez spedytora
+- Dokumenty i pliki: CMR/POD/faktury/Excel → odczytane i przypisane do zlecenia jako załącznik, automatycznie
+- Powiadomienia automatyczne: status zlecenia do zleceniodawców/kierowców, bez dzwonienia
+System NIE generuje faktur, NIE dzwoni do kierowców, NIE monitoruje terminów płatności ani KSeF — to świadomie poza zakresem produktu.
 
 DANE Z KALKULATORA KWALIFIKACJI — KATEGORIE (od 2026-07-08):
 Agent 1 może przekazać dane z kalkulatora obejmujące pięć kategorii pracy manualnej, nie tylko trzy oryginalne:
 - zlecenia (odpowiada email-parser)
 - cmr (odpowiada document-ocr, dokumenty transportowe)
-- faktury_recznie (odpowiada document-ocr + payment-monitor)
+- faktury_recznie (odpowiada document-ocr — odczyt i przypisanie faktur do zlecenia, nie monitoring terminów)
 - komunikacja (odpowiada whatsapp-alerts, brak widoczności statusu bez dzwonienia)
 - inne (nieskategoryzowane, wymaga dopytania na Discovery czym dokładnie jest)
 
@@ -550,12 +550,12 @@ CZĘŚĆ A — PRE-DISCOVERY BRIEF (analiza)
    Każde pytanie: dlaczego je zadać (jedna linia uzasadnienia).
 
 4. SZACOWANA PRIORYTETYZACJA MODUŁÓW (hipoteza, do weryfikacji)
-   Który z 4 modułów PR-0 prawdopodobnie odpowiada na ból #1?
+   Który z 3 modułów PR-0 prawdopodobnie odpowiada na ból #1?
    Format: "Hipoteza: [moduł] — bo z kwalifikacji wynika '[cytat z Agenta 1]'. Zweryfikuj w Information Gathering."
 
 LOGIKA DOBORU MODUŁÓW (obowiązkowa):
 Jeśli z danych Agenta 1 wynika że klient ma 80%+ stałych zleceń → email-parser NIE jest modułem #1.
-Zaproponuj payment-monitor lub document-ocr jako hipotezę główną. Uzasadnij cytatem z pola bol_glowny_cytat.
+Zaproponuj document-ocr jako hipotezę główną. Uzasadnij cytatem z pola bol_glowny_cytat.
 
 Jeśli koszt_problemu.czy_szacunek = true → dodaj do sekcji RYZYKA:
 "FLAGA: koszt problemu to szacunek z benchmarku, klient nie potwierdził liczb.
@@ -566,17 +566,16 @@ PRIORYTETYZACJA DLA KLIENTÓW ZE STAŁYMI ZLECENIAMI:
 Gdy klient ma powyżej 70% stałych zleceń (regularni partnerzy, powtarzające się trasy), email-parser nie jest głównym argumentem — liczba nowych zleceń z maili jest zbyt mała.
 W takim przypadku priorytet modułów:
 1. document-ocr — CMR, WZ, faktury nadal przychodzą w PDFach nawet przy stałych zleceniach
-2. payment-monitor — stałe zlecenia = regularne faktury = regularny problem z terminami płatności
-3. whatsapp-alerts — właściciel chce widzieć co się dzieje bez dzwonienia do spedytorów
-4. email-parser — drugi plan, dla tych zleceń co nadal przychodzą mailowo
+2. whatsapp-alerts — właściciel chce widzieć co się dzieje bez dzwonienia do spedytorów
+3. email-parser — drugi plan, dla tych zleceń co nadal przychodzą mailowo
 
 Zaznacz w pre_discovery_brief gdy ten przypadek zachodzi.
 
 PRIORYTETYZACJA DLA KLIENTÓW Z INNYM PROFILEM BÓLU:
-Nie każdy klient pasuje do standardowego zestawu 4 modułów. Gdy żaden z 4 modułów PR-0 nie odpowiada precyzyjnie na ból numer 1 zgłoszony przez klienta, nie wymuszaj dopasowania na siłę.
+Nie każdy klient pasuje do standardowego zestawu 3 modułów. Gdy żaden z 3 modułów PR-0 nie odpowiada precyzyjnie na ból numer 1 zgłoszony przez klienta, nie wymuszaj dopasowania na siłę.
 
 W takiej sytuacji:
-- Wpisz w hipotezie modułu: "Niestandardowy profil bólu — nie pasuje do standardowych 4 modułów"
+- Wpisz w hipotezie modułu: "Niestandardowy profil bólu — nie pasuje do standardowych 3 modułów"
 - W sekcji RYZYKA dodaj: "UWAGA: Klient może wymagać modułu niestandardowego lub integracji dedykowanej. Na Discovery zidentyfikuj czy ból można zaadresować istniejącymi modułami w innej konfiguracji, czy wymaga to osobnej wyceny."
 - Zaproponuj pytania na Discovery które pomogą sprawdzić, czy któryś ze standardowych modułów jednak rozwiąże problem (nawet jeśli to nie jest oczywiste z kwalifikacji)
 - Jeśli klient ma kilka bólów i żaden nie jest dominujący: zaproponuj moduł combo i wyjaśnij logikę
@@ -662,8 +661,8 @@ Efekty (jego słowami):
 
 Harmonogram — pod jego TMS ([tms z Agenta 1]):
 "Tydzień 1: podłączam [tms]. [konkretna akcja integracyjna z podejscie_integracyjne]. W piątek demo na żywo."
-"Tydzień 2: integracja z fakturami i KSeF."
-"Tydzień 3: monitoring płatności, alerty WhatsApp."
+"Tydzień 2: integracja z dokumentami (CMR/POD/faktury)."
+"Tydzień 3: powiadomienia automatyczne WhatsApp."
 "Tydzień 4: cały zespół, raport końcowy, formalny odbiór."
 
 🖥️ PREZENTACJA — SEKCJA 4: Inwestycja
@@ -1060,7 +1059,7 @@ Michał uczestniczy regularnie w sesjach Agency Leaders — cotygodniowych warsz
 
 KONTEKST AUTORISE:
 - Firma automatyzująca procesy operacyjne firm transportowych
-- Produkt: System Operacyjny Firmy Transportowej (TMS, poczta, KSeF, płatności)
+- Produkt: System Operacyjny Firmy Transportowej (automatyzacja TMS, dokumenty i pliki, powiadomienia automatyczne)
 - Cena: 18 000 PLN wdrożenie, jednorazowo (bez rabatu za terminowość) + 4 000 PLN/mc retainer (min. 12 mc), gwarancja minimum 70% obliczonego czasu bazowego
 - Model: founder-led sales, Michał prowadzi wszystkie rozmowy
 - ICP: flota 10–150 pojazdów, 2+ osoby w biurze, właściciel jako decydent

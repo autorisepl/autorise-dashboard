@@ -1,9 +1,16 @@
 "use client";
 
-import { Loader2, Plus, Trash2, X } from "lucide-react";
+import { Loader2, Plus, Repeat, Trash2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import type { FinanceEntry, FinanceEntryInput, FinanceTyp } from "@/lib/notion/finance";
+import type {
+  FinanceEntry,
+  FinanceEntryInput,
+  FinanceTyp,
+  RenewalInterval,
+  RenewalKind,
+} from "@/lib/notion/finance";
+import { RENEWAL_INTERVALS, RENEWAL_KINDS } from "@/lib/notion/finance";
 
 export interface FinanceDraft {
   id?: string;
@@ -11,9 +18,13 @@ export interface FinanceDraft {
   typ: FinanceTyp;
   kwota: string; // string w formularzu, walidacja/konwersja przy submit
   kategoria: string[];
-  data: string; // yyyy-mm-dd
+  data: string; // yyyy-mm-dd, ignorowane gdy dataNieznana
+  dataNieznana: boolean;
   notatka: string;
   przypisaneDoPrzychoduId: string | null;
+  subskrypcja: boolean;
+  cyklOdnawiania: RenewalInterval | null;
+  rodzajCyklu: RenewalKind | null;
 }
 
 function today(): string {
@@ -28,8 +39,12 @@ export function emptyDraft(): FinanceDraft {
     kwota: "",
     kategoria: [],
     data: today(),
+    dataNieznana: false,
     notatka: "",
     przypisaneDoPrzychoduId: null,
+    subskrypcja: false,
+    cyklOdnawiania: null,
+    rodzajCyklu: null,
   };
 }
 
@@ -41,8 +56,12 @@ export function entryToDraft(e: FinanceEntry): FinanceDraft {
     kwota: String(e.kwota),
     kategoria: e.kategoria,
     data: e.data || today(),
+    dataNieznana: !e.data,
     notatka: e.notatka,
     przypisaneDoPrzychoduId: e.przypisaneDoPrzychoduId,
+    subskrypcja: e.subskrypcja,
+    cyklOdnawiania: e.cyklOdnawiania,
+    rodzajCyklu: e.rodzajCyklu,
   };
 }
 
@@ -52,9 +71,12 @@ export function draftToInput(d: FinanceDraft): FinanceEntryInput {
     typ: d.typ,
     kwota: Number.parseFloat(d.kwota.replace(",", ".")) || 0,
     kategoria: d.kategoria,
-    data: d.data,
+    data: d.dataNieznana ? "" : d.data,
     notatka: d.notatka.trim() || undefined,
     przypisaneDoPrzychoduId: d.typ === "Wydatek" ? d.przypisaneDoPrzychoduId : null,
+    subskrypcja: d.subskrypcja,
+    cyklOdnawiania: d.subskrypcja ? d.cyklOdnawiania : null,
+    rodzajCyklu: d.subskrypcja ? (d.rodzajCyklu ?? "Subskrypcja") : null,
   };
 }
 
@@ -101,7 +123,11 @@ function CategoryTagInput({
   suggestions: string[];
 }) {
   const [draft, setDraft] = useState("");
-  const remaining = suggestions.filter(
+  const [addingNew, setAddingNew] = useState(false);
+  // Wszystkie jeszcze niewybrane istniejące kategorie, widoczne od razu jako chipy do
+  // klikania — filtrowane dodatkowo przez draft tylko gdy użytkownik zacznie pisać
+  // (żeby zawęzić długą listę), nie jako warunek pokazania.
+  const available = suggestions.filter(
     (s) => !value.includes(s) && s.toLowerCase().includes(draft.toLowerCase()),
   );
 
@@ -109,6 +135,7 @@ function CategoryTagInput({
     const t = name.trim();
     if (t && !value.includes(t)) onChange([...value, t]);
     setDraft("");
+    setAddingNew(false);
   }
 
   return (
@@ -129,13 +156,15 @@ function CategoryTagInput({
               alignItems: "center",
               gap: 4,
               fontFamily: "var(--font-sans)",
-              fontSize: 11,
-              fontWeight: 600,
-              color: "var(--accent)",
-              background: "var(--accent-muted)",
-              border: "1px solid var(--accent-border)",
+              fontSize: 10,
+              fontWeight: 700,
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+              color: "#fff",
+              background: "var(--bg-hover)",
+              border: "1px solid rgba(255,255,255,0.3)",
               borderRadius: "var(--radius-xs)",
-              padding: "3px 6px 3px 9px",
+              padding: "3px 5px 3px 9px",
             }}
           >
             {cat}
@@ -147,7 +176,7 @@ function CategoryTagInput({
                 cursor: "pointer",
                 display: "flex",
                 padding: 0,
-                color: "var(--accent)",
+                color: "#fff",
               }}
             >
               <X size={11} />
@@ -155,39 +184,72 @@ function CategoryTagInput({
           </span>
         ))}
       </div>
-      <input
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === ",") {
-            e.preventDefault();
-            add(draft);
-          }
-        }}
-        placeholder="Dodaj kategorię i Enter..."
-        style={fieldStyle}
-      />
-      {draft && remaining.length > 0 && (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 6 }}>
-          {remaining.slice(0, 6).map((s) => (
-            <button
-              key={s}
-              onClick={() => add(s)}
-              style={{
-                fontFamily: "var(--font-sans)",
-                fontSize: 11,
-                color: "var(--text-secondary)",
-                background: "var(--bg-hover)",
-                border: "1px solid var(--border)",
-                borderRadius: "var(--radius-xs)",
-                padding: "3px 8px",
-                cursor: "pointer",
-              }}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
+
+      {/* Istniejące kategorie od razu klikalne — dodanie nowej to osobna, świadoma opcja obok */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 6 }}>
+        {available.map((s) => (
+          <button
+            key={s}
+            onClick={() => add(s)}
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 11,
+              color: "var(--text-secondary)",
+              background: "var(--bg-hover)",
+              border: "1px solid var(--border)",
+              borderRadius: "var(--radius-xs)",
+              padding: "3px 8px",
+              cursor: "pointer",
+            }}
+          >
+            {s}
+          </button>
+        ))}
+        {!addingNew && (
+          <button
+            onClick={() => setAddingNew(true)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 3,
+              fontFamily: "var(--font-sans)",
+              fontSize: 11,
+              fontWeight: 600,
+              color: "var(--text-secondary)",
+              background: "none",
+              border: "1px dashed var(--border-hover)",
+              borderRadius: "var(--radius-xs)",
+              padding: "3px 8px",
+              cursor: "pointer",
+            }}
+          >
+            <Plus size={10} /> Nowa kategoria
+          </button>
+        )}
+      </div>
+
+      {addingNew && (
+        <input
+          autoFocus
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === ",") {
+              e.preventDefault();
+              add(draft);
+            }
+            if (e.key === "Escape") {
+              setDraft("");
+              setAddingNew(false);
+            }
+          }}
+          onBlur={() => {
+            if (draft.trim()) add(draft);
+            else setAddingNew(false);
+          }}
+          placeholder="Nazwa nowej kategorii i Enter..."
+          style={fieldStyle}
+        />
       )}
     </div>
   );
@@ -218,7 +280,11 @@ export function FinanceEntryForm({
   const isEdit = Boolean(initial.id);
   const set = (patch: Partial<FinanceDraft>) => setD((p) => ({ ...p, ...patch }));
   const kwotaNum = Number.parseFloat(d.kwota.replace(",", "."));
-  const valid = d.nazwa.trim().length > 0 && !Number.isNaN(kwotaNum) && kwotaNum > 0 && d.data;
+  const valid =
+    d.nazwa.trim().length > 0 &&
+    !Number.isNaN(kwotaNum) &&
+    kwotaNum > 0 &&
+    (d.dataNieznana || d.data);
   const nazwaRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -349,10 +415,31 @@ export function FinanceEntryForm({
               <Label>Data</Label>
               <input
                 type="date"
+                lang="pl-PL"
+                disabled={d.dataNieznana}
                 value={d.data}
                 onChange={(e) => set({ data: e.target.value })}
-                style={fieldStyle}
+                style={{ ...fieldStyle, opacity: d.dataNieznana ? 0.5 : 1 }}
               />
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 5,
+                  marginTop: 5,
+                  cursor: "pointer",
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 11,
+                  color: "var(--text-tertiary)",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={d.dataNieznana}
+                  onChange={(e) => set({ dataNieznana: e.target.checked })}
+                />
+                Data jeszcze nieznana
+              </label>
             </div>
           </div>
 
@@ -363,6 +450,100 @@ export function FinanceEntryForm({
               onChange={(kategoria) => set({ kategoria })}
               suggestions={categoryOptions}
             />
+          </div>
+
+          {/* Subskrypcja: wspólne dla Wydatku i Przychodu (np. abonament klienta) — cykl
+              wybierany tylko gdy zaznaczone, żeby nie sugerować cyklu tam gdzie go nie ma. */}
+          <div
+            style={{
+              borderRadius: "var(--radius-sm)",
+              border: d.subskrypcja ? "1px solid var(--accent-border)" : "1px solid var(--border)",
+              background: d.subskrypcja ? "var(--accent-muted)" : "var(--bg)",
+              padding: "10px 12px",
+              transition: "background 150ms ease, border-color 150ms ease",
+            }}
+          >
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 7,
+                cursor: "pointer",
+                fontFamily: "var(--font-sans)",
+                fontSize: 13,
+                fontWeight: 600,
+                color: "var(--text-primary)",
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={d.subskrypcja}
+                onChange={(e) =>
+                  set({
+                    subskrypcja: e.target.checked,
+                    cyklOdnawiania: e.target.checked ? (d.cyklOdnawiania ?? "Miesiąc") : null,
+                  })
+                }
+              />
+              <Repeat size={13} color={d.subskrypcja ? "var(--accent)" : "var(--text-tertiary)"} />
+              To jest cykliczne (subskrypcja lub retainer klienta)
+            </label>
+            {d.subskrypcja && (
+              <div style={{ marginTop: 10 }}>
+                <Label>Rodzaj</Label>
+                <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+                  {RENEWAL_KINDS.map((kind) => {
+                    const active = (d.rodzajCyklu ?? "Subskrypcja") === kind;
+                    return (
+                      <button
+                        key={kind}
+                        onClick={() => set({ rodzajCyklu: kind })}
+                        style={{
+                          flex: 1,
+                          fontFamily: "var(--font-sans)",
+                          fontSize: 12,
+                          fontWeight: 700,
+                          padding: "6px 4px",
+                          borderRadius: "var(--radius-sm)",
+                          cursor: "pointer",
+                          color: active ? "var(--accent)" : "var(--text-secondary)",
+                          background: active ? "var(--bg-elevated)" : "var(--bg)",
+                          border: `1px solid ${active ? "var(--accent)" : "var(--border)"}`,
+                        }}
+                      >
+                        {kind}
+                      </button>
+                    );
+                  })}
+                </div>
+                <Label>Odnawia się co</Label>
+                <div style={{ display: "flex", gap: 6 }}>
+                  {RENEWAL_INTERVALS.map((interval) => {
+                    const active = d.cyklOdnawiania === interval;
+                    return (
+                      <button
+                        key={interval}
+                        onClick={() => set({ cyklOdnawiania: interval })}
+                        style={{
+                          flex: 1,
+                          fontFamily: "var(--font-sans)",
+                          fontSize: 12,
+                          fontWeight: 700,
+                          padding: "6px 0",
+                          borderRadius: "var(--radius-sm)",
+                          cursor: "pointer",
+                          color: active ? "var(--accent)" : "var(--text-secondary)",
+                          background: active ? "var(--bg-elevated)" : "var(--bg)",
+                          border: `1px solid ${active ? "var(--accent)" : "var(--border)"}`,
+                        }}
+                      >
+                        {interval}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           {d.typ === "Wydatek" && (

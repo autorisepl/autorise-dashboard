@@ -17,9 +17,21 @@ const PROP = {
   data: "Data",
   notatka: "Notatka",
   przypisanie: "Przypisane do przychodu",
+  subskrypcja: "Subskrypcja",
+  cyklOdnawiania: "Cykl odnawiania",
+  rodzajCyklu: "Rodzaj cyklu",
 } as const;
 
 export type FinanceTyp = "Przychód" | "Wydatek";
+
+export const RENEWAL_INTERVALS = ["Tydzień", "Miesiąc", "Kwartał", "Rok"] as const;
+export type RenewalInterval = (typeof RENEWAL_INTERVALS)[number];
+
+// Subskrypcja osobista (Netflix, Claude Code itp.) vs Retainer klienta Autorise (stały,
+// cykliczny przychód od klienta na wdrożeniu/utrzymaniu) — to samo mechanicznie (cykliczna
+// kwota, cykl odnawiania), ale semantycznie różne rzeczy, więc liczone i pokazywane osobno.
+export const RENEWAL_KINDS = ["Subskrypcja", "Retainer klienta"] as const;
+export type RenewalKind = (typeof RENEWAL_KINDS)[number];
 
 export interface FinanceEntry {
   id: string;
@@ -27,10 +39,13 @@ export interface FinanceEntry {
   typ: FinanceTyp | "";
   kwota: number;
   kategoria: string[];
-  data: string; // yyyy-mm-dd
+  data: string; // yyyy-mm-dd, "" = data nieznana
   notatka: string;
   przypisaneDoPrzychoduId: string | null;
   przypisaneDoPrzychoduNazwa: string | null;
+  subskrypcja: boolean;
+  cyklOdnawiania: RenewalInterval | null;
+  rodzajCyklu: RenewalKind | null;
   lastEdited: string;
 }
 
@@ -39,9 +54,12 @@ export interface FinanceEntryInput {
   typ: FinanceTyp;
   kwota: number;
   kategoria: string[];
-  data: string;
+  data: string; // "" = data nieznana, czyści pole Data w Notion
   notatka?: string;
   przypisaneDoPrzychoduId?: string | null;
+  subskrypcja?: boolean;
+  cyklOdnawiania?: RenewalInterval | null;
+  rodzajCyklu?: RenewalKind | null;
 }
 
 const notion = new Client({ auth: process.env.NOTION_TOKEN });
@@ -85,6 +103,28 @@ function extractRelationIds(prop: PageObjectResponse["properties"][string] | und
   return [];
 }
 
+function extractCheckbox(prop: PageObjectResponse["properties"][string] | undefined): boolean {
+  if (!prop) return false;
+  if (prop.type === "checkbox") return prop.checkbox;
+  return false;
+}
+
+function extractRenewalInterval(
+  prop: PageObjectResponse["properties"][string] | undefined,
+): RenewalInterval | null {
+  if (prop?.type !== "select" || !prop.select) return null;
+  const name = prop.select.name;
+  return (RENEWAL_INTERVALS as readonly string[]).includes(name) ? (name as RenewalInterval) : null;
+}
+
+function extractRenewalKind(
+  prop: PageObjectResponse["properties"][string] | undefined,
+): RenewalKind | null {
+  if (prop?.type !== "select" || !prop.select) return null;
+  const name = prop.select.name;
+  return (RENEWAL_KINDS as readonly string[]).includes(name) ? (name as RenewalKind) : null;
+}
+
 function toEntryShape(page: PageObjectResponse): Omit<FinanceEntry, "przypisaneDoPrzychoduNazwa"> {
   const props = page.properties;
   const relIds = extractRelationIds(props[PROP.przypisanie]);
@@ -97,6 +137,9 @@ function toEntryShape(page: PageObjectResponse): Omit<FinanceEntry, "przypisaneD
     data: extractText(props[PROP.data]),
     notatka: extractText(props[PROP.notatka]),
     przypisaneDoPrzychoduId: relIds[0] ?? null,
+    subskrypcja: extractCheckbox(props[PROP.subskrypcja]),
+    cyklOdnawiania: extractRenewalInterval(props[PROP.cyklOdnawiania]),
+    rodzajCyklu: extractRenewalKind(props[PROP.rodzajCyklu]),
     lastEdited: page.last_edited_time,
   };
 }
@@ -123,6 +166,33 @@ export async function getFinanceSchemaOptions(): Promise<FinanceSchemaOptions> {
     return { kategoria };
   } catch {
     return { kategoria: [] };
+  }
+}
+
+// Property "Subskrypcja"/"Cykl odnawiania" mogą nie istnieć jeszcze w bazie (dodane w tej
+// rundzie, po pierwszej sesji budowy panelu). Tworzone idempotentnie przy każdym GET —
+// bezpieczne mimo wywoływania za każdym razem, bo zawsze wysyłamy tę samą, pełną, stałą listę
+// opcji cyklu (Tydzień/Miesiąc/Kwartał/Rok), nigdy częściową — więc nawet gdyby Notion
+// nadpisywał opcje select przy update (jak robi dla ISTNIEJĄCYCH property, patrz CLAUDE.md),
+// nic tu nigdy nie ginie. Błąd (np. brak uprawnień) połykany świadomie — panel ma działać
+// dalej nawet bez tych dwóch pól, tylko bez funkcji subskrypcji.
+export async function ensureFinanceSubscriptionSchema(): Promise<void> {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (notion.dataSources as any).update({
+      data_source_id: FINANCE_DATA_SOURCE_ID,
+      properties: {
+        [PROP.subskrypcja]: { checkbox: {} },
+        [PROP.cyklOdnawiania]: {
+          select: { options: RENEWAL_INTERVALS.map((name) => ({ name })) },
+        },
+        [PROP.rodzajCyklu]: {
+          select: { options: RENEWAL_KINDS.map((name) => ({ name })) },
+        },
+      },
+    });
+  } catch {
+    // Brak dostępu albo property już istnieje w niekompatybilnym typie — nie blokuj reszty.
   }
 }
 
@@ -156,7 +226,10 @@ function buildProperties(input: Partial<FinanceEntryInput>): Record<string, any>
   if (input.kategoria !== undefined) {
     properties[PROP.kategoria] = { multi_select: input.kategoria.map((name) => ({ name })) };
   }
-  if (input.data !== undefined) properties[PROP.data] = { date: { start: input.data } };
+  if (input.data !== undefined) {
+    // "" = data nieznana — czyści pole Data w Notion zamiast wysyłać nieprawidłowy pusty string.
+    properties[PROP.data] = input.data ? { date: { start: input.data } } : { date: null };
+  }
   if (input.notatka !== undefined) {
     properties[PROP.notatka] = { rich_text: input.notatka ? richText(input.notatka) : [] };
   }
@@ -164,6 +237,19 @@ function buildProperties(input: Partial<FinanceEntryInput>): Record<string, any>
     properties[PROP.przypisanie] = {
       relation: input.przypisaneDoPrzychoduId ? [{ id: input.przypisaneDoPrzychoduId }] : [],
     };
+  }
+  if (input.subskrypcja !== undefined) {
+    properties[PROP.subskrypcja] = { checkbox: input.subskrypcja };
+  }
+  if (input.cyklOdnawiania !== undefined) {
+    properties[PROP.cyklOdnawiania] = input.cyklOdnawiania
+      ? { select: { name: input.cyklOdnawiania } }
+      : { select: null };
+  }
+  if (input.rodzajCyklu !== undefined) {
+    properties[PROP.rodzajCyklu] = input.rodzajCyklu
+      ? { select: { name: input.rodzajCyklu } }
+      : { select: null };
   }
   return properties;
 }

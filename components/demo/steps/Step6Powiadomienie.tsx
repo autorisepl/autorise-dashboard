@@ -113,19 +113,30 @@ export function Step6Powiadomienie({ active, confirmed, onConfirm }: Step6Powiad
         )}
 
         {ready && confirmed && (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              fontFamily: demoFont.sans,
-              fontSize: 12,
-              color: demoColors.success,
-              fontWeight: 600,
-            }}
-          >
-            <CheckCircle2 size={13} />
-            Powiadomienie wysłane.
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                fontFamily: demoFont.sans,
+                fontSize: 12,
+                color: demoColors.success,
+                fontWeight: 600,
+              }}
+            >
+              <CheckCircle2 size={13} />
+              Powiadomienie wysłane.
+            </div>
+            <div
+              style={{
+                fontFamily: demoFont.sans,
+                fontSize: 11,
+                color: demoColors.textSecondary,
+              }}
+            >
+              Spedytor: jedno kliknięcie zamiast ręcznego przepisywania
+            </div>
           </div>
         )}
       </div>

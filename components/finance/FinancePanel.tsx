@@ -10,8 +10,8 @@ import {
   type FinanceDraft,
   FinanceEntryForm,
 } from "@/components/finance/FinanceEntryForm";
-import { FinanceIncomeSummary } from "@/components/finance/FinanceIncomeSummary";
 import { FinanceList } from "@/components/finance/FinanceList";
+import { SubscriptionsSummary } from "@/components/finance/SubscriptionsSummary";
 import { Panel } from "@/components/ui/Panel";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import {
@@ -19,6 +19,7 @@ import {
   formatPLN,
   isWithinRange,
   monthRange,
+  subscriptionsStats,
   sumKwota,
 } from "@/lib/finance/summary";
 import type { FinanceEntry, FinanceEntryInput } from "@/lib/notion/finance";
@@ -133,19 +134,38 @@ export function FinancePanel({ compact = false }: FinancePanelProps) {
 
   const expenseTotals = categoryTotals(expensesInRange);
   const incomeTotals = categoryTotals(incomeInRange);
+  // Subskrypcje liczone ze WSZYSTKICH wpisów, nie tylko `inRange` — to stan trwały, nie
+  // zdarzenie ograniczone do wybranego miesiąca (patrz komentarz w subscriptionsStats).
+  const subStats = subscriptionsStats(entries);
 
   return (
-    <Panel style={{ padding: compact ? 16 : 20 }}>
+    <Panel solid style={{ padding: compact ? 16 : 20 }}>
       <div
         style={{
           display: "flex",
           alignItems: "center",
-          gap: 8,
+          gap: 10,
           marginBottom: 10,
           flexWrap: compact ? "wrap" : "nowrap",
         }}
       >
-        <PiggyBank size={14} color="var(--accent)" />
+        {/* Ikona w kwadratowym "module badge" — celowo inny język wizualny niż nagłówek kolumny
+            dnia (sama nazwa dnia, bez ikony), żeby ten panel czytał się jednoznacznie jako
+            osobny moduł/widget, nie "ósmy dzień tygodnia". */}
+        <div
+          style={{
+            width: 26,
+            height: 26,
+            borderRadius: "var(--radius-sm)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "var(--bg-hover)",
+            flexShrink: 0,
+          }}
+        >
+          <PiggyBank size={14} color="var(--text-secondary)" />
+        </div>
         <SectionLabel paddingX={0} style={{ padding: 0, fontSize: 11, fontWeight: 700 }}>
           Finanse osobiste
         </SectionLabel>
@@ -226,6 +246,8 @@ export function FinancePanel({ compact = false }: FinancePanelProps) {
         </div>
       ) : (
         <>
+          <SubscriptionsSummary stats={subStats} />
+
           <FinanceList
             entries={entries}
             categoryOptions={categoryOptions}
@@ -289,7 +311,7 @@ export function FinancePanel({ compact = false }: FinancePanelProps) {
                     cursor: "pointer",
                     fontFamily: "var(--font-sans)",
                     fontSize: 12,
-                    color: "var(--accent)",
+                    color: "var(--accent-text)",
                   }}
                 >
                   Ten miesiąc
@@ -318,7 +340,11 @@ export function FinancePanel({ compact = false }: FinancePanelProps) {
                 <SectionLabel paddingX={0} style={{ fontSize: 10, fontWeight: 700 }}>
                   Przychody wg kategorii
                 </SectionLabel>
-                <FinanceIncomeSummary data={incomeTotals} />
+                <FinanceDonutChart
+                  data={incomeTotals}
+                  centerLabel="Przychody"
+                  centerValue={formatPLN(sumKwota(incomeInRange))}
+                />
               </div>
             </div>
           </div>
