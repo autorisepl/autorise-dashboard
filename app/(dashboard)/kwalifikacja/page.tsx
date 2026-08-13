@@ -311,6 +311,60 @@ function newGroupId(): string {
   return `grp_${Date.now()}_${groupIdCounter}`;
 }
 
+// Zwykły <input type="number"> kontrolowany liczbą wymusza natychmiastowy
+// powrót do `min` przy każdym skasowaniu pola (Number("") || min), co psuje
+// ręczne wpisywanie z klawiatury: pole wraca do min w trakcie kasowania,
+// zanim zdążysz wpisać nową cyfrę, więc realnie działa tylko przez strzałki.
+// Lokalny bufor tekstowy pozwala pisać swobodnie, walidacja/clamp dopiero
+// przy onBlur.
+function NumberField({
+  value,
+  min,
+  max,
+  step,
+  onCommit,
+  style,
+}: {
+  value: number;
+  min: number;
+  max?: number;
+  step?: number;
+  onCommit: (n: number) => void;
+  style?: React.CSSProperties;
+}) {
+  const [text, setText] = useState(String(value));
+
+  useEffect(() => {
+    setText(String(value));
+  }, [value]);
+
+  return (
+    <input
+      type="number"
+      min={min}
+      max={max}
+      step={step}
+      value={text}
+      onChange={(e) => {
+        const raw = e.target.value;
+        setText(raw);
+        const n = Number(raw);
+        if (raw.trim() !== "" && !Number.isNaN(n)) {
+          onCommit(n);
+        }
+      }}
+      onBlur={() => {
+        const n = Number(text);
+        const safe = Number.isNaN(n) ? min : n;
+        const clamped = Math.max(min, max !== undefined ? Math.min(safe, max) : safe);
+        setText(String(clamped));
+        onCommit(clamped);
+      }}
+      style={style}
+    />
+  );
+}
+
 function GroupRow({
   group,
   onChange,
@@ -365,35 +419,32 @@ function GroupRow({
       </label>
       <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
         <span style={labelStyle}>Osoby</span>
-        <input
-          type="number"
+        <NumberField
           min={1}
           max={50}
           value={group.osoby}
-          onChange={(e) => onChange({ osoby: Math.max(1, Number(e.target.value) || 1) })}
+          onCommit={(n) => onChange({ osoby: n })}
           style={fieldStyle}
         />
       </label>
       <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
         <span style={labelStyle}>Godz/dzień</span>
-        <input
-          type="number"
+        <NumberField
           min={0.5}
           max={12}
           step={0.5}
           value={group.godziny}
-          onChange={(e) => onChange({ godziny: Math.max(0.5, Number(e.target.value) || 0.5) })}
+          onCommit={(n) => onChange({ godziny: n })}
           style={fieldStyle}
         />
       </label>
       <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
         <span style={labelStyle}>Stawka zł/h</span>
-        <input
-          type="number"
+        <NumberField
           min={20}
           max={200}
           value={group.stawka}
-          onChange={(e) => onChange({ stawka: Math.max(20, Number(e.target.value) || 50) })}
+          onCommit={(n) => onChange({ stawka: n })}
           style={fieldStyle}
         />
       </label>
@@ -836,11 +887,10 @@ function InlineCaptureInput({
       >
         {label}
       </span>
-      <input
-        type="number"
+      <NumberField
         min={min}
         value={value}
-        onChange={(e) => onChange(Math.max(min, Number(e.target.value) || min))}
+        onCommit={onChange}
         style={{
           height: 36,
           width: 70,
@@ -2380,7 +2430,8 @@ export default function KwalifikacjaPage() {
               nie dwa osobne kliknięcia. Ten przycisk zostaje wyłącznie dla realnie
               nawiązanej rozmowy. */}
           <button
-            onClick={() => tally("rozmowa_kwalifikacja")}
+            onClick={() => selected && tally("rozmowa_kwalifikacja")}
+            disabled={!selected}
             style={{
               height: 28,
               padding: "0 10px",
@@ -2393,14 +2444,19 @@ export default function KwalifikacjaPage() {
                   : "var(--text-secondary)",
               fontSize: 11,
               fontWeight: 600,
-              cursor: "pointer",
+              cursor: selected ? "pointer" : "not-allowed",
+              opacity: selected ? 1 : 0.5,
               display: "flex",
               alignItems: "center",
               gap: 5,
               fontFamily: "var(--font-sans)",
               transition: "background 150ms, color 150ms",
             }}
-            title="Zlicz nawiązaną rozmowę (ogólna statystyka dzienna, niezależna od wybranego klienta)"
+            title={
+              selected
+                ? "Zlicz nawiązaną rozmowę z wybranym klientem"
+                : "Wybierz klienta z listy, żeby zarejestrować rozmowę"
+            }
           >
             {tallyFlash === "rozmowa_kwalifikacja" ? <Check size={11} /> : <PhoneCall size={11} />}
             Rejestruj odbycie rozmowy
