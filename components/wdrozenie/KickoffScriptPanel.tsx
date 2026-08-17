@@ -13,10 +13,11 @@ import type { ScriptLine } from "@/lib/scripts/types";
 // zebrane w Kroku 4 zapisują się do już istniejącego Panelu 0 (KickoffModuleTable) poniżej —
 // ten panel jest wyłącznie przewodnikiem rozmowy, nie osobnym miejscem zapisu.
 
+// "note" jest celowo cichy (text-tertiary) — dyskretna adnotacja dla settera, nie ostrzeżenie.
 const LINE_COLOR: Record<ScriptLine["t"], string> = {
   say: "var(--text-primary)",
   client: "var(--text-secondary)",
-  note: "var(--warning)",
+  note: "var(--text-tertiary)",
   action: "var(--accent)",
   branch: "var(--success-text)",
   "branch-bad": "var(--error)",
@@ -25,7 +26,7 @@ const LINE_COLOR: Record<ScriptLine["t"], string> = {
 const LINE_LABEL: Record<ScriptLine["t"], string> = {
   say: "MÓWISZ",
   client: "KLIENT",
-  note: "UWAGA",
+  note: "NOTATKA",
   action: "AKCJA",
   branch: "DALEJ",
   "branch-bad": "DALEJ",
@@ -159,11 +160,12 @@ export function KickoffScriptPanel({ autoExpandStepId }: KickoffScriptPanelProps
                           fontSize: 13,
                           color: LINE_COLOR[line.t],
                           lineHeight: 1.5,
+                          fontStyle: line.t === "note" ? "italic" : "normal",
                         }}
                       >
-                        {renderText(line.text)}
+                        {line.t === "note" ? line.setterNote : renderText(line.text)}
                       </span>
-                      {line.cel && (
+                      {line.t !== "note" && line.cel && (
                         <span
                           style={{
                             fontFamily: "var(--font-sans)",
@@ -243,7 +245,7 @@ export function KickoffScriptPanel({ autoExpandStepId }: KickoffScriptPanelProps
                     {obj.script}
                   </div>
                 )}
-                {obj.note && (
+                {obj.setterNote && (
                   <div
                     style={{
                       marginTop: 4,
@@ -253,7 +255,7 @@ export function KickoffScriptPanel({ autoExpandStepId }: KickoffScriptPanelProps
                       fontStyle: "italic",
                     }}
                   >
-                    {obj.note}
+                    {obj.setterNote}
                   </div>
                 )}
               </div>

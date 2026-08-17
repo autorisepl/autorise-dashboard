@@ -21,9 +21,9 @@
 // Zero pytań tłumaczących klientowi (właścicielowi firmy transportowej) branżowe
 // pojęcia jak CMR czy potwierdzenie dostawy — pytaj wprost, po partnersku. Zero
 // założeń o sytuacji klienta, których nie wypowiedział. Liczby w ustach settera
-// zaokrąglone, dokładne zostają wyłącznie w kalkulatorze. Notatki (`note`) i cele
-// (`cel`) są WYŁĄCZNIE dla settera, nie są czytane klientowi — mogą zawierać
-// dwukropki i pełne instrukcje.
+// zaokrąglone, dokładne zostają wyłącznie w kalkulatorze. `setterNote` i `cel` są
+// WYŁĄCZNIE dla settera, fizycznie oddzielone od `text` w typie ScriptLine (patrz
+// types.ts) — nie są czytane klientowi. `setterNote` jedno zdanie, limit 120/150 znaków.
 
 import type { IcpRule, Objection, Step } from "./types";
 
@@ -43,12 +43,12 @@ export const STEPS_K: Step[] = [
           "Widziałem w systemie że wypełnił Pan nasz formularz o oszczędności czasu w biurze.",
           "Chciałem zapytać, czy ten temat jest u Was jeszcze aktualny?",
         ],
-        cel: "Uzasadnienie rozmowy wbudowane w samo zdanie, klient od razu wie po co dzwonisz, zanim zdąży pomyśleć że to nachalna sprzedaż",
+        cel: "Klient od razu wie po co dzwonisz, zanim pomyśli że to nachalna sprzedaż.",
       },
       {
         t: "say",
         text: "Chciałbym zadać dwa, trzy pytania żeby sprawdzić czy to w ogóle ma sens dla Pana firmy. Zajęłoby mi to z dwie minuty, dobrze?",
-        cel: "Uzasadnienie prośby o czas wbudowane w samo zdanie, nie osobna adnotacja — klient wie po co te 2 minuty, zanim zdąży pomyśleć że to sprzedaż",
+        cel: "Klient wie po co te 2 minuty, zanim pomyśli że to sprzedaż.",
       },
       { t: "client", text: "[odpowiedź]" },
     ],
@@ -91,7 +91,7 @@ export const STEPS_K: Step[] = [
       {
         t: "say",
         text: "Co spowodowało że akurat teraz zdecydował się Pan wypełnić ten formularz?",
-        cel: "Znaleźć konkretny wyzwalacz i realny ból, zanim przejdziesz do reszty pytań",
+        cel: "Znaleźć konkretny wyzwalacz i realny ból.",
       },
       { t: "client", text: "[odpowiedź]" },
     ],
@@ -120,7 +120,7 @@ export const STEPS_K: Step[] = [
           trigger: "„W sumie nie mam żadnych problemów”",
           action: "Odpowiadasz i dopytujesz raz jeszcze, zanim uznasz że nie ma bólu.",
           sayAfter:
-            "Wielu ludzi z którymi rozmawiam mówi podobnie, a potem okazuje się że jest jedno konkretne miejsce gdzie coś nie gra tak jak by chcieli. Jak to u Pana wygląda?",
+            "To częsta odpowiedź na start. Zapytam inaczej. Gdzie dziś najwięcej czasu ucieka w biurze, nawet jeśli Pan by tego nie nazwał problemem, tylko czymś co po prostu tak już jest?",
           goToStepId: "diagnoza_doprecyzowanie_bolu",
           tone: "warning",
         },
@@ -152,13 +152,13 @@ export const STEPS_K: Step[] = [
           "Zapytam o dwie konkretne sytuacje, bo to właśnie w takich momentach większość firm traci klientów albo popełnia kosztowne pomyłki.",
           "Jak to wygląda gdy nagle przychodzi dużo zleceń naraz, na przykład w szczycie sezonu?",
         ],
-        cel: "Sprawdzić czy pod presją proces się sypie, bez zakładania z góry że u klienta jest dobrze, bo tego jeszcze nie powiedział — dodane zdanie o skali konsekwencji zwiększa szansę że klient szczerze opowie, widzi że pytanie ma realny sens biznesowy",
+        cel: "Sprawdzić czy pod presją proces się sypie.",
       },
       { t: "client", text: "[odpowiedź]" },
       {
         t: "say",
         text: "A jak radzicie sobie gdy spedytor jest nieobecny, choroba, urlop? Firma wtedy staje, czy ktoś to przejmuje bez problemu?",
-        cel: "Druga konkretna sytuacja, sprawdza czy istnieje pojedynczy punkt awarii w procesie",
+        cel: "Sprawdzić czy istnieje pojedynczy punkt awarii w procesie.",
       },
       { t: "client", text: "[odpowiedź]" },
     ],
@@ -193,17 +193,15 @@ export const STEPS_K: Step[] = [
       {
         t: "say",
         text: "Niech Pan opowie, jak wygląda zwykły dzień w biurze. Od tego jak wchodzi zlecenie, aż po to jak się rozliczacie.",
-        cel: "Pytanie otwarte prowadzące do własnego opisu klienta, bez podsuwania mu gotowych kategorii — łatwiej rozpoznać prawdziwy ból we własnych słowach niż wybrać z cudzej listy",
+        cel: "Klient opisuje ból własnymi słowami, bez podsuwania mu gotowych kategorii.",
       },
       { t: "client", text: "[odpowiedź]" },
       {
+        // Mapowanie sygnałów na moduły kalkulatora, do wykorzystania przy słuchaniu
+        // odpowiedzi klienta: przepisywanie zleceń = TMS, szukanie CMR/faktur = Dokumenty
+        // i pliki, dzwonienie po status = Powiadomienia automatyczne.
         t: "note",
-        text: [
-          "Podpowiedź wyłącznie dla Ciebie, nie czytaj klientowi.",
-          "Przepisywanie zleceń z maila, PDF-a albo WhatsAppa: sygnał modułu Automatyzacja TMS.",
-          "Szukanie i segregowanie CMR, potwierdzeń dostawy albo faktur: sygnał modułu Dokumenty i pliki.",
-          "Dzwonienie żeby sprawdzić status albo czekanie na informację: sygnał modułu Powiadomienia automatyczne.",
-        ],
+        setterNote: "Słuchaj, który moduł kalkulatora pasuje do opisu: TMS, Dokumenty i pliki, czy Powiadomienia.",
       },
     ],
     decision: {
@@ -234,31 +232,34 @@ export const STEPS_K: Step[] = [
       {
         t: "say",
         text: "Ile pojazdów ma Pan teraz aktywnie?",
-        cel: "Zweryfikować orientacyjną skalę floty pod kątem ICP (10-150 pojazdów)",
+        cel: "Zweryfikować orientacyjną skalę floty pod kątem ICP.",
       },
       {
         t: "say",
         text: "Orientacyjnie, w jakim przedziale rocznego przychodu firma się dziś mieści - to pytanie zadaję tylko po to, żeby dobrze dobrać skalę rozwiązania, nie z ciekawości.",
-        cel: "Drugi, opcjonalny filtr ICP obok liczby pojazdów, do dopasowania skali rozwiązania",
+        cel: "Drugi, opcjonalny filtr ICP obok liczby pojazdów.",
       },
       {
+        // Odpowiedź zapisywana jako drugi filtr ICP obok liczby pojazdów.
         t: "note",
-        text: "Pytanie opcjonalne. Odpowiedź zapisywana jako drugi filtr ICP obok liczby pojazdów. Jeśli klient nie chce odpowiedzieć, nie jest to blokada dalszej rozmowy — przechodzisz dalej bez naciskania.",
+        setterNote: "Pytanie opcjonalne, brak odpowiedzi nie blokuje dalszej rozmowy.",
       },
       {
         t: "say",
         text: "Ile osób pracuje w biurze? Chodzi mi o zlecenia, dokumenty, faktury.",
-        cel: "Sprawdzić twardy próg ICP, poniżej 2 osób ból zwykle zbyt mały żeby uzasadnić inwestycję, niezależnie od gwarancji (gwarancja jest procentowa, skaluje się z wielkością biura)",
+        cel: "Sprawdzić twardy próg ICP, minimum 2 osoby w biurze.",
       },
       {
         t: "say",
         text: "A kto się czym zajmuje? Spedytorzy, ktoś od faktur?",
-        cel: "Zebrać realny podział ról w biurze — przyda się przy zakładaniu ról w kalkulatorze niżej, zamiast wpisywać je ręcznie od zera",
+        cel: "Zebrać realny podział ról w biurze, przyda się przy zakładaniu ról w kalkulatorze.",
       },
       { t: "client", text: "[odpowiedź]" },
       {
+        // Ścieżka "1 osoba, plan zatrudnienia" nie ma osobnej logiki liczbowej: niższe
+        // ROI przy mniejszym zespole jest naturalne, nie błędem.
         t: "note",
-        text: "Ścieżka '1 osoba, plan zatrudnienia' nie ma osobnej logiki liczbowej. Liczysz ją nadal jako 1 osobę w kalkulatorze niżej — ROI wyjdzie niższy, to naturalne przy mniejszym zespole, nie błąd. Zaznacz w Pipeline 'plan zatrudnienia, potwierdzić na Discovery', żeby nie zgubić tej informacji.",
+        setterNote: "Licz jako 1 osobę w kalkulatorze; zaznacz w Pipeline do potwierdzenia na Discovery.",
       },
     ],
     decision: {
@@ -294,7 +295,7 @@ export const STEPS_K: Step[] = [
       {
         t: "say",
         text: "Jest Pan właścicielem firmy?",
-        cel: "Ustalić czy rozmawiasz z osobą decyzyjną, żeby nie umówić spotkania bez sensu",
+        cel: "Ustalić czy rozmawiasz z osobą decyzyjną.",
       },
     ],
     decision: {
@@ -323,13 +324,17 @@ export const STEPS_K: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Jakiego systemu używacie do zarządzania zleceniami i flotą? Trans.eu, Timocom, coś własnego?",
-        cel: "Ustalić punkt odniesienia — co już mają, żeby wiedzieć czego NIE trzeba zastępować",
+        text: [
+          "Rozumiem.",
+          "Jakiego systemu używacie do zarządzania zleceniami i flotą? Trans.eu, Timocom, coś własnego?",
+        ],
+        cel: "Ustalić punkt odniesienia, co klient już ma, żeby wiedzieć czego nie zastępować.",
+        setterNote: "Krótkie potwierdzenie przed pytaniem, żeby rozmowa nie brzmiała jak przesłuchanie.",
       },
       { t: "client", text: "[odpowiedź]" },
       {
         t: "note",
-        text: "Klient wspomniał Microsoft 365 / Power Automate / Power Apps jako 'już mam to ogarnięte'.",
+        setterNote: "Klient wspomniał M365/Power Automate/Power Apps jako 'już mam to ogarnięte'.",
         linkObjectionId: "konkurencja_m365",
       },
     ],
@@ -367,12 +372,14 @@ export const STEPS_K: Step[] = [
       {
         t: "say",
         text: "Jak wygląda u Was obieg dokumentów w tym systemie? Co jeszcze robicie ręcznie obok tego panelu?",
-        cel: "Ogólne rozeznanie zamiast pytań pod klasyczną spedycję, które przy tym profilu klienta mogą nie pasować",
+        cel: "Ogólne rozeznanie, bez pytań pod klasyczną spedycję które mogą tu nie pasować.",
       },
       { t: "client", text: "[odpowiedź]" },
       {
+        // Pytania 2d-2g są zbudowane pod klasycznego spedytora z CMR na giełdach
+        // transportowych, np. pytanie o CMR nie pasuje do klienta kurierskiego bez frachtu.
         t: "note",
-        text: "Pytania 2d do 2g są zbudowane pod klasycznego spedytora z CMR na giełdach transportowych. Przy tym kliencie oceń na słuch które z nich mają sens, pomijaj te które oczywiście nie pasują (np. pytanie o CMR przy kliencie kurierskim bez międzynarodowego frachtu), i wróć do standardowej ścieżki od kroku który faktycznie pasuje do jego odpowiedzi.",
+        setterNote: "Pytania 2d-2g pod spedytora z CMR; pomijaj te co nie pasują do klienta.",
       },
     ],
     nextStepId: "diagnoza_dokumenty_zlecenie",
@@ -385,13 +392,16 @@ export const STEPS_K: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Powie mi Pan, jak te zlecenia do Was trafiają? Ktoś to musi ręcznie przepisywać z maili czy PDF-ów do systemu?",
-        cel: "Sprawdzić czy pierwszy etap (przyjęcie zlecenia) generuje pracę ręczną",
+        text: [
+          "Jasne, dzięki.",
+          "Jak u Państwa zlecenia trafiają do biura? Ktoś to musi ręcznie przepisywać z maili czy PDF-ów do systemu?",
+        ],
+        cel: "Sprawdzić czy pierwszy etap, przyjęcie zlecenia, generuje pracę ręczną.",
       },
       { t: "client", text: "[opis]" },
       {
         t: "note",
-        text: "Jeśli klient nie rozumie pytania lub miesza je ze zleceniem dla kierowcy: „Chodzi mi o dokument od klienta który zamawia u Was transport, nie polecenie wyjazdu dla kierowcy.”",
+        setterNote: "Jeśli klient miesza to ze zleceniem dla kierowcy, doprecyzuj: chodzi o dokument od klienta.",
       },
     ],
     decision: {
@@ -423,20 +433,17 @@ export const STEPS_K: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Jak to wygląda z CMR-ami? Po kursie, jak to do Was wraca?",
-        cel: "Sprawdzić czy dokumenty po kursie wymagają ręcznego przepisywania, automatyczne odczytywanie dokumentów wchodzi w moduł Dokumenty i pliki",
+        text: ["OK, to się przyda.", "Jak to wygląda z CMR-ami? Po kursie, jak to do Was wraca?"],
+        cel: "Sprawdzić czy dokumenty po kursie wymagają ręcznego przepisywania.",
       },
       {
         t: "say",
         text: "Potwierdzenia dostawy wchodzą u Pana razem z CMR, czy osobno?",
-        cel: "Sprawdzić czy klient rozróżnia CMR i osobne potwierdzenie dostawy — u większości nie, ale trafiają się wyjątki, np. druk z sieci handlowej",
+        cel: "Sprawdzić czy klient rozróżnia CMR i osobne potwierdzenie dostawy.",
       },
       {
         t: "note",
-        text: [
-          "Papier fizyczny lub zdjęcie na WhatsApp/mailem: moduł Dokumenty i pliki, zaznacz w kalkulatorze.",
-          "Elektroniczne, np. eCMR: inny profil klienta, sprawdź czy dane i tak trzeba ręcznie przenieść do rozliczeń.",
-        ],
+        setterNote: "Papier/zdjęcie: moduł Dokumenty i pliki. eCMR: sprawdź czy dane i tak trzeba przepisać ręcznie.",
       },
     ],
     decision: {
@@ -468,8 +475,11 @@ export const STEPS_K: Step[] = [
     lines: [
       {
         t: "say",
-        text: "A z fakturami jak to wygląda? Tymi które wystawiacie i tymi które dostajecie. Kto to ogarnia i wpisuje do księgowości?",
-        cel: "Sprawdzić skalę pracy manualnej przy fakturach",
+        text: [
+          "Rozumiem.",
+          "A z fakturami jak to wygląda? Tymi które wystawiacie i tymi które dostajecie. Kto to ogarnia i wpisuje do księgowości?",
+        ],
+        cel: "Sprawdzić skalę pracy manualnej przy fakturach.",
       },
       { t: "client", text: "[odpowiedź]" },
     ],
@@ -502,8 +512,11 @@ export const STEPS_K: Step[] = [
     lines: [
       {
         t: "say",
-        text: "I ostatnia rzecz. Jak Pan sam sprawdza dziś status jakiegoś zlecenia? Trzeba zadzwonić do spedytora, czy widać to od razu w systemie?",
-        cel: "Sprawdzić czy właściciel ma widoczność operacyjną bez dzwonienia, kandydat na moduł Powiadomienia automatyczne",
+        text: [
+          "Jasne, dzięki.",
+          "I ostatnia rzecz. Jak Pan sam sprawdza dziś status jakiegoś zlecenia? Trzeba zadzwonić do spedytora, czy widać to od razu w systemie?",
+        ],
+        cel: "Sprawdzić czy właściciel ma widoczność operacyjną bez dzwonienia.",
       },
     ],
     decision: {
@@ -536,8 +549,11 @@ export const STEPS_K: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Orientacyjnie, ile kosztuje Pana godzina pracy osoby w biurze, razem ze wszystkimi narzutami?",
-        cel: "Zebrać realną stawkę zamiast domyślnego szacunku — dokładniejsza liczba dla klienta",
+        text: [
+          "Rozumiem.",
+          "Orientacyjnie, ile kosztuje Pana godzina pracy osoby w biurze, razem ze wszystkimi narzutami?",
+        ],
+        cel: "Zebrać realną stawkę zamiast domyślnego szacunku.",
       },
       { t: "client", text: "[odpowiedź lub niechęć do podania]" },
     ],
@@ -569,11 +585,14 @@ export const STEPS_K: Step[] = [
       {
         t: "say",
         text: "Dokładny podział na poszczególne zadania zmierzymy razem na spotkaniu wdrożeniowym. Teraz potrzebuję orientacyjnej całości.",
-        cel: "Ustawić oczekiwanie że to pierwsze przybliżenie, nie finalna liczba — dokładny pomiar per moduł następuje dopiero na spotkaniu wdrożeniowym (Załącznik 1 umowy). Zero słowa 'Kickoff' w rozmowie z klientem.",
+        cel: "Ustawić oczekiwanie że to pierwsze przybliżenie, nie finalna liczba.",
+        setterNote: "Dokładny pomiar per moduł dopiero na Kickoffie. Zero słowa 'Kickoff' w rozmowie z klientem.",
       },
       {
+        // Kalkulator wypełnia się sam: role z pytania o zespół (2a), moduły z checkboxów
+        // zaznaczonych automatycznie w krokach 2d-2g.
         t: "note",
-        text: "Kalkulator poniżej wypełnia się sam z tego co klient już powiedział: role z pytania o zespół (2a), moduły z checkboxów zaznaczonych automatycznie w krokach 2d do 2g. Dopytaj tylko o godziny dziennie per rola, jeśli jeszcze nie padły w rozmowie.",
+        setterNote: "Dopytaj tylko o godziny dziennie per rola, jeśli jeszcze nie padły w rozmowie.",
       },
     ],
     nextStepId: "diagnoza_liczba",
@@ -583,28 +602,29 @@ export const STEPS_K: Step[] = [
     nr: "2j",
     label: "PODANIE LICZBY KLIENTOWI",
     tag: "MÓWISZ",
-    hasModuleRecommendation: true,
     lines: [
       {
         t: "note",
-        text: "Odczytaj wynik z kalkulatora poniżej. W rozmowie mów liczbami zaokrąglonymi, dokładne wartości zostają w kalkulatorze dla Ciebie.",
+        setterNote: "Odczytaj wynik z kalkulatora, w rozmowie mów liczbami zaokrąglonymi.",
       },
       {
         t: "say",
         text: [
-          "Jak tak na to patrzę, przy tej skali robi się z tego całkiem sporo.",
+          "To przy tej skali robi się z tego naprawdę sporo godzin.",
           "Z moich wyliczeń na szybko wychodzi, że Wasz zespół traci miesięcznie około [WYNIK Z KALKULATORA] godzin. To koszt rzędu [WARTOŚĆ PLN] miesięcznie.",
         ],
       },
       {
         t: "say",
         text: "Nie każdą z tych godzin da się zautomatyzować w stu procentach, bo część to rozmowy z klientami i decyzje. Realistycznie mówimy o około 70 procentach tego czasu, czyli w okolicach [POTENCJAL_H] godzin miesięcznie wracających do biura.",
-        cel: "Budować wiarygodność przez uczciwość, nie obiecywać więcej niż realnie możliwe. 70 procent to ten sam wskaźnik co potencjał pokazany w kalkulatorze poniżej, nie osobna liczba",
+        cel: "Budować wiarygodność przez uczciwość, nie obiecywać więcej niż realnie możliwe.",
+        setterNote: "70% to ten sam wskaźnik co potencjał w kalkulatorze poniżej, nie osobna liczba.",
       },
       {
         t: "say",
         text: "Ta liczba dotyczy konkretnie tych zadań które przed chwilą razem policzyliśmy. Nie ogólnej wydajności zespołu, tylko tej powtarzalnej pracy którą Pan sam opisał.",
-        cel: "Zapobiec późniejszemu nieporozumieniu przy zobowiązaniu zwrotu na umowie — ono dotyczy konkretnych, potwierdzonych procesów, nie ogólnej produktywności czy zarobków firmy",
+        cel: "Zapobiec późniejszemu nieporozumieniu przy zobowiązaniu zwrotu na umowie.",
+        setterNote: "Zobowiązanie dotyczy konkretnych, potwierdzonych procesów, nie ogólnej produktywności firmy.",
       },
     ],
     nextStepId: "diagnoza_czas",
@@ -618,7 +638,7 @@ export const STEPS_K: Step[] = [
       {
         t: "say",
         text: "Gdyby te [POTENCJAL_H] godzin miesięcznie wróciły do biura, co by Pan z nimi zrobił?",
-        cel: "Sprawić żeby klient sam nazwał korzyść — silniej przekonuje niż gdybyś to Ty powiedział",
+        cel: "Sprawić żeby klient sam nazwał korzyść.",
       },
       { t: "client", text: "[odpowiedź]" },
     ],
@@ -658,7 +678,7 @@ export const STEPS_K: Step[] = [
     label: "BRAK BÓLU: WYJŚCIE",
     tag: "UWAGA",
     lines: [
-      { t: "note", text: "Używaj po 2 nieudanych próbach ukazania bólu. Nie sprzedawaj na siłę." },
+      { t: "note", setterNote: "Używaj po 2 nieudanych próbach ukazania bólu. Nie sprzedawaj na siłę." },
       {
         t: "say",
         text: [
@@ -669,6 +689,12 @@ export const STEPS_K: Step[] = [
       { t: "client", text: "Nie, wszystko gra." },
       {
         t: "say",
+        text: "Zanim zakończymy, jeszcze jedno pytanie. W jakim celu zostawił Pan ten formularz, jeśli mogę zapytać?",
+        cel: "Ostatnia próba diagnozy przed zamknięciem rozmowy.",
+      },
+      { t: "client", text: "[odpowiedź]" },
+      {
+        t: "say",
         text: [
           "Rozumiem. Na ten moment nie mamy dla Pana sensownej propozycji i nie chcę zabierać Panu czasu.",
           "Odezwę się za jakieś 3 miesiące, dobrze?",
@@ -676,7 +702,7 @@ export const STEPS_K: Step[] = [
       },
       {
         t: "note",
-        text: "Jeśli zgadza się: status Nieaktywny (follow up), data re-engagement za 3 mc.",
+        setterNote: "Jeśli zgadza się: status Nieaktywny (follow up), re-engagement za 3 mc.",
       },
     ],
   },
@@ -693,6 +719,12 @@ export const STEPS_K: Step[] = [
           "Mam propozycję. Spotkanie przez internet, 45 minut. Pokażę dokładnie jak wygląda automatyzacja dla firmy o tej skali, na Pana liczbach.",
         ],
       },
+      {
+        t: "say",
+        text: "Gdyby rozwiązanie się spodobało, mam jeszcze pytanie techniczne. Czy obecny rytm pracy pozwoliłby zacząć od razu, czy trzeba najpierw pozamykać jakieś sprawy po Pana stronie?",
+        cel: "Sprawdzić gotowość operacyjną do startu przed rezerwacją terminu.",
+      },
+      { t: "client", text: "[odpowiedź]" },
       {
         t: "say",
         text: "Kiedy pasowałby Panu taki termin, w tym czy w przyszłym tygodniu, rano czy po południu?",
@@ -730,14 +762,14 @@ export const STEPS_K: Step[] = [
       { t: "client", text: "[potwierdza]" },
       {
         t: "action",
-        text: "Zarezerwuj termin bezpośrednio w Calendly na podany dzień i godzinę, teraz, w trakcie rozmowy. Klient tylko potwierdza, nie wysyłasz mu linku do samodzielnego wyboru — link zostaje jako wariant zapasowy wyłącznie gdy klient nie chce ustalić terminu na żywo (patrz obiekcja poniżej).",
+        text: "Zarezerwuj termin bezpośrednio w Calendly na podany dzień i godzinę, teraz, w trakcie rozmowy. Klient tylko potwierdza, nie wysyłasz mu linku do samodzielnego wyboru. Link zostaje jako wariant zapasowy wyłącznie gdy klient nie chce ustalić terminu na żywo (patrz obiekcja poniżej).",
       },
       {
         t: "say",
         text: "Jeszcze jedno. Całe wdrożenie, od tego spotkania aż po uruchomienie systemu u Pana w firmie, prowadzę osobiście. Nie przekazuję tego nikomu innemu. Będzie Pan miał jeden kontakt przez cały proces, nie różnych ludzi na różnych etapach.",
         textSetter:
           "Jeszcze jedno. Całe wdrożenie, od tego spotkania aż po uruchomienie systemu u Pana w firmie, prowadzi osobiście założyciel Autorise, Michał. Nie przekazuje tego nikomu innemu. Będzie Pan miał jeden kontakt przez cały proces, nie różnych ludzi na różnych etapach.",
-        cel: "Budować autorytet i ciągłość — klient rozmawia z decydentem i wykonawcą w jednej osobie, nie trafia do korporacyjnego przekazywania sprawy między działami",
+        cel: "Budować autorytet i ciągłość, klient rozmawia z decydentem i wykonawcą w jednej osobie.",
       },
       {
         t: "say",
@@ -758,7 +790,7 @@ export const OBJECTIONS_K: Objection[] = [
     label: "Nie pamiętam żadnego formularza",
     stage: "opening",
     script:
-      "Jasne, tych reklam jest sporo, rozumiem. Zajmujemy się automatyzacją dokumentów transportowych, na przykład zleceniami, CMR-ami i fakturami, tym co dziś ktoś u Pana przepisuje ręcznie. Tego dotyczył formularz który Pan zostawił na Facebooku. Mam dwa pytania zanim opowiem więcej, ma Pan chwilę?",
+      "To nic, ludzie wypełniają dużo takich formularzy. Powiem w dwóch zdaniach. Dotyczy to automatyzacji dokumentów i zleceń w firmie transportowej. Mogę zadać dwa pytania, żeby sprawdzić czy to w ogóle ma sens dla Pana firmy?",
     nextStepId: "diagnoza_otwarcie",
   },
   {
@@ -790,10 +822,10 @@ export const OBJECTIONS_K: Objection[] = [
     label: "Niech Pan mi najpierw opowie czym się zajmujecie",
     stage: "opening",
     script:
-      "Jasne, powiem w dwóch zdaniach - ale żeby to miało sens, chciałbym najpierw zrozumieć z czym Pan dziś pracuje. Mogę zadać dwa pytania?",
+      "Jasne, powiem w dwóch zdaniach. Wcześniej chciałbym tylko zapytać o dwie rzeczy, żeby to co powiem miało sens dla Pana konkretnie, nie ogólnie. Można?",
     followup:
       "Pomagamy firmom transportowym ograniczyć ręczne wpisywanie zleceń i dokumentów, z gwarancją efektu zapisaną w umowie.",
-    note: "Followup wyłącznie jeśli klient nadal nalega przed odpowiedzią na pytania. To jedno zdanie z wynikiem, nie opis usługi.",
+    setterNote: "Followup wyłącznie jeśli klient nadal nalega przed odpowiedzią na pytania. To jedno zdanie z wynikiem, nie opis usługi.",
     nextStepId: "diagnoza_otwarcie",
   },
   {
@@ -802,7 +834,7 @@ export const OBJECTIONS_K: Objection[] = [
     stage: "opening",
     script:
       "Mogę wysłać materiały, ale wolałbym zadać dwa krótkie pytania, zajmie to góra minutę, żeby nie były to ogólne informacje tylko coś dopasowane pod Pana firmę.",
-    note: "Jeśli klient nadal odmawia rozmowy: 'Rozumiem, wyślę ogólne informacje na [email z Pipeline], a jeśli po przeczytaniu będzie Pan chciał pogłębić temat, zapraszam do kontaktu.' Status: follow-up, nie zamknięta sprawa.",
+    setterNote: "Jeśli nadal odmawia: zaproponuj wysyłkę informacji mailem. Status: follow-up, nie zamknięta sprawa.",
     nextStepId: "diagnoza_otwarcie",
   },
   // Standardowe obiekcje
@@ -818,7 +850,7 @@ export const OBJECTIONS_K: Objection[] = [
     label: "Nadal nie mam czasu (drugie NIE)",
     stage: "opening",
     script: "Jasne. Kiedy jest Pan bardziej dostępny, jutro rano czy po południu?",
-    note: "Zapisz dzień i godzinę. Ustaw follow-up w Pipeline.",
+    setterNote: "Zapisz dzień i godzinę. Ustaw follow-up w Pipeline.",
   },
   {
     id: "ok3",
@@ -834,7 +866,7 @@ export const OBJECTIONS_K: Objection[] = [
     stage: "wszedzie",
     script: "Rozumiem. Kiedy Pan wraca?",
     followup: "Zapisuję. Zadzwonię do Pana [data po powrocie]. Życzę udanego urlopu.",
-    note: "Status: Nieaktywny (follow up). Data re-engagement: dzień po powrocie.",
+    setterNote: "Status: Nieaktywny (follow up). Data re-engagement: dzień po powrocie.",
   },
   {
     id: "ok5",
@@ -842,14 +874,14 @@ export const OBJECTIONS_K: Objection[] = [
     stage: "wszedzie",
     script:
       "A mogliby Państwo dołączyć we dwoje na spotkanie przez internet? Trwa 45 minut, mam przygotowane liczby konkretnie dla Pana firmy. Wtedy oboje macie pełen obraz i decydujecie razem.",
-    note: "Jeśli nie może dołączyć: 'Rozumiem. Co musiałoby się wydarzyć na spotkaniu żeby [osoba] powiedziała tak?'",
+    setterNote: "Jeśli nie może dołączyć: 'Rozumiem. Co musiałoby się wydarzyć na spotkaniu żeby [osoba] powiedziała tak?'",
   },
   {
     id: "ok1_szczere",
     label: "Nie mam czasu, naprawdę zajęty",
     stage: "opening",
     script: "Jasne, rozumiem. Kiedy byłoby Panu wygodniej, jutro rano czy po południu?",
-    note: "Nie przekonuj, nie próbuj wcisnąć rozmowy na siłę. Szczery brak czasu szanujesz i umawiasz konkretny termin, nie 'kiedyś'.",
+    setterNote: "Nie przekonuj, nie próbuj wcisnąć rozmowy na siłę. Szczery brak czasu szanujesz i umawiasz konkretny termin, nie 'kiedyś'.",
   },
   {
     id: "ok1_wymowka",
@@ -857,7 +889,7 @@ export const OBJECTIONS_K: Objection[] = [
     stage: "opening",
     script:
       "Jasne, rozumiem. Powiem krótko o co chodzi, a Pan sam oceni czy warto dać mi te dwie minuty. Sprawdzam czy Pana biuro traci więcej niż kilkadziesiąt godzin miesięcznie na ręczne wpisywanie zleceń i dokumentów. Jeśli tak, to są realne pieniądze. Ma Pan te dwie minuty?",
-    note: "Rozpoznajesz wymówkę po tonie: szybkie 'nie mam czasu' zaraz po przedstawieniu się, bez pytania o co chodzi, zanim jeszcze wiedział czego dotyczy telefon. Jeśli nadal odmawia mimo tej odpowiedzi: przejdź do obiekcji 'Nadal nie mam czasu' (drugie NIE).",
+    setterNote: "Poznaj po tonie: szybkie 'nie mam czasu' zaraz po przedstawieniu się, bez pytania o co chodzi.",
     nextStepId: "diagnoza_otwarcie",
   },
   {
@@ -866,7 +898,7 @@ export const OBJECTIONS_K: Objection[] = [
     stage: "opening",
     script:
       "Ma Pan rację, przepraszam. Zapytam wprost, dokończyć w skrócie teraz, czy woli Pan żebym oddzwonił i zrobił to porządnie?",
-    note: "To się zdarza gdy diagnoza faktycznie trwa dłużej niż deklarowane 2 minuty. Nie ignoruj tego, przyznaj wprost i daj klientowi wybór. Większość zostaje jeśli dasz im kontrolę nad decyzją.",
+    setterNote: "Gdy diagnoza trwa dłużej niż deklarowane 2 minuty, przyznaj to wprost i daj klientowi wybór.",
   },
   {
     id: "icp_ponizej_progu",
@@ -874,7 +906,7 @@ export const OBJECTIONS_K: Objection[] = [
     stage: "icp",
     script:
       "Dziękuję za szczerość. Przy tej wielkości biura pewnie nie poczułby Pan jeszcze realnej różnicy, więc szczerze, nie namawiam na coś co się nie zwróci. Mogę zapisać kontakt i wrócić za jakieś 3 miesiące, jak zespół się powiększy, dobrze?",
-    note: "Status: Niekwalifikowany. Jeśli zgoda: data re-engagement +90 dni w Pipeline. Koniec rozmowy, nie wracaj do diagnozy.",
+    setterNote: "Status: Niekwalifikowany. Jeśli zgoda: data re-engagement +90 dni w Pipeline. Koniec rozmowy, nie wracaj do diagnozy.",
   },
   {
     id: "icp_nie_decydent",
@@ -884,7 +916,9 @@ export const OBJECTIONS_K: Objection[] = [
       "Rozumiem. Zaproponuję najprościej. Umówmy od razu 45 minut wspólnie z osobą decyzyjną, żeby nie musiał Pan tego później tłumaczyć z drugiej ręki. Kiedy mogliby Państwo razem, w tym czy w przyszłym tygodniu?",
     followup:
       "Świetnie, rezerwuję ten termin już teraz. Wyślę zaproszenie na Państwa oboje maile, dobrze?",
-    note: "Jeśli klient od razu poda wspólny termin: zarezerwuj slot Calendly na obie osoby, zapisz obie osoby w Pipeline, nie kończ rozmowy bez konkretnej daty i godziny. Po potwierdzeniu terminu: podziękuj, potwierdź że wysyłasz zaproszenie od razu, i zapytaj czy jest jeszcze coś co chciałby wiedzieć przed spotkaniem, zanim zakończysz rozmowę. Jeśli druga osoba mimo to nie może dołączyć na Discovery: umów spotkanie z rozmówcą, zaznacz w Pipeline 'decydent nieobecny, do potwierdzenia przed ceną', Agent 2 musi to uwzględnić w brief.",
+    // Jeśli druga osoba mimo to nie może dołączyć: umów spotkanie z rozmówcą, zaznacz w
+    // Pipeline "decydent nieobecny, do potwierdzenia przed ceną", Agent 2 musi to uwzględnić.
+    setterNote: "Zarezerwuj Calendly i zapisz obie osoby w Pipeline, nie kończ rozmowy bez daty i godziny.",
     nextStepId: "spotkanie",
   },
   {
@@ -893,7 +927,7 @@ export const OBJECTIONS_K: Objection[] = [
     stage: "diagnoza",
     script:
       "Jasne, biuro rachunkowe zajmuje się rozliczeniami. A kto u Was przygotowuje i wysyła im dokumenty, faktury, potwierdzenia dostaw? To zwykle ta sama osoba co reszta administracji, zgadza się?",
-    note: "Nawet z zewnętrzną księgowością ktoś wewnątrz firmy zbiera i wysyła dokumenty ręcznie — to wciąż ból do zmapowania w kalkulatorze (moduł Dokumenty i pliki).",
+    setterNote: "Nawet z zewnętrzną księgowością ktoś w firmie zbiera dokumenty ręcznie, to nadal ból do zmapowania.",
   },
   {
     id: "konkurencja_m365",
@@ -903,7 +937,7 @@ export const OBJECTIONS_K: Objection[] = [
       "To brzmi jak solidna konfiguracja. Sprawdzam zwykle jedną rzecz: czy to faktycznie odczytuje dane z dokumentu i wypełnia je automatycznie, czy tylko przenosi plik do folderu, a ktoś nadal musi go otworzyć i przepisać ręcznie?",
     followup:
       "A co się dzieje gdy dokument wygląda inaczej niż zwykle? Flow ogarnia to sam, czy ktoś wtedy ręcznie interweniuje? I kto to utrzymuje, jak coś się zepsuje po aktualizacji?",
-    note: "Większość konfiguracji Power Automate przenosi pliki, nie wyciąga z nich danych, i utrzymuje ją jedna osoba która to kiedyś skonfigurowała. Jeśli klient ma faktycznie zaawansowaną integrację z realnym OCR i utrzymaniem, przyznaj to uczciwie, nie naciskaj wbrew faktom.",
+    setterNote: "Większość Power Automate tylko przenosi pliki, nie czyta danych. Jeśli klient ma realny OCR, przyznaj to uczciwie.",
   },
   {
     id: "po_co_to_pytanie",
@@ -911,7 +945,15 @@ export const OBJECTIONS_K: Objection[] = [
     stage: "diagnoza",
     script:
       "Pytam, bo od tego zależy czy w ogóle mam dla Pana sensowną propozycję. Wolę to sprawdzić w dwie minuty, niż zabierać Panu czas na spotkanie, które niczego by nie dało.",
-    note: "Krótkie, szczere uzasadnienie, bez tłumaczenia się i bez przedłużania wątku. Po odpowiedzi wracaj natychmiast do pytania diagnostycznego które przerwał.",
+    setterNote: "Krótkie, szczere uzasadnienie. Po odpowiedzi wracaj natychmiast do przerwanego pytania.",
+  },
+  {
+    id: "cena_nacisk_diagnoza",
+    label: "Naciska na cenę już podczas kwalifikacji",
+    stage: "diagnoza",
+    script:
+      "Rozumiem, że cena jest ważna, i to będzie jedna z pierwszych rzeczy które omówimy na najbliższym spotkaniu, razem z dokładnym wyliczeniem pod Pana firmę. Teraz chcę się tylko upewnić, że to w ogóle ma sens, dobrze?",
+    setterNote: "Odróżnij od ok_cp (pytanie o cenę w opening). Ta dotyczy nacisku w trakcie diagnozy.",
   },
   {
     id: "czas_milczy",
@@ -932,7 +974,7 @@ export const OBJECTIONS_K: Objection[] = [
     label: "Przeskakuje od razu do pytania o cenę",
     stage: "kalkulator",
     script: "Do ceny zaraz dojdziemy, chcę tylko dokończyć ten wątek.",
-    note: "Jeśli mimo to nalega: nie walcz, przejdź dalej normalnie, zanotuj w Pipeline że pytanie o korzyść czasu nie zostało w pełni odpowiedziane.",
+    setterNote: "Jeśli mimo to nalega: nie walcz, przejdź dalej normalnie, zanotuj w Pipeline że pytanie o korzyść czasu nie zostało w pełni odpowiedziane.",
   },
   {
     id: "stawka_niechec",
@@ -940,7 +982,7 @@ export const OBJECTIONS_K: Objection[] = [
     stage: "kalkulator",
     script:
       "Rozumiem, to szczegół księgowy. Wystarczy orientacyjnie: to bliżej 40, 55, czy 70 złotych za godzinę z narzutami?",
-    note: "Wpisz podaną wartość orientacyjną do kalkulatora, nie zostawiaj pustego pola.",
+    setterNote: "Wpisz podaną wartość orientacyjną do kalkulatora, nie zostawiaj pustego pola.",
   },
   {
     id: "spedytorzy_dorazni",
@@ -948,7 +990,7 @@ export const OBJECTIONS_K: Objection[] = [
     stage: "diagnoza",
     script:
       "Rozumiem, czyli pracują doraźnie, na wezwanie. A gdy jest dużo zleceń naraz, ile osób realnie wtedy przy tym siedzi i ile godzin to zajmuje?",
-    note: "ICP i kalkulator liczą się tak samo — pytaj o realną liczbę osób i godzin w szczycie, niezależnie od formy zatrudnienia. Forma zatrudnienia nie zmienia kwalifikacji, liczy się faktyczny czas pracy nad dokumentami.",
+    setterNote: "Forma zatrudnienia nie zmienia kwalifikacji, liczy się faktyczny czas pracy nad dokumentami.",
   },
   {
     id: "spotkanie_link_zapasowy",
@@ -956,7 +998,9 @@ export const OBJECTIONS_K: Objection[] = [
     stage: "closing",
     script:
       "Rozumiem, nie ma problemu. Wyślę Panu link do samodzielnej rezerwacji przez Calendly, wybierze Pan dogodny termin. Dostanie Pan też automatyczne przypomnienie SMS dzień przed.",
-    note: "Użyj wyłącznie gdy klient wyraźnie nie chce ustalić terminu na żywo — domyślna ścieżka to rezerwacja terminu bezpośrednio na tej rozmowie (krok 3, opcja 'podaje dzień i porę'). Wyślij link Calendly natychmiast po rozmowie, nie 'zaraz', teraz. Zmień status w Pipeline na 'Discovery umówione' dopiero gdy klient faktycznie zarezerwuje termin w Calendly, nie w momencie wysłania linku.",
+    // Domyślna ścieżka to rezerwacja terminu bezpośrednio na tej rozmowie (krok 3). Status
+    // "Discovery umówione" dopiero gdy klient faktycznie zarezerwuje termin w Calendly.
+    setterNote: "Użyj tylko gdy klient nie chce ustalić terminu na żywo. Wyślij link Calendly od razu.",
   },
 ];
 

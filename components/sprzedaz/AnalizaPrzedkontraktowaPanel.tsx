@@ -44,10 +44,11 @@ function parseRows(raw: string): KickoffModuleRow[] | null {
   }
 }
 
+// "note" jest celowo cichy (text-tertiary) — dyskretna adnotacja dla settera, nie ostrzeżenie.
 const LINE_COLOR: Record<ScriptLine["t"], string> = {
   say: "var(--text-primary)",
   client: "var(--text-secondary)",
-  note: "var(--warning)",
+  note: "var(--text-tertiary)",
   action: "var(--accent)",
   branch: "var(--success-text)",
   "branch-bad": "var(--error)",
@@ -56,7 +57,7 @@ const LINE_COLOR: Record<ScriptLine["t"], string> = {
 const LINE_LABEL: Record<ScriptLine["t"], string> = {
   say: "MÓWISZ",
   client: "KLIENT",
-  note: "UWAGA",
+  note: "NOTATKA",
   action: "AKCJA",
   branch: "DALEJ",
   "branch-bad": "DALEJ",
@@ -64,6 +65,32 @@ const LINE_LABEL: Record<ScriptLine["t"], string> = {
 
 function renderText(text: string | string[]): string {
   return Array.isArray(text) ? text.join(" ") : text;
+}
+
+// Ten panel nie miał WCALE podstawiania danych klienta pod nawiasy (w przeciwieństwie do fill()
+// w page.tsx dla Skryptu Discovery) — setter czytał klientowi dosłowne "[nazwa TMS/system
+// klienta]" i "[lista modułów z briefu]" na żywo. Naprawione tym samym wzorcem honest-fallback
+// co reszta /sprzedaz: brak danych = czytelna instrukcja w nawiasach myślnika, nigdy fabrykowana
+// wartość ani surowy placeholder.
+function fillPrzedkontraktowa(text: string, client: PipelineClientDetailed): string {
+  let out = text;
+  out = out.replace(
+    /\[nazwa TMS\/system klienta\]/g,
+    client.tms?.trim() || "systemu którego dziś Państwo używacie",
+  );
+  const moduleLabels = client.moduleWdrazane
+    .map((code) => MODULE_LABELS[code] ?? code)
+    .join(", ");
+  out = out.replace(
+    /\[lista modułów z briefu\]/g,
+    moduleLabels || "— brak zaznaczonych modułów w Pipeline, dopytaj i zaznacz w karcie klienta —",
+  );
+  out = out.replace(
+    /\[ta konkretna czynność\]/g,
+    "— nazwij konkretną czynność z tabeli Załącznika 1 poniżej —",
+  );
+  out = out.replace(/\[termin\]/g, "— ustal konkretną datę wysyłki umowy i wpisz ją na żywo —");
+  return out;
 }
 
 const inputBase: CSSProperties = {
@@ -241,11 +268,14 @@ export function AnalizaPrzedkontraktowaPanel({
                           fontSize: 13,
                           color: LINE_COLOR[line.t],
                           lineHeight: 1.5,
+                          fontStyle: line.t === "note" ? "italic" : "normal",
                         }}
                       >
-                        {renderText(line.text)}
+                        {line.t === "note"
+                          ? line.setterNote
+                          : fillPrzedkontraktowa(renderText(line.text), client)}
                       </span>
-                      {line.cel && (
+                      {line.t !== "note" && line.cel && (
                         <span
                           style={{
                             fontFamily: "var(--font-sans)",
@@ -322,10 +352,10 @@ export function AnalizaPrzedkontraktowaPanel({
                       lineHeight: 1.5,
                     }}
                   >
-                    {obj.script}
+                    {fillPrzedkontraktowa(obj.script, client)}
                   </div>
                 )}
-                {obj.note && (
+                {obj.setterNote && (
                   <div
                     style={{
                       marginTop: 4,
@@ -335,7 +365,7 @@ export function AnalizaPrzedkontraktowaPanel({
                       fontStyle: "italic",
                     }}
                   >
-                    {obj.note}
+                    {obj.setterNote}
                   </div>
                 )}
               </div>
@@ -355,7 +385,7 @@ export function AnalizaPrzedkontraktowaPanel({
           marginBottom: 8,
         }}
       >
-        Załącznik 1 — czas manualny per moduł
+        Załącznik 1: czas manualny per moduł
       </div>
 
       {rows.length === 0 ? (

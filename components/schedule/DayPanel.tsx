@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDown, ChevronUp, Plus, Repeat } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CalendarEvent } from "@/app/api/google/calendar/route";
 import { NoTimeTaskCard } from "@/components/schedule/DayNoTimeTask";
 import {
@@ -21,6 +21,7 @@ import {
   type EventDragPayload,
   formatEventTime,
   localDateKey,
+  minutesToAxisPx,
   type Priority,
   parseTimeRangeFromNotes,
   STICKY_ROW1_HEIGHT,
@@ -29,6 +30,9 @@ import {
 } from "@/lib/schedule/dateHelpers";
 
 const NO_TIME_VISIBLE_CAP = 4;
+// Przy pełnej dobie 0-24h oś ma 960px wysokości (24h * PX_PER_HOUR) — bez limitu kolumna dnia
+// rozciągałaby całą stronę na pustych godzinach nocnych. 420px pokazuje ok. 10.5h naraz.
+const AXIS_MAX_HEIGHT = 420;
 
 interface DayPanelProps {
   day: Date;
@@ -115,6 +119,16 @@ export function DayPanel({
   ];
   const range = computeAxisRange(axisBlocks);
 
+  // Auto-scroll do bieżącej godziny przy pierwszym renderze dzisiejszej kolumny — bez tego
+  // scroll osi 0-24h startowałby zawsze od północy, chowając "teraz" kilkaset px niżej.
+  useEffect(() => {
+    if (!isToday || !axisWrapRef.current) return;
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    const targetPx = minutesToAxisPx(nowMin, range) - AXIS_MAX_HEIGHT / 2;
+    axisWrapRef.current.scrollTop = Math.max(0, targetPx);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isToday]);
+
   function handleContentDragOver(e: React.DragEvent) {
     if (
       e.dataTransfer.types.includes(DRAG_TYPE_TASK) ||
@@ -137,7 +151,11 @@ export function DayPanel({
     if (taskRaw) {
       const payload = JSON.parse(taskRaw) as DragPayload;
       if (withinAxis && axisRect) {
-        const startMin = axisPxToMinutes(e.clientY - axisRect.top, range);
+        // + scrollTop: axisRect.top to góra WIDOCZNEGO fragmentu przewijanej osi (0-24h ma
+        // 960px, ale widocznie tylko AXIS_MAX_HEIGHT), więc pozycję trzeba przesunąć o to, ile
+        // już przewinięto, inaczej drop po przewinięciu lądowałby na złej godzinie.
+        const scrollTop = axisWrapRef.current?.scrollTop ?? 0;
+        const startMin = axisPxToMinutes(e.clientY - axisRect.top + scrollTop, range);
         onDropTaskTimed(payload.taskId, day, startMin);
       } else {
         onDropTaskNoTime(payload.taskId, day);
@@ -420,7 +438,7 @@ export function DayPanel({
           </button>
         </div>
 
-        <div ref={axisWrapRef}>
+        <div ref={axisWrapRef} style={{ maxHeight: AXIS_MAX_HEIGHT, overflowY: "auto" }}>
           <DayTimeAxis
             range={range}
             blocks={axisBlocks}

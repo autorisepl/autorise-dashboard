@@ -990,7 +990,7 @@ export function KalkulatorRoi({ embedded = false, initialClientName }: Kalkulato
               value={nazwaKlienta}
               onChange={setNazwaKlienta}
               type="text"
-              placeholder="np. Trans-Pol Sp. z o.o."
+              placeholder="Uzupełnij nazwę firmy"
             />
             <Field
               label="Godziny manualne / tydzień"
@@ -1255,7 +1255,9 @@ export function KalkulatorRoi({ embedded = false, initialClientName }: Kalkulato
                     transition: "all 0.15s",
                   }}
                 >
-                  {showIntegracja && <Check size={11} color="var(--text-on-accent)" strokeWidth={3} />}
+                  {showIntegracja && (
+                    <Check size={11} color="var(--text-on-accent)" strokeWidth={3} />
+                  )}
                 </div>
                 <span
                   style={{

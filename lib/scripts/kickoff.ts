@@ -57,7 +57,7 @@ export const STEPS_KO: Step[] = [
       { t: "client", text: "[potwierdzenie albo korekta]" },
       {
         t: "note",
-        text: "Jeśli klient zgłasza rozbieżność ze scope'em z umowy: nie decyduj sam, przenieś ustalenie zakresu do rozmowy z Michałem przed kontynuowaniem Kickoffu.",
+        setterNote: "Przy rozbieżności ze scope'em umowy nie decyduj sam, przenieś do rozmowy z Michałem.",
       },
     ],
   },
@@ -80,7 +80,7 @@ export const STEPS_KO: Step[] = [
       { t: "client", text: "[osoba kontaktowa + orientacyjny termin]" },
       {
         t: "note",
-        text: "Umowa daje 3 tygodnie od otrzymania Wykazu jako maksimum — potwierdź konkretną datę wcześniejszą jeśli klient deklaruje że da radę szybciej, nie proponuj mu maksimum jako punkt wyjścia.",
+        setterNote: "Umowa daje max 3 tygodnie od Wykazu, potwierdź wcześniejszą datę jeśli klient zdąży szybciej.",
         linkObjectionId: "ko_dostepy_wrazliwe",
       },
     ],
@@ -94,8 +94,9 @@ export const STEPS_KO: Step[] = [
     hasModuleRecommendation: true,
     lines: [
       {
+        // Kickoff dzieje się po podpisie i wpłacie, to nie ponowny pomiar.
         t: "note",
-        text: "Liczby w Załączniku 1 są już ustalone i podpisane — Kickoff dzieje się po podpisie i wpłacie. Dla KAŻDEGO modułu z listy osobno: odczytaj liczbę z podpisanej umowy, poproś o potwierdzenie, zapisz od razu. To nie jest ponowny pomiar.",
+        setterNote: "Dla każdego modułu osobno: odczytaj liczbę z umowy, poproś o potwierdzenie, zapisz od razu.",
       },
       {
         t: "say",
@@ -105,7 +106,7 @@ export const STEPS_KO: Step[] = [
       { t: "client", text: "[potwierdzenie albo zgłoszona zmiana]" },
       {
         t: "note",
-        text: "Jeśli klient mówi że coś się zmieniło: to nie jest miejsce na renegocjację liczb z podpisanego Załącznika. Zanotuj rozbieżność do dalszej rozmowy, nie zmieniaj wartości w tabeli Kickoff bez wyraźnej decyzji Michała.",
+        setterNote: "Jeśli coś się zmieniło: zanotuj rozbieżność, nie zmieniaj tabeli bez decyzji Michała.",
         linkObjectionId: "ko_nie_wiem_ile",
       },
       {
@@ -129,7 +130,7 @@ export const STEPS_KO: Step[] = [
       { t: "client", text: "[potwierdzenie]" },
       {
         t: "note",
-        text: "Edytowalne wyłącznie przy wyraźnym powodzie biznesowym (np. bardzo niska baza czasowa gdzie 70% jest nierealne z przyczyn strukturalnych) — nie negocjuj w dół żeby szybciej zamknąć spotkanie.",
+        setterNote: "Edytowalne tylko przy wyraźnym powodzie biznesowym, nie negocjuj w dół dla szybszego zamknięcia.",
       },
     ],
   },
@@ -162,7 +163,7 @@ export const OBJECTIONS_KO: Objection[] = [
     stage: "kickoff",
     script:
       "Rozumiem, to nie musi być pamiętane co do minuty. Tę liczbę ustaliliśmy wspólnie i podpisaliśmy w Załączniku, więc jeśli nic się od tego czasu nie zmieniło w tym procesie, przyjmujemy ją jako punkt odniesienia do weryfikacji za 30 dni. Jeśli coś realnie się zmieniło, proszę powiedzieć co, zanotuję to do dalszej rozmowy.",
-    note: "Nie proponuj nowego pomiaru na żywo ani nowego szacunku — liczba jest już wiążąca z podpisanej umowy. Jedyna dopuszczalna reakcja na zgłoszoną zmianę to notatka do dalszej rozmowy, nie zmiana wartości w tabeli Kickoff.",
+    setterNote: "Nie proponuj nowego pomiaru, liczba jest wiążąca. Zgłoszoną zmianę zanotuj, nie zmieniaj tabeli.",
   },
   {
     id: "ko_dlaczego_teraz",
@@ -170,7 +171,7 @@ export const OBJECTIONS_KO: Objection[] = [
     stage: "kickoff",
     script:
       "Bo dokładny pomiar czasu manualnego jest częścią Analizy przedkontraktowej, robionej przed podpisaniem umowy — te liczby są już w podpisanym Załączniku 1 i są wiążące. Dzisiejsze spotkanie to potwierdzenie że nic się nie zmieniło od tamtego momentu, żeby weryfikacja za 30 dni była uczciwa i policzalna.",
-    note: "Kickoff dzieje się już po podpisie i wpłacie — to nie jest miejsce na renegocjację liczb z Załącznika, tylko na ich potwierdzenie. Rozbieżności zgłoszone przez klienta idą do notatki, nie do bezpośredniej zmiany tabeli.",
+    setterNote: "To potwierdzenie liczb z Załącznika, nie renegocjacja. Rozbieżności idą do notatki, nie do tabeli.",
   },
   {
     id: "ko_dostepy_wrazliwe",
@@ -178,6 +179,6 @@ export const OBJECTIONS_KO: Objection[] = [
     stage: "kickoff",
     script:
       "Rozumiem obawę. Dane operacyjne zostają cały czas własnością Pana firmy, zgodnie z §8 umowy i RODO — my jesteśmy wyłącznie powierzającym przetwarzanie. Jeśli wolałby Pan ograniczyć dostęp tylko do niezbędnego zakresu na start, możemy tak zrobić i rozszerzyć później, jeśli okaże się potrzebne.",
-    note: "Zaproponuj ograniczenie zakresu jako opcję, nie żądaj pełnego dostępu jako warunku koniecznego jeśli klient się waha.",
+    setterNote: "Zaproponuj ograniczenie zakresu jako opcję, nie żądaj pełnego dostępu jako warunku koniecznego jeśli klient się waha.",
   },
 ];

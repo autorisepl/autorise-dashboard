@@ -1,7 +1,31 @@
 "use client";
 
-import { AlertTriangle, CheckCircle2, HelpCircle, Target } from "lucide-react";
+import { AlertTriangle, Bell, CheckCircle2, FileText, HelpCircle, Target, Workflow } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { LiveScript } from "@/components/LiveScript";
+import { MODULE_CATALOG } from "@/lib/scripts/moduleCatalog";
+
+const MODULE_ICONS: Record<string, LucideIcon> = {
+  "email-parser": Workflow,
+  "document-ocr": FileText,
+  "whatsapp-alerts": Bell,
+};
+
+// Agent 02 czasem zwraca surowy kod modułu ("document-ocr") zamiast nazwy z prezentacji, a
+// czasem wciąż generuje "payment-monitor" mimo że moduł usunięto z katalogu 2026-08-08 (patrz
+// moduleCatalog.ts) — obie sytuacje trzeba pokazać setterowi wprost, nie ciche pominięcie.
+function resolveModule(raw: string): { label: string; icon: LucideIcon; removed: boolean } {
+  const trimmed = raw.trim();
+  const byCode = MODULE_CATALOG.find((m) => m.code === trimmed);
+  if (byCode) return { label: byCode.label, icon: MODULE_ICONS[byCode.code] ?? Target, removed: false };
+  const byLabel = MODULE_CATALOG.find((m) => m.label.toLowerCase() === trimmed.toLowerCase());
+  if (byLabel)
+    return { label: byLabel.label, icon: MODULE_ICONS[byLabel.code] ?? Target, removed: false };
+  if (/payment-monitor|pilnowanie.*p(ł|l)atno|\bksef\b/i.test(trimmed)) {
+    return { label: trimmed, icon: AlertTriangle, removed: true };
+  }
+  return { label: trimmed, icon: Target, removed: false };
+}
 
 export interface Agent2Output {
   pre_discovery_brief?: {
@@ -257,59 +281,91 @@ export function Agent2Card({ output }: { output: Agent2Output }) {
               <div
                 style={{ margin: "0 0 0 24px", display: "flex", flexDirection: "column", gap: 10 }}
               >
-                {brief.priorytetyzacja_modulow_hipoteza.map((item, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      padding: "12px 14px",
-                      background: "var(--bg-card)",
-                      border: "1px solid var(--border)",
-                      borderRadius: 10,
-                    }}
-                  >
+                {brief.priorytetyzacja_modulow_hipoteza.map((item, i) => {
+                  const mod = resolveModule(item.modul);
+                  const Icon = mod.icon;
+                  return (
                     <div
+                      key={i}
                       style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 8,
-                        marginBottom: item.uzasadnienie_cytat ? 6 : 0,
+                        padding: "14px 16px",
+                        background: mod.removed ? "rgba(255,149,0,0.06)" : "var(--bg-card)",
+                        border: mod.removed
+                          ? "1px solid rgba(255,149,0,0.3)"
+                          : "1px solid var(--border)",
+                        borderRadius: 10,
                       }}
                     >
-                      <Target size={12} color="#1a56ff" />
-                      <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>
-                        {item.modul}
-                      </span>
-                      {i === 0 && (
-                        <span
-                          style={{
-                            padding: "1px 8px",
-                            background: "rgba(26,86,255,0.10)",
-                            border: "1px solid rgba(26,86,255,0.2)",
-                            borderRadius: 99,
-                            fontSize: 10,
-                            fontWeight: 700,
-                            color: "#1a56ff",
-                          }}
-                        >
-                          główny
-                        </span>
-                      )}
-                    </div>
-                    {item.uzasadnienie_cytat && (
-                      <p
+                      <div
                         style={{
-                          fontSize: 12,
-                          color: "var(--text-secondary)",
-                          margin: "0 0 0 20px",
-                          lineHeight: 1.55,
-                          fontStyle: "italic",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 10,
+                          marginBottom: item.uzasadnienie_cytat || mod.removed ? 8 : 0,
                         }}
                       >
-                        &ldquo;{item.uzasadnienie_cytat}&rdquo;
-                      </p>
-                    )}
-                  </div>
-                ))}
+                        <div
+                          style={{
+                            width: 30,
+                            height: 30,
+                            borderRadius: 8,
+                            flexShrink: 0,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            background: mod.removed ? "rgba(255,149,0,0.12)" : "rgba(26,86,255,0.10)",
+                          }}
+                        >
+                          <Icon size={16} color={mod.removed ? "#ff9500" : "#1a56ff"} />
+                        </div>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>
+                          {mod.label}
+                        </span>
+                        {i === 0 && !mod.removed && (
+                          <span
+                            style={{
+                              padding: "1px 8px",
+                              background: "rgba(26,86,255,0.10)",
+                              border: "1px solid rgba(26,86,255,0.2)",
+                              borderRadius: 99,
+                              fontSize: 10,
+                              fontWeight: 700,
+                              color: "#1a56ff",
+                            }}
+                          >
+                            główny
+                          </span>
+                        )}
+                      </div>
+                      {mod.removed && (
+                        <p
+                          style={{
+                            fontSize: 12,
+                            color: "#ff9500",
+                            margin: "0 0 8px 40px",
+                            lineHeight: 1.55,
+                          }}
+                        >
+                          Ten moduł nie istnieje w obecnym katalogu produktu — zgłoś to jako błąd
+                          Agenta 02, nie pokazuj klientowi.
+                        </p>
+                      )}
+                      {item.uzasadnienie_cytat && (
+                        <p
+                          style={{
+                            fontSize: 12,
+                            color: "var(--text-secondary)",
+                            margin: "0 0 0 40px",
+                            lineHeight: 1.55,
+                            fontStyle: "italic",
+                          }}
+                        >
+                          &ldquo;{item.uzasadnienie_cytat}&rdquo;
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
               <Divider />
             </>

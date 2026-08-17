@@ -1,17 +1,51 @@
 export type ScriptLineType = "say" | "client" | "note" | "action" | "branch" | "branch-bad";
 
-export interface ScriptLine {
-  t: ScriptLineType;
+// Faza 1 fundamentu (2026-08-14): `speech` i `setterNote` są teraz DWOMA fizycznie
+// rozdzielonymi polami przez discriminated union, nie tylko konwencją nazewniczą —
+// linia typu "note" nie ma pola `speech` w ogóle, więc tekst wewnętrzny (instrukcja dla
+// settera) fizycznie nie może się wymieszać z tekstem czytanym klientowi ani zostać
+// przez pomyłkę wyrenderowany jako mowa. Wcześniejsza wersja miała jedno pole `text`
+// współdzielone przez oba przypadki — to była realna przyczyna trzykrotnego złamania
+// tej zasady (2026-08).
+//
+// Zasada treści `setterNote` (niezmieniona): MUSI być instrukcją co zrobić/powiedzieć
+// TERAZ, w trakcie żywej rozmowy ("Jeśli klient powie X, zrób Y") — nigdy wyjaśnieniem
+// DLACZEGO linia/krok istnieje, nigdy odniesieniem do wewnętrznej struktury skryptu
+// ("Krok b) sekwencji..."), nigdy cytowaniem źródła/rozmowy/dokumentu wewnętrznego
+// (Agency Leaders, Arek Burkowski, SZKIC_UMOWA.md). Takie uzasadnienia/źródła należą do
+// komentarza TypeScript nad danym Step/Objection, który setter nigdy nie widzi na żywo.
+// Krótka, jedno zdanie, limit 120 znaków (miękki), 150 znaków (twardy, weryfikowany).
+//
+// Nawigację do konkretnej obiekcji zapisuj przez `linkObjectionId` (renderuje się jako
+// klikalny przycisk), nie jako zdanie tekstowe "patrz obiekcja X w prawym panelu".
+interface ScriptSpeechLine {
+  t: Exclude<ScriptLineType, "note">;
+  // Treść do przeczytania/pokazania klientowi na żywo (say/client), albo etykieta
+  // systemowa nawigacji/akcji (action/branch/branch-bad) — nigdy notatka dla settera.
   text: string | string[];
+  // Krótka adnotacja "Cel:" widoczna pod linią `say` — jedno zdanie, wyjaśnia PO CO
+  // pada ta kwestia, nie instrukcja co robić (to rola `setterNote` niżej).
   cel?: string;
   // Wersja tej linii dla settera, gdy oryginalna treść zakłada że mówi Michał
   // (Founder) osobiście — np. "prowadzę wdrożenie osobiście". Jeśli brak,
   // linia renderuje się identycznie dla obu ról.
   textSetter?: string | string[];
-  // Note renderowany jako klikalny przycisk skaczący do obiekcji zamiast
-  // czystego tekstu instrukcji (patrz obiekcja M365 w diagnoza_tms).
+  // Opcjonalna taktyczna notatka doczepiona do tej konkretnej linii `say`/`client`, gdy
+  // sama linia potrzebuje instrukcji "co zrobić TERAZ" obok "Cel:". Ta sama zasada treści
+  // i limit długości co w ScriptNoteLine.setterNote wyżej — nigdy nie zastępuje `text`.
+  setterNote?: string;
   linkObjectionId?: string;
 }
+
+interface ScriptNoteLine {
+  t: "note";
+  // Jedyne pole treści na tej linii — patrz zasada `setterNote` wyżej. Nie ma `text`,
+  // więc nie da się jej przez pomyłkę podłączyć pod renderer mowy.
+  setterNote: string;
+  linkObjectionId?: string;
+}
+
+export type ScriptLine = ScriptSpeechLine | ScriptNoteLine;
 
 export interface DecisionOption {
   trigger: string;
@@ -55,7 +89,10 @@ export interface Objection {
   sms?: string;
   extra?: string;
   type?: "sms" | "fb";
-  note?: string;
+  // Ta sama zasada co ScriptNoteLine.setterNote wyżej: instrukcja co zrobić przy tej
+  // obiekcji TERAZ, nigdy uzasadnienie/źródło/cytat wewnętrzny — te należą do komentarza
+  // .ts, nie do `setterNote`. Jedno zdanie, limit 120/150 znaków, patrz zasada wyżej.
+  setterNote?: string;
   followup?: string;
   // Krok skryptu do którego wraca rozmowa po tej obiekcji (np. "Po 'tak':
   // przejdź do kroku 2 Otwarcie diagnozy") — renderowany jako NextStepArrow,

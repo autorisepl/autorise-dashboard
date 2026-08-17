@@ -121,7 +121,12 @@ export async function GET() {
       .filter((p): p is PageObjectResponse => p.object === "page")
       .map((page: PageObjectResponse) => {
         const props = page.properties;
-        const firma = extractText(props["Firma"]) || extractText(props["Kontakt"]) || "Bez nazwy";
+        // B2 (Faza 2): Notion "Firma" bywa puste dopóki Agent 1 nie zbierze nazwy firmy —
+        // dawny fallback na "Kontakt" cicho podstawiał imię i nazwisko osoby kontaktowej jako
+        // nazwę firmy wszędzie gdzie renderowany był client.firma (brief, kalkulator). "Bez
+        // nazwy" jest neutralnym, nie mylącym stanem pustym; jedyne, jawne "Uzupełnij nazwę
+        // firmy" pokazuje się w polu edycyjnym kalkulatora (KalkulatorRoi), nie tutaj.
+        const firma = extractText(props["Firma"]) || "Bez nazwy";
 
         return {
           id: page.id,

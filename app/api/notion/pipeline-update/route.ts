@@ -41,6 +41,12 @@ const bodySchema = z.object({
   tabelaModulowWeryfikacja: z.string().nullable().optional(),
   celEfektywnosciProcent: z.number().nullable().optional(),
   tabelaModulowPrzedkontraktowa: z.string().nullable().optional(),
+  // B1 (Faza 2): brief agenta sprzedażowego edytowalny i zapisywany bezpośrednio w /sprzedaz,
+  // zamiast czystego odczytu tego co zapisał agent — te same property Notion co saveAgent2Output.
+  hipotezaBolGlowny: z.string().nullable().optional(),
+  przewidywaneObiekcje: z.string().nullable().optional(),
+  pitchRecipe: z.string().nullable().optional(),
+  uwagiFAgent2: z.string().nullable().optional(),
 });
 
 function richText(text: string) {
@@ -194,6 +200,22 @@ export async function PATCH(req: Request) {
       properties["Tabela modułów Analiza przedkontraktowa"] = {
         rich_text: d.tabelaModulowPrzedkontraktowa ? richText(d.tabelaModulowPrzedkontraktowa) : [],
       };
+    }
+    if (d.hipotezaBolGlowny !== undefined) {
+      properties["Hipoteza ból główny"] = {
+        rich_text: d.hipotezaBolGlowny ? richText(d.hipotezaBolGlowny) : [],
+      };
+    }
+    if (d.przewidywaneObiekcje !== undefined) {
+      properties["Przewidywane obiekcje"] = {
+        rich_text: d.przewidywaneObiekcje ? richText(d.przewidywaneObiekcje) : [],
+      };
+    }
+    if (d.pitchRecipe !== undefined) {
+      properties["Pitch Recipe"] = { rich_text: d.pitchRecipe ? richText(d.pitchRecipe) : [] };
+    }
+    if (d.uwagiFAgent2 !== undefined) {
+      properties["Uwagi Agenta 2"] = { rich_text: d.uwagiFAgent2 ? richText(d.uwagiFAgent2) : [] };
     }
 
     if (Object.keys(properties).length === 0) {

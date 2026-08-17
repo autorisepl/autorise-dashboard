@@ -1,8 +1,6 @@
 "use client";
 
 import {
-  AlertTriangle,
-  ArrowDown,
   Check,
   CheckCircle2,
   ChevronDown,
@@ -12,8 +10,11 @@ import {
   MessageSquare,
   Monitor,
   PhoneOff,
+  Plus,
+  Save,
+  StickyNote,
   Target,
-  Undo2,
+  Trash2,
   Users,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -22,12 +23,20 @@ import type { PipelineClientDetailed } from "@/app/api/notion/pipeline/route";
 import { ClientSidebar } from "@/components/clients/ClientSidebar";
 import { ProgressBar, SectionLabelSmall, StepCard } from "@/components/dalsze-kroki/DalszeKrokiUI";
 import { KalkulatorRoi } from "@/components/kalkulator/KalkulatorRoi";
+import { isTestClient } from "@/lib/demo/testClient";
 import { DecisionDiagram } from "@/components/scripts/DecisionDiagram";
 import { NextStepArrow } from "@/components/scripts/NextStepArrow";
 import { AnalizaPrzedkontraktowaPanel } from "@/components/sprzedaz/AnalizaPrzedkontraktowaPanel";
 import { WarunkiUmowyForm } from "@/components/sprzedaz/WarunkiUmowyForm";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { fillBrief, parseCytatyKlienta } from "@/lib/scripts/fillBrief";
+import {
+  fillBrief,
+  hasUnfilledPlaceholders,
+  parseCytatyKlienta,
+  parsePrzewidywaneObiekcje,
+  type PrzewidywanaObiekcja,
+  serializePrzewidywaneObiekcje,
+} from "@/lib/scripts/fillBrief";
 import { useFormaGrzecznosciowa } from "@/lib/scripts/formaGrzecznosciowa";
 import { GROUP_COLORS, MESSAGES_DATA } from "@/lib/scripts/messages";
 import { DISCOVERY_STATUSES, OBJECTIONS_D, STEPS_D } from "@/lib/scripts/sprzedaz";
@@ -46,11 +55,6 @@ function toVocative(name: string): string {
   return first;
 }
 
-function findStepLabelD(stepId: string): string {
-  const step = STEPS_D.find((s) => s.id === stepId);
-  return step ? `${step.nr} ${step.label}` : stepId;
-}
-
 // Te same wartości co STATUS_COLORS w /pipeline (rozjaśnione pod ciemny motyw, audyt WCAG AA
 // 2026-08-05) — jedno źródło prawdy o kolorach statusów, nie osobno dobierane per strona.
 const STATUS_COLORS: Record<string, string> = {
@@ -65,10 +69,13 @@ const STATUS_COLORS: Record<string, string> = {
 
 // ── Line styles ───────────────────────────────────────────────────────
 
+// "note" jest tu celowo cichy (text-tertiary, brak tła) — dyskretna adnotacja dla settera,
+// nie ostrzeżenie. Warning-bg/AlertTriangle zarezerwowane wyłącznie dla realnych błędów/
+// blokad (np. niekompletny brief w BriefSection niżej).
 const LINE_COLOR: Record<ScriptLine["t"], string> = {
   say: "var(--text-primary)",
   client: "var(--text-secondary)",
-  note: "var(--warning)",
+  note: "var(--text-tertiary)",
   action: "var(--accent)",
   branch: "var(--success-text)",
   "branch-bad": "var(--error)",
@@ -77,7 +84,7 @@ const LINE_COLOR: Record<ScriptLine["t"], string> = {
 const LINE_BG: Record<ScriptLine["t"], string> = {
   say: "transparent",
   client: "transparent",
-  note: "var(--warning-bg)",
+  note: "transparent",
   action: "var(--accent-muted)",
   branch: "var(--success-bg)",
   "branch-bad": "var(--error-bg)",
@@ -133,7 +140,7 @@ function Card({
         </span>
         {collapsible && (
           <ChevronDown
-            size={14}
+            size={17}
             color="var(--text-tertiary)"
             style={{
               transform: open ? "rotate(180deg)" : "none",
@@ -154,7 +161,11 @@ function Card({
 // zapisuje realną wartość "NO-SHOW" do tego samego pola, więc show rate i licznik No-Show
 // w /statystyki liczą się z faktu, nie z domysłu. Zapis idzie tym samym PATCH
 // /api/notion/pipeline-update co WarunkiUmowyForm, ten sam wzorzec optimistic update.
-function NoShowBanner({
+// A1 (Faza 2): dawny duży pomarańczowy baner w treści strony zastąpiony kompaktowym
+// przyciskiem w headerze, dokładnie tym samym wzorcem co "Brak odbioru" w /kwalifikacja
+// (32px wysokości, ten sam border/radius/gap) — tylko inna etykieta i akcja (No-Show
+// zamiast braku odbioru telefonicznego).
+function NoShowHeaderButton({
   client,
   onSaved,
 }: {
@@ -163,8 +174,10 @@ function NoShowBanner({
 }) {
   const [saving, setSaving] = useState(false);
   const isNoShow = client.wynikDiscovery === "NO-SHOW";
+  const isTest = isTestClient(client);
 
   const toggle = useCallback(async () => {
+    if (isTest) return;
     setSaving(true);
     const next = isNoShow ? null : "NO-SHOW";
     try {
@@ -177,71 +190,41 @@ function NoShowBanner({
     } finally {
       setSaving(false);
     }
-  }, [client.id, isNoShow, onSaved]);
+  }, [client.id, isNoShow, isTest, onSaved]);
 
   return (
-    <div
+    <button
+      onClick={() => void toggle()}
+      disabled={saving || isTest}
+      title={
+        isTest
+          ? "Klient testowy — akcje nie zapisują się do Notion"
+          : isNoShow
+            ? "Cofnij oznaczenie No-Show"
+            : "Klient nie stawił się na Discovery Call — zapisze No-Show do Notion, licznik w /statystyki zaktualizuje się od razu"
+      }
       style={{
+        height: 32,
+        padding: "0 12px",
+        borderRadius: 8,
+        border: "1px solid var(--border)",
+        background: isNoShow ? "var(--error-bg)" : "var(--bg)",
+        fontSize: 12,
+        color: isNoShow ? "var(--error-text)" : "var(--text-secondary)",
+        cursor: saving || isTest ? "default" : "pointer",
+        opacity: saving || isTest ? 0.6 : 1,
         display: "flex",
         alignItems: "center",
-        gap: 10,
-        padding: "10px 14px",
-        marginBottom: 12,
-        borderRadius: 10,
-        background: isNoShow ? "var(--error-bg)" : "var(--warning-bg)",
-        border: `1px solid ${isNoShow ? "var(--error-border)" : "var(--warning)"}`,
+        gap: 6,
+        whiteSpace: "nowrap",
+        flexShrink: 0,
+        fontFamily: "var(--font-sans)",
+        transition: "background 150ms, color 150ms",
       }}
     >
-      <PhoneOff size={16} color={isNoShow ? "var(--error)" : "var(--warning)"} strokeWidth={2} />
-      <div style={{ flex: 1 }}>
-        <span
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: 12,
-            fontWeight: 700,
-            color: "var(--text-primary)",
-          }}
-        >
-          {isNoShow ? "Oznaczono: klient się nie stawił" : "Klient się nie stawił?"}
-        </span>{" "}
-        <span
-          style={{ fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--text-secondary)" }}
-        >
-          {isNoShow
-            ? "Liczy się jako No-Show w statystykach."
-            : "Zapisze No-Show do Notion, licznik w /statystyki zaktualizuje się od razu."}
-        </span>
-      </div>
-      <button
-        onClick={() => void toggle()}
-        disabled={saving}
-        style={{
-          height: 28,
-          padding: "0 12px",
-          borderRadius: 7,
-          border: `1px solid ${isNoShow ? "var(--error)" : "var(--warning)"}`,
-          background: "var(--bg-elevated)",
-          color: isNoShow ? "var(--error-text)" : "var(--warning-text)",
-          fontFamily: "var(--font-sans)",
-          fontSize: 11,
-          fontWeight: 700,
-          cursor: saving ? "default" : "pointer",
-          opacity: saving ? 0.6 : 1,
-          flexShrink: 0,
-          display: "flex",
-          alignItems: "center",
-          gap: 5,
-        }}
-      >
-        {isNoShow ? (
-          <>
-            <Undo2 size={11} /> Cofnij
-          </>
-        ) : (
-          "Oznacz No-Show"
-        )}
-      </button>
-    </div>
+      <PhoneOff size={15} strokeWidth={2} />
+      {isNoShow ? "Cofnij No-Show" : "Oznacz No-Show"}
+    </button>
   );
 }
 
@@ -249,19 +232,23 @@ function NoShowBanner({
 
 function ScriptStep({
   step,
+  index,
   fill,
   onCopy,
   copiedId,
   onJump,
   onDecisionSelect,
+  onJumpToObjection,
   selectedTrigger,
 }: {
   step: (typeof STEPS_D)[0];
+  index: number;
   fill: (t: string) => string;
   onCopy: (id: string, text: string) => void;
   copiedId: string | null;
   onJump: (stepId: string) => void;
   onDecisionSelect: (stepId: string, option: DecisionOption) => void;
+  onJumpToObjection: (objectionId: string) => void;
   selectedTrigger?: string;
 }) {
   const [open, setOpen] = useState(true);
@@ -276,24 +263,6 @@ function ScriptStep({
         overflow: "hidden",
       }}
     >
-      {!step.decision && step.nextStepId && (
-        <div
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: 10,
-            color: "var(--text-tertiary)",
-            padding: "5px 14px",
-            background: "var(--bg-hover)",
-            borderBottom: "1px solid var(--border)",
-            display: "flex",
-            alignItems: "center",
-            gap: 4,
-          }}
-        >
-          <ArrowDown size={10} />
-          {`Dalej: ${findStepLabelD(step.nextStepId)}`}
-        </div>
-      )}
       <div
         onClick={() => setOpen((p) => !p)}
         style={{
@@ -308,14 +277,21 @@ function ScriptStep({
       >
         <span
           style={{
+            width: 22,
+            height: 22,
+            borderRadius: "50%",
+            background: "var(--accent)",
+            color: "var(--text-on-accent)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             fontFamily: "var(--font-sans)",
-            fontSize: 10,
-            fontWeight: 800,
-            color: "var(--text-tertiary)",
-            minWidth: 20,
+            fontSize: 11,
+            fontWeight: 700,
+            flexShrink: 0,
           }}
         >
-          {step.nr}
+          {index + 1}
         </span>
         <span
           style={{
@@ -335,19 +311,8 @@ function ScriptStep({
             {step.duration}
           </span>
         )}
-        <span
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: 8,
-            fontWeight: 600,
-            letterSpacing: "0.06em",
-            color: "var(--text-tertiary)",
-          }}
-        >
-          {step.tag}
-        </span>
         <ChevronDown
-          size={13}
+          size={16}
           color="var(--text-tertiary)"
           style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform 150ms" }}
         />
@@ -368,34 +333,69 @@ function ScriptStep({
             >
               <div style={{ flexShrink: 0, marginTop: 1 }}>
                 {line.t === "say" && (
-                  <MessageSquare size={13} color="var(--accent)" strokeWidth={1.6} />
+                  <MessageSquare size={16} color="var(--accent)" strokeWidth={1.6} />
                 )}
                 {line.t === "client" && (
-                  <Users size={13} color="var(--text-secondary)" strokeWidth={1.8} />
+                  <Users size={16} color="var(--text-secondary)" strokeWidth={1.8} />
                 )}
                 {line.t === "note" && (
-                  <AlertTriangle size={12} color="var(--warning)" strokeWidth={1.6} />
+                  <StickyNote size={14} color="var(--text-tertiary)" strokeWidth={1.6} />
                 )}
-                {line.t === "action" && <Check size={12} color="var(--accent)" strokeWidth={2} />}
+                {line.t === "action" && <Check size={15} color="var(--accent)" strokeWidth={2} />}
                 {(line.t === "branch" || line.t === "branch-bad") && (
-                  <Check size={12} color={LINE_COLOR[line.t]} strokeWidth={2} />
+                  <Check size={15} color={LINE_COLOR[line.t]} strokeWidth={2} />
                 )}
               </div>
               <div style={{ flex: 1 }}>
-                {(Array.isArray(line.text) ? line.text : [line.text]).map((paragraph, pi) => (
+                {line.t === "note" ? (
                   <p
-                    key={pi}
                     style={{
-                      margin: pi === 0 ? 0 : "6px 0 0 0",
+                      margin: 0,
                       fontFamily: "var(--font-sans)",
-                      fontSize: 13,
-                      lineHeight: 1.55,
-                      color: LINE_COLOR[line.t],
+                      fontSize: 12,
+                      lineHeight: 1.5,
+                      fontStyle: "italic",
+                      color: LINE_COLOR.note,
                     }}
                   >
-                    {fill(paragraph)}
+                    {fill(line.setterNote)}
                   </p>
-                ))}
+                ) : (
+                  (Array.isArray(line.text) ? line.text : [line.text]).map((paragraph, pi) => {
+                    const filled = fill(paragraph);
+                    const incomplete = line.t === "say" && hasUnfilledPlaceholders(filled);
+                    return (
+                      <p
+                        key={pi}
+                        style={{
+                          margin: pi === 0 ? 0 : "6px 0 0 0",
+                          fontFamily: "var(--font-sans)",
+                          fontSize: 13,
+                          lineHeight: 1.55,
+                          color: incomplete ? "var(--warning-text)" : LINE_COLOR[line.t],
+                        }}
+                      >
+                        {incomplete && (
+                          <span
+                            style={{
+                              fontSize: 10,
+                              fontWeight: 700,
+                              letterSpacing: "0.04em",
+                              textTransform: "uppercase",
+                              marginRight: 6,
+                              padding: "1px 5px",
+                              borderRadius: 4,
+                              border: "1px solid var(--warning-border)",
+                            }}
+                          >
+                            nie czytaj, dane niekompletne
+                          </span>
+                        )}
+                        {filled}
+                      </p>
+                    );
+                  })
+                )}
                 {line.t === "say" && line.cel && (
                   <div
                     style={{
@@ -410,6 +410,41 @@ function ScriptStep({
                   >
                     Cel: {line.cel}
                   </div>
+                )}
+                {line.t === "say" && line.setterNote && (
+                  <div
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 11,
+                      color: "var(--text-tertiary)",
+                      fontStyle: "italic",
+                      marginTop: 2,
+                    }}
+                  >
+                    {line.setterNote}
+                  </div>
+                )}
+                {line.t === "note" && line.linkObjectionId && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onJumpToObjection(line.linkObjectionId!);
+                    }}
+                    style={{
+                      marginTop: 6,
+                      padding: "4px 9px",
+                      borderRadius: 6,
+                      border: "1px solid var(--border)",
+                      background: "transparent",
+                      color: "var(--text-secondary)",
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 11,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Otwórz obiekcję
+                  </button>
                 )}
               </div>
               {line.t === "say" && (
@@ -437,9 +472,9 @@ function ScriptStep({
                   }}
                 >
                   {copiedId === `${step.id}-${li}` ? (
-                    <CheckCircle2 size={10} />
+                    <CheckCircle2 size={13} />
                   ) : (
-                    <Copy size={10} />
+                    <Copy size={13} />
                   )}
                 </button>
               )}
@@ -463,8 +498,288 @@ function ScriptStep({
 
 // ── Brief Agent 02 ────────────────────────────────────────────────────
 
-function BriefSection({ client }: { client: PipelineClientDetailed | null }) {
-  if (!client) {
+function BriefLabel({ children, hint }: { children: React.ReactNode; hint?: boolean }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+      <div
+        style={{
+          fontSize: 10,
+          fontWeight: 700,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          color: "var(--text-tertiary)",
+        }}
+      >
+        {children}
+      </div>
+      {hint && (
+        <span
+          style={{
+            fontSize: 9,
+            fontWeight: 600,
+            color: "var(--text-tertiary)",
+            padding: "1px 6px",
+            borderRadius: 99,
+            border: "1px solid var(--border)",
+          }}
+        >
+          dane niekompletne
+        </span>
+      )}
+    </div>
+  );
+}
+
+// B1 (Faza 2): brief był dawniej czystym odczytem (<p>) tego co zapisał agent — jeśli agent
+// zostawił niewypełniony placeholder albo błąd, jedynym wyjściem było ponowne uruchomienie
+// Agenta 02. Teraz pole edycyjne wprost w tym panelu, zapisywane do Notion przez
+// /api/notion/pipeline-update (ten sam mechanizm co saveAgent2Output), z widocznym przyciskiem
+// "Zapisz brief" wyłącznie gdy coś realnie się zmieniło (patrz `dirty` w BriefSection niżej).
+function BriefTextField({
+  label,
+  value,
+  onChange,
+  rows = 3,
+  incompleteHint,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  rows?: number;
+  incompleteHint?: boolean;
+}) {
+  return (
+    <div>
+      <BriefLabel hint={incompleteHint}>{label}</BriefLabel>
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        rows={rows}
+        style={{
+          width: "100%",
+          resize: "vertical",
+          padding: "10px 12px",
+          borderRadius: 8,
+          border: "1px solid var(--border)",
+          background: "var(--bg-elevated)",
+          fontFamily: "var(--font-sans)",
+          fontSize: 13,
+          lineHeight: 1.6,
+          color: "var(--text-primary)",
+          outline: "none",
+          boxSizing: "border-box",
+        }}
+      />
+    </div>
+  );
+}
+
+// Sekcja C: pod każdą obiekcją pole gotowej odpowiedzi — wypełnione przez agenta, albo (gdy
+// agent go nie dostarczył dla rozpoznanego, standardowego wzorca) przez bibliotekę gotowych
+// odpowiedzi z lib/scripts/objectionAnswers.ts, patrz parsePrzewidywaneObiekcje.
+function ObiekcjeEditor({
+  items,
+  onChange,
+}: {
+  items: PrzewidywanaObiekcja[];
+  onChange: (items: PrzewidywanaObiekcja[]) => void;
+}) {
+  const update = (i: number, patch: Partial<PrzewidywanaObiekcja>) =>
+    onChange(items.map((o, idx) => (idx === i ? { ...o, ...patch } : o)));
+  const remove = (i: number) => onChange(items.filter((_, idx) => idx !== i));
+  const add = () => onChange([...items, { objekcja: "", odpowiedz: "" }]);
+
+  return (
+    <div>
+      <BriefLabel>Przewidywane obiekcje</BriefLabel>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {items.map((o, i) => (
+          <div
+            key={i}
+            style={{
+              padding: "10px 12px",
+              borderRadius: 8,
+              border: "1px solid var(--border)",
+              background: "var(--bg-elevated)",
+              display: "flex",
+              flexDirection: "column",
+              gap: 6,
+            }}
+          >
+            <div style={{ display: "flex", gap: 6, alignItems: "flex-start" }}>
+              <input
+                value={o.objekcja}
+                onChange={(e) => update(i, { objekcja: e.target.value })}
+                placeholder="Treść obiekcji"
+                style={{
+                  flex: 1,
+                  height: 32,
+                  padding: "0 10px",
+                  borderRadius: 7,
+                  border: "1px solid var(--border)",
+                  background: "var(--bg)",
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 13,
+                  color: "var(--warning-text)",
+                  outline: "none",
+                }}
+              />
+              <button
+                onClick={() => remove(i)}
+                title="Usuń obiekcję"
+                style={{
+                  flexShrink: 0,
+                  width: 32,
+                  height: 32,
+                  borderRadius: 7,
+                  border: "1px solid var(--border)",
+                  background: "transparent",
+                  color: "var(--text-tertiary)",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+            <textarea
+              value={o.odpowiedz}
+              onChange={(e) => update(i, { odpowiedz: e.target.value })}
+              placeholder="Odpowiedź do powiedzenia klientowi"
+              rows={2}
+              style={{
+                width: "100%",
+                resize: "vertical",
+                padding: "8px 10px",
+                borderRadius: 7,
+                border: "1px solid var(--border)",
+                background: "var(--bg)",
+                fontFamily: "var(--font-sans)",
+                fontSize: 13,
+                lineHeight: 1.55,
+                color: "var(--text-primary)",
+                outline: "none",
+                boxSizing: "border-box",
+              }}
+            />
+          </div>
+        ))}
+      </div>
+      <button
+        onClick={add}
+        style={{
+          marginTop: 8,
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          padding: "6px 10px",
+          borderRadius: 7,
+          border: "1px dashed var(--border)",
+          background: "transparent",
+          color: "var(--text-secondary)",
+          fontSize: 12,
+          cursor: "pointer",
+          fontFamily: "var(--font-sans)",
+        }}
+      >
+        <Plus size={13} />
+        Dodaj obiekcję
+      </button>
+    </div>
+  );
+}
+
+interface BriefDraft {
+  hipoteza: string;
+  obiekcje: PrzewidywanaObiekcja[];
+  pitch: string;
+  uwagi: string;
+}
+
+function draftFromClient(client: PipelineClientDetailed): BriefDraft {
+  return {
+    hipoteza: client.hipotezaBolGlowny ?? "",
+    obiekcje: parsePrzewidywaneObiekcje(client.przewidywaneObiekcje ?? ""),
+    pitch: client.pitchRecipe ?? "",
+    uwagi: client.uwagiFAgent2 ?? "",
+  };
+}
+
+function BriefSection({
+  client,
+  onSaved,
+}: {
+  client: PipelineClientDetailed | null;
+  onSaved: (patch: Partial<PipelineClientDetailed>) => void;
+}) {
+  const [draft, setDraft] = useState<BriefDraft | null>(client ? draftFromClient(client) : null);
+  const [original, setOriginal] = useState<BriefDraft | null>(
+    client ? draftFromClient(client) : null,
+  );
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (client) {
+      const next = draftFromClient(client);
+      setDraft(next);
+      setOriginal(next);
+    } else {
+      setDraft(null);
+      setOriginal(null);
+    }
+    setSaveError(null);
+    // client.id wystarcza — draftFromClient(client) czytany od nowa przy zmianie klienta,
+    // nie przy każdej zmianie referencji obiektu client (np. po No-Show).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [client?.id]);
+
+  const dirty =
+    !!draft &&
+    !!original &&
+    (draft.hipoteza !== original.hipoteza ||
+      draft.pitch !== original.pitch ||
+      draft.uwagi !== original.uwagi ||
+      serializePrzewidywaneObiekcje(draft.obiekcje) !==
+        serializePrzewidywaneObiekcje(original.obiekcje));
+
+  const handleSave = useCallback(async () => {
+    if (!client || !draft) return;
+    if (isTestClient(client)) {
+      // Klient testowy nie ma realnej strony w Notion — zapisujemy tylko lokalnie,
+      // żeby dało się przetestować edycję briefu bez błędu 404 z PATCH.
+      onSaved({});
+      setOriginal(draft);
+      return;
+    }
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const patch = {
+        hipotezaBolGlowny: draft.hipoteza,
+        przewidywaneObiekcje: serializePrzewidywaneObiekcje(draft.obiekcje),
+        pitchRecipe: draft.pitch,
+        uwagiFAgent2: draft.uwagi,
+      };
+      const res = await fetch("/api/notion/pipeline-update", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pageId: client.id, ...patch }),
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error ?? "Nie udało się zapisać briefu");
+      onSaved(patch);
+      setOriginal(draft);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "Nie udało się zapisać briefu");
+    } finally {
+      setSaving(false);
+    }
+  }, [client, draft, onSaved]);
+
+  if (!client || !draft) {
     return (
       <div
         style={{
@@ -475,7 +790,7 @@ function BriefSection({ client }: { client: PipelineClientDetailed | null }) {
           fontFamily: "var(--font-sans)",
         }}
       >
-        Wybierz klienta, aby zobaczyć Brief Agenta 02.
+        Wybierz klienta, aby zobaczyć Brief agenta sprzedażowego.
       </div>
     );
   }
@@ -497,7 +812,7 @@ function BriefSection({ client }: { client: PipelineClientDetailed | null }) {
             fontFamily: "var(--font-sans)",
           }}
         >
-          Brief Agenta 02 nie jest dostępny dla tego klienta. Uruchom Agenta 02 na stronie Agenci
+          Brief agenta sprzedażowego nie jest dostępny dla tego klienta. Uruchom Agenta 02 na stronie Agenci
           AI.
         </div>
         <a
@@ -517,7 +832,7 @@ function BriefSection({ client }: { client: PipelineClientDetailed | null }) {
             fontWeight: 500,
           }}
         >
-          <ExternalLink size={13} />
+          <ExternalLink size={16} />
           Uruchom Agent 02 dla {client.kontakt || client.firma}
         </a>
       </div>
@@ -526,48 +841,57 @@ function BriefSection({ client }: { client: PipelineClientDetailed | null }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      {client.hipotezaBolGlowny && (
-        <div>
-          <div
+      {dirty && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "flex-end",
+            gap: 8,
+          }}
+        >
+          {saveError && (
+            <span style={{ fontSize: 12, color: "var(--error-text)", fontFamily: "var(--font-sans)" }}>
+              {saveError}
+            </span>
+          )}
+          <button
+            onClick={() => void handleSave()}
+            disabled={saving}
             style={{
-              fontSize: 10,
-              fontWeight: 700,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              color: "var(--text-tertiary)",
-              marginBottom: 6,
-            }}
-          >
-            Hipoteza bólu głównego
-          </div>
-          <p
-            style={{
-              margin: 0,
-              fontSize: 13,
-              lineHeight: 1.65,
-              color: "var(--text-primary)",
+              height: 32,
+              padding: "0 14px",
+              borderRadius: 8,
+              border: "1px solid var(--accent-border)",
+              background: "var(--accent-muted)",
+              color: "var(--accent-text)",
               fontFamily: "var(--font-sans)",
-              whiteSpace: "pre-wrap",
+              fontSize: 12,
+              fontWeight: 700,
+              cursor: saving ? "default" : "pointer",
+              opacity: saving ? 0.6 : 1,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
             }}
           >
-            {fillBrief(client.hipotezaBolGlowny, client)}
-          </p>
+            <Save size={13} />
+            {saving ? "Zapisywanie…" : "Zapisz brief"}
+          </button>
         </div>
       )}
+
+      <BriefTextField
+        label="Hipoteza bólu głównego"
+        value={draft.hipoteza}
+        onChange={(v) => setDraft((d) => (d ? { ...d, hipoteza: v } : d))}
+        rows={2}
+        incompleteHint={hasUnfilledPlaceholders(fillBrief(draft.hipoteza, client))}
+      />
+
       {cytaty.length > 0 && (
         <div>
-          <div
-            style={{
-              fontSize: 10,
-              fontWeight: 700,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              color: "var(--text-tertiary)",
-              marginBottom: 6,
-            }}
-          >
-            Cytaty klienta
-          </div>
+          <BriefLabel>Cytaty klienta</BriefLabel>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {cytaty.map((c, i) => (
               <div
@@ -609,90 +933,27 @@ function BriefSection({ client }: { client: PipelineClientDetailed | null }) {
           </div>
         </div>
       )}
-      {client.pitchRecipe && (
-        <div>
-          <div
-            style={{
-              fontSize: 10,
-              fontWeight: 700,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              color: "var(--text-tertiary)",
-              marginBottom: 6,
-            }}
-          >
-            Pitch Recipe
-          </div>
-          <p
-            style={{
-              margin: 0,
-              fontSize: 13,
-              lineHeight: 1.65,
-              color: "var(--text-primary)",
-              fontFamily: "var(--font-sans)",
-              whiteSpace: "pre-wrap",
-            }}
-          >
-            {fillBrief(client.pitchRecipe, client)}
-          </p>
-        </div>
-      )}
-      {client.przewidywaneObiekcje && (
-        <div>
-          <div
-            style={{
-              fontSize: 10,
-              fontWeight: 700,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              color: "var(--text-tertiary)",
-              marginBottom: 6,
-            }}
-          >
-            Przewidywane obiekcje
-          </div>
-          <p
-            style={{
-              margin: 0,
-              fontSize: 13,
-              lineHeight: 1.65,
-              color: "var(--warning-text)",
-              fontFamily: "var(--font-sans)",
-              whiteSpace: "pre-wrap",
-            }}
-          >
-            {fillBrief(client.przewidywaneObiekcje, client)}
-          </p>
-        </div>
-      )}
-      {client.uwagiFAgent2 && (
-        <div>
-          <div
-            style={{
-              fontSize: 10,
-              fontWeight: 700,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              color: "var(--text-tertiary)",
-              marginBottom: 6,
-            }}
-          >
-            Uwagi Agenta 02
-          </div>
-          <p
-            style={{
-              margin: 0,
-              fontSize: 13,
-              lineHeight: 1.65,
-              color: "var(--text-secondary)",
-              fontFamily: "var(--font-sans)",
-              whiteSpace: "pre-wrap",
-            }}
-          >
-            {client.uwagiFAgent2}
-          </p>
-        </div>
-      )}
+
+      <BriefTextField
+        label="Pitch Recipe"
+        value={draft.pitch}
+        onChange={(v) => setDraft((d) => (d ? { ...d, pitch: v } : d))}
+        rows={5}
+        incompleteHint={hasUnfilledPlaceholders(fillBrief(draft.pitch, client))}
+      />
+
+      <ObiekcjeEditor
+        items={draft.obiekcje}
+        onChange={(items) => setDraft((d) => (d ? { ...d, obiekcje: items } : d))}
+      />
+
+      <BriefTextField
+        label="Uwagi Agenta 02"
+        value={draft.uwagi}
+        onChange={(v) => setDraft((d) => (d ? { ...d, uwagi: v } : d))}
+        rows={3}
+      />
+
       <a
         href="/agenci"
         style={{
@@ -709,7 +970,7 @@ function BriefSection({ client }: { client: PipelineClientDetailed | null }) {
           fontSize: 12,
         }}
       >
-        <ExternalLink size={11} />
+        <ExternalLink size={14} />
         Otwórz w Agenci AI
       </a>
     </div>
@@ -767,18 +1028,6 @@ function renderObjectionD(
         <div style={{ flex: 1 }}>
           <div
             style={{
-              fontSize: 8,
-              fontWeight: 600,
-              letterSpacing: "0.06em",
-              textTransform: "uppercase",
-              color: "var(--text-tertiary)",
-              marginBottom: 1,
-            }}
-          >
-            {oc.category}
-          </div>
-          <div
-            style={{
               fontFamily: "var(--font-sans)",
               fontSize: 12,
               fontWeight: 500,
@@ -789,7 +1038,7 @@ function renderObjectionD(
           </div>
         </div>
         <ChevronDown
-          size={12}
+          size={15}
           color="var(--text-tertiary)"
           style={{
             transform: isOpen ? "rotate(180deg)" : "none",
@@ -807,7 +1056,9 @@ function renderObjectionD(
                   margin: 0,
                   fontSize: 13,
                   lineHeight: 1.55,
-                  color: "var(--text-primary)",
+                  color: hasUnfilledPlaceholders(fill(obj.script))
+                    ? "var(--warning-text)"
+                    : "var(--text-primary)",
                   fontFamily: "var(--font-sans)",
                   flex: 1,
                 }}
@@ -832,9 +1083,9 @@ function renderObjectionD(
                 }}
               >
                 {copiedId === `obj-${obj.id}-script` ? (
-                  <CheckCircle2 size={10} />
+                  <CheckCircle2 size={13} />
                 ) : (
-                  <Copy size={10} />
+                  <Copy size={13} />
                 )}
               </button>
             </div>
@@ -859,20 +1110,18 @@ function renderObjectionD(
               selectedTrigger={selectedOptions[obj.id]}
             />
           )}
-          {obj.note && (
+          {obj.setterNote && (
             <p
               style={{
                 margin: 0,
                 fontSize: 11,
                 lineHeight: 1.5,
-                color: "var(--text-secondary)",
+                fontStyle: "italic",
+                color: "var(--text-tertiary)",
                 fontFamily: "var(--font-sans)",
-                background: "var(--warning-bg)",
-                padding: "6px 8px",
-                borderRadius: 6,
               }}
             >
-              {obj.note}
+              {obj.setterNote}
             </p>
           )}
           {obj.sms && (
@@ -1056,7 +1305,7 @@ function SmsPanel({
                     fontFamily: "var(--font-sans)",
                   }}
                 >
-                  {copiedId === `sms-${item.id}` ? <CheckCircle2 size={11} /> : <Copy size={11} />}
+                  {copiedId === `sms-${item.id}` ? <CheckCircle2 size={14} /> : <Copy size={14} />}
                   {copiedId === `sms-${item.id}` ? "Skopiowano" : "Kopiuj"}
                 </button>
               </div>
@@ -1126,7 +1375,7 @@ function SmsPanel({
                   fontFamily: "var(--font-sans)",
                 }}
               >
-                {copiedId === `tel-${item.id}` ? <CheckCircle2 size={11} /> : <Copy size={11} />}
+                {copiedId === `tel-${item.id}` ? <CheckCircle2 size={14} /> : <Copy size={14} />}
                 {copiedId === `tel-${item.id}` ? "Skopiowano" : "Kopiuj"}
               </button>
             </div>
@@ -1152,7 +1401,7 @@ function PrezentacjaSection({ client }: { client: PipelineClientDetailed | null 
           gap: 10,
         }}
       >
-        <Monitor size={14} color="var(--accent)" />
+        <Monitor size={17} color="var(--accent)" />
         <div style={{ flex: 1 }}>
           <div
             style={{
@@ -1186,7 +1435,7 @@ function PrezentacjaSection({ client }: { client: PipelineClientDetailed | null 
             flexShrink: 0,
           }}
         >
-          <ExternalLink size={11} />
+          <ExternalLink size={14} />
           Agent 03
         </a>
       </div>
@@ -1200,7 +1449,7 @@ function PrezentacjaSection({ client }: { client: PipelineClientDetailed | null 
           gap: 10,
         }}
       >
-        <Target size={14} color="var(--success-text)" />
+        <Target size={17} color="var(--success-text)" />
         <div style={{ flex: 1 }}>
           <div
             style={{
@@ -1234,7 +1483,7 @@ function PrezentacjaSection({ client }: { client: PipelineClientDetailed | null 
             flexShrink: 0,
           }}
         >
-          <ExternalLink size={11} />
+          <ExternalLink size={14} />
           Pipeline
         </a>
       </div>
@@ -1249,7 +1498,7 @@ const DALSZE_KROKI_DISCOVERY_LABELS: Record<
   string
 > = {
   fathom: "Fathom włączony przed spotkaniem",
-  brief: "Brief Agenta 02 przeczytany",
+  brief: "Brief agenta sprzedażowego przeczytany",
   agent3: "Prezentacja zaktualizowana przez Agenta 03",
   reminderSms: "Wyślij przypomnienie dzień przed",
   closing: "Closing i cena zamknięte na tym spotkaniu",
@@ -1392,7 +1641,7 @@ function DalszeKrokiDiscovery({ client }: { client: PipelineClientDetailed | nul
               color: reminderSmsCopied ? "var(--success-text)" : "var(--text-secondary)",
             }}
           >
-            {reminderSmsCopied ? <CheckCircle2 size={11} /> : <Copy size={11} />}
+            {reminderSmsCopied ? <CheckCircle2 size={14} /> : <Copy size={14} />}
             Kopiuj
           </button>
         </div>
@@ -1490,7 +1739,7 @@ function DalszeKrokiDiscovery({ client }: { client: PipelineClientDetailed | nul
           fontWeight: 500,
         }}
       >
-        <Target size={13} color="var(--text-secondary)" />
+        <Target size={16} color="var(--text-secondary)" />
         Przejdź do Pipeline
       </a>
     </div>
@@ -1656,6 +1905,18 @@ export default function SprzedazPage() {
           ? `„${bolGlownyDisplay}"`
           : "— odwołaj się do tego co klient powiedział w parafrazie —",
       );
+      // Faza 3, Sekcja E (2026-08-15): trzy nawiasy w kroku "Parafraza" ([ból główny], [cel],
+      // [opis pracy]) nie miały żadnego podstawienia mimo że reszta parafrazy jest już
+      // wypełniana danymi klienta — odwołują się do odpowiedzi udzielonych chwilę wcześniej w
+      // TEJ SAMEJ rozmowie (nie do Notion), więc honest fallback wskazuje krok, nie "brak danych".
+      out = out.replace(
+        /\[ból główny\]/g,
+        bolGlownyDisplay
+          ? `„${bolGlownyDisplay}"`
+          : "— odwołaj się do tego co klient powiedział o problemie —",
+      );
+      out = out.replace(/\[cel\]/g, "— odwołaj się do odpowiedzi z kroku 'Cel: wizja przyszłości' —");
+      out = out.replace(/\[opis pracy\]/g, "— odwołaj się do opisu procesu z kroku 'Diagnoza' —");
       const poprzednieProby = selected.poprzednieProby?.trim() ?? "";
       out = out.replace(
         /\[poprzednia próba z rozmowy\]/g,
@@ -1703,16 +1964,21 @@ export default function SprzedazPage() {
         "Samodzielnie trudno to rozwiązać bez narzędzia dedykowanego pod transport.",
       );
       const roznicowanie = selected.zdanieRoznicujace?.trim() ?? "";
+      // Wzorzec [^\]]* zamiast literalnej treści nawiasu (Faza 3, 2026-08-14): poprzednia
+      // wersja tego regexu wymagała dosłownego brzmienia placeholdera i przestała pasować po
+      // korekcie tekstu w sprzedaz.ts ("opisany korzyścią" -> "zakończony konkretnym efektem"),
+      // przez co [poprzednia próba z rozmowy] i [powód z rozmowy] leciały do klienta surowe.
+      // Elastyczny wzorzec przetrwa kolejne drobne poprawki brzmienia w skrypcie.
       out = out.replace(
-        /Wcześniej pojawiła się próba rozwiązania tego inaczej: \[poprzednia próba z rozmowy\], która nie zadziałała bo \[powód z rozmowy\]\.\s*My robimy to inaczej — nie sprzedajemy kolejnego generycznego narzędzia, tylko wdrożenie dopasowane do \[nazwa TMS\/system klienta\] i tego konkretnego procesu\./g,
+        /Wcześniej pojawiła się próba rozwiązania tego inaczej: \[poprzednia próba z rozmowy\], która nie zadziałała bo \[powód z rozmowy\]\. My robimy to inaczej: nie sprzedajemy kolejnego generycznego narzędzia, tylko wdrożenie dopasowane do \[nazwa TMS\/system klienta\] i tego konkretnego procesu\./g,
         roznicowanie ||
           "— brak zdania różnicującego z Agenta Kwalifikacja, opisz na żywo czym Autorise różni się od poprzednich prób klienta —",
       );
       const systemKroki = selected.systemTransformacji ?? [];
       out = out.replace(
-        /System transformacji wygląda tak: krok pierwszy, \[moduł 1 opisany korzyścią\]\.\s*Krok drugi, \[moduł 2 opisany korzyścią\]\.\s*Krok trzeci, \[moduł 3 opisany korzyścią\]\./g,
+        /System transformacji wygląda tak: krok pierwszy, \[moduł 1[^\]]*\]\. Krok drugi, \[moduł 2[^\]]*\]\. Krok trzeci, \[moduł 3[^\]]*\]\./g,
         systemKroki.length >= 3
-          ? systemKroki.slice(0, 3).join(" ")
+          ? `System transformacji wygląda tak: ${systemKroki.slice(0, 3).join(" ")}`
           : "— brak system_transformacji z Agenta Kwalifikacja, opisz na żywo 3 kroki wdrożenia dla tego klienta —",
       );
       const roiDopowiedzenie = selected.roiDopowiedzenie?.trim() ?? "";
@@ -1740,6 +2006,27 @@ export default function SprzedazPage() {
         gwarancjaH != null
           ? `${gwarancjaH} godzin`
           : "— brak czasu bazowego w Pipeline, policz z kalkulatorem ROI —",
+      );
+      // Faza 3, Sekcja E (2026-08-15): [email] w kroku wysyłki umowy nie miał żadnego
+      // podstawienia, setter czytał to dosłownie klientowi. Wykryte dopiero teraz przy
+      // ponownym przejściu przez cały łańcuch kroków closing.
+      const email = selected.email?.trim() ?? "";
+      out = out.replace(
+        /\[email\]/g,
+        email || "— brak adresu email w Pipeline, dopytaj i zapisz w karcie klienta —",
+      );
+      // Krok B (rezonans) podsumowuje wartość w skrócie: godziny z tej samej gwarancji co
+      // reszta pitchu, złotówki z kosztu rocznego / 12 (jedyne pole miesięczne dostępne w
+      // Pipeline to roczne, dzielone tutaj).
+      const kosztMiesieczny =
+        selected.kosztRoczny && selected.kosztRoczny > 0
+          ? Math.round(selected.kosztRoczny / 12)
+          : null;
+      out = out.replace(
+        /\[X godzin\/zł miesięcznie\]/g,
+        gwarancjaH != null && kosztMiesieczny != null
+          ? `${gwarancjaH} godzin, ${kosztMiesieczny.toLocaleString("pl-PL")} zł miesięcznie`
+          : "— policz z kalkulatorem ROI —",
       );
     }
     return out;
@@ -1794,7 +2081,7 @@ export default function SprzedazPage() {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
       {/* Header */}
-      <PageHeader icon={<Target size={15} color="var(--accent)" />} title="Sprzedaż">
+      <PageHeader icon={<Target size={18} color="var(--accent)" />} title="Sprzedaż">
         <div style={{ height: 20, width: 1, background: "var(--border)", marginLeft: 4 }} />
         <span
           style={{ fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--text-tertiary)" }}
@@ -1822,7 +2109,7 @@ export default function SprzedazPage() {
             }}
             title="Zlicz odbytą rozmowę sprzedażową (statystyki dzienne)"
           >
-            {rozmowaFlash ? <Check size={11} /> : <MessageSquare size={11} />}
+            {rozmowaFlash ? <Check size={14} /> : <MessageSquare size={14} />}
             Rozmowa
           </button>
           {rozmowaUndo && (
@@ -1848,6 +2135,15 @@ export default function SprzedazPage() {
         </div>
         {selected && (
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: "auto" }}>
+            <NoShowHeaderButton
+              client={selected}
+              onSaved={(patch) => {
+                setSelected((prev) => (prev ? { ...prev, ...patch } : prev));
+                setClients((prev) =>
+                  prev.map((c) => (c.id === selected.id ? { ...c, ...patch } : c)),
+                );
+              }}
+            />
             <div
               style={{
                 display: "flex",
@@ -1868,7 +2164,7 @@ export default function SprzedazPage() {
                     fontFamily: "var(--font-sans)",
                   }}
                 >
-                  Zwrot do klienta:
+                  Zwrot:
                 </span>
                 {(["Pan", "Pani"] as const).map((f) => (
                   <button
@@ -1918,7 +2214,7 @@ export default function SprzedazPage() {
                     fontFamily: "var(--font-sans)",
                   }}
                 >
-                  Jak się zwracać:
+                  Wołacz:
                 </span>
                 <input
                   value={vocative}
@@ -1934,7 +2230,7 @@ export default function SprzedazPage() {
                     color: "var(--text-primary)",
                     background: "var(--bg-elevated)",
                     outline: "none",
-                    width: 140,
+                    width: 110,
                   }}
                 />
               </div>
@@ -1955,36 +2251,35 @@ export default function SprzedazPage() {
           filterStatuses={DISCOVERY_STATUSES}
           groupByStatus
           statusColors={STATUS_COLORS}
+          showTestClient
           emptyLabel="Brak klientów Discovery"
         />
 
         {/* Main: brief + script + roi + dalsze kroki */}
         <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px", background: "var(--bg)" }}>
-          <Card title="Brief Agenta 02" collapsible defaultOpen={true}>
-            <BriefSection client={selected} />
-          </Card>
-
-          {selected && (
-            <NoShowBanner
+          <Card title="Brief agenta sprzedażowego" collapsible defaultOpen={true}>
+            <BriefSection
               client={selected}
               onSaved={(patch) => {
                 setSelected((prev) => (prev ? { ...prev, ...patch } : prev));
                 setClients((prev) =>
-                  prev.map((c) => (c.id === selected.id ? { ...c, ...patch } : c)),
+                  prev.map((c) => (c.id === selected?.id ? { ...c, ...patch } : c)),
                 );
               }}
             />
-          )}
+          </Card>
 
           <Card title="Skrypt Discovery">
-            {STEPS_D.map((step) => (
+            {STEPS_D.map((step, index) => (
               <ScriptStep
                 key={step.id}
                 step={step}
+                index={index}
                 fill={fill}
                 onCopy={onCopy}
                 copiedId={copiedId}
                 onJump={jumpToStep}
+                onJumpToObjection={jumpToObjection}
                 onDecisionSelect={handleDecisionSelect}
                 selectedTrigger={selectedOptions[step.id]}
               />
@@ -1992,9 +2287,12 @@ export default function SprzedazPage() {
           </Card>
 
           <Card title="Kalkulator ROI" collapsible defaultOpen={false}>
+            {/* B2 (Faza 2): dawniej priorytet miał `selected.kontakt` (imię i nazwisko osoby
+                kontaktowej), więc pole "Nazwa firmy" domyślnie pokazywało nie-firmowe dane.
+                Teraz wyłącznie `firma` (albo pusto, żeby zadziałał placeholder pola). */}
             <KalkulatorRoi
               embedded
-              initialClientName={selected?.kontakt || selected?.firma || ""}
+              initialClientName={selected?.firma && selected.firma !== "Bez nazwy" ? selected.firma : ""}
             />
           </Card>
 
@@ -2051,7 +2349,7 @@ export default function SprzedazPage() {
               }}
             />
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6 }}>
-              <FileText size={11} color="var(--text-tertiary)" />
+              <FileText size={14} color="var(--text-tertiary)" />
               <span
                 style={{
                   fontSize: 11,

@@ -604,7 +604,11 @@ export async function saveAgent2Output(
 
   const brief = preDiscoveryBrief as {
     hipoteza_bol_glowny?: string | null;
-    przewidywane_obiekcje?: Array<{ objekcja?: string }> | null;
+    przewidywane_obiekcje?: Array<{
+      objekcja?: string;
+      obiekcja_wariant?: string;
+      odpowiedz?: string;
+    }> | null;
     ryzyka_rozmowy?: string | null;
     uwagi_agenta?: string | null;
     cytaty_klienta?: Array<{ cytat?: string; kontekst?: string }> | null;
@@ -614,9 +618,18 @@ export async function saveAgent2Output(
     props["Hipoteza ból główny"] = { rich_text: richText(brief.hipoteza_bol_glowny) };
   }
   if (brief.przewidywane_obiekcje?.length) {
+    // Faza 2, Sekcja C: dawniej łączono tu wyłącznie `objekcja`, `odpowiedz` z agenta była
+    // cicho odrzucana mimo że interfejs ją zwraca — setter widział samą treść obiekcji bez
+    // gotowej odpowiedzi w /sprzedaz. Format "objekcja|||odpowiedz" per linia (ten sam
+    // wzorzec co "Cytaty klienta") zachowuje obie wartości, patrz parsePrzewidywaneObiekcje.
     const text = brief.przewidywane_obiekcje
-      .map((o) => o.objekcja)
-      .filter(Boolean)
+      .map((o) => {
+        const objekcja = (o.objekcja ?? o.obiekcja_wariant ?? "").trim();
+        if (!objekcja) return null;
+        const odpowiedz = (o.odpowiedz ?? "").trim();
+        return odpowiedz ? `${objekcja}|||${odpowiedz}` : objekcja;
+      })
+      .filter((line): line is string => Boolean(line))
       .join("\n");
     if (text) props["Przewidywane obiekcje"] = { rich_text: richText(text) };
   }

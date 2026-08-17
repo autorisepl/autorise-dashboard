@@ -21,7 +21,7 @@ export const STEPS_AP: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Dziękuję za rozmowę i decyzję o współpracy. Zanim przygotuję dla Pana finalną umowę, potrzebuję 20-30 minut żeby dokładnie zmierzyć z Panem kilka liczb — to jest dokładnie to co potem pozwoli nam uczciwie sprawdzić czy system działa, dla obu stron.",
+        text: "Dziękuję za rozmowę i decyzję o współpracy. Zanim przygotuję dla Pana finalną umowę, potrzebuję 20-30 minut żeby dokładnie zmierzyć z Panem kilka liczb. To jest dokładnie to co potem pozwoli nam uczciwie sprawdzić czy system działa, dla obu stron.",
         cel: "Klient rozumie od razu po co jest to spotkanie i że to krok konieczny przed umową, nie dodatkowa formalność",
       },
       { t: "client", text: "[potwierdzenie]" },
@@ -41,7 +41,7 @@ export const STEPS_AP: Step[] = [
       {
         t: "say",
         text: "Z naszej rozmowy wynika że wdrażamy: [lista modułów z briefu]. System który trzeba zintegrować to [nazwa TMS/system klienta]. Zgadza się, czy coś się zmieniło od Discovery?",
-        cel: "Zakres musi być identyczny z tym co było na Discovery — jeśli coś się zmieniło, wychodzi to teraz, nie dopiero w umowie",
+        cel: "Zakres musi być identyczny z tym co było na Discovery. Jeśli coś się zmieniło, wychodzi to teraz, nie dopiero w umowie",
       },
       { t: "client", text: "[potwierdzenie albo korekta]" },
     ],
@@ -55,13 +55,14 @@ export const STEPS_AP: Step[] = [
     hasModuleRecommendation: true,
     lines: [
       {
+        // Wynik trafia wprost do Załącznika 1, jest wiążący od podpisu umowy.
         t: "note",
-        text: "Najważniejsza część spotkania. Dla KAŻDEGO modułu z listy osobno, w tej kolejności: opis czynności, konkretna liczba, zapis od razu. Wynik trafia wprost do Załącznika 1, jest wiążący od podpisu umowy.",
+        setterNote: "Dla każdego modułu osobno: opis czynności, konkretna liczba, zapis od razu.",
       },
       {
         t: "say",
         text: "Jak dziś wygląda [ta konkretna czynność] krok po kroku, od początku do końca?",
-        cel: "Zrozumieć realny proces, nie założenie z rozmowy kwalifikacyjnej czy Discovery — czasem różni się w szczegółach",
+        cel: "Zrozumieć realny proces, nie założenie z rozmowy kwalifikacyjnej czy Discovery, bo czasem różni się w szczegółach",
       },
       { t: "client", text: "[opis procesu]" },
       {
@@ -70,13 +71,15 @@ export const STEPS_AP: Step[] = [
       },
       { t: "client", text: "[czas w minutach albo godzinach na operację]" },
       {
+        // Sposób szacowania: obserwacja ekranu jeśli możliwe, albo rozbicie na mniejsze
+        // kroki (otwarcie maila, przepisanie do systemu, sprawdzenie poprawności osobno).
         t: "note",
-        text: "Jeśli klient nie wie dokładnie: pomóż oszacować wspólnie — obserwacja ekranu jeśli możliwe, albo rozbicie na mniejsze kroki ('ile zajmuje samo otwarcie maila, ile przepisanie do systemu, ile sprawdzenie poprawności'). Przybliżenie zawsze lepsze niż nic.",
+        setterNote: "Jeśli klient nie wie dokładnie, pomóż oszacować wspólnie. Przybliżenie zawsze lepsze niż nic.",
         linkObjectionId: "ap_nie_wiem_ile",
       },
       {
         t: "action",
-        text: "Zapisz wynik od razu do tabeli w /sprzedaz, moduł po module — nie z pamięci na końcu spotkania.",
+        text: "Zapisz wynik od razu do tabeli w /sprzedaz, moduł po module, nie z pamięci na końcu spotkania.",
       },
     ],
   },
@@ -89,13 +92,13 @@ export const STEPS_AP: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Standardowy cel to 70% — gwarantujemy zaoszczędzenie minimum 70% czasu który przed chwilą zmierzyliśmy. Potwierdzamy tę liczbę?",
+        text: "Standardowy cel to 70%. Gwarantujemy zaoszczędzenie minimum 70% czasu który przed chwilą zmierzyliśmy. Potwierdzamy tę liczbę?",
         cel: "70% to domyślna wartość, nie osobna decyzja do wynegocjowania na nowo za każdym razem",
       },
       { t: "client", text: "[potwierdzenie]" },
       {
         t: "note",
-        text: "Edytowalne wyłącznie przy wyraźnym powodzie biznesowym (np. bardzo niska baza czasowa gdzie 70% jest nierealne z przyczyn strukturalnych) — nie negocjuj w dół żeby szybciej zamknąć spotkanie.",
+        setterNote: "Edytowalne tylko przy wyraźnym powodzie biznesowym, nie negocjuj w dół dla szybszego zamknięcia.",
       },
     ],
   },
@@ -108,7 +111,7 @@ export const STEPS_AP: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Świetnie, to wszystko czego potrzebuję. Przygotuję teraz finalną umowę z tymi dokładnymi liczbami i wyślę ją Panu do [termin] wraz z Załącznikiem — będzie Pan mógł to spokojnie przejrzeć, ewentualnie z prawnikiem, zanim podpiszemy.",
+        text: "To wszystko czego potrzebuję. Przygotuję teraz finalną umowę z tymi dokładnymi liczbami i wyślę ją Panu do [termin] wraz z Załącznikiem. Będzie Pan mógł to spokojnie przejrzeć, ewentualnie z prawnikiem, zanim podpiszemy.",
       },
       {
         t: "action",
@@ -124,22 +127,22 @@ export const OBJECTIONS_AP: Objection[] = [
     label: "Po co to teraz, mieliśmy już to omówione",
     stage: "przedkontraktowa",
     script:
-      "To co mieliśmy wcześniej to był orientacyjny szacunek na potrzeby oferty. To spotkanie to dokładny pomiar na potrzeby prawnie wiążącego dokumentu — chcemy mieć uczciwe liczby, nie przybliżenie, zanim coś podpiszemy.",
-    note: "Odnieś się do tego że kwalifikacja i Discovery dawały przybliżenie, a Załącznik 1 wymaga dokładnego pomiaru per moduł właśnie na tym etapie, przed podpisem.",
+      "To co mieliśmy wcześniej to był orientacyjny szacunek na potrzeby oferty. To spotkanie to dokładny pomiar na potrzeby prawnie wiążącego dokumentu, chcemy mieć uczciwe liczby, nie przybliżenie, zanim coś podpiszemy.",
+    setterNote: "Wcześniejsze etapy dawały przybliżenie, Załącznik 1 wymaga dokładnego pomiaru per moduł.",
   },
   {
     id: "ap_nie_wiem_ile",
     label: "Nie wiem dokładnie ile to zajmuje",
     stage: "przedkontraktowa",
     script:
-      "Rozumiem, mało kto ma to zmierzone stoperem. Rozbijmy to na mniejsze kroki — ile zajmuje samo otwarcie maila, ile przepisanie do systemu, ile sprawdzenie poprawności? Albo jeśli to możliwe teraz, proszę mi pokazać na ekranie, policzę czas obok.",
-    note: "Przybliżenie zawsze lepsze niż nic — nie zostawiaj pola pustego. Ta sama zasada co w kalkulatorze kroku 2.6 kwalifikacji.",
+      "Rozumiem, mało kto ma to zmierzone stoperem. Rozbijmy to na mniejsze kroki: ile zajmuje samo otwarcie maila, ile przepisanie do systemu, ile sprawdzenie poprawności? Albo jeśli to możliwe teraz, proszę mi pokazać na ekranie, policzę czas obok.",
+    setterNote: "Przybliżenie zawsze lepsze niż nic, nie zostawiaj pola pustego. Ta sama zasada co w kalkulatorze kroku 2.6 kwalifikacji.",
   },
   {
     id: "ap_opoznienie",
     label: "Czy to opóźni podpisanie",
     stage: "przedkontraktowa",
     script:
-      "To jest jeden krok, 20-30 minut, i przyspiesza resztę — umowa którą Pan dostanie będzie już kompletna, nie będziemy do niej wracać.",
+      "To jest jeden krok, 20-30 minut, i przyspiesza resztę: umowa którą Pan dostanie będzie już kompletna, nie będziemy do niej wracać.",
   },
 ];

@@ -1,9 +1,19 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, ExternalLink, RefreshCw, Search, Users, X } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink,
+  FlaskConical,
+  RefreshCw,
+  Search,
+  Users,
+  X,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import type { PipelineClientDetailed } from "@/app/api/notion/pipeline/route";
 import { ClientCompanyLine, ClientContactDetails } from "@/components/clients/ClientContactDetails";
+import { TEST_CLIENT } from "@/lib/demo/testClient";
 
 // Wydzielone 2026-07-18 z /kwalifikacja i /sprzedaz, gdzie ten sam panel żył jako dwie
 // osobne, ręcznie zsynchronizowane kopie (świadoma decyzja z sesji 2026-07-15/16, "osobny
@@ -27,12 +37,15 @@ interface ClientSidebarProps {
   /** Grupowanie sekcjami per status (wzorem /sprzedaz) zamiast płaskiej listy (wzorem
    * /kwalifikacja). Wymaga `filterStatuses` dla kolejności sekcji. */
   groupByStatus?: boolean;
-  /** Kolory nagłówków sekcji w trybie groupByStatus, klucz = nazwa statusu. */
+  /** Kolory nagłówków sekcji w trybie groupByStatus i odznaki statusu przy wierszu klienta
+   * (A2, Faza 2) — jedno wspólne źródło koloru dla obu miejsc, klucz = nazwa statusu. */
   statusColors?: Record<string, string>;
-  /** Etykieta nagłówka w trybie płaskim (np. "Nowy lead"). Domyślnie "Klienci". */
-  headerLabel?: string;
   /** Tekst pustej listy. */
   emptyLabel?: string;
+  /** Sekcja D (Faza 2): pokazuje jeden stały, fikcyjny klient testowy przypięty na górze
+   * listy, niezależnie od `filterStatuses`/wyszukiwania po statusie — żeby dało się
+   * przechodzić przez skrypt i brief bez prawdziwego leada. */
+  showTestClient?: boolean;
 }
 
 export function ClientSidebar({
@@ -44,8 +57,8 @@ export function ClientSidebar({
   filterStatuses,
   groupByStatus = false,
   statusColors = {},
-  headerLabel = "Klienci",
   emptyLabel = "Brak klientów",
+  showTestClient = false,
 }: ClientSidebarProps) {
   const [search, setSearch] = useState("");
   const [collapsed, setCollapsed] = useState(false);
@@ -74,6 +87,13 @@ export function ClientSidebar({
         return acc;
       }, {})
     : null;
+
+  // Sekcja D: przypięty na górze niezależnie od filterStatuses (klient testowy nie musi
+  // pasować do statusów pipeline tej zakładki), respektuje tylko wyszukiwarkę.
+  const testClientVisible =
+    showTestClient &&
+    (!search.trim() ||
+      `${TEST_CLIENT.kontakt} ${TEST_CLIENT.firma}`.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <div
@@ -196,7 +216,12 @@ export function ClientSidebar({
                     color: "var(--text-tertiary)",
                   }}
                 >
-                  {groupByStatus ? "Klienci" : `${headerLabel} (${filtered.length})`}
+                  {/* A2 (Faza 2): pole nagłówka jest teraz zawsze neutralne "Klienci (N)" w
+                      obu trybach (dawniej w trybie płaskim pokazywało tu kolorowany label
+                      statusu, np. "Nowy lead (N)") — status pipeline pojedynczego klienta
+                      nie znika, przenosi się do wspólnej, jednej lokalizacji: odznaki przy
+                      wierszu klienta niżej (patrz ClientRow), tej samej w obu zakładkach. */}
+                  {`Klienci (${filtered.length + (testClientVisible ? 1 : 0)})`}
                 </span>
                 <button
                   onClick={onRefresh}
@@ -247,6 +272,16 @@ export function ClientSidebar({
             </div>
 
             <div style={{ flex: 1, overflowY: "auto", padding: "6px 8px" }}>
+              {testClientVisible && (
+                <div style={{ marginBottom: 8 }}>
+                  <ClientRow
+                    client={TEST_CLIENT}
+                    selected={selected}
+                    onSelect={onSelect}
+                    isTest
+                  />
+                </div>
+              )}
               {groupByStatus && grouped
                 ? (filterStatuses ?? []).map((status) => {
                     const group = grouped[status] ?? [];
@@ -280,7 +315,7 @@ export function ClientSidebar({
                 : filtered.map((c) => (
                     <ClientRow key={c.id} client={c} selected={selected} onSelect={onSelect} />
                   ))}
-              {filtered.length === 0 && (
+              {filtered.length === 0 && !testClientVisible && (
                 <div
                   style={{
                     padding: "20px 8px",
@@ -360,34 +395,68 @@ function ClientRow({
   client,
   selected,
   onSelect,
+  isTest = false,
 }: {
   client: PipelineClientDetailed;
   selected: PipelineClientDetailed | null;
   onSelect: (c: PipelineClientDetailed | null) => void;
+  isTest?: boolean;
 }) {
   const isSelected = selected?.id === client.id;
   return (
     <div
       onClick={() => onSelect(isSelected ? null : client)}
+      title={isTest ? "Klient testowy — dane fikcyjne, numer telefonu celowo nieprawdziwy" : undefined}
       style={{
         padding: "9px 10px",
         borderRadius: 8,
         marginBottom: 2,
         cursor: "pointer",
-        background: isSelected ? "var(--accent-muted)" : "transparent",
-        border: isSelected ? "1px solid var(--accent-border)" : "1px solid transparent",
+        background: isSelected
+          ? isTest
+            ? "var(--warning-bg)"
+            : "var(--accent-muted)"
+          : isTest
+            ? "rgba(158, 106, 46, 0.06)"
+            : "transparent",
+        border: isSelected
+          ? `1px solid ${isTest ? "var(--warning-border)" : "var(--accent-border)"}`
+          : isTest
+            ? "1px dashed var(--warning-border)"
+            : "1px solid transparent",
       }}
     >
       <div
         style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
           fontFamily: "var(--font-sans)",
           fontSize: 13,
           fontWeight: 600,
-          color: isSelected ? "var(--accent)" : "var(--text-primary)",
+          color: isSelected ? (isTest ? "var(--warning-text)" : "var(--accent)") : "var(--text-primary)",
           marginBottom: 2,
         }}
       >
+        {isTest && <FlaskConical size={12} color="var(--warning-text)" strokeWidth={2} />}
         {client.kontakt || client.firma || "—"}
+        {isTest && (
+          <span
+            style={{
+              fontSize: 8,
+              fontWeight: 800,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              color: "var(--warning-text)",
+              padding: "1px 6px",
+              borderRadius: 99,
+              border: "1px solid var(--warning-border)",
+              background: "var(--warning-bg)",
+            }}
+          >
+            Testowy
+          </span>
+        )}
       </div>
       <ClientCompanyLine client={client} />
       <ClientContactDetails client={client} />

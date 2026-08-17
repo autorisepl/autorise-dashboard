@@ -398,11 +398,12 @@ export function combineDateAndTime(dateIso: string, hhmm: string): string {
 }
 
 // ── Oś czasu dnia ────────────────────────────────────────────────────────────────────────
-// Domyślny widoczny zakres 6:00-23:00 (nie pełna doba — 70% doby jest zwykle pusta, robiąc
-// bloki drobne i nieczytelne). Jeśli w danym dniu istnieje wydarzenie/zadanie poza zakresem,
-// kolumna tego dnia sama się rozszerza (computeAxisRange), ale skala pikseli na godzinę
-// (PX_PER_HOUR) jest tym samym stałym stałym dla wszystkich kolumn, więc wysokości bloków
-// zostają porównywalne między dniami.
+// Pełna doba 0:00-24:00 zawsze widoczna (decyzja Michała 2026-08-17, zastąpiła wcześniejszy
+// dynamiczny zakres 6:00-23:00). computeAxisRange nadal rozszerza zakres o bloki wykraczające
+// poza domyślny, ale przy 0-24h jako default to rozszerzanie jest teraz no-opem (zakres już
+// jest maksymalny). Skala pikseli na godzinę (PX_PER_HOUR) jest tym samym stałym stałym dla
+// wszystkich kolumn, więc wysokości bloków zostają porównywalne między dniami. Przy 24h*40px
+// wysokość osi (960px) wymaga wewnętrznego scrolla kolumny dnia, patrz DayPanel.tsx.
 
 export function timeStrToMinutes(hhmm: string): number {
   const [h, m] = hhmm.split(":").map(Number);
@@ -444,8 +445,8 @@ export const PX_PER_HOUR = 40;
 // Wysokość sticky Rzędu 1 (nawigacja tygodnia) w page.tsx — nagłówki kolumn dnia (Rząd
 // 2/3) sticky'ują się tuż pod nim, więc obie wartości muszą się zgadzać.
 export const STICKY_ROW1_HEIGHT = 44;
-export const DEFAULT_AXIS_START_MIN = 6 * 60;
-export const DEFAULT_AXIS_END_MIN = 23 * 60;
+export const DEFAULT_AXIS_START_MIN = 0;
+export const DEFAULT_AXIS_END_MIN = MINUTES_IN_DAY;
 export const MIN_BLOCK_DURATION_MIN = 15;
 
 export interface AxisRange {

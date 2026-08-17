@@ -38,6 +38,13 @@ export function PageHeader({ icon, title, children, className }: PageHeaderProps
         backdropFilter: "var(--glass-blur)",
         WebkitBackdropFilter: "var(--glass-blur)",
         borderBottom: "1px solid var(--border)",
+        // Bez tego przy dużej liczbie elementów w children (np. /kwalifikacja z wybranym
+        // klientem: licznik + imię sprzedawcy + brak odbioru + forma grzecznościowa) flex
+        // items ściskają się poniżej szerokości tekstu i tekst łamie się w środku przycisku,
+        // rozciągając wiersz na kilka linii mimo wymuszonego height:48 (złapane na żywym
+        // zrzucie ekranu — wiersz nagłówka rozjechał się na 3 linie).
+        flexWrap: "nowrap",
+        overflowX: "auto",
       }}
     >
       {icon}

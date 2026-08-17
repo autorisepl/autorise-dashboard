@@ -319,6 +319,7 @@ function BlueprintView() {
 function firstLineText(step: Step): string {
   const line = step.lines[0];
   if (!line) return "";
+  if (line.t === "note") return line.setterNote;
   return Array.isArray(line.text) ? line.text[0] : line.text;
 }
 
