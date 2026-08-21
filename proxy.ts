@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { resolveRole } from "@/lib/auth/resolveRole";
+import { createMiddlewareClient } from "@/lib/supabase/middleware";
 
 const PUBLIC_PATHS = [
   "/login",
@@ -23,7 +24,7 @@ const SETTER_ALLOWED_PREFIXES = [
   "/api/stats/tally",
 ];
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (
@@ -34,12 +35,23 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const session = request.cookies.get("autorise_session")?.value;
-  const role = resolveRole(session);
+  const { supabase, getResponse } = createMiddlewareClient(request);
+  // getUser() (nie getSession()) — waliduje JWT bezpośrednio u Supabase, bezpieczniejsze
+  // w middleware niż samo odczytanie ciasteczka.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const role = resolveRole(user?.email);
 
   if (!role) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("from", pathname);
+    if (user) {
+      // Zalogowany do Supabase, ale e-mail poza allowlistą ról — czytelny komunikat
+      // zamiast cichego przekierowania jak przy braku sesji w ogóle.
+      loginUrl.searchParams.set("error", "unauthorized");
+    }
     return NextResponse.redirect(loginUrl);
   }
 
@@ -50,7 +62,7 @@ export function proxy(request: NextRequest) {
     }
   }
 
-  return NextResponse.next();
+  return getResponse();
 }
 
 export const config = {

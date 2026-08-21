@@ -1,8 +1,48 @@
 "use client";
 
-import { Briefcase, ChevronRight, Link2, Mail, Unlink, UserCircle2 } from "lucide-react";
+import { Briefcase, ChevronRight, Link2, LogOut, Mail, Unlink, UserCircle2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
+
+// ── Wyloguj ────────────────────────────────────────────────────────────
+
+function LogoutButton() {
+  const [loading, setLoading] = useState(false);
+
+  const handleLogout = async () => {
+    if (loading) return;
+    setLoading(true);
+    await fetch("/api/auth", { method: "DELETE" });
+    window.location.href = "/login";
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleLogout}
+      disabled={loading}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8,
+        padding: "10px 14px",
+        background: "var(--bg-card)",
+        border: "1px solid var(--border)",
+        borderRadius: 12,
+        fontFamily: "var(--font-sans)",
+        fontSize: 13,
+        fontWeight: 500,
+        color: "var(--error-text)",
+        cursor: loading ? "not-allowed" : "pointer",
+        opacity: loading ? 0.6 : 1,
+      }}
+    >
+      <LogOut size={14} />
+      {loading ? "Wylogowywanie…" : "Wyloguj"}
+    </button>
+  );
+}
 
 // ── Types ──────────────────────────────────────────────────────────────
 
@@ -382,6 +422,7 @@ function ProfilContent() {
               </div>
             </div>
           </div>
+          <LogoutButton />
         </div>
 
         {/* Right — Google connections */}
