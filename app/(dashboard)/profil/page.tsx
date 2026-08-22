@@ -1,12 +1,6 @@
-import { type Role, resolveIdentity } from "@/lib/auth/resolveRole";
+import { ROLE_LABELS, resolveIdentity } from "@/lib/auth/resolveRole";
 import { createClient } from "@/lib/supabase/server";
 import { ProfilContent } from "./ProfilContent";
-
-const ROLE_LABELS: Record<Role, string> = {
-  admin: "Founder",
-  setter: "Setter",
-  closer: "Closer",
-};
 
 export default async function ProfilPage() {
   const supabase = await createClient();

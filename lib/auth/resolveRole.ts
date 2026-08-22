@@ -51,3 +51,12 @@ export function resolveIdentity(accessToken: string | null | undefined): Identit
 export function resolveRole(accessToken: string | null | undefined): Role | null {
   return resolveIdentity(accessToken)?.role ?? null;
 }
+
+// Jedna mapa etykiet dla wszystkich miejsc pokazujących rolę użytkownikowi (profil,
+// sidebar) — żeby dodanie kolejnej roli wymagało zmiany w jednym miejscu, nie kilku
+// osobnych ternary rozjeżdżających się przy każdej nowej wartości Role.
+export const ROLE_LABELS: Record<Role, string> = {
+  admin: "Founder",
+  setter: "Setter",
+  closer: "Closer",
+};
