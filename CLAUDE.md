@@ -186,6 +186,18 @@ Ten mechanizm (`URLSearchParams` → `V` → `applyValues()` → klasy `val-*` �
 - **"Wynik Discovery" ma teraz 4 opcje** (Batch 1 rozszerzony, migracja uruchomiona 2026-07-18): TAK/NIE/W TRAKCIE (Agent 4, automatyczne) + **NO-SHOW** (ręczne, przycisk w `/sprzedaz`). Zobacz sekcję "No-show i redesign /statystyki" niżej.
 - **Baza "Produkty"** (utworzona 2026-07-15, jawna instrukcja z `AUTORISE_MASTER_PLAN.md` sekcja "Arek" pkt 11, wykonana przez połączony konektor Notion, nie przez API route): 4 standardowe moduły wdrożeniowe (`email-parser`/`document-ocr`/`payment-monitor`/`whatsapp-alerts`), każdy z polami Opis dla klienta/Opis techniczny/Typowy czas integracji/Warunki rekomendacji/Kategorie kalkulatora/Status modułu. Pole "Kategorie kalkulatora" (multi_select: zlecenia/cmr/faktury_recznie/komunikacja/inne) odpowiada dokładnie wartościom `calculatorFlag` z `lib/scripts/kwalifikacyjna.ts`. Powiązanie z kodem: `lib/scripts/moduleRecommendation.ts` (`MODULE_FLAG_MAP`) ma teraz pole `code` z tym samym sluggiem co "Kod modułu" w Notion — rekomendacja modułu w kroku 2j kwalifikacji nie jest już samym tekstem, ma jeden do jednego odpowiednik w tej bazie. Metodologia "4 sposoby rozwiązania braku dostępu do API strony trzeciej" opisana jako osobna strona w Notion ("Produkty — Metodologia: brak dostępu do API strony trzeciej", siostrzana do bazy Produkty): (1) bezpośredni kontakt z właścicielem/dostawcą systemu, (2) automatyzacja RPA klikająca interfejs jak człowiek, (3) rozpoznawanie elementów wizualnie na ekranie, (4) dostęp przez panel w przeglądarce — w tej kolejności preferencji, mocniejsza integracja zawsze przed słabszą.
 
+## Autoryzacja i Supabase (fundament, 2026-08-20)
+
+Logowanie przeszło ze wspólnego hasła (`DASHBOARD_PASSWORD_*`) na **Supabase Auth** (Google OAuth + e-mail/hasło), projekt `autorise-production` (`owwpnvvdxdpozfoadhcr`, eu-central-1). Self-signup wyłączony w Supabase Dashboard — konta zakładane ręcznie. Rola (`admin`/`setter`) nie jest polem w Supabase, tylko allowlistą e-mail w `lib/auth/resolveRole.ts` (`roth@autorise.pl`=admin, `zlotnicki@autorise.pl`=setter, jedno źródło prawdy) — nawet skuteczne zalogowanie do Supabase przez e-mail spoza tej listy kończy się jak brak sesji (`proxy.ts` redirect `/login?error=unauthorized`).
+
+`lib/supabase/`: `client.ts` (przeglądarka, klucz anon), `server.ts` (Server Components/Route Handlers, `next/headers` cookies), `middleware.ts` (Edge, `proxy.ts` — `getUser()` nie `getSession()`, waliduje JWT server-side), `admin.ts` (`service_role`, **wyłącznie server-side**, API zapisu + skrypt migracji, nigdy z komponentu klienckiego). Wzorzec cookie-refresh w middleware wg oficjalnego `@supabase/ssr` — `proxy.ts` musi zwrócić dokładnie response z `getResponse()`, inaczej sesja losowo wygasa.
+
+`app/api/auth/callback/route.ts` — wymiana kodu OAuth na sesję po powrocie z Google. `app/api/auth/route.ts` (DELETE) — `supabase.auth.signOut()`, wywoływane przez pierwszy w historii projektu przycisk "Wyloguj" w `/profil` (wcześniej nie istniał wcale, sprawdzone gepem przed budową). `app/login/page.tsx` zachowuje wizualny shell sprzed zmiany, w środku: przycisk Google (`signInWithOAuth`) + formularz e-mail/hasło (`signInWithPassword`).
+
+**Pipeline w Supabase (płaska tabela `public.pipeline`, `supabase/migrations/0001_pipeline_schema.sql` + `0002_pipeline_rls.sql`)** — pierwszy krok migracji z Notion, **Notion pozostaje jedynym źródłem prawdy dla UI aż do kolejnego etapu** (redesign kalendarza/statystyk/kanbana). ~70 kolumn 1:1 z property Notion (traceability przez `COMMENT ON COLUMN`), `CHECK` na `status` (11 wartości identycznych jak w Notion), RLS: SELECT dla `authenticated`, zero polityk zapisu (wyłącznie `service_role` z API routes). Skrypt jednorazowy `scripts/migrate-notion-to-supabase.mjs` (wzorem `scripts/backfill-normalize-phones.mjs`): backup JSON do `backups/` PRZED zapisem, upsert **rekord po rekordzie** po `notion_page_id` (celowo nie batch — jeden zły `status` nie może ubić całego importu), bezpiecznie uruchamialny wielokrotnie. Nowe `app/api/pipeline/route.ts` (GET przez anon+RLS, POST tworzy rekord przez `service_role` z syntetycznym `notion_page_id` w formacie `native-<uuid>` dla leadów zakładanych bezpośrednio, bez pochodzenia z Notion) i `app/api/pipeline/[id]/route.ts` (PATCH), Zod w `lib/supabase/pipelineSchema.ts`. Stare `app/api/notion/pipeline/route.ts` i `app/api/notion/pipeline-update/route.ts` mają komentarz `DEPRECATED`, zostają nietknięte funkcjonalnie do czasu weryfikacji nowej ścieżki na realnych danych.
+
+**Kroki poza zasięgiem Claude Code (brak tokenu/hasła do produkcyjnego Supabase), do zrobienia ręcznie przez Michała**: wklejenie obu plików SQL w Supabase SQL Editor, włączenie providerów Auth (Google + Email) + wyłączenie self-signup + redirect URLs, dopisanie redirect URI Supabase w Google Cloud Console (istniejący klient OAuth, współdzielony z Calendar/Tasks), ręczne założenie userów `roth@autorise.pl`/`zlotnicki@autorise.pl`, wklejenie `SUPABASE_SERVICE_ROLE_KEY` do `.env.local`, uruchomienie skryptu migracji. Dopiero po tym logowanie i migracja są testowalne end-to-end.
+
 ## No-show i redesign /statystyki (2026-07-18)
 
 Trzy niezależne zmiany w jednej sesji, żeby /statystyki było wiarygodne i czytelne:
@@ -346,8 +358,17 @@ components/agents/AgentKwalifikacjaCard.tsx — renderuje wynik agentKwalifikacj
 app/api/health/route.ts                   — health check (Anthropic/Notion/Google/Groq/MCP)
 app/api/env-check/route.ts                — env vars check
 app/api/claude-config/route.ts            — Claude Code agents/skills (filtered)
-app/api/notion/pipeline/route.ts          — Pipeline clients
+app/api/notion/pipeline/route.ts          — Pipeline clients (DEPRECATED, zastąpione przez /api/pipeline)
 app/api/notion/sheets-sync/route.ts       — Sheets → Notion sync
+supabase/migrations/0001_pipeline_schema.sql — schemat public.pipeline (Supabase), ~70 kolumn 1:1 z Notion
+supabase/migrations/0002_pipeline_rls.sql — RLS public.pipeline, SELECT dla authenticated
+lib/supabase/{client,server,middleware,admin}.ts — klienci Supabase (przeglądarka/server/middleware/service_role)
+lib/supabase/pipelineSchema.ts            — Zod schema dla /api/pipeline (create/patch)
+lib/auth/resolveRole.ts                   — allowlista e-mail → rola (admin/setter), jedno źródło prawdy
+app/api/auth/callback/route.ts            — wymiana kodu OAuth Supabase na sesję
+app/api/pipeline/route.ts                 — GET (anon+RLS) / POST (service_role) pipeline w Supabase
+app/api/pipeline/[id]/route.ts            — PATCH pipeline w Supabase (service_role)
+scripts/migrate-notion-to-supabase.mjs    — jednorazowa migracja Pipeline Notion → Supabase (backup JSON + upsert per rekord)
 app/(dashboard)/wdrozenie/page.tsx        — PROTOTYP: jednorazowy proces wdrożenia (Tydzień 0 do Dzień 30)
 app/(dashboard)/utrzymanie/page.tsx       — PROTOTYP: stały retainer po zamknięciu wdrożenia
 app/(dashboard)/demo-arek/page.tsx        — Demo sprzedażowe dla Arka Burkowskiego (5 kroków, bez zapisu do Notion)

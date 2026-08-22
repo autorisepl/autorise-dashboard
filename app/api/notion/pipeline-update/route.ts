@@ -1,3 +1,5 @@
+// DEPRECATED (2026-08-20): zastąpione przez PATCH /api/pipeline/[id] (Supabase), patrz
+// CLAUDE.md — usunąć dopiero po kilku dniach weryfikacji nowej ścieżki na realnych danych.
 import { Client } from "@notionhq/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";

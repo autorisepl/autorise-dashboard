@@ -1,3 +1,5 @@
+// DEPRECATED (2026-08-20): zastąpione przez /api/pipeline (Supabase), patrz CLAUDE.md —
+// usunąć dopiero po kilku dniach weryfikacji nowej ścieżki na realnych danych.
 import { Client } from "@notionhq/client";
 import type { PageObjectResponse } from "@notionhq/client/build/src/api-endpoints";
 import { NextResponse } from "next/server";

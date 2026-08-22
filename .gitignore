@@ -46,4 +46,12 @@ next-env.d.ts
 context/transkrypty-testowe/
 context/PELNOMOCNICTWO_PODPISANE.pdf
 
+# backup JSON z scripts/migrate-notion-to-supabase.mjs — pełny eksport danych klientów
+# (telefony, e-maile, kwoty), workspace-lokalny, nie do historii git.
+backups/
+
+# zrzuty Playwright/debug ze scratch sesji, nie do historii git
+.screens/
+--full-page
+
 .vercel
