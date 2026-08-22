@@ -6,7 +6,7 @@
 // /api/pipeline (Supabase, inny kontrakt) — ale nic realnie się na ten nowy kontrakt nie
 // przepięło, więc zamiast migrować wszystkich wołających, przepinamy wnętrze tego route'a.
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
@@ -193,7 +193,15 @@ function mapRow(row: PipelineRow): PipelineClientDetailed {
 
 export async function GET() {
   try {
-    const supabase = await createClient();
+    // service_role (nie anon+RLS z lib/supabase/server) — celowo: ta strona jest client
+    // component i importuje z tego pliku realną wartość SKRYPT_V4_DATA (nie tylko typ), więc
+    // bundler wciąga całe drzewo importów route.ts do bundla klienckiego. lib/supabase/server
+    // zależy od next/headers, co wywala build Turbopack ("Pages Router" error mimo App
+    // Routera) w każdej wersji (statyczny czy dynamiczny import). lib/supabase/admin nie ma tej
+    // zależności. Bezpieczne: ta ścieżka i tak jest chroniona przez proxy.ts (rola wymagana,
+    // patrz SETTER_ALLOWED_PREFIXES) zanim request w ogóle dotrze do handlera — RLS był tu
+    // dodatkową warstwą, nie jedyną granicą autoryzacji.
+    const supabase = createAdminClient();
     const { data, error } = await supabase
       .from("pipeline")
       .select("*")
