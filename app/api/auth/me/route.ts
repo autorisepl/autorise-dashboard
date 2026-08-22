@@ -9,7 +9,10 @@ export async function GET() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const role = resolveRole(user?.email);
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const role = resolveRole(session?.access_token);
 
   if (!role) {
     return NextResponse.json({ role: null, email: null }, { status: 401 });

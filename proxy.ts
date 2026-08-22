@@ -18,6 +18,10 @@ const SETTER_ALLOWED_PREFIXES = [
   "/agencja",
   "/prezentacja",
   "/agenci",
+  // Prowizorka: przycisk wylogowania dziś żyje wyłącznie w /profil. Docelowo wylogowanie
+  // ląduje w panelu bocznym (sekcja D briefu redesignu), dostępne z każdej strony bez
+  // wchodzenia w ustawienia — wtedy ten wpis można usunąć.
+  "/profil",
   "/api/notion",
   "/api/agents",
   "/api/google",
@@ -37,12 +41,17 @@ export async function proxy(request: NextRequest) {
 
   const { supabase, getResponse } = createMiddlewareClient(request);
   // getUser() (nie getSession()) — waliduje JWT bezpośrednio u Supabase, bezpieczniejsze
-  // w middleware niż samo odczytanie ciasteczka.
+  // w middleware niż samo odczytanie ciasteczka. getSession() po walidacji tylko czyta
+  // już-zweryfikowaną sesję z ciasteczek (bez dodatkowego round-tripu), żeby wyciągnąć
+  // access_token z claimsami roli.
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
-  const role = resolveRole(user?.email);
+  const role = resolveRole(session?.access_token);
 
   if (!role) {
     const loginUrl = new URL("/login", request.url);

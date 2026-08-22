@@ -933,7 +933,7 @@ function ScriptStep({
   onDecisionSelect: (stepId: string, option: DecisionOption) => void;
   onJumpToObjection: (objectionId: string) => void;
   selectedTrigger?: string;
-  role: "admin" | "setter" | null;
+  role: "admin" | "setter" | "closer" | null;
   children?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(true);

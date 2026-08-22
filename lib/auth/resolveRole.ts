@@ -1,18 +1,53 @@
-export type Role = "admin" | "setter";
+import { jwtDecode } from "jwt-decode";
 
-// Jedno źródło prawdy dla mapowania e-maila (Supabase Auth) na rolę — używane przez
-// proxy.ts (server-side gate na ścieżki), app/api/auth/me/route.ts, i
-// RoleProvider (server layout przekazujący rolę do klienta bez opóźnienia).
+export type Role = "admin" | "setter" | "closer";
+
+export interface Identity {
+  role: Role;
+  teamMemberId: string;
+  displayName: string;
+}
+
+interface AccessTokenPayload {
+  app_metadata?: {
+    team_member_id?: string;
+    team_role?: string;
+    team_display_name?: string;
+  };
+}
+
+function isRole(value: string | undefined): value is Role {
+  return value === "admin" || value === "setter" || value === "closer";
+}
+
+// Rola i tożsamość osoby nie żyją w kodzie — leżą w Supabase (tabele team_members /
+// team_member_emails) i trafiają do sesji wyłącznie przez Custom Access Token hook jako
+// app_metadata.team_member_id / .team_role / .team_display_name NA SAMYM TOKENIE (JWT).
 //
-// Self-signup w Supabase jest wyłączony, więc to jest wyłącznie warstwa defense-in-depth:
-// nawet gdyby ktoś jakimś trybem założył konto Supabase spoza tej listy, resolveRole
-// zwraca null i proxy.ts traktuje go jak niezalogowanego.
-const EMAIL_ROLES: Record<string, Role> = {
-  "roth@autorise.pl": "admin",
-  "zlotnicki@autorise.pl": "setter",
-};
+// Pułapka: te claimsy NIE są widoczne w supabase.auth.getUser().data.user.app_metadata —
+// hook dopisuje je do wystawianego JWT, nie do rekordu usera w bazie Auth. Trzeba je czytać
+// z session.access_token, zdekodowanego lokalnie (getUser() już zwalidował podpis u Supabase,
+// więc tu tylko odczytujemy payload, bez ponownej weryfikacji).
+//
+// null = e-mail logowania nie ma wpisu w team_member_emails (albo hook z innego powodu nie
+// dopisał kompletu claimsów) — proxy.ts traktuje to jak niezalogowanego.
+export function resolveIdentity(accessToken: string | null | undefined): Identity | null {
+  if (!accessToken) return null;
 
-export function resolveRole(email: string | null | undefined): Role | null {
-  if (!email) return null;
-  return EMAIL_ROLES[email.toLowerCase()] ?? null;
+  let payload: AccessTokenPayload;
+  try {
+    payload = jwtDecode<AccessTokenPayload>(accessToken);
+  } catch {
+    return null;
+  }
+
+  const { team_member_id, team_role, team_display_name } = payload.app_metadata ?? {};
+  if (!team_member_id || !team_role || !team_display_name) return null;
+  if (!isRole(team_role)) return null;
+
+  return { role: team_role, teamMemberId: team_member_id, displayName: team_display_name };
+}
+
+export function resolveRole(accessToken: string | null | undefined): Role | null {
+  return resolveIdentity(accessToken)?.role ?? null;
 }

@@ -5,10 +5,12 @@ import { createClient } from "@/lib/supabase/server";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
+  // Sama walidacja JWT (getUser()) już się odbyła w proxy.ts dla tego requestu — tu
+  // wystarczy odczytać sesję z ciasteczek po access_token z claimsami roli.
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const role = resolveRole(user?.email);
+    data: { session },
+  } = await supabase.auth.getSession();
+  const role = resolveRole(session?.access_token);
 
   return (
     <RoleProvider role={role}>
