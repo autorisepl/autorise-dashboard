@@ -9,7 +9,13 @@ const IdentityContext = createContext<Identity | null>(null);
 // przez next/headers przed pierwszym renderem), nie dociągana asynchronicznie
 // po stronie klienta — eliminuje to okno w którym setter widzi pełną nawigację
 // admina zanim fetch do /api/auth/me zdąży wrócić.
-export function RoleProvider({ role, children }: { role: Identity | null; children: React.ReactNode }) {
+export function RoleProvider({
+  role,
+  children,
+}: {
+  role: Identity | null;
+  children: React.ReactNode;
+}) {
   return <IdentityContext.Provider value={role}>{children}</IdentityContext.Provider>;
 }
 
