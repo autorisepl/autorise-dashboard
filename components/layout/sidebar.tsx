@@ -26,7 +26,8 @@ import { useCallback, useEffect, useState } from "react";
 import type { VercelDeployData } from "@/app/api/vercel/last-deploy/route";
 import type { WeatherData } from "@/app/api/weather/route";
 import { SectionLabel } from "@/components/ui/SectionLabel";
-import { useRole } from "@/lib/auth/RoleContext";
+import { useIdentity } from "@/lib/auth/RoleContext";
+import { ROLE_LABELS } from "@/lib/auth/resolveRole";
 
 // ── Wind speed text ─────────────────────────────────────────────────
 
@@ -249,7 +250,8 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
   const weather = useWeather();
   const { deploy, configured: deployConfigured } = useLastDeploy();
   const now = useClock();
-  const role = useRole();
+  const identity = useIdentity();
+  const role = identity?.role ?? null;
 
   const visibleNav =
     role === "setter"
@@ -378,7 +380,7 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
               letterSpacing: "-0.01em",
             }}
           >
-            Michał Roth
+            {identity?.displayName ?? "Nieznany użytkownik"}
           </span>
           {role && (
             <span
@@ -392,7 +394,7 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
                 width: "fit-content",
               }}
             >
-              {role === "admin" ? "Founder" : "Setter"}
+              {ROLE_LABELS[role]}
             </span>
           )}
         </div>
