@@ -1,14 +1,14 @@
-// DEPRECATED (2026-08-20): zastąpione przez /api/pipeline (Supabase), patrz CLAUDE.md —
-// usunąć dopiero po kilku dniach weryfikacji nowej ścieżki na realnych danych.
-import { Client } from "@notionhq/client";
-import type { PageObjectResponse } from "@notionhq/client/build/src/api-endpoints";
+// Wewnętrznie czyta z Supabase (public.pipeline), NIE z Notion — przepięte 2026-08-22.
+// Kontrakt zewnętrzny (URL, kształt JSON, nazwy pól PipelineClientDetailed) pozostał
+// identyczny, żeby wszystkie miejsca wołające ten endpoint (sprzedaz/utrzymanie/wdrozenie/
+// mapa/pipeline/KalkulatorRoi) działały bez zmian. Notion nie jest już w ogóle odpytywany
+// przez ten route. Ścieżka nazwana wcześniej "DEPRECATED" bo miała zostać zastąpiona przez
+// /api/pipeline (Supabase, inny kontrakt) — ale nic realnie się na ten nowy kontrakt nie
+// przepięło, więc zamiast migrować wszystkich wołających, przepinamy wnętrze tego route'a.
 import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
-
-const notion = new Client({ auth: process.env.NOTION_TOKEN });
-// In @notionhq/client v5, databases.query moved to dataSources.query
-const PIPELINE_DATA_SOURCE_ID = "2ea38355-7529-48f9-8d7f-1c62f5570df3";
 
 export interface PipelineClientDetailed {
   id: string;
@@ -63,6 +63,7 @@ export interface PipelineClientDetailed {
   tabelaModulowWeryfikacja: string;
   celEfektywnosciProcent: number;
   tabelaModulowPrzedkontraktowa: string;
+  cenaWdrozenia: number;
 }
 
 // Blok 1, punkt 1.5 (2026-07-14) — data premiery skryptu kwalifikacyjnego V4 (12 kroków, ICP
@@ -73,124 +74,142 @@ export interface PipelineClientDetailed {
 // rozjeżdża się z rzeczywistą datą wdrożenia zmiany).
 export const SKRYPT_V4_DATA = "2026-07-03";
 
-function extractText(prop: PageObjectResponse["properties"][string] | undefined): string {
-  if (!prop) return "";
-  if (prop.type === "rich_text")
-    return prop.rich_text
-      .map((t) => t.plain_text)
-      .join("")
-      .trim();
-  if (prop.type === "title")
-    return prop.title
-      .map((t) => t.plain_text)
-      .join("")
-      .trim();
-  if (prop.type === "phone_number") return prop.phone_number ?? "";
-  if (prop.type === "email") return prop.email ?? "";
-  if (prop.type === "select") return prop.select?.name ?? "";
-  if (prop.type === "date") return prop.date?.start ?? "";
-  return "";
+interface PipelineRow {
+  id: string;
+  firma: string;
+  kontakt: string | null;
+  telefon: string | null;
+  email: string | null;
+  nip: string | null;
+  status: string | null;
+  updated_at: string;
+  data_discovery: string | null;
+  nastepny_krok: string | null;
+  ocena_icp: string | null;
+  data_nastepnego_kroku: string | null;
+  liczba_prob_kontaktu: number | null;
+  notatki: string | null;
+  bol_glowny: string | null;
+  poprzednie_proby: string | null;
+  hipoteza_bol_glowny: string | null;
+  uwagi_agenta_2: string | null;
+  przewidywane_obiekcje: string | null;
+  pitch_recipe: string | null;
+  ryzyka_rozmowy: string | null;
+  godziny_wpisywania_spedytor: number | null;
+  flota: number | null;
+  tms: string | null;
+  koszt_roczny_pln_rok: number | null;
+  cytaty_klienta: string | null;
+  warunki_umowy_dni_dostepow: number | null;
+  warunki_umowy_uwagi: string | null;
+  poza_zakresem_ustalenia: string | null;
+  data_pierwszego_kontaktu: string | null;
+  utracony: boolean;
+  powod_utraty: string | null;
+  system_transformacji_3_kroki: string | null;
+  zdanie_roznicujace: string | null;
+  roi_dopowiedzenie: string | null;
+  retainer_pln_mc: number | null;
+  data_potwierdzenia_dostepow: string | null;
+  czas_bazowy_potwierdzony_h_mc: number | null;
+  dostepy_zebrane: string | null;
+  ostatni_kontakt_retainer: string | null;
+  historia_zgloszen_retainer: string | null;
+  wynik_discovery: string | null;
+  protokol_odbioru_podpisany: boolean;
+  data_protokolu_odbioru: string | null;
+  kickoff_odbyty: boolean;
+  data_kickoff: string | null;
+  uwagi_agenta_1: string | null;
+  moduly_wdrazane: string[] | null;
+  tabela_modulow_kickoff: string | null;
+  tabela_modulow_weryfikacja: string | null;
+  cel_efektywnosci_procent: number | null;
+  tabela_modulow_przedkontraktowa: string | null;
+  cena_wdrozenia: number | null;
 }
 
-function extractNumber(prop: PageObjectResponse["properties"][string] | undefined): number {
-  if (!prop) return 0;
-  if (prop.type === "number") return prop.number ?? 0;
-  return 0;
-}
-
-function extractCheckbox(prop: PageObjectResponse["properties"][string] | undefined): boolean {
-  if (!prop) return false;
-  if (prop.type === "checkbox") return prop.checkbox;
-  return false;
-}
-
-function extractMultiSelect(prop: PageObjectResponse["properties"][string] | undefined): string[] {
-  if (!prop) return [];
-  if (prop.type === "multi_select") return prop.multi_select.map((o) => o.name);
-  return [];
+function mapRow(row: PipelineRow): PipelineClientDetailed {
+  return {
+    id: row.id,
+    firma: row.firma || row.kontakt || "Bez nazwy",
+    kontakt: row.kontakt ?? "",
+    telefon: row.telefon ?? "",
+    email: row.email ?? "",
+    nip: row.nip ?? "",
+    status: row.status ?? "",
+    lastModified: row.updated_at,
+    dataDiscovery: row.data_discovery ?? "",
+    nastepnyKrok: row.nastepny_krok ?? "",
+    ocenaICP: row.ocena_icp ?? "",
+    dataFollowup: row.data_nastepnego_kroku ?? "",
+    liczbaProb: row.liczba_prob_kontaktu ?? 0,
+    notatki: row.notatki ?? "",
+    bolGlowny: row.bol_glowny ?? "",
+    poprzednieProby: row.poprzednie_proby ?? "",
+    hipotezaBolGlowny: row.hipoteza_bol_glowny ?? "",
+    uwagiFAgent2: row.uwagi_agenta_2 ?? "",
+    przewidywaneObiekcje: row.przewidywane_obiekcje ?? "",
+    pitchRecipe: row.pitch_recipe ?? "",
+    ryzyka: row.ryzyka_rozmowy ?? "",
+    godzinyWpisywania: row.godziny_wpisywania_spedytor ?? 0,
+    flota: row.flota ?? 0,
+    tms: row.tms ?? "",
+    kosztRoczny: row.koszt_roczny_pln_rok ?? 0,
+    cytatyKlienta: row.cytaty_klienta ?? "",
+    warunkiDniDostepow: row.warunki_umowy_dni_dostepow ?? 0,
+    warunkiUwagi: row.warunki_umowy_uwagi ?? "",
+    pozaZakresem: row.poza_zakresem_ustalenia ?? "",
+    dataPierwszegoKontaktu: row.data_pierwszego_kontaktu ?? "",
+    utracony: row.utracony,
+    powodUtraty: row.powod_utraty ?? "",
+    systemTransformacji: (row.system_transformacji_3_kroki ?? "")
+      .split("\n")
+      .map((s) => s.trim())
+      .filter(Boolean),
+    zdanieRoznicujace: row.zdanie_roznicujace ?? "",
+    roiDopowiedzenie: row.roi_dopowiedzenie ?? "",
+    retainer: row.retainer_pln_mc ?? 0,
+    dataPotwierdzeniaDostepow: row.data_potwierdzenia_dostepow ?? "",
+    czasBazowyPotwierdzony: row.czas_bazowy_potwierdzony_h_mc ?? 0,
+    dostepyZebrane: row.dostepy_zebrane ?? "",
+    ostatniKontaktRetainer: row.ostatni_kontakt_retainer ?? "",
+    historiaZgloszenRetainer: row.historia_zgloszen_retainer ?? "",
+    wynikDiscovery: row.wynik_discovery ?? "",
+    protokolOdbioruPodpisany: row.protokol_odbioru_podpisany,
+    dataProtokoluOdbioru: row.data_protokolu_odbioru ?? "",
+    kickoffOdbyty: row.kickoff_odbyty,
+    dataKickoff: row.data_kickoff ?? "",
+    uwagiAgenta1: row.uwagi_agenta_1 ?? "",
+    moduleWdrazane: row.moduly_wdrazane ?? [],
+    tabelaModulowKickoff: row.tabela_modulow_kickoff ?? "",
+    tabelaModulowWeryfikacja: row.tabela_modulow_weryfikacja ?? "",
+    celEfektywnosciProcent: row.cel_efektywnosci_procent ?? 0,
+    tabelaModulowPrzedkontraktowa: row.tabela_modulow_przedkontraktowa ?? "",
+    cenaWdrozenia: row.cena_wdrozenia ?? 0,
+  };
 }
 
 export async function GET() {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const response = (await (notion.dataSources as any).query({
-      data_source_id: PIPELINE_DATA_SOURCE_ID,
-      sorts: [{ property: "Data pierwszego kontaktu", direction: "descending" }],
-      page_size: 100,
-    })) as { results: PageObjectResponse[] };
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("pipeline")
+      .select("*")
+      .order("data_pierwszego_kontaktu", { ascending: false, nullsFirst: false });
 
-    const clients: PipelineClientDetailed[] = response.results
-      .filter((p): p is PageObjectResponse => p.object === "page")
-      .map((page: PageObjectResponse) => {
-        const props = page.properties;
-        const firma = extractText(props["Firma"]) || extractText(props["Kontakt"]) || "Bez nazwy";
+    if (error) {
+      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
 
-        return {
-          id: page.id,
-          firma,
-          kontakt: extractText(props["Kontakt"]),
-          telefon: extractText(props["Telefon"]),
-          email: extractText(props["E-mail"] ?? props["Email"]),
-          nip: extractText(props["NIP"]),
-          status: extractText(props["Status"]),
-          lastModified: page.last_edited_time,
-          dataDiscovery: extractText(props["Data discovery"]),
-          nastepnyKrok: extractText(props["Następny krok"]),
-          ocenaICP: extractText(props["Ocena ICP"]),
-          dataFollowup: extractText(props["Data następnego kroku"]),
-          liczbaProb: extractNumber(props["Liczba prób kontaktu"]),
-          notatki: extractText(props["Notatki"]),
-          bolGlowny: extractText(props["Ból główny"]),
-          poprzednieProby: extractText(props["Poprzednie próby"]),
-          hipotezaBolGlowny: extractText(props["Hipoteza ból główny"]),
-          uwagiFAgent2: extractText(props["Uwagi Agenta 2"]),
-          przewidywaneObiekcje: extractText(props["Przewidywane obiekcje"]),
-          pitchRecipe: extractText(props["Pitch Recipe"]),
-          ryzyka: extractText(props["Ryzyka rozmowy"]),
-          godzinyWpisywania: extractNumber(props["Godziny wpisywania / spedytor"]),
-          flota: extractNumber(props["Flota"]),
-          tms: extractText(props["TMS"]),
-          kosztRoczny: extractNumber(props["Koszt roczny PLN/rok"]),
-          cytatyKlienta: extractText(props["Cytaty klienta"]),
-          warunkiDniDostepow: extractNumber(props["Warunki umowy — dni dostępów"]),
-          warunkiUwagi: extractText(props["Warunki umowy — uwagi"]),
-          pozaZakresem: extractText(props["Poza zakresem — ustalenia"]),
-          dataPierwszegoKontaktu: extractText(props["Data pierwszego kontaktu"]),
-          utracony: extractCheckbox(props["Utracony"]),
-          powodUtraty: extractText(props["Powód utraty"]),
-          systemTransformacji: extractText(props["System transformacji (3 kroki)"])
-            .split("\n")
-            .map((s) => s.trim())
-            .filter(Boolean),
-          zdanieRoznicujace: extractText(props["Zdanie różnicujące"]),
-          roiDopowiedzenie: extractText(props["ROI dopowiedzenie"]),
-          retainer: extractNumber(props["Retainer PLN/mc"]),
-          dataPotwierdzeniaDostepow: extractText(props["Data potwierdzenia dostępów"]),
-          czasBazowyPotwierdzony: extractNumber(props["Czas bazowy potwierdzony h/mc"]),
-          dostepyZebrane: extractText(props["Dostępy zebrane"]),
-          ostatniKontaktRetainer: extractText(props["Ostatni kontakt (retainer)"]),
-          historiaZgloszenRetainer: extractText(props["Historia zgłoszeń (retainer)"]),
-          wynikDiscovery: extractText(props["Wynik Discovery"]),
-          protokolOdbioruPodpisany: extractCheckbox(props["Protokół odbioru podpisany"]),
-          dataProtokoluOdbioru: extractText(props["Data protokołu odbioru"]),
-          kickoffOdbyty: extractCheckbox(props["Kickoff odbyty"]),
-          dataKickoff: extractText(props["Data Kickoff"]),
-          uwagiAgenta1: extractText(props["Uwagi Agenta 1"]),
-          moduleWdrazane: extractMultiSelect(props["Moduły wdrażane"]),
-          tabelaModulowKickoff: extractText(props["Tabela modułów Kickoff"]),
-          tabelaModulowWeryfikacja: extractText(props["Tabela modułów Weryfikacja"]),
-          celEfektywnosciProcent: extractNumber(props["Cel efektywności (%)"]),
-          tabelaModulowPrzedkontraktowa: extractText(
-            props["Tabela modułów Analiza przedkontraktowa"],
-          ),
-        };
-      })
-      .filter((c: PipelineClientDetailed) => c.firma !== "Bez nazwy");
+    const clients: PipelineClientDetailed[] = (data as PipelineRow[])
+      .map(mapRow)
+      .filter((c) => c.firma !== "Bez nazwy");
 
-    // Deduplicate: same firma+kontakt combo → keep highest-status entry
-    // Blok 1, punkt 1.2 (2026-07-14) — uzupełnione o 2 brakujące statusy z enuma Status
-    // (znalezione przy audycie: bez nich dedup traktował je jako ranga -1, czyli zawsze
-    // przegrywały tie-break z dowolnym innym statusem, nawet "Nowy lead").
+    // Deduplikacja: ten sam klucz firma+kontakt → zostaje karta z wyższym statusem. Realny
+    // rekord Supabase raczej nie ma duplikatów (jeden wiersz per klient), ale zachowane 1:1
+    // z dawną logiką Notion na wypadek ręcznie założonych duplikatów.
     const STATUS_ORDER = [
       "Nowy lead",
       "Kwalifikacja",
@@ -218,7 +237,7 @@ export async function GET() {
     }
     const dedupedClients = Array.from(deduped.values());
 
-    // Second dedup pass: same phone (last 9 digits) → keep highest-status entry
+    // Druga deduplikacja: ten sam telefon (ostatnie 9 cyfr) → zostaje karta z wyższym statusem.
     const phoneDeduped = new Map<string, PipelineClientDetailed>();
     for (const c of dedupedClients) {
       const raw = c.telefon.replace(/\D/g, "");
@@ -240,7 +259,7 @@ export async function GET() {
 
     return NextResponse.json({ success: true, clients: finalClients });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Błąd Notion";
+    const msg = err instanceof Error ? err.message : "Błąd Supabase";
     return NextResponse.json({ success: false, error: msg }, { status: 500 });
   }
 }
