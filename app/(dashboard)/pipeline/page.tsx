@@ -33,7 +33,7 @@ import { ContactAttemptsBadge } from "@/components/clients/ContactAttemptsBadge"
 import { Button } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { formatPhone } from "@/lib/format/phone";
-import { MODULE_CATALOG } from "@/lib/scripts/moduleCatalog";
+import { DASHBOARD_ZARZADCZY_LABEL, MODULE_CATALOG } from "@/lib/scripts/moduleCatalog";
 import { createClient as createBrowserClient } from "@/lib/supabase/client";
 import {
   KANBAN_DRAGGABLE_STATUSES,
@@ -51,27 +51,14 @@ const PIPELINE_SORT_KEY = "autorise_pipeline_sort_direction";
 // MODULE_CATALOG samo wydzielone do lib/scripts/moduleCatalog.ts (2026-07-26), bo /wdrozenie
 // potrzebuje tych samych etykiet dla tabeli czasu bazowego per moduł.
 
-// Ściągawka cennika modułowego (2026-07-26) — WYŁĄCZNIE orientacyjna podpowiedź dla Michała,
-// nigdy nie wysyłana do klienta ani nigdzie nie zapisywana. Stałe placeholder, nieoparte na
-// żadnym realnym cenniku modułowym (dziś jest jedna cena 18 000 zł za całe wdrożenie,
-// niezależnie od liczby modułów — patrz lib/agents/prompts.ts) — do skorygowania przez
-// Michała, jeśli/gdy pojawi się realna decyzja o cenniku per moduł.
-const MODULE_PRICE_BASE = 8000; // pierwszy moduł
-const MODULE_PRICE_ADDITIONAL = 4000; // każdy kolejny moduł
-
-function estimateModulePricing(moduleCount: number): number | null {
-  if (moduleCount <= 0) return null;
-  return MODULE_PRICE_BASE + (moduleCount - 1) * MODULE_PRICE_ADDITIONAL;
-}
-
 const STATUS_COLORS: Record<string, string> = {
   "Nowy lead": "var(--accent)",
-  Kwalifikacja: "#a379ec",
-  "Discovery umówione": "#14b8a7",
-  Finalizacja: "#d97706",
-  Kickoff: "#16a34a",
-  Wdrożenie: "#34b262",
-  Retainer: "#3fa676",
+  Kwalifikacja: "#9333ea",
+  "Discovery umówione": "#06b6d4",
+  Finalizacja: "#f59e0b",
+  Kickoff: "#22c55e",
+  Wdrożenie: "#10b981",
+  Retainer: "#0ea5e9",
   Niekwalifikowany: "var(--text-tertiary)",
   "Nieaktywny (follow up)": "var(--warning)",
   Upsell: "#0ea5e9",
@@ -483,6 +470,7 @@ function ClientPanel({
 }) {
   const color = STATUS_COLORS[client.status] ?? "var(--text-tertiary)";
   const [powodDraft, setPowodDraft] = useState(client.powodUtraty);
+  const [notatkiDraft, setNotatkiDraft] = useState(client.notatki);
   const [saving, setSaving] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const isOldScript = Boolean(
@@ -515,6 +503,21 @@ function ClientPanel({
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pageId: client.id, powodUtraty: powodDraft }),
+      });
+      onUpdated();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const saveNotatki = async () => {
+    if (notatkiDraft === client.notatki) return;
+    setSaving(true);
+    try {
+      await fetch("/api/notion/pipeline-update", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pageId: client.id, notatki: notatkiDraft }),
       });
       onUpdated();
     } finally {
@@ -684,87 +687,120 @@ function ClientPanel({
           )}
         </div>
 
-        {/* Moduły wdrażane — widoczne od razu, edytowalne na miejscu (Batch 6, 2026-07-26).
-            Checkbox toggle, ten sam wzorzec co Panel Dostępy w /wdrozenie. */}
+        {/* Notatka zespołu — pierwsza rzecz widoczna pod plakietkami statusu, zapis na blur
+            (ten sam wzorzec co powodDraft/savePowod), pole "notatki" już istniejące w Supabase. */}
+        <div style={{ marginBottom: 16 }}>
+          <textarea
+            value={notatkiDraft}
+            onChange={(e) => setNotatkiDraft(e.target.value)}
+            onBlur={() => void saveNotatki()}
+            placeholder="Notatka zespołu (np. pamiętaj...)"
+            disabled={saving}
+            style={{
+              width: "100%",
+              minHeight: 44,
+              padding: "8px 10px",
+              borderRadius: "var(--radius-xs)",
+              border: "1px solid var(--border)",
+              background: "var(--bg-elevated)",
+              fontFamily: "var(--font-sans)",
+              fontSize: 12,
+              color: "var(--text-primary)",
+              resize: "vertical",
+              boxSizing: "border-box",
+            }}
+          />
+        </div>
+
+        {/* "System Autorise" — jedna linijka na moduł, kolor zielony/czerwony wg obecności w
+            moduleWdrazane, klik przełącza (toggleModule, bez zmian). Dashboard zarządczy
+            zawsze zielony i nieklikalny — nie jest opcją, wchodzi w każde wdrożenie (patrz
+            komentarz przy DASHBOARD_ZARZADCZY_LABEL w lib/scripts/moduleCatalog.ts). */}
         <div style={{ marginBottom: 16 }}>
           <div
             style={{
-              fontSize: 10,
-              fontWeight: 600,
-              letterSpacing: "0.07em",
-              textTransform: "uppercase",
-              color: "var(--text-tertiary)",
+              fontSize: 13,
+              fontWeight: 700,
+              color: "var(--text-primary)",
               marginBottom: 6,
               fontFamily: "var(--font-sans)",
             }}
           >
-            Moduły wdrażane
+            System Autorise
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            {MODULE_CATALOG.map((m) => {
+          <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+            {MODULE_CATALOG.map((m, i) => {
               const active = (client.moduleWdrazane ?? []).includes(m.code);
+              const moduleColor = active ? "var(--success-text)" : "var(--error-text)";
               return (
-                <label
+                <div
                   key={m.code}
+                  onClick={() => !saving && void toggleModule(m.code)}
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: 8,
-                    padding: "6px 8px",
-                    borderRadius: "var(--radius-xs)",
-                    border: "1px solid var(--border)",
-                    background: active ? "var(--accent-muted)" : "var(--bg-elevated)",
+                    gap: 6,
+                    padding: "3px 2px",
                     cursor: saving ? "default" : "pointer",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
                   }}
                 >
-                  <input
-                    type="checkbox"
-                    checked={active}
-                    disabled={saving}
-                    onChange={() => void toggleModule(m.code)}
+                  <span
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: "50%",
+                      background: moduleColor,
+                      flexShrink: 0,
+                    }}
                   />
                   <span
                     style={{
                       fontSize: 12,
-                      color: active ? "var(--accent)" : "var(--text-secondary)",
-                      fontWeight: active ? 600 : 400,
+                      color: moduleColor,
                       fontFamily: "var(--font-sans)",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
                     }}
                   >
-                    {m.label}
+                    Moduł {i + 1}: {m.label}
                   </span>
-                </label>
+                </div>
               );
             })}
-          </div>
-          {/* Ściągawka cennika modułowego — WYŁĄCZNIE wewnętrzna podpowiedź, nigdy nie
-              wysyłana/pokazywana klientowi, Michał decyduje ostatecznie sam. Bez dodatkowego
-              sprawdzania roli w kodzie — /pipeline jest już dostępne wyłącznie dla admina
-              (Foundera), setter jest przekierowywany na poziomie proxy.ts zanim ta strona się
-              w ogóle wyrenderuje (patrz SETTER_ALLOWED_PREFIXES), więc ten panel i tak nigdy
-              nie trafia przed oczy settera. */}
-          {(() => {
-            const moduleCount = (client.moduleWdrazane ?? []).length;
-            const estimate = estimateModulePricing(moduleCount);
-            if (estimate == null) return null;
-            return (
-              <div
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "3px 2px",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+              }}
+            >
+              <span
                 style={{
-                  marginTop: 8,
-                  padding: "6px 8px",
-                  borderRadius: "var(--radius-xs)",
-                  border: "1px dashed var(--border)",
-                  fontFamily: "var(--font-sans)",
-                  fontSize: 10,
-                  color: "var(--text-tertiary)",
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  background: "var(--success-text)",
+                  flexShrink: 0,
                 }}
-                title="Wyłącznie orientacyjna podpowiedź wewnętrzna — nigdy niewysyłana do klienta."
+              />
+              <span
+                style={{
+                  fontSize: 12,
+                  color: "var(--success-text)",
+                  fontFamily: "var(--font-sans)",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
               >
-                Sugerowana cena (orientacyjnie, {moduleCount}{" "}
-                {moduleCount === 1 ? "moduł" : "moduły"}): {estimate.toLocaleString("pl-PL")} zł
-              </div>
-            );
-          })()}
+                {DASHBOARD_ZARZADCZY_LABEL} — zawsze w zakresie
+              </span>
+            </div>
+          </div>
         </div>
 
         {/* Notatki jakościowe — Cytaty klienta / Uwagi Agenta 1 / Uwagi Agenta 2, dotąd
@@ -1285,7 +1321,26 @@ export default function PipelinePage() {
         </div>
       </PageHeader>
 
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .pipeline-kanban-scroll {
+          scrollbar-width: thin;
+          scrollbar-color: var(--border) transparent;
+        }
+        .pipeline-kanban-scroll::-webkit-scrollbar {
+          height: 7px;
+        }
+        .pipeline-kanban-scroll::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .pipeline-kanban-scroll::-webkit-scrollbar-thumb {
+          background: var(--border);
+          border-radius: var(--radius-xs);
+        }
+        .pipeline-kanban-scroll::-webkit-scrollbar-thumb:hover {
+          background: var(--accent-muted);
+        }
+      `}</style>
 
       {/* Body */}
       <div style={{ flex: 1, overflow: "hidden", display: "flex", position: "relative" }}>
@@ -1347,6 +1402,7 @@ export default function PipelinePage() {
           ) : (
             <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
               <div
+                className="pipeline-kanban-scroll"
                 style={{
                   display: "flex",
                   gap: 12,
