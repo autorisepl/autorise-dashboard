@@ -4,28 +4,32 @@ import { motion } from "framer-motion";
 import {
   BarChart2,
   BookOpen,
+  Building2,
   CalendarDays,
   GitBranch,
   Kanban,
   LayoutDashboard,
   Library,
   LifeBuoy,
+  LogOut,
   Mic,
   Monitor,
   Phone,
   Presentation,
   Rocket,
+  Settings,
   Target,
   TrendingUp,
   UserCircle2,
   Users,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import type { VercelDeployData } from "@/app/api/vercel/last-deploy/route";
 import type { WeatherData } from "@/app/api/weather/route";
 import { SectionLabel } from "@/components/ui/SectionLabel";
+import { logout } from "@/lib/auth/logout";
 import { useIdentity } from "@/lib/auth/RoleContext";
 import { ROLE_LABELS } from "@/lib/auth/resolveRole";
 
@@ -95,6 +99,37 @@ function useClock() {
     return () => clearInterval(id);
   }, []);
   return now;
+}
+
+// ── Session timer ───────────────────────────────────────────────────
+
+// "Sesja Xh Ym" — od momentu otwarcia aplikacji w TEJ karcie przeglądarki, nie z tokenu
+// JWT (który odświeża się cyklicznie i zresetowałby licznik do zera, dając mylący wynik).
+// sessionStorage (nie localStorage) — świadomie: nowa karta = nowa sesja licznika, zamknięcie
+// karty go kasuje, zgodnie z "jak długo jesteś dziś zalogowany w TEJ karcie".
+const SESSION_STARTED_AT_KEY = "autorise_session_started_at";
+
+function useSessionTimerLabel(): string | null {
+  const [startedAt, setStartedAt] = useState<number | null>(null);
+  const [now, setNow] = useState<number | null>(null);
+
+  useEffect(() => {
+    let raw = sessionStorage.getItem(SESSION_STARTED_AT_KEY);
+    if (!raw) {
+      raw = String(Date.now());
+      sessionStorage.setItem(SESSION_STARTED_AT_KEY, raw);
+    }
+    setStartedAt(Number(raw));
+    setNow(Date.now());
+    const id = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  if (startedAt === null || now === null) return null;
+  const totalMinutes = Math.max(0, Math.floor((now - startedAt) / 60_000));
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  return `Sesja ${h}h ${m}m`;
 }
 
 // ── Role ────────────────────────────────────────────────────────────
@@ -246,12 +281,19 @@ function isActive(pathname: string, href: string, exact?: boolean): boolean {
 
 export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNavigate?: () => void }) {
   const pathname = usePathname();
-  const router = useRouter();
   const weather = useWeather();
   const { deploy, configured: deployConfigured } = useLastDeploy();
   const now = useClock();
   const identity = useIdentity();
   const role = identity?.role ?? null;
+  const sessionLabel = useSessionTimerLabel();
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    if (loggingOut) return;
+    setLoggingOut(true);
+    await logout();
+  };
 
   const visibleNav =
     role === "setter"
@@ -337,68 +379,48 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
         </div>
       </div>
 
-      {/* 2. Profil */}
-      <button
-        onClick={() => {
-          router.push("/profil");
-          onNavigate?.();
-        }}
+      {/* 2. Etykieta workspace'u — czysto wizualna, wzorem przełącznika workspace z referencji
+          (ikona + nazwa), BEZ rozwijanego menu. Nie ma dziś między czym przełączać (jeden
+          workspace, "Autorise") — fałszywy dropdown byłby gorszy niż jego brak. Tożsamość
+          użytkownika (imię, rola, wylogowanie, ustawienia) przeniesiona do funkcjonalnej
+          karty na dole sidebara, patrz niżej. */}
+      <div
         style={{
           display: "flex",
           alignItems: "center",
           gap: 10,
           padding: "10px 16px",
           flexShrink: 0,
-          background: "transparent",
-          border: "none",
-          borderBottom: "1px solid var(--border)" as never,
-          cursor: "pointer",
-          width: "100%",
-          textAlign: "left",
-          transition: "background 150ms",
-        }}
-        onMouseEnter={(e) => {
-          (e.currentTarget as HTMLButtonElement).style.background = "var(--bg-hover)";
-        }}
-        onMouseLeave={(e) => {
-          (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+          borderBottom: "1px solid var(--border)",
         }}
       >
-        <UserCircle2
-          size={22}
-          color="var(--text-secondary)"
-          strokeWidth={1.5}
-          style={{ flexShrink: 0 }}
-        />
-        <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
-          <span
-            style={{
-              fontFamily: "var(--font-sans)",
-              fontSize: 13,
-              fontWeight: 500,
-              color: "var(--text-primary)",
-              letterSpacing: "-0.01em",
-            }}
-          >
-            {identity?.displayName ?? "Nieznany użytkownik"}
-          </span>
-          {role && (
-            <span
-              style={{
-                fontFamily: "var(--font-sans)",
-                fontSize: 10,
-                fontWeight: 700,
-                letterSpacing: "0.04em",
-                textTransform: "uppercase",
-                color: role === "admin" ? "var(--accent)" : "var(--warning-text)",
-                width: "fit-content",
-              }}
-            >
-              {ROLE_LABELS[role]}
-            </span>
-          )}
+        <div
+          style={{
+            width: 26,
+            height: 26,
+            borderRadius: 7,
+            background: "var(--accent-muted)",
+            border: "1px solid var(--accent-border)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
+        >
+          <Building2 size={14} color="var(--accent)" strokeWidth={2} />
         </div>
-      </button>
+        <span
+          style={{
+            fontFamily: "var(--font-sans)",
+            fontSize: 13,
+            fontWeight: 600,
+            color: "var(--text-primary)",
+            letterSpacing: "-0.01em",
+          }}
+        >
+          Autorise
+        </span>
+      </div>
 
       {/* 2b. Ostatni deploy Vercel */}
       {deployConfigured && deploy && (
@@ -531,9 +553,9 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
         }}
       >
         {visibleNav.map((section, si) => (
-          <div key={si} style={{ marginBottom: 4 }}>
+          <div key={si} style={{ marginBottom: 8 }}>
             <SectionLabel paddingX={6}>{section.label}</SectionLabel>
-            <div style={{ display: "flex", flexDirection: "column", gap: 1, marginTop: 2 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 2, marginTop: 4 }}>
               {section.items.map((item) => (
                 <NavItem
                   key={item.href}
@@ -548,6 +570,107 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
           </div>
         ))}
       </nav>
+
+      {/* 5. Karta użytkownika — dół, funkcjonalna (nie tylko wizualna): identity z
+          useIdentity() (nie osobny stan), licznik sesji, ikona ustawień (→ /profil) i
+          DZIAŁająca ikona wylogowania wywołująca dokładnie tę samą logout() co przycisk
+          "Wyloguj" w /profil. Rozwiązuje ostatecznie "wylogowanie tylko z /profil" —
+          patrz proxy.ts, wpis "/profil" usunięty z SETTER_ALLOWED_PREFIXES w tej samej
+          rundzie, bo przestał być jedyną drogą do wylogowania settera. */}
+      <div
+        style={{
+          flexShrink: 0,
+          borderTop: "1px solid var(--border)",
+          padding: "10px 12px",
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+        }}
+      >
+        <div
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: "50%",
+            background: "var(--bg-elevated)",
+            border: "1px solid var(--border)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
+        >
+          <UserCircle2 size={18} color="var(--text-secondary)" strokeWidth={1.5} />
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 13,
+              fontWeight: 500,
+              color: "var(--text-primary)",
+              letterSpacing: "-0.01em",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {identity?.displayName ?? "Nieznany użytkownik"}
+          </div>
+          <div
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 10,
+              color: "var(--text-tertiary)",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {role ? ROLE_LABELS[role] : "—"}
+            {sessionLabel ? ` · ${sessionLabel}` : ""}
+          </div>
+        </div>
+        <Link
+          href="/profil"
+          onClick={onNavigate}
+          title="Ustawienia konta"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 28,
+            height: 28,
+            borderRadius: 6,
+            flexShrink: 0,
+            color: "var(--text-secondary)",
+          }}
+        >
+          <Settings size={15} strokeWidth={1.6} />
+        </Link>
+        <button
+          type="button"
+          onClick={() => void handleLogout()}
+          disabled={loggingOut}
+          title="Wyloguj"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 28,
+            height: 28,
+            borderRadius: 6,
+            flexShrink: 0,
+            background: "transparent",
+            border: "none",
+            cursor: loggingOut ? "default" : "pointer",
+            color: "var(--error-text)",
+            opacity: loggingOut ? 0.5 : 1,
+          }}
+        >
+          <LogOut size={15} strokeWidth={1.6} />
+        </button>
+      </div>
     </aside>
   );
 }

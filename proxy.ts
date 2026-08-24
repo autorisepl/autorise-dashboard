@@ -18,9 +18,10 @@ const SETTER_ALLOWED_PREFIXES = [
   "/agencja",
   "/prezentacja",
   "/agenci",
-  // Prowizorka: przycisk wylogowania dziś żyje wyłącznie w /profil. Docelowo wylogowanie
-  // ląduje w panelu bocznym (sekcja D briefu redesignu), dostępne z każdej strony bez
-  // wchodzenia w ustawienia — wtedy ten wpis można usunąć.
+  // Nie jest już prowizorką pod sam przycisk wylogowania (ten żyje teraz w karcie
+  // użytkownika w sidebarze, dostępny z każdej strony) — zostaje z innego powodu: ikona
+  // ustawień w tej samej karcie linkuje do /profil dla KAŻDEJ roli, więc setter musi mieć
+  // do niego dostęp, inaczej kliknięcie cicho przekierowuje go do /sprzedaz.
   "/profil",
   "/api/notion",
   "/api/agents",

@@ -3,6 +3,7 @@
 import { Briefcase, ChevronRight, Link2, LogOut, Mail, Unlink, UserCircle2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
+import { logout } from "@/lib/auth/logout";
 
 // ── Wyloguj ────────────────────────────────────────────────────────────
 
@@ -12,8 +13,7 @@ function LogoutButton() {
   const handleLogout = async () => {
     if (loading) return;
     setLoading(true);
-    await fetch("/api/auth", { method: "DELETE" });
-    window.location.href = "/login";
+    await logout();
   };
 
   return (

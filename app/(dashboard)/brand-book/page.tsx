@@ -1,6 +1,20 @@
 "use client";
 
-import { BookOpen, Check, CheckCircle2, Copy } from "lucide-react";
+import {
+  BookOpen,
+  Building2,
+  Check,
+  CheckCircle2,
+  Clock,
+  Copy,
+  GripVertical,
+  Lock,
+  LogOut,
+  Mail,
+  Phone,
+  Settings,
+  UserCircle2,
+} from "lucide-react";
 import { useState } from "react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Panel } from "@/components/ui/Panel";
@@ -440,23 +454,201 @@ function ButtonVariants() {
   );
 }
 
+// ── Karta klienta (Kanban) ──────────────────────────────────────────────
+
+// Statyczna replika ClientCard z app/(dashboard)/pipeline/page.tsx (nie import realnego
+// komponentu — tamten jest prywatny wewnątrz strony i sprzężony z @dnd-kit/PipelineClientDetailed
+// na żywych danych, więc dokumentujemy tu wyłącznie WYGLĄD, ten sam wzorzec co ShadowShowcase/
+// PanelShowcase niżej). Dwa stany: zablokowana (status ustawiany rozmową kwalifikacyjną/
+// sprzedażową, próba przeciągnięcia pokazuje toast zamiast ruszać kartę) i odblokowana
+// (Finalizacja/Kickoff/Wdrożenie/Retainer, przeciągalna między tymi czterema kolumnami).
+function BrandBookIconCircle({ icon: Icon }: { icon: React.ElementType }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: 22,
+        height: 22,
+        borderRadius: "50%",
+        background: "var(--bg-elevated)",
+        border: "1px solid rgba(255,255,255,0.22)",
+        flexShrink: 0,
+      }}
+    >
+      <Icon size={12} strokeWidth={2.5} color="var(--text-primary)" />
+    </div>
+  );
+}
+
+function BrandBookClientCard({ locked }: { locked: boolean }) {
+  return (
+    <div
+      style={{
+        width: 260,
+        padding: "10px 12px",
+        background: "var(--bg)",
+        border: "1px solid rgba(255,255,255,0.22)",
+        borderRadius: "var(--radius-sm)",
+        boxShadow: "var(--shadow-sm)",
+        cursor: locked ? "default" : "grab",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+        <div
+          style={{
+            width: 10,
+            height: 10,
+            borderRadius: "50%",
+            background: "#f97316",
+            flexShrink: 0,
+          }}
+        />
+        <div
+          style={{
+            fontFamily: "var(--font-sans)",
+            fontSize: 13,
+            fontWeight: 600,
+            color: "var(--text-primary)",
+            letterSpacing: "-0.01em",
+            flex: 1,
+          }}
+        >
+          Jan Kowalski
+        </div>
+        {!locked && <GripVertical size={14} color="var(--text-tertiary)" />}
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+        <BrandBookIconCircle icon={Building2} />
+        <span
+          style={{ fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--text-primary)" }}
+        >
+          Kowalski Logistics Sp. z o.o.
+        </span>
+      </div>
+
+      <div style={{ display: "flex", gap: 5, marginBottom: 8 }}>
+        <span
+          style={{
+            fontSize: 11,
+            fontWeight: 700,
+            color: "var(--accent-text)",
+            background: "var(--accent-muted)",
+            padding: "3px 7px",
+            borderRadius: "var(--radius-xs)",
+            fontFamily: "var(--font-sans)",
+          }}
+        >
+          ICP Wysoki
+        </span>
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 4,
+            fontSize: 11,
+            fontWeight: 700,
+            color: "var(--text-primary)",
+            background: "var(--bg-elevated)",
+            border: "1px solid var(--border)",
+            padding: "3px 7px",
+            borderRadius: "var(--radius-xs)",
+            fontFamily: "var(--font-sans)",
+          }}
+        >
+          <Clock size={12} strokeWidth={2.5} color="var(--text-primary)" />4 dni temu
+        </span>
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 4,
+          paddingTop: 6,
+          borderTop: "1px solid var(--border)",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <BrandBookIconCircle icon={Phone} />
+          <span
+            style={{ fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--text-primary)" }}
+          >
+            +48 600 100 200
+          </span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <BrandBookIconCircle icon={Mail} />
+          <span
+            style={{ fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--text-primary)" }}
+          >
+            jan@kowalski-logistics.pl
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ClientCardShowcase() {
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 24 }}>
+      <div>
+        <BrandBookClientCard locked />
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 5,
+            marginTop: 8,
+            fontFamily: "var(--font-sans)",
+            fontSize: 11,
+            color: "var(--text-tertiary)",
+          }}
+        >
+          <Lock size={11} />
+          Zablokowana — status ustawia rozmowa w /kwalifikacja lub /sprzedaz
+        </div>
+      </div>
+      <div>
+        <BrandBookClientCard locked={false} />
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 5,
+            marginTop: 8,
+            fontFamily: "var(--font-sans)",
+            fontSize: 11,
+            color: "var(--text-tertiary)",
+          }}
+        >
+          <GripVertical size={11} />
+          Odblokowana — przeciągalna między Finalizacja/Kickoff/Wdrożenie/Retainer
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Status badges ─────────────────────────────────────────────────────
 
-// Zgodne 1:1 z ROW1/ROW2/ROW3 i STATUS_COLORS w app/(dashboard)/pipeline/page.tsx — ten sam
-// zestaw 11 statusów w tej samej kolejności, żeby Brand Book nie rozjeżdżał się z realnym
-// Pipeline Kanbanem (wcześniej brakowało Wdrożenie/Upsell/Zakończona współpraca, a Nowy
-// lead/Niekwalifikowany/Nieaktywny (follow up) miały twarde hexy sprzed redesignu palety
-// zamiast var(--accent)/var(--text-tertiary)/var(--warning), więc nie śledziły motywu).
+// Zgodne 1:1 z STATUS_COLORS w app/(dashboard)/pipeline/page.tsx — ten sam zestaw 11
+// statusów w tej samej kolejności. Zsynchronizowane 2026-08-24 po rundzie poprawek Kanbanu
+// (redesign sekcji makro-etapów), która zmieniła wszystkie wartości poza Upsell/Zakończona
+// współpraca — Brand Book miał nadal stare hexy sprzed tej rundy, rozjechany z realną kartą.
 const STATUSES: { label: string; color: string; bg: string }[] = [
-  { label: "Nowy lead", color: "var(--accent)", bg: "var(--accent-muted)" },
-  { label: "Kwalifikacja", color: "#a379ec", bg: "rgba(163,121,236,0.08)" },
-  { label: "Discovery umówione", color: "#14b8a7", bg: "rgba(20,184,167,0.08)" },
-  { label: "Finalizacja", color: "#d97706", bg: "rgba(217,119,6,0.08)" },
-  { label: "Kickoff", color: "#16a34a", bg: "rgba(22,163,74,0.08)" },
-  { label: "Wdrożenie", color: "#34b262", bg: "rgba(52,178,98,0.08)" },
-  { label: "Retainer", color: "#3fa676", bg: "rgba(63,166,118,0.08)" },
-  { label: "Niekwalifikowany", color: "var(--text-tertiary)", bg: "var(--bg-hover)" },
-  { label: "Nieaktywny (follow up)", color: "var(--warning)", bg: "var(--warning-bg)" },
+  { label: "Nowy lead", color: "#3b82f6", bg: "rgba(59,130,246,0.08)" },
+  { label: "Kwalifikacja", color: "#c026d3", bg: "rgba(192,38,211,0.08)" },
+  { label: "Discovery umówione", color: "#06b6d4", bg: "rgba(6,182,212,0.08)" },
+  { label: "Niekwalifikowany", color: "#6b7280", bg: "rgba(107,114,128,0.08)" },
+  { label: "Nieaktywny (follow up)", color: "#eab308", bg: "rgba(234,179,8,0.08)" },
+  { label: "Finalizacja", color: "#f97316", bg: "rgba(249,115,22,0.08)" },
+  { label: "Kickoff", color: "#22c55e", bg: "rgba(34,197,94,0.08)" },
+  { label: "Wdrożenie", color: "#14b8a6", bg: "rgba(20,184,166,0.08)" },
+  { label: "Retainer", color: "#e879f9", bg: "rgba(232,121,249,0.08)" },
   { label: "Upsell", color: "#0ea5e9", bg: "rgba(14,165,233,0.08)" },
   { label: "Zakończona współpraca", color: "#7c8a9c", bg: "rgba(124,138,156,0.08)" },
 ];
@@ -481,6 +673,95 @@ function StatusBadges() {
           {s.label}
         </div>
       ))}
+    </div>
+  );
+}
+
+// ── Sidebar — karta użytkownika ─────────────────────────────────────────
+
+// Statyczny podgląd finalnego wzorca z components/layout/sidebar.tsx (Część A redesignu
+// sidebara, 2026-08-24) — avatar, imię/rola, licznik sesji, ikony ustawień/wylogowania.
+// Nie musi być funkcjonalne wewnątrz Brand Booka (ten sam wzorzec co reszta strony), tylko
+// dokumentować wygląd obok Paneli/Przycisków.
+function SidebarUserCardShowcase() {
+  return (
+    <div
+      style={{
+        width: 260,
+        border: "1px solid var(--border)",
+        borderRadius: "var(--radius-sm)",
+        background: "var(--bg-sidebar)",
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          padding: "10px 12px",
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+        }}
+      >
+        <div
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: "50%",
+            background: "var(--bg-elevated)",
+            border: "1px solid var(--border)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
+        >
+          <UserCircle2 size={18} color="var(--text-secondary)" strokeWidth={1.5} />
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 13,
+              fontWeight: 500,
+              color: "var(--text-primary)",
+              letterSpacing: "-0.01em",
+            }}
+          >
+            Michał Roth
+          </div>
+          <div
+            style={{ fontFamily: "var(--font-sans)", fontSize: 10, color: "var(--text-tertiary)" }}
+          >
+            Founder · Sesja 1h 24m
+          </div>
+        </div>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 28,
+            height: 28,
+            borderRadius: 6,
+            color: "var(--text-secondary)",
+          }}
+        >
+          <Settings size={15} strokeWidth={1.6} />
+        </div>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 28,
+            height: 28,
+            borderRadius: 6,
+            color: "var(--error-text)",
+          }}
+        >
+          <LogOut size={15} strokeWidth={1.6} />
+        </div>
+      </div>
     </div>
   );
 }
@@ -837,6 +1118,12 @@ export default function BrandBookPage() {
 
           <SectionTitle>Statusy Pipeline</SectionTitle>
           <StatusBadges />
+
+          <SectionTitle>Karta klienta (Kanban)</SectionTitle>
+          <ClientCardShowcase />
+
+          <SectionTitle>Sidebar — karta użytkownika</SectionTitle>
+          <SidebarUserCardShowcase />
 
           <SectionTitle>CSS Variables Reference</SectionTitle>
           <CssVarReference />
