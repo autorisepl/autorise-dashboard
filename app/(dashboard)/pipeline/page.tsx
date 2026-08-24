@@ -858,9 +858,11 @@ function ClientPanel({
     }
   };
 
-  // Pola tożsamości (Firma/Kontakt/Telefon/E-mail) edytowalne inline przez EditableField —
+  // Pola tożsamości (Firma/Kontakt/Telefon/E-mail/NIP) edytowalne inline przez EditableField —
   // jeden generyczny zapis, pole PATCH nazwane 1:1 jak klucz body /api/notion/pipeline-update.
-  const saveField = (field: "firma" | "kontakt" | "telefon" | "email", value: string) => {
+  // NIP dołączony 2026-08-24 (feedback: był tylko do odczytu w sekcji "rows" niżej, mimo że
+  // kolumna Supabase i endpoint PATCH już dawno istniały dla pozostałej trójki).
+  const saveField = (field: "firma" | "kontakt" | "telefon" | "email" | "nip", value: string) => {
     setSaving(true);
     fetch("/api/notion/pipeline-update", {
       method: "PATCH",
@@ -876,7 +878,6 @@ function ClientPanel({
   const uwagiAgenta2 = client.uwagiFAgent2 ? parseUwagi(client.uwagiFAgent2) : [];
 
   const rows = [
-    { label: "NIP", value: client.nip },
     { label: "Status", value: client.status },
     { label: "Ocena ICP", value: client.ocenaICP },
     { label: "Data discovery", value: client.dataDiscovery ? fmtDate(client.dataDiscovery) : "" },
@@ -1264,6 +1265,12 @@ function ClientPanel({
             label="E-mail"
             value={client.email}
             onSave={(v) => saveField("email", v)}
+            disabled={saving}
+          />
+          <EditableField
+            label="NIP"
+            value={client.nip}
+            onSave={(v) => saveField("nip", v)}
             disabled={saving}
           />
         </div>
