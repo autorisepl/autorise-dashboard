@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 import {
   BarChart2,
   BookOpen,
-  Building2,
   CalendarDays,
   GitBranch,
   Kanban,
@@ -32,18 +31,6 @@ import { SectionLabel } from "@/components/ui/SectionLabel";
 import { logout } from "@/lib/auth/logout";
 import { useIdentity } from "@/lib/auth/RoleContext";
 import { ROLE_LABELS } from "@/lib/auth/resolveRole";
-
-// ── Wind speed text ─────────────────────────────────────────────────
-
-function windText(ms: number): string {
-  if (ms <= 2) return "Spokojny";
-  if (ms <= 6) return "Słaby";
-  if (ms <= 11) return "Umiarkowany";
-  if (ms <= 17) return "Dość silny";
-  if (ms <= 24) return "Silny";
-  if (ms <= 32) return "Bardzo silny";
-  return "Gwałtowny";
-}
 
 // ── Weather hook ────────────────────────────────────────────────────
 
@@ -338,10 +325,11 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
         zIndex: 10,
       }}
     >
-      {/* 1. Logo */}
+      {/* 1. Logo — marka Autorise, zastępuje dawny tekstowy lockup + osobną etykietę
+          workspace'u (2026-08-24, jedno źródło tożsamości marki zamiast dwóch). */}
       <div
         style={{
-          height: 52,
+          height: 64,
           display: "flex",
           alignItems: "center",
           padding: "0 46px 0 14px" /* right 46px clears the toggle button at left:245px */,
@@ -349,77 +337,18 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
           flexShrink: 0,
         }}
       >
-        <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
-          <span
-            style={{
-              fontFamily: "var(--font-sans)",
-              fontSize: 12,
-              fontWeight: 800,
-              letterSpacing: "0.08em",
-              color: "var(--text-primary)",
-              textTransform: "uppercase",
-              lineHeight: 1,
-            }}
-          >
-            AUTORISE
-          </span>
-          <span
-            style={{
-              fontFamily: "var(--font-sans)",
-              fontSize: 9,
-              fontWeight: 600,
-              letterSpacing: "0.10em",
-              color: "var(--text-tertiary)",
-              textTransform: "uppercase",
-              lineHeight: 1,
-            }}
-          >
-            DASHBOARD
-          </span>
-        </div>
-      </div>
-
-      {/* 2. Etykieta workspace'u — czysto wizualna, wzorem przełącznika workspace z referencji
-          (ikona + nazwa), BEZ rozwijanego menu. Nie ma dziś między czym przełączać (jeden
-          workspace, "Autorise") — fałszywy dropdown byłby gorszy niż jego brak. Tożsamość
-          użytkownika (imię, rola, wylogowanie, ustawienia) przeniesiona do funkcjonalnej
-          karty na dole sidebara, patrz niżej. */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          padding: "10px 16px",
-          flexShrink: 0,
-          borderBottom: "1px solid var(--border)",
-        }}
-      >
-        <div
+        {/* biome-ignore lint: statyczny lokalny asset marki, next/image niepotrzebny dla stałego logo w sidebarze */}
+        <img
+          src="/logo.png"
+          alt="Autorise"
           style={{
-            width: 26,
-            height: 26,
-            borderRadius: 7,
-            background: "var(--accent-muted)",
-            border: "1px solid var(--accent-border)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            height: 38,
+            width: 38,
+            borderRadius: 9,
+            border: "1px solid var(--border)",
             flexShrink: 0,
           }}
-        >
-          <Building2 size={14} color="var(--accent)" strokeWidth={2} />
-        </div>
-        <span
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: 13,
-            fontWeight: 600,
-            color: "var(--text-primary)",
-            letterSpacing: "-0.01em",
-          }}
-        >
-          Autorise
-        </span>
+        />
       </div>
 
       {/* 2b. Ostatni deploy Vercel */}
@@ -440,20 +369,11 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
               height: 7,
               borderRadius: "50%",
               flexShrink: 0,
-              background: deploy.state === "Wdrożony" ? "var(--success-text)" : "var(--warning)",
+              background:
+                deploy.state === "Zaktualizowano" ? "var(--success-text)" : "var(--warning)",
             }}
           />
           <div style={{ minWidth: 0 }}>
-            <div
-              style={{
-                fontFamily: "var(--font-sans)",
-                fontSize: 11,
-                fontWeight: 500,
-                color: "var(--text-primary)",
-              }}
-            >
-              {deploy.state}
-            </div>
             <div
               style={{
                 fontFamily: "var(--font-sans)",
@@ -470,6 +390,19 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
                 hour: "2-digit",
                 minute: "2-digit",
               })}
+            </div>
+            <div
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 13,
+                fontWeight: 700,
+                color: "var(--text-primary)",
+                textTransform: "uppercase",
+                letterSpacing: "0.04em",
+                marginTop: 2,
+              }}
+            >
+              {deploy.state}
             </div>
           </div>
         </div>
@@ -508,34 +441,32 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
         >
           {timeStr}
         </div>
-        {weather ? (
-          <>
-            <div
+        {weather && (
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span
               style={{
                 fontFamily: "var(--font-sans)",
                 fontSize: 11,
                 color: "var(--text-secondary)",
-                marginBottom: 2,
               }}
             >
-              {weather.city} · {weather.temp}°C · {weather.description}
-            </div>
-            <div
+              {weather.city}
+            </span>
+            <span
               style={{
                 fontFamily: "var(--font-sans)",
                 fontSize: 11,
-                color: "var(--text-tertiary)",
+                fontWeight: 600,
+                color: "var(--text-primary)",
+                background: "var(--accent-muted)",
+                border: "1px solid var(--accent-border)",
+                borderRadius: 999,
+                padding: "1px 8px",
+                fontVariantNumeric: "tabular-nums",
               }}
             >
-              Deszcz: {weather.precipitationChance}% · Wiatr: {windText(weather.windMs)} · UV{" "}
-              {weather.uvIndex}
-            </div>
-          </>
-        ) : (
-          <div
-            style={{ fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--text-tertiary)" }}
-          >
-            Pobieranie pogody...
+              {weather.temp}°C
+            </span>
           </div>
         )}
       </div>

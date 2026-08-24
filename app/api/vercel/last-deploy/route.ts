@@ -12,11 +12,11 @@ export interface VercelDeployData {
 }
 
 const STATE_LABELS: Record<string, string> = {
-  READY: "Wdrożony",
-  ERROR: "Błąd wdrożenia",
-  BUILDING: "Buduje się",
-  QUEUED: "W kolejce",
-  CANCELED: "Anulowany",
+  READY: "Zaktualizowano",
+  ERROR: "Błąd aktualizacji",
+  BUILDING: "Aktualizacja w toku",
+  QUEUED: "Oczekuje w kolejce",
+  CANCELED: "Anulowano",
   INITIALIZING: "Inicjalizacja",
 };
 
