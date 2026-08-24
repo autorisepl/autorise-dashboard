@@ -23,6 +23,7 @@ import {
   Phone,
   Radio,
   RefreshCw,
+  Search,
   UserX,
   X,
 } from "lucide-react";
@@ -98,6 +99,19 @@ function daysSince(iso: string): number | null {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return null;
   return Math.max(0, Math.floor((Date.now() - d.getTime()) / 86_400_000));
+}
+
+// Re-engagement "do kontaktu" — dziś lub data przeszła. Porównanie po dniu kalendarzowym
+// (nie pełnym timestampie), żeby data ustawiona na "dziś rano" nie wypadała z listy po
+// południu tego samego dnia.
+function isReengagementDue(iso: string): boolean {
+  if (!iso) return false;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime() <= today.getTime();
 }
 
 // Dni w etapie: liczone od pierwszego kontaktu (najbardziej stabilny sygnał "jak długo karta
@@ -782,6 +796,7 @@ function ClientPanel({
 }) {
   const color = STATUS_COLORS[client.status] ?? "var(--text-tertiary)";
   const [powodDraft, setPowodDraft] = useState(client.powodUtraty);
+  const [reEngagementDraft, setReEngagementDraft] = useState(client.dataReengagement);
   const [notatkiDraft, setNotatkiDraft] = useState(client.notatki);
   const [saving, setSaving] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
@@ -798,7 +813,7 @@ function ClientPanel({
         body: JSON.stringify({
           pageId: client.id,
           utracony: next,
-          ...(next ? {} : { powodUtraty: null }),
+          ...(next ? {} : { powodUtraty: null, dataReengagement: null }),
         }),
       });
       onUpdated();
@@ -820,6 +835,22 @@ function ClientPanel({
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pageId: client.id, powodUtraty: powodDraft }),
+      });
+      onUpdated();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const saveReEngagement = async (next: string) => {
+    setReEngagementDraft(next);
+    if (next === client.dataReengagement) return;
+    setSaving(true);
+    try {
+      await fetch("/api/notion/pipeline-update", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pageId: client.id, dataReengagement: next || null }),
       });
       onUpdated();
     } finally {
@@ -1362,6 +1393,40 @@ function ClientPanel({
               }}
             />
           )}
+          {client.utracony && (
+            <div style={{ marginTop: 8 }}>
+              <div
+                style={{
+                  fontSize: 10,
+                  fontWeight: 600,
+                  letterSpacing: "0.07em",
+                  textTransform: "uppercase",
+                  color: "var(--text-tertiary)",
+                  marginBottom: 3,
+                  fontFamily: "var(--font-sans)",
+                }}
+              >
+                Wróć do tego kiedy
+              </div>
+              <input
+                type="date"
+                lang="pl-PL"
+                value={reEngagementDraft ? reEngagementDraft.slice(0, 10) : ""}
+                onChange={(e) => void saveReEngagement(e.target.value)}
+                disabled={saving}
+                style={{
+                  padding: "6px 10px",
+                  borderRadius: "var(--radius-xs)",
+                  border: "1px solid var(--border)",
+                  background: "var(--bg-elevated)",
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 12,
+                  color: "var(--text-primary)",
+                  boxSizing: "border-box",
+                }}
+              />
+            </div>
+          )}
         </div>
 
         <div style={{ marginTop: 20, display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -1587,12 +1652,29 @@ export default function PipelinePage() {
   const visibleClients = showUtracone ? clients : clients.filter((c) => !c.utracony);
   const utraconeCount = clients.filter((c) => c.utracony).length;
 
+  // Utracone leady z Re-engagement na dziś lub datę przeszłą — "do kontaktu teraz", nie
+  // wszystkie utracone. Liczone z pełnej listy clients (nie visibleClients), bo ma być
+  // widoczne niezależnie od tego czy showUtracone jest akurat włączone.
+  const reengagementDueCount = clients.filter(
+    (c) => c.utracony && isReengagementDue(c.dataReengagement),
+  ).length;
+
+  // Wyszukiwarka nagłówka — czysto client-side, dane już wczytane. Puste pole = brak filtra.
+  // Filtruje po firma/kontakt, częściowe dopasowanie, bez uwzględniania wielkości liter.
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchedClients = searchQuery.trim()
+    ? visibleClients.filter((c) => {
+        const q = searchQuery.trim().toLowerCase();
+        return c.firma.toLowerCase().includes(q) || c.kontakt.toLowerCase().includes(q);
+      })
+    : visibleClients;
+
   // Karta testowa (jest_testowy, patrz scripts/seed-test-pipeline-clients.mjs) zawsze
   // pinowana jako PIERWSZA w swojej kolumnie, przed sortowaniem realnych kart A-Z/Z-A —
   // demonstracyjny wzorzec, nie realny lead, więc nie powinien "pływać" po alfabecie.
   const grouped = ALL_VISIBLE_STATUSES.reduce<Record<string, PipelineClientDetailed[]>>(
     (acc, s) => {
-      const bucket = visibleClients.filter((c) => c.status === s);
+      const bucket = searchedClients.filter((c) => c.status === s);
       const testowe = bucket.filter((c) => c.jestTestowy);
       const realne = bucket.filter((c) => !c.jestTestowy);
       realne.sort((a, b) => {
@@ -1605,16 +1687,16 @@ export default function PipelinePage() {
     {},
   );
 
-  // Licz z visibleClients (respektuje filtr utraconych), nie z pełnej clients — inaczej
-  // liczba w nagłówku przestrzeliwała sumę kart faktycznie widocznych w kolumnach Kanbanu.
-  // jest_testowy zawsze wykluczony — to dane demonstracyjne, nie realny biznes.
-  const totalActive = visibleClients.filter(
+  // Licz z searchedClients (respektuje filtr utraconych + wyszukiwarkę), nie z pełnej clients
+  // — inaczej liczba w nagłówku przestrzeliwała sumę kart faktycznie widocznych w kolumnach
+  // Kanbanu. jest_testowy zawsze wykluczony — to dane demonstracyjne, nie realny biznes.
+  const totalActive = searchedClients.filter(
     (c) => !c.jestTestowy && c.status !== "Niekwalifikowany",
   ).length;
 
   // Sekcje grup Kanbanu (patrz KANBAN_GROUPS) posortowane malejąco wg liczby kart — grupa z
   // największym ruchem zawsze na górze, "Nieaktywne" naturalnie spada na dół gdy jest małe.
-  // Przeliczane na żywo z visibleClients, nie sztywna kolejność. jest_testowy wykluczony z
+  // Przeliczane na żywo z searchedClients, nie sztywna kolejność. jest_testowy wykluczony z
   // liczników (patrz totalActive wyżej).
   const groupsWithCounts = KANBAN_GROUPS.map((g) => {
     const count = g.statuses.reduce(
@@ -1731,6 +1813,33 @@ export default function PipelinePage() {
             )}
             {sortDirection === "asc" ? "A-Z" : "Z-A"}
           </button>
+          {/* Wyszukiwarka firma/kontakt — czysto client-side (dane już wczytane), obok
+              Odśwież per feedback. Ikona Search w środku pola zamiast osobnego przycisku. */}
+          <div style={{ position: "relative", flexShrink: 0 }}>
+            <Search
+              size={14}
+              strokeWidth={2.5}
+              color="var(--text-tertiary)"
+              style={{ position: "absolute", left: 9, top: "50%", transform: "translateY(-50%)" }}
+            />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Szukaj firma / kontakt..."
+              style={{
+                width: 200,
+                padding: "5px 10px 5px 30px",
+                background: "var(--bg)",
+                border: "1px solid var(--border)",
+                borderRadius: "var(--radius-xs)",
+                color: "var(--text-primary)",
+                fontSize: 12,
+                fontFamily: "var(--font-sans)",
+                boxSizing: "border-box",
+              }}
+            />
+          </div>
           <button
             onClick={() => void load()}
             disabled={loading}
@@ -1779,6 +1888,34 @@ export default function PipelinePage() {
               }}
             >
               {showUtracone ? "Ukryj utracone" : `Utracone (${utraconeCount})`}
+            </button>
+          )}
+          {/* Plakietka "do kontaktu" — osobna od "Utracone (N)": tamten pokazuje WSZYSTKIE
+              utracone, ta tylko te z Re-engagement na dziś/przeszłość, czyli realnie pilne.
+              Klik włącza widoczność utraconych (jeśli wyłączona) — bez podświetlania
+              konkretnych kart w gridzie, świadomie uproszczone na tę rundę. */}
+          {reengagementDueCount > 0 && (
+            <button
+              onClick={() => {
+                if (!showUtracone) setShowUtracone(true);
+              }}
+              title="Utracone leady z terminem powrotu do kontaktu dziś lub wcześniej"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 5,
+                padding: "5px 10px",
+                background: "var(--warning-bg)",
+                border: "1px solid var(--warning-border)",
+                borderRadius: "var(--radius-xs)",
+                cursor: "pointer",
+                color: "var(--warning-text)",
+                fontSize: 12,
+                fontWeight: 600,
+                fontFamily: "var(--font-sans)",
+              }}
+            >
+              {reengagementDueCount} do kontaktu
             </button>
           )}
         </div>

@@ -43,6 +43,7 @@ export interface PipelineClientDetailed {
   dataPierwszegoKontaktu: string;
   utracony: boolean;
   powodUtraty: string;
+  dataReengagement: string;
   systemTransformacji: string[];
   zdanieRoznicujace: string;
   roiDopowiedzenie: string;
@@ -108,6 +109,7 @@ interface PipelineRow {
   data_pierwszego_kontaktu: string | null;
   utracony: boolean;
   powod_utraty: string | null;
+  re_engagement: string | null;
   system_transformacji_3_kroki: string | null;
   zdanie_roznicujace: string | null;
   roi_dopowiedzenie: string | null;
@@ -166,6 +168,7 @@ function mapRow(row: PipelineRow): PipelineClientDetailed {
     dataPierwszegoKontaktu: row.data_pierwszego_kontaktu ?? "",
     utracony: row.utracony,
     powodUtraty: row.powod_utraty ?? "",
+    dataReengagement: row.re_engagement ?? "",
     systemTransformacji: (row.system_transformacji_3_kroki ?? "")
       .split("\n")
       .map((s) => s.trim())
