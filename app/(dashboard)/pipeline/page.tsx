@@ -346,8 +346,27 @@ function ClientCard({
           }}
         >
           {client.telefon && (
-            <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-              <Phone size={13} strokeWidth={2.5} color="var(--text-primary)" fill="currentColor" />
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 22,
+                  height: 22,
+                  borderRadius: "50%",
+                  background: "var(--bg-elevated)",
+                  border: "1px solid rgba(255,255,255,0.22)",
+                  flexShrink: 0,
+                }}
+              >
+                <Phone
+                  size={12}
+                  strokeWidth={2.5}
+                  color="var(--text-primary)"
+                  fill="currentColor"
+                />
+              </div>
               <span
                 style={{
                   fontFamily: "var(--font-sans)",
@@ -365,8 +384,22 @@ function ClientCard({
             </div>
           )}
           {client.email && (
-            <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-              <Mail size={13} strokeWidth={2.5} color="var(--text-primary)" />
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 22,
+                  height: 22,
+                  borderRadius: "50%",
+                  background: "var(--bg-elevated)",
+                  border: "1px solid rgba(255,255,255,0.22)",
+                  flexShrink: 0,
+                }}
+              >
+                <Mail size={12} strokeWidth={2.5} color="var(--text-primary)" />
+              </div>
               <span
                 style={{
                   fontFamily: "var(--font-sans)",
@@ -505,7 +538,9 @@ function KanbanColumn({
               fontFamily: "var(--font-sans)",
               fontSize: 12,
               fontWeight: 800,
-              color,
+              // Tekst biały, nie kolor statusu — feedback 2026-08-24: tło+obwódka zostają
+              // kolorowe (jak dotąd), sam napis ma być biały dla lepszego kontrastu.
+              color: "var(--text-primary)",
               letterSpacing: "0.02em",
               textTransform: "uppercase",
               overflow: "hidden",
@@ -561,7 +596,11 @@ function KanbanColumn({
           flexDirection: "column",
           gap: 6,
           overflowY: "auto",
-          height: 310,
+          // 310px wciąż przycinało dolną obwódkę drugiej karty przy pełnej treści
+          // (plakietka Test + linia firmy + ICP/dni + telefon + e-mail) — realny wzorzec z
+          // feedbacku 2026-08-24. Podniesione z zapasem, żeby dwie najbardziej rozbudowane
+          // karty zawsze mieściły się w całości.
+          height: 380,
           paddingRight: 2,
           paddingBottom: 4,
           borderRadius: "var(--radius-sm)",
@@ -696,10 +735,12 @@ function ClientPanel({
   client,
   onClose,
   onUpdated,
+  onMarkedUtracony,
 }: {
   client: PipelineClientDetailed;
   onClose: () => void;
   onUpdated: () => void;
+  onMarkedUtracony: () => void;
 }) {
   const color = STATUS_COLORS[client.status] ?? "var(--text-tertiary)";
   const [powodDraft, setPowodDraft] = useState(client.powodUtraty);
@@ -723,6 +764,11 @@ function ClientPanel({
         }),
       });
       onUpdated();
+      // Feedback 2026-08-24 — "co się dzieje z utraconym leadem, nagle zniknął": utracone
+      // leady są domyślnie ukryte z Kanbanu (showUtracone), więc karta faktycznie znika z
+      // widoku natychmiast po zaznaczeniu. To zamierzone (Blok 1, punkt 1.5), ale bez
+      // wyjaśnienia wygląda jak błąd — toast tłumaczy co się stało i jak to cofnąć.
+      if (next) onMarkedUtracony();
     } finally {
       setSaving(false);
     }
@@ -803,8 +849,9 @@ function ClientPanel({
   return (
     <div
       style={{
-        width: 340,
-        minWidth: 340,
+        // +15% wg feedbacku 2026-08-24 (340 → 391).
+        width: 391,
+        minWidth: 391,
         height: "100%",
         borderLeft: "1px solid var(--border)",
         display: "flex",
@@ -1787,8 +1834,9 @@ export default function PipelinePage() {
                     {i > 0 && (
                       <div
                         style={{
-                          height: 1,
-                          background: "rgba(255,255,255,0.15)",
+                          // 0.15 alpha praktycznie niewidoczne — feedback 2026-08-24.
+                          height: 2,
+                          background: "rgba(255,255,255,0.4)",
                           marginBottom: 22,
                         }}
                       />
@@ -1864,6 +1912,11 @@ export default function PipelinePage() {
             client={selected}
             onClose={() => setSelected(null)}
             onUpdated={() => void load()}
+            onMarkedUtracony={() =>
+              showToast(
+                'Klient oznaczony jako utracony — ukryty domyślnie. Przywróć przyciskiem "Utracone" w headerze.',
+              )
+            }
           />
         )}
 
