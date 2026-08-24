@@ -13,6 +13,7 @@ import {
 import {
   ArrowDownAZ,
   ArrowUpAZ,
+  Building2,
   CheckCircle2,
   Clock,
   Copy,
@@ -28,7 +29,6 @@ import {
 import type { CSSProperties } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { type PipelineClientDetailed, SKRYPT_V4_DATA } from "@/app/api/notion/pipeline/route";
-import { ClientCompanyLine } from "@/components/clients/ClientContactDetails";
 import { ContactAttemptsBadge } from "@/components/clients/ContactAttemptsBadge";
 import { Button } from "@/components/ui/Button";
 import { formatPhone } from "@/lib/format/phone";
@@ -294,7 +294,44 @@ function ClientCard({
         )}
       </div>
 
-      <ClientCompanyLine client={client} style={{ marginBottom: 4 }} />
+      {/* Nazwa firmy pod imieniem/nazwiskiem, tym samym stylem co telefon/e-mail niżej —
+          feedback 2026-08-24: poprzednia wersja (ClientCompanyLine, 11px text-tertiary,
+          bez ikony) była praktycznie niewidoczna, wyglądała jak ledwo widoczny podpis
+          zamiast realnej informacji. Pokazujemy tylko gdy firma różni się od kontaktu
+          (osoby) na górze karty — bez tego dublowalibyśmy tę samą wartość dwa razy. */}
+      {client.firma && client.kontakt && client.firma !== client.kontakt && (
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 22,
+              height: 22,
+              borderRadius: "50%",
+              background: "var(--bg-elevated)",
+              border: "1px solid rgba(255,255,255,0.22)",
+              flexShrink: 0,
+            }}
+          >
+            <Building2 size={12} strokeWidth={2.5} color="var(--text-primary)" />
+          </div>
+          <span
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 13,
+              fontWeight: 500,
+              color: "var(--text-primary)",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              minWidth: 0,
+            }}
+          >
+            {client.firma}
+          </span>
+        </div>
+      )}
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 4 }}>
         {client.ocenaICP && (
@@ -599,8 +636,9 @@ function KanbanColumn({
           // 310px wciąż przycinało dolną obwódkę drugiej karty przy pełnej treści
           // (plakietka Test + linia firmy + ICP/dni + telefon + e-mail) — realny wzorzec z
           // feedbacku 2026-08-24. Podniesione z zapasem, żeby dwie najbardziej rozbudowane
-          // karty zawsze mieściły się w całości.
-          height: 380,
+          // karty zawsze mieściły się w całości. 380→410: linia firmy dostała pełny wiersz
+          // z ikoną (jak telefon/e-mail) zamiast małego podpisu bez ikony, karta urosła.
+          height: 410,
           paddingRight: 2,
           paddingBottom: 4,
           borderRadius: "var(--radius-sm)",
