@@ -18,6 +18,7 @@ import {
   Copy,
   ExternalLink,
   Loader2,
+  Mail,
   Phone,
   Radio,
   RefreshCw,
@@ -106,6 +107,13 @@ function daysInStage(client: PipelineClientDetailed): number | null {
   return primary ?? daysSince(client.dataFollowup);
 }
 
+// "55 d" → "55 dni temu" (feedback 2026-08-24: skrót nieczytelny na pierwszy rzut oka).
+function daysAgoLabel(n: number): string {
+  if (n === 0) return "dziś";
+  if (n === 1) return "1 dzień temu";
+  return `${n} dni temu`;
+}
+
 // "Cytaty klienta" — surowy tekst z jednym wpisem na linię, cytat i adnotacja rozdzielone
 // "|||". Wpis bez separatora (starsze dane sprzed tego formatu) wyświetla się jako sam cytat,
 // bez adnotacji, zamiast znikać albo wywalać się na parsowaniu.
@@ -127,6 +135,40 @@ function parseUwagi(raw: string): string[] {
     .split(/\s+(?=\d+\.\s)/)
     .map((s) => s.trim())
     .filter(Boolean);
+}
+
+// Mały przycisk kopiowania obok telefonu/e-maila w karcie — osobny stan "skopiowano" per
+// instancja, stopPropagation żeby nie otwierał panelu bocznego karty pod spodem.
+function CopyIconButton({ value }: { value: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        void navigator.clipboard.writeText(value);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      }}
+      title="Kopiuj"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: 22,
+        height: 22,
+        marginLeft: "auto",
+        padding: 0,
+        border: "none",
+        background: "transparent",
+        color: copied ? "var(--success-text)" : "var(--text-secondary)",
+        cursor: "pointer",
+        flexShrink: 0,
+      }}
+    >
+      {copied ? <CheckCircle2 size={14} strokeWidth={2.5} /> : <Copy size={14} strokeWidth={2.5} />}
+    </button>
+  );
 }
 
 // ── Client card ──────────────────────────────────────────────────────
@@ -154,16 +196,15 @@ function ClientCard({
         padding: "10px 12px",
         // Karta ciemniejsza niż jaśniejsze tło strony (--bg-elevated) — hierarchia odwrócona
         // względem poprzedniej wersji, karty mają wyraźnie odcinać się od jaśniejszego płótna,
-        // nie wtapiać się w nie. Hover tylko przez obwódkę/cień (bez zmiany blura — świadomie,
-        // patrz sekcja "Diagnoza INP" w CLAUDE.md, dużo kart z blurem kosztowało realny czas
-        // interakcji na tej stronie).
+        // nie wtapiać się w nie. Obwódka celowo jaśniejsza niż domyślny --border (8% biały,
+        // praktycznie niewidoczny) — feedback 2026-08-24: karty miały wyglądać wyraźnie
+        // obramowane na biało, nie wtopione w tło.
         background: "var(--bg)",
-        border: "1px solid var(--border)",
+        border: `1px solid ${hovered ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.22)"}`,
         borderRadius: "var(--radius-sm)",
         cursor: "pointer",
         transition: "box-shadow 120ms, border-color 120ms",
         boxShadow: hovered ? "var(--shadow-card)" : "var(--shadow-sm)",
-        borderColor: hovered ? "var(--border-hover)" : "var(--border)",
         flexShrink: 0,
       }}
     >
@@ -201,25 +242,46 @@ function ClientCard({
         />
       </div>
 
-      {client.utracony && (
-        <span
-          style={{
-            display: "inline-block",
-            fontSize: 9,
-            fontWeight: 700,
-            letterSpacing: "0.04em",
-            textTransform: "uppercase",
-            color: "var(--error-text)",
-            background: "var(--error-bg)",
-            border: "1px solid var(--error-border)",
-            borderRadius: "var(--radius-xs)",
-            padding: "1px 5px",
-            marginBottom: 4,
-          }}
-        >
-          Utracony
-        </span>
-      )}
+      <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+        {client.jestTestowy && (
+          <span
+            style={{
+              display: "inline-block",
+              fontSize: 9,
+              fontWeight: 700,
+              letterSpacing: "0.04em",
+              textTransform: "uppercase",
+              color: "var(--accent-text)",
+              background: "var(--accent-muted)",
+              border: "1px solid var(--accent-border)",
+              borderRadius: "var(--radius-xs)",
+              padding: "1px 5px",
+              marginBottom: 4,
+            }}
+          >
+            Test
+          </span>
+        )}
+        {client.utracony && (
+          <span
+            style={{
+              display: "inline-block",
+              fontSize: 9,
+              fontWeight: 700,
+              letterSpacing: "0.04em",
+              textTransform: "uppercase",
+              color: "var(--error-text)",
+              background: "var(--error-bg)",
+              border: "1px solid var(--error-border)",
+              borderRadius: "var(--radius-xs)",
+              padding: "1px 5px",
+              marginBottom: 4,
+            }}
+          >
+            Utracony
+          </span>
+        )}
+      </div>
 
       <ClientCompanyLine client={client} style={{ marginBottom: 4 }} />
 
@@ -244,10 +306,10 @@ function ClientCard({
             style={{
               display: "inline-flex",
               alignItems: "center",
-              gap: 3,
+              gap: 4,
               fontSize: 11,
               fontWeight: 700,
-              color: "var(--text-secondary)",
+              color: "var(--text-primary)",
               background: "var(--bg-elevated)",
               border: "1px solid var(--border)",
               padding: "3px 7px",
@@ -255,34 +317,62 @@ function ClientCard({
               fontFamily: "var(--font-sans)",
             }}
           >
-            <Clock size={10} />
-            {days} d
+            <Clock size={12} strokeWidth={2.5} color="var(--text-primary)" />
+            {daysAgoLabel(days)}
           </span>
         )}
       </div>
 
-      {client.telefon && (
+      {(client.telefon || client.email) && (
         <div
           style={{
             display: "flex",
-            alignItems: "center",
-            gap: 5,
+            flexDirection: "column",
+            gap: 4,
             marginTop: 8,
             paddingTop: 6,
             borderTop: "1px solid var(--border)",
           }}
         >
-          <Phone size={12} color="var(--text-secondary)" />
-          <span
-            style={{
-              fontFamily: "var(--font-sans)",
-              fontSize: 13,
-              fontWeight: 500,
-              color: "var(--text-primary)",
-            }}
-          >
-            {formatPhone(client.telefon)}
-          </span>
+          {client.telefon && (
+            <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+              <Phone size={13} strokeWidth={2.5} color="var(--text-primary)" fill="currentColor" />
+              <span
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 13,
+                  fontWeight: 500,
+                  color: "var(--text-primary)",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {formatPhone(client.telefon)}
+              </span>
+              <CopyIconButton value={formatPhone(client.telefon)} />
+            </div>
+          )}
+          {client.email && (
+            <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+              <Mail size={13} strokeWidth={2.5} color="var(--text-primary)" />
+              <span
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 13,
+                  fontWeight: 500,
+                  color: "var(--text-primary)",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  minWidth: 0,
+                }}
+              >
+                {client.email}
+              </span>
+              <CopyIconButton value={client.email} />
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -356,7 +446,9 @@ function KanbanColumn({
 }) {
   const color = STATUS_COLORS[status] ?? "var(--text-tertiary)";
   const { setNodeRef, isOver } = useDroppable({ id: status, disabled: !draggable });
-  const sumPln = clients.reduce((acc, c) => acc + (c.cenaWdrozenia || 0), 0);
+  // Karta testowa (jest_testowy) wykluczona z licznika i sumy — demo, nie realny biznes.
+  const realClients = clients.filter((c) => !c.jestTestowy);
+  const sumPln = realClients.reduce((acc, c) => acc + (c.cenaWdrozenia || 0), 0);
 
   return (
     <div
@@ -384,10 +476,10 @@ function KanbanColumn({
         <span
           style={{
             fontFamily: "var(--font-sans)",
-            fontSize: 11,
-            fontWeight: 600,
-            color: "var(--text-secondary)",
-            letterSpacing: "0.03em",
+            fontSize: 13,
+            fontWeight: 700,
+            color: "var(--text-primary)",
+            letterSpacing: "0.02em",
             textTransform: "uppercase",
             flex: 1,
             overflow: "hidden",
@@ -401,8 +493,8 @@ function KanbanColumn({
           style={{
             fontFamily: "var(--font-sans)",
             fontSize: 11,
-            fontWeight: 600,
-            color: "var(--text-tertiary)",
+            fontWeight: 700,
+            color: "var(--text-secondary)",
             background: "var(--bg)",
             padding: "1px 6px",
             borderRadius: "var(--radius-xs)",
@@ -410,7 +502,7 @@ function KanbanColumn({
             flexShrink: 0,
           }}
         >
-          {clients.length}
+          {realClients.length}
         </span>
       </div>
       {sumPln > 0 && (
@@ -728,13 +820,13 @@ function ClientPanel({
             background: "none",
             border: "none",
             cursor: "pointer",
-            color: "var(--text-tertiary)",
+            color: "var(--text-primary)",
             padding: 4,
             display: "flex",
             alignItems: "center",
           }}
         >
-          <X size={16} />
+          <X size={18} strokeWidth={2.5} />
         </button>
       </div>
 
@@ -1168,7 +1260,7 @@ function ClientPanel({
               fontFamily: "var(--font-sans)",
             }}
           >
-            <ExternalLink size={12} />
+            <ExternalLink size={14} strokeWidth={2.5} />
             Otwórz prezentację
           </a>
           <button
@@ -1184,7 +1276,7 @@ function ClientPanel({
               alignItems: "center",
               gap: 5,
               fontSize: 12,
-              color: linkCopied ? "var(--success-text)" : "var(--text-secondary)",
+              color: linkCopied ? "var(--success-text)" : "var(--text-primary)",
               background: "transparent",
               padding: "6px 10px",
               border: "1px solid var(--border)",
@@ -1193,7 +1285,11 @@ function ClientPanel({
               cursor: "pointer",
             }}
           >
-            {linkCopied ? <CheckCircle2 size={12} /> : <Copy size={12} />}
+            {linkCopied ? (
+              <CheckCircle2 size={14} strokeWidth={2.5} />
+            ) : (
+              <Copy size={14} strokeWidth={2.5} />
+            )}
             {linkCopied ? "Skopiowano" : "Kopiuj link do prezentacji"}
           </button>
         </div>
@@ -1368,14 +1464,19 @@ export default function PipelinePage() {
   const visibleClients = showUtracone ? clients : clients.filter((c) => !c.utracony);
   const utraconeCount = clients.filter((c) => c.utracony).length;
 
+  // Karta testowa (jest_testowy, patrz scripts/seed-test-pipeline-clients.mjs) zawsze
+  // pinowana jako PIERWSZA w swojej kolumnie, przed sortowaniem realnych kart A-Z/Z-A —
+  // demonstracyjny wzorzec, nie realny lead, więc nie powinien "pływać" po alfabecie.
   const grouped = ALL_VISIBLE_STATUSES.reduce<Record<string, PipelineClientDetailed[]>>(
     (acc, s) => {
       const bucket = visibleClients.filter((c) => c.status === s);
-      bucket.sort((a, b) => {
+      const testowe = bucket.filter((c) => c.jestTestowy);
+      const realne = bucket.filter((c) => !c.jestTestowy);
+      realne.sort((a, b) => {
         const cmp = a.firma.localeCompare(b.firma, "pl", { sensitivity: "base" });
         return sortDirection === "asc" ? cmp : -cmp;
       });
-      acc[s] = bucket;
+      acc[s] = [...testowe, ...realne];
       return acc;
     },
     {},
@@ -1383,15 +1484,26 @@ export default function PipelinePage() {
 
   // Licz z visibleClients (respektuje filtr utraconych), nie z pełnej clients — inaczej
   // liczba w nagłówku przestrzeliwała sumę kart faktycznie widocznych w kolumnach Kanbanu.
-  const totalActive = visibleClients.filter((c) => c.status !== "Niekwalifikowany").length;
+  // jest_testowy zawsze wykluczony — to dane demonstracyjne, nie realny biznes.
+  const totalActive = visibleClients.filter(
+    (c) => !c.jestTestowy && c.status !== "Niekwalifikowany",
+  ).length;
 
   // Sekcje grup Kanbanu (patrz KANBAN_GROUPS) posortowane malejąco wg liczby kart — grupa z
   // największym ruchem zawsze na górze, "Nieaktywne" naturalnie spada na dół gdy jest małe.
-  // Przeliczane na żywo z visibleClients, nie sztywna kolejność.
+  // Przeliczane na żywo z visibleClients, nie sztywna kolejność. jest_testowy wykluczony z
+  // liczników (patrz totalActive wyżej).
   const groupsWithCounts = KANBAN_GROUPS.map((g) => {
-    const count = g.statuses.reduce((sum, s) => sum + (grouped[s]?.length ?? 0), 0);
+    const count = g.statuses.reduce(
+      (sum, s) => sum + (grouped[s]?.filter((c) => !c.jestTestowy).length ?? 0),
+      0,
+    );
     const sumPln = g.statuses.reduce(
-      (sum, s) => sum + (grouped[s] ?? []).reduce((a, c) => a + (c.cenaWdrozenia || 0), 0),
+      (sum, s) =>
+        sum +
+        (grouped[s] ?? [])
+          .filter((c) => !c.jestTestowy)
+          .reduce((a, c) => a + (c.cenaWdrozenia || 0), 0),
       0,
     );
     return { ...g, count, sumPln };
@@ -1464,7 +1576,7 @@ export default function PipelinePage() {
               fontFamily: "var(--font-sans)",
             }}
           >
-            <Radio size={11} />
+            <Radio size={14} strokeWidth={2.5} fill="currentColor" />
             Live
           </div>
           <button
@@ -1483,12 +1595,17 @@ export default function PipelinePage() {
               border: "1px solid var(--border)",
               borderRadius: "var(--radius-xs)",
               cursor: "pointer",
-              color: "var(--text-secondary)",
+              color: "var(--text-primary)",
               fontSize: 12,
+              fontWeight: 600,
               fontFamily: "var(--font-sans)",
             }}
           >
-            {sortDirection === "asc" ? <ArrowDownAZ size={12} /> : <ArrowUpAZ size={12} />}
+            {sortDirection === "asc" ? (
+              <ArrowDownAZ size={14} strokeWidth={2.5} />
+            ) : (
+              <ArrowUpAZ size={14} strokeWidth={2.5} />
+            )}
             {sortDirection === "asc" ? "A-Z" : "Z-A"}
           </button>
           <button
@@ -1503,13 +1620,15 @@ export default function PipelinePage() {
               border: "1px solid var(--border)",
               borderRadius: "var(--radius-xs)",
               cursor: loading ? "default" : "pointer",
-              color: "var(--text-secondary)",
+              color: "var(--text-primary)",
               fontSize: 12,
+              fontWeight: 600,
               fontFamily: "var(--font-sans)",
             }}
           >
             <RefreshCw
-              size={12}
+              size={14}
+              strokeWidth={2.5}
               style={loading ? { animation: "spin 1s linear infinite" } : undefined}
             />
             Odśwież
@@ -1545,22 +1664,24 @@ export default function PipelinePage() {
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
         .pipeline-kanban-scroll {
+          /* --border to 8% biały, praktycznie niewidoczny jako scrollbar — feedback
+             2026-08-24: scrollbary mają być wyraźnie widoczne, na biało. */
           scrollbar-width: thin;
-          scrollbar-color: var(--border) transparent;
+          scrollbar-color: rgba(255,255,255,0.45) transparent;
         }
         .pipeline-kanban-scroll::-webkit-scrollbar {
-          height: 7px;
-          width: 7px;
+          height: 9px;
+          width: 9px;
         }
         .pipeline-kanban-scroll::-webkit-scrollbar-track {
           background: transparent;
         }
         .pipeline-kanban-scroll::-webkit-scrollbar-thumb {
-          background: var(--border);
+          background: rgba(255,255,255,0.45);
           border-radius: var(--radius-xs);
         }
         .pipeline-kanban-scroll::-webkit-scrollbar-thumb:hover {
-          background: var(--accent-muted);
+          background: rgba(255,255,255,0.7);
         }
       `}</style>
 

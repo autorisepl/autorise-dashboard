@@ -93,6 +93,7 @@ const pipelineFieldsSchema = z.object({
   data_potwierdzenia_dostepow: z.string().nullable().optional(),
   pitch_recipe: z.string().nullable().optional(),
   tabela_modulow_przedkontraktowa: z.string().nullable().optional(),
+  jest_testowy: z.boolean().optional(),
 });
 
 export const pipelineCreateSchema = pipelineFieldsSchema.extend({

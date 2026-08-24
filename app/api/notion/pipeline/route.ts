@@ -64,6 +64,7 @@ export interface PipelineClientDetailed {
   celEfektywnosciProcent: number;
   tabelaModulowPrzedkontraktowa: string;
   cenaWdrozenia: number;
+  jestTestowy: boolean;
 }
 
 // Blok 1, punkt 1.5 (2026-07-14) — data premiery skryptu kwalifikacyjnego V4 (12 kroków, ICP
@@ -128,6 +129,7 @@ interface PipelineRow {
   cel_efektywnosci_procent: number | null;
   tabela_modulow_przedkontraktowa: string | null;
   cena_wdrozenia: number | null;
+  jest_testowy: boolean | null;
 }
 
 function mapRow(row: PipelineRow): PipelineClientDetailed {
@@ -188,6 +190,7 @@ function mapRow(row: PipelineRow): PipelineClientDetailed {
     celEfektywnosciProcent: row.cel_efektywnosci_procent ?? 0,
     tabelaModulowPrzedkontraktowa: row.tabela_modulow_przedkontraktowa ?? "",
     cenaWdrozenia: row.cena_wdrozenia ?? 0,
+    jestTestowy: row.jest_testowy ?? false,
   };
 }
 
