@@ -106,13 +106,6 @@ function daysInStage(client: PipelineClientDetailed): number | null {
   return primary ?? daysSince(client.dataFollowup);
 }
 
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "?";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[1][0]).toUpperCase();
-}
-
 // "Cytaty klienta" — surowy tekst z jednym wpisem na linię, cytat i adnotacja rozdzielone
 // "|||". Wpis bez separatora (starsze dane sprzed tego formatu) wyświetla się jako sam cytat,
 // bez adnotacji, zamiast znikać albo wywalać się na parsowaniu.
@@ -175,25 +168,17 @@ function ClientCard({
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+        {/* Kropka koloru statusu zamiast inicjałów — czysto dekoracyjna, bez tekstu (feedback
+            2026-08-24: inicjały nie dodawały informacji, obwódka+tint były za słabo widoczne). */}
         <div
           style={{
-            width: 24,
-            height: 24,
+            width: 10,
+            height: 10,
             borderRadius: "50%",
-            background: `${color}22`,
-            border: `1px solid ${color}88`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            background: color,
             flexShrink: 0,
-            fontSize: 9,
-            fontWeight: 700,
-            color,
-            fontFamily: "var(--font-sans)",
           }}
-        >
-          {initials(name)}
-        </div>
+        />
         <div
           style={{
             fontFamily: "var(--font-sans)",
@@ -242,11 +227,11 @@ function ClientCard({
         {client.ocenaICP && (
           <span
             style={{
-              fontSize: 10,
-              fontWeight: 600,
-              color: "var(--accent)",
+              fontSize: 11,
+              fontWeight: 700,
+              color: "var(--accent-text)",
               background: "var(--accent-muted)",
-              padding: "2px 6px",
+              padding: "3px 7px",
               borderRadius: "var(--radius-xs)",
               fontFamily: "var(--font-sans)",
             }}
@@ -260,17 +245,17 @@ function ClientCard({
               display: "inline-flex",
               alignItems: "center",
               gap: 3,
-              fontSize: 10,
-              fontWeight: 600,
-              color: "var(--text-tertiary)",
+              fontSize: 11,
+              fontWeight: 700,
+              color: "var(--text-secondary)",
               background: "var(--bg-elevated)",
               border: "1px solid var(--border)",
-              padding: "2px 6px",
+              padding: "3px 7px",
               borderRadius: "var(--radius-xs)",
               fontFamily: "var(--font-sans)",
             }}
           >
-            <Clock size={9} />
+            <Clock size={10} />
             {days} d
           </span>
         )}
@@ -287,9 +272,14 @@ function ClientCard({
             borderTop: "1px solid var(--border)",
           }}
         >
-          <Phone size={10} color="var(--text-tertiary)" />
+          <Phone size={12} color="var(--text-secondary)" />
           <span
-            style={{ fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--text-secondary)" }}
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 13,
+              fontWeight: 500,
+              color: "var(--text-primary)",
+            }}
           >
             {formatPhone(client.telefon)}
           </span>
@@ -438,9 +428,11 @@ function KanbanColumn({
         </div>
       )}
 
-      {/* Cards — scroll wewnętrzny z limitem wysokości (nie flex:1 na całą wysokość viewportu —
-          sekcje grup są teraz ułożone pionowo, strona przewija się w pionie), droppable gdy
-          kolumna jest częścią grupy przeciągalnej. */}
+      {/* Cards — wysokość STAŁA (nie max-height zależny od zawartości), żeby wszystkie kolumny
+          w rzędzie miały identyczną wysokość niezależnie od liczby kart (feedback 2026-08-24:
+          kolumna z 40 kartami rozjeżdżała cały rząd względem sąsiadów z 0-1 kartą). Mieści
+          dokładnie ~2 karty, dalej scroll wewnętrzny. Droppable gdy kolumna jest częścią grupy
+          przeciągalnej. */}
       <div
         className="pipeline-kanban-scroll"
         ref={draggable ? setNodeRef : undefined}
@@ -449,7 +441,7 @@ function KanbanColumn({
           flexDirection: "column",
           gap: 6,
           overflowY: "auto",
-          maxHeight: 480,
+          height: 238,
           paddingRight: 2,
           paddingBottom: 4,
           borderRadius: "var(--radius-sm)",
@@ -843,7 +835,12 @@ function ClientPanel({
         {/* "System Autorise" — jedna linijka na moduł, kolor zielony/czerwony wg obecności w
             moduleWdrazane, klik przełącza (toggleModule, bez zmian). Dashboard zarządczy
             zawsze zielony i nieklikalny — nie jest opcją, wchodzi w każde wdrożenie (patrz
-            komentarz przy DASHBOARD_ZARZADCZY_LABEL w lib/scripts/moduleCatalog.ts). */}
+            komentarz przy DASHBOARD_ZARZADCZY_LABEL w lib/scripts/moduleCatalog.ts).
+            Feedback 2026-08-24: moduły są realnie ustalane dopiero PO rozmowie kwalifikacyjnej
+            (agent nadaje kolejny status: Kwalifikacja/Niekwalifikowany/Nieaktywny) — status
+            "Nowy lead" oznacza że rozmowa jeszcze się nie odbyła, więc pokazywanie w tym
+            momencie 3 modułów jako "wyłączone" (czerwone) fałszywie sugerowało decyzję, która
+            jeszcze nie zapadła. Dla "Nowy lead" honest fallback zamiast pełnej listy. */}
         <div style={{ marginBottom: 16 }}>
           <div
             style={{
@@ -856,79 +853,92 @@ function ClientPanel({
           >
             System Autorise
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-            {MODULE_CATALOG.map((m, i) => {
-              const active = (client.moduleWdrazane ?? []).includes(m.code);
-              const moduleColor = active ? "var(--success-text)" : "var(--error-text)";
-              return (
-                <div
-                  key={m.code}
-                  onClick={() => !saving && void toggleModule(m.code)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6,
-                    padding: "3px 2px",
-                    cursor: saving ? "default" : "pointer",
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                  }}
-                >
-                  <span
-                    style={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: "50%",
-                      background: moduleColor,
-                      flexShrink: 0,
-                    }}
-                  />
-                  <span
-                    style={{
-                      fontSize: 12,
-                      color: moduleColor,
-                      fontFamily: "var(--font-sans)",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                    }}
-                  >
-                    Moduł {i + 1}: {m.label}
-                  </span>
-                </div>
-              );
-            })}
+          {client.status === "Nowy lead" ? (
             <div
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                padding: "3px 2px",
-                whiteSpace: "nowrap",
-                overflow: "hidden",
+                fontSize: 12,
+                color: "var(--text-tertiary)",
+                fontFamily: "var(--font-sans)",
+                fontStyle: "italic",
               }}
             >
-              <span
+              Moduły do ustalenia po rozmowie kwalifikacyjnej
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              {MODULE_CATALOG.map((m, i) => {
+                const active = (client.moduleWdrazane ?? []).includes(m.code);
+                const moduleColor = active ? "var(--success-text)" : "var(--error-text)";
+                return (
+                  <div
+                    key={m.code}
+                    onClick={() => !saving && void toggleModule(m.code)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      padding: "3px 2px",
+                      cursor: saving ? "default" : "pointer",
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: "50%",
+                        background: moduleColor,
+                        flexShrink: 0,
+                      }}
+                    />
+                    <span
+                      style={{
+                        fontSize: 12,
+                        color: moduleColor,
+                        fontFamily: "var(--font-sans)",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      Moduł {i + 1}: {m.label}
+                    </span>
+                  </div>
+                );
+              })}
+              <div
                 style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: "50%",
-                  background: "var(--success-text)",
-                  flexShrink: 0,
-                }}
-              />
-              <span
-                style={{
-                  fontSize: 12,
-                  color: "var(--success-text)",
-                  fontFamily: "var(--font-sans)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "3px 2px",
+                  whiteSpace: "nowrap",
                   overflow: "hidden",
-                  textOverflow: "ellipsis",
                 }}
               >
-                {DASHBOARD_ZARZADCZY_LABEL} — zawsze w zakresie
-              </span>
+                <span
+                  style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: "50%",
+                    background: "var(--success-text)",
+                    flexShrink: 0,
+                  }}
+                />
+                <span
+                  style={{
+                    fontSize: 12,
+                    color: "var(--success-text)",
+                    fontFamily: "var(--font-sans)",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {DASHBOARD_ZARZADCZY_LABEL} — zawsze w zakresie
+                </span>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Cytaty klienta — pary [cytat, adnotacja] rozdzielone "|||", każda para osobnym
@@ -1631,7 +1641,7 @@ export default function PipelinePage() {
                       <span
                         style={{
                           fontFamily: "var(--font-sans)",
-                          fontSize: 13,
+                          fontSize: 16,
                           fontWeight: 700,
                           color: "var(--text-primary)",
                           letterSpacing: "-0.01em",
@@ -1642,8 +1652,9 @@ export default function PipelinePage() {
                       <span
                         style={{
                           fontFamily: "var(--font-sans)",
-                          fontSize: 12,
-                          color: "var(--text-tertiary)",
+                          fontSize: 14,
+                          fontWeight: 500,
+                          color: "var(--text-secondary)",
                         }}
                       >
                         {group.count} {pluralKarty(group.count)}
