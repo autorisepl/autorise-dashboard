@@ -1,16 +1,12 @@
-import { Client } from "@notionhq/client";
-import type { PageObjectResponse } from "@notionhq/client/build/src/api-endpoints";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { getDriveClient, getRefreshToken } from "@/lib/google/auth";
 import { listAllFileNames } from "@/lib/google/driveFolder";
 import { getDailyStatsRangeTotals } from "@/lib/notion/client";
+import { createClient } from "@/lib/supabase/server";
 import { classifyStage, hasMatchingTranscript } from "@/lib/transcripts/parse";
 
 export const dynamic = "force-dynamic";
-
-const notion = new Client({ auth: process.env.NOTION_TOKEN });
-const PIPELINE_DATA_SOURCE_ID = "2ea38355-7529-48f9-8d7f-1c62f5570df3";
 
 const SPRZEDAZ_STATUSES = ["Kickoff", "Wdrożenie", "Retainer", "Upsell"];
 
@@ -78,19 +74,18 @@ async function countUnprocessedRecordings(): Promise<{
   }
 }
 
-function extractDate(prop: PageObjectResponse["properties"][string] | undefined): string | null {
-  if (prop?.type === "date") return prop.date?.start?.slice(0, 10) ?? null;
-  return null;
+interface StatsRow {
+  data_pierwszego_kontaktu: string | null;
+  data_discovery: string | null;
+  wynik_discovery: string | null;
+  status: string | null;
+  data_zamkniecia: string | null;
+  cena_wdrozenia: number | null;
+  retainer_pln_mc: number | null;
 }
 
-function extractSelect(prop: PageObjectResponse["properties"][string] | undefined): string | null {
-  if (prop?.type === "select") return prop.select?.name ?? null;
-  return null;
-}
-
-function extractNumber(prop: PageObjectResponse["properties"][string] | undefined): number {
-  if (prop?.type === "number") return prop.number ?? 0;
-  return 0;
+function toDateOnly(value: string | null): string | null {
+  return value ? value.slice(0, 10) : null;
 }
 
 function isInRange(dateStr: string | null, from: string, to: string): boolean {
@@ -113,17 +108,15 @@ export async function GET(request: Request) {
     const to = searchParams.get("to") || defaults.to;
     const todayISO = new Date().toISOString().slice(0, 10);
 
-    const pages: PageObjectResponse[] = [];
-    let cursor: string | undefined;
-    do {
-      const response = await notion.dataSources.query({
-        data_source_id: PIPELINE_DATA_SOURCE_ID,
-        page_size: 100,
-        start_cursor: cursor,
-      });
-      pages.push(...response.results.filter((p): p is PageObjectResponse => p.object === "page"));
-      cursor = response.has_more ? (response.next_cursor ?? undefined) : undefined;
-    } while (cursor);
+    const supabase = await createClient();
+    const { data: rows, error } = await supabase
+      .from("pipeline")
+      .select(
+        "data_pierwszego_kontaktu, data_discovery, wynik_discovery, status, data_zamkniecia, cena_wdrozenia, retainer_pln_mc",
+      );
+    if (error) {
+      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
 
     let nowe_leady = 0;
     let discovery_umowione = 0;
@@ -133,13 +126,12 @@ export async function GET(request: Request) {
     let wartosc_sprzedazy_pln = 0;
     let niekwalifikowani = 0;
 
-    for (const page of pages) {
-      const props = page.properties;
-      const dataPierwszegoKontaktu = extractDate(props["Data pierwszego kontaktu"]);
-      const dataDiscovery = extractDate(props["Data discovery"]);
-      const wynikDiscovery = extractSelect(props["Wynik Discovery"]);
-      const status = extractSelect(props["Status"]);
-      const dataZamkniecia = extractDate(props["Data zamknięcia"]);
+    for (const row of rows as StatsRow[]) {
+      const dataPierwszegoKontaktu = toDateOnly(row.data_pierwszego_kontaktu);
+      const dataDiscovery = toDateOnly(row.data_discovery);
+      const wynikDiscovery = row.wynik_discovery;
+      const status = row.status;
+      const dataZamkniecia = toDateOnly(row.data_zamkniecia);
 
       if (isInRange(dataPierwszegoKontaktu, from, to)) {
         nowe_leady += 1;
@@ -164,8 +156,7 @@ export async function GET(request: Request) {
 
       if (status && SPRZEDAZ_STATUSES.includes(status) && isInRange(dataZamkniecia, from, to)) {
         sprzedaze += 1;
-        wartosc_sprzedazy_pln +=
-          extractNumber(props["Cena wdrożenia"]) + extractNumber(props["Retainer PLN/mc"]);
+        wartosc_sprzedazy_pln += (row.cena_wdrozenia ?? 0) + (row.retainer_pln_mc ?? 0);
       }
     }
 

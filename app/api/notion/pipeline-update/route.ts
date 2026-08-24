@@ -1,13 +1,15 @@
-// DEPRECATED (2026-08-20): zastąpione przez PATCH /api/pipeline/[id] (Supabase), patrz
-// CLAUDE.md — usunąć dopiero po kilku dniach weryfikacji nowej ścieżki na realnych danych.
-import { Client } from "@notionhq/client";
+// Wewnętrznie zapisuje do Supabase (public.pipeline), NIE do Notion — przepięte 2026-08-22.
+// Kontrakt zewnętrzny (URL, nazwy pól body) pozostał identyczny. "pageId" w body to teraz
+// Supabase `id` (uuid), nie notion_page_id — patrz app/api/notion/pipeline/route.ts, które
+// zwraca właśnie to `id` jako pole "id" odpowiedzi. Notion nie jest już w ogóle zapisywany
+// przez ten route. Osobny endpoint app/api/pipeline/[id]/route.ts (Supabase, inny kontrakt)
+// zostaje nietknięty — to on jest referencją nazw kolumn użytą tutaj do mapowania.
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { normalizePhonePL } from "@/lib/format/normalizePhonePL";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
-
-const notion = new Client({ auth: process.env.NOTION_TOKEN });
 
 const bodySchema = z.object({
   pageId: z.string().min(1),
@@ -22,6 +24,7 @@ const bodySchema = z.object({
   firma: z.string().optional(),
   kontakt: z.string().optional(),
   telefon: z.string().optional(),
+  email: z.string().optional(),
   notatki: z.string().optional(),
   dniDostepow: z.number().nullable().optional(),
   uwagiWarunki: z.string().nullable().optional(),
@@ -45,10 +48,6 @@ const bodySchema = z.object({
   tabelaModulowPrzedkontraktowa: z.string().nullable().optional(),
 });
 
-function richText(text: string) {
-  return [{ type: "text" as const, text: { content: text.slice(0, 2000) } }];
-}
-
 export async function PATCH(req: Request) {
   try {
     const raw = await req.json();
@@ -61,151 +60,73 @@ export async function PATCH(req: Request) {
     }
 
     const d = parsed.data;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const properties: Record<string, any> = {};
+    const columns: Record<string, string | number | boolean | string[] | null> = {};
 
-    if (d.status !== undefined) {
-      properties["Status"] = { select: { name: d.status } };
-    }
-    if (d.nastepnyKrok !== undefined) {
-      properties["Następny krok"] = { rich_text: richText(d.nastepnyKrok) };
-    }
-    if (d.dataFollowup !== undefined) {
-      properties["Data następnego kroku"] = d.dataFollowup
-        ? { date: { start: d.dataFollowup } }
-        : { date: null };
-    }
-    if (d.typFollowup !== undefined) {
-      properties["Typ follow-up"] = d.typFollowup
-        ? { select: { name: d.typFollowup } }
-        : { select: null };
-    }
+    if (d.status !== undefined) columns.status = d.status;
+    if (d.nastepnyKrok !== undefined) columns.nastepny_krok = d.nastepnyKrok;
+    if (d.dataFollowup !== undefined) columns.data_nastepnego_kroku = d.dataFollowup || null;
+    if (d.typFollowup !== undefined) columns.typ_follow_up = d.typFollowup || null;
     if (d.kontekstFollowup !== undefined && d.kontekstFollowup) {
-      properties["Następny krok"] = {
-        rich_text: richText(`[Follow-up: ${d.typFollowup ?? ""}] ${d.kontekstFollowup}`),
-      };
+      columns.nastepny_krok = `[Follow-up: ${d.typFollowup ?? ""}] ${d.kontekstFollowup}`;
     }
-    if (d.powodNiekwalifikowania !== undefined && d.powodNiekwalifikowania) {
-      properties["Powód rezygnacji"] = { rich_text: richText(d.powodNiekwalifikowania) };
+    if (d.powodNiekwalifikowania !== undefined) {
+      columns.powod_rezygnacji = d.powodNiekwalifikowania || null;
     }
-    if (d.dataReengagement !== undefined) {
-      properties["Re-engagement"] = d.dataReengagement
-        ? { date: { start: d.dataReengagement } }
-        : { date: null };
-    }
-    if (d.liczbaProb !== undefined) {
-      properties["Liczba prób kontaktu"] = { number: d.liczbaProb };
-    }
-    if (d.firma !== undefined && d.firma) {
-      properties["Firma"] = { title: richText(d.firma) };
-    }
-    if (d.kontakt !== undefined) {
-      properties["Kontakt"] = { rich_text: richText(d.kontakt) };
-    }
+    if (d.dataReengagement !== undefined) columns.re_engagement = d.dataReengagement || null;
+    if (d.liczbaProb !== undefined) columns.liczba_prob_kontaktu = d.liczbaProb;
+    if (d.firma !== undefined && d.firma) columns.firma = d.firma;
+    if (d.kontakt !== undefined) columns.kontakt = d.kontakt;
     if (d.telefon !== undefined) {
       const normalized = d.telefon ? normalizePhonePL(d.telefon) : null;
       if (d.telefon && !normalized)
         console.warn(`normalizePhonePL: nie udało się znormalizować "${d.telefon}"`);
-      properties["Telefon"] = { phone_number: normalized ?? d.telefon };
+      columns.telefon = normalized ?? d.telefon;
     }
-    if (d.notatki !== undefined) {
-      properties["Notatki"] = { rich_text: richText(d.notatki) };
-    }
-    if (d.dniDostepow !== undefined) {
-      properties["Warunki umowy — dni dostępów"] = { number: d.dniDostepow };
-    }
-    if (d.uwagiWarunki !== undefined) {
-      properties["Warunki umowy — uwagi"] = {
-        rich_text: d.uwagiWarunki ? richText(d.uwagiWarunki) : [],
-      };
-    }
-    if (d.pozaZakresem !== undefined) {
-      properties["Poza zakresem — ustalenia"] = {
-        rich_text: d.pozaZakresem ? richText(d.pozaZakresem) : [],
-      };
-    }
-    if (d.utracony !== undefined) {
-      properties["Utracony"] = { checkbox: d.utracony };
-    }
-    if (d.powodUtraty !== undefined) {
-      properties["Powód utraty"] = { rich_text: d.powodUtraty ? richText(d.powodUtraty) : [] };
-    }
-    if (d.dataPotwierdzeniaDostepow !== undefined) {
-      properties["Data potwierdzenia dostępów"] = d.dataPotwierdzeniaDostepow
-        ? { date: { start: d.dataPotwierdzeniaDostepow } }
-        : { date: null };
-    }
-    if (d.czasBazowyPotwierdzony !== undefined) {
-      properties["Czas bazowy potwierdzony h/mc"] = { number: d.czasBazowyPotwierdzony };
-    }
-    if (d.dostepyZebrane !== undefined) {
-      properties["Dostępy zebrane"] = {
-        rich_text: d.dostepyZebrane ? richText(d.dostepyZebrane) : [],
-      };
-    }
-    if (d.ostatniKontaktRetainer !== undefined) {
-      properties["Ostatni kontakt (retainer)"] = d.ostatniKontaktRetainer
-        ? { date: { start: d.ostatniKontaktRetainer } }
-        : { date: null };
-    }
-    if (d.historiaZgloszenRetainer !== undefined) {
-      properties["Historia zgłoszeń (retainer)"] = {
-        rich_text: d.historiaZgloszenRetainer ? richText(d.historiaZgloszenRetainer) : [],
-      };
-    }
-    if (d.wynikDiscovery !== undefined) {
-      properties["Wynik Discovery"] = d.wynikDiscovery
-        ? { select: { name: d.wynikDiscovery } }
-        : { select: null };
-    }
-    if (d.protokolOdbioruPodpisany !== undefined) {
-      properties["Protokół odbioru podpisany"] = { checkbox: d.protokolOdbioruPodpisany };
-    }
-    if (d.dataProtokoluOdbioru !== undefined) {
-      properties["Data protokołu odbioru"] = d.dataProtokoluOdbioru
-        ? { date: { start: d.dataProtokoluOdbioru } }
-        : { date: null };
-    }
-    if (d.kickoffOdbyty !== undefined) {
-      properties["Kickoff odbyty"] = { checkbox: d.kickoffOdbyty };
-    }
-    if (d.dataKickoff !== undefined) {
-      properties["Data Kickoff"] = d.dataKickoff
-        ? { date: { start: d.dataKickoff } }
-        : { date: null };
-    }
-    if (d.moduleWdrazane !== undefined) {
-      properties["Moduły wdrażane"] = {
-        multi_select: d.moduleWdrazane.map((name) => ({ name })),
-      };
-    }
-    if (d.tabelaModulowKickoff !== undefined) {
-      properties["Tabela modułów Kickoff"] = {
-        rich_text: d.tabelaModulowKickoff ? richText(d.tabelaModulowKickoff) : [],
-      };
-    }
-    if (d.tabelaModulowWeryfikacja !== undefined) {
-      properties["Tabela modułów Weryfikacja"] = {
-        rich_text: d.tabelaModulowWeryfikacja ? richText(d.tabelaModulowWeryfikacja) : [],
-      };
-    }
-    if (d.celEfektywnosciProcent !== undefined) {
-      properties["Cel efektywności (%)"] = { number: d.celEfektywnosciProcent };
-    }
-    if (d.tabelaModulowPrzedkontraktowa !== undefined) {
-      properties["Tabela modułów Analiza przedkontraktowa"] = {
-        rich_text: d.tabelaModulowPrzedkontraktowa ? richText(d.tabelaModulowPrzedkontraktowa) : [],
-      };
-    }
+    if (d.email !== undefined) columns.email = d.email;
+    if (d.notatki !== undefined) columns.notatki = d.notatki;
+    if (d.dniDostepow !== undefined) columns.warunki_umowy_dni_dostepow = d.dniDostepow;
+    if (d.uwagiWarunki !== undefined) columns.warunki_umowy_uwagi = d.uwagiWarunki;
+    if (d.pozaZakresem !== undefined) columns.poza_zakresem_ustalenia = d.pozaZakresem;
+    if (d.utracony !== undefined) columns.utracony = d.utracony;
+    if (d.powodUtraty !== undefined) columns.powod_utraty = d.powodUtraty;
+    if (d.dataPotwierdzeniaDostepow !== undefined)
+      columns.data_potwierdzenia_dostepow = d.dataPotwierdzeniaDostepow || null;
+    if (d.czasBazowyPotwierdzony !== undefined)
+      columns.czas_bazowy_potwierdzony_h_mc = d.czasBazowyPotwierdzony;
+    if (d.dostepyZebrane !== undefined) columns.dostepy_zebrane = d.dostepyZebrane;
+    if (d.ostatniKontaktRetainer !== undefined)
+      columns.ostatni_kontakt_retainer = d.ostatniKontaktRetainer || null;
+    if (d.historiaZgloszenRetainer !== undefined)
+      columns.historia_zgloszen_retainer = d.historiaZgloszenRetainer;
+    if (d.wynikDiscovery !== undefined) columns.wynik_discovery = d.wynikDiscovery || null;
+    if (d.protokolOdbioruPodpisany !== undefined)
+      columns.protokol_odbioru_podpisany = d.protokolOdbioruPodpisany;
+    if (d.dataProtokoluOdbioru !== undefined)
+      columns.data_protokolu_odbioru = d.dataProtokoluOdbioru || null;
+    if (d.kickoffOdbyty !== undefined) columns.kickoff_odbyty = d.kickoffOdbyty;
+    if (d.dataKickoff !== undefined) columns.data_kickoff = d.dataKickoff || null;
+    if (d.moduleWdrazane !== undefined) columns.moduly_wdrazane = d.moduleWdrazane;
+    if (d.tabelaModulowKickoff !== undefined)
+      columns.tabela_modulow_kickoff = d.tabelaModulowKickoff;
+    if (d.tabelaModulowWeryfikacja !== undefined)
+      columns.tabela_modulow_weryfikacja = d.tabelaModulowWeryfikacja;
+    if (d.celEfektywnosciProcent !== undefined)
+      columns.cel_efektywnosci_procent = d.celEfektywnosciProcent;
+    if (d.tabelaModulowPrzedkontraktowa !== undefined)
+      columns.tabela_modulow_przedkontraktowa = d.tabelaModulowPrzedkontraktowa;
 
-    if (Object.keys(properties).length === 0) {
+    if (Object.keys(columns).length === 0) {
       return NextResponse.json(
         { success: false, error: "Brak pól do aktualizacji" },
         { status: 400 },
       );
     }
 
-    await notion.pages.update({ page_id: d.pageId, properties });
+    const supabase = createAdminClient();
+    const { error } = await supabase.from("pipeline").update(columns).eq("id", d.pageId);
+    if (error) {
+      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -214,7 +135,7 @@ export async function PATCH(req: Request) {
   }
 }
 
-// Keep POST for backward compat (numeric fields only)
+// Zachowane dla wstecznej zgodności (KalkulatorRoi.tsx) — wyłącznie pola numeryczne.
 export async function POST(req: Request) {
   try {
     const raw = await req.json();
@@ -232,30 +153,34 @@ export async function POST(req: Request) {
 
     const { pageId, fields } = parsed.data;
     const FIELD_MAP: Record<string, string> = {
-      koszt_problemu: "Koszt problemu PLN/mc",
-      koszt_roczny: "Koszt roczny PLN/rok",
-      maile_dziennie: "Maile ze zleceniami / dzień",
-      godziny_wpisywania: "Godziny wpisywania / spedytor",
-      faktury_po_terminie: "Faktury po terminie / mc",
-      srednia_wartosc_faktury: "Średnia wartość faktury PLN",
+      koszt_problemu: "koszt_problemu_pln_mc",
+      koszt_roczny: "koszt_roczny_pln_rok",
+      maile_dziennie: "maile_ze_zleceniami_dzien",
+      godziny_wpisywania: "godziny_wpisywania_spedytor",
+      faktury_po_terminie: "faktury_po_terminie_mc",
+      srednia_wartosc_faktury: "srednia_wartosc_faktury_pln",
     };
 
-    const properties: Record<string, { number: number }> = {};
-    for (const [key, notionProp] of Object.entries(FIELD_MAP)) {
+    const columns: Record<string, number> = {};
+    for (const [key, column] of Object.entries(FIELD_MAP)) {
       const val = fields[key];
       if (val != null && typeof val === "number") {
-        properties[notionProp] = { number: val };
+        columns[column] = val;
       }
     }
 
-    if (Object.keys(properties).length === 0) {
+    if (Object.keys(columns).length === 0) {
       return NextResponse.json(
         { success: false, error: "Brak pól do aktualizacji" },
         { status: 400 },
       );
     }
 
-    await notion.pages.update({ page_id: pageId, properties });
+    const supabase = createAdminClient();
+    const { error } = await supabase.from("pipeline").update(columns).eq("id", pageId);
+    if (error) {
+      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
     return NextResponse.json({ success: true });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Nieznany błąd";
