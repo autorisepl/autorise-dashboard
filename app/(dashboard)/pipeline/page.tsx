@@ -29,20 +29,31 @@ import { type PipelineClientDetailed, SKRYPT_V4_DATA } from "@/app/api/notion/pi
 import { ClientCompanyLine } from "@/components/clients/ClientContactDetails";
 import { ContactAttemptsBadge } from "@/components/clients/ContactAttemptsBadge";
 import { Button } from "@/components/ui/Button";
-import { PageHeader } from "@/components/ui/PageHeader";
 import { formatPhone } from "@/lib/format/phone";
 import { DASHBOARD_ZARZADCZY_LABEL, MODULE_CATALOG } from "@/lib/scripts/moduleCatalog";
 import { createClient as createBrowserClient } from "@/lib/supabase/client";
 import {
   KANBAN_DRAGGABLE_STATUSES,
+  KANBAN_GROUPS,
   KANBAN_LOCKED_STATUSES,
-  KANBAN_VISIBLE_STATUSES,
 } from "@/lib/supabase/pipelineKanban";
 
 // ── Constants ────────────────────────────────────────────────────────
 
 // Blok 1, punkt 1.4 — klucz localStorage dla kierunku sortowania kart w kolumnach Kanbanu.
 const PIPELINE_SORT_KEY = "autorise_pipeline_sort_direction";
+
+// Płaska lista wszystkich statusów widocznych na Kanbanie, wyprowadzona z KANBAN_GROUPS —
+// jedno źródło prawdy, żeby grupowanie i lista statusów nigdy się nie rozjechały.
+const ALL_VISIBLE_STATUSES = KANBAN_GROUPS.flatMap((g) => g.statuses);
+
+function pluralKarty(n: number): string {
+  if (n === 1) return "karta";
+  const lastDigit = n % 10;
+  const lastTwo = n % 100;
+  if (lastDigit >= 2 && lastDigit <= 4 && !(lastTwo >= 12 && lastTwo <= 14)) return "karty";
+  return "kart";
+}
 
 // Pole "Moduły wdrażane" (Batch 6, 2026-07-26) nie istniało wcześniej na karcie klienta —
 // dotąd żadne miejsce nie zapisywało które moduły faktycznie wdraża się dla danego klienta.
@@ -148,11 +159,16 @@ function ClientCard({
       onMouseLeave={() => setHovered(false)}
       style={{
         padding: "10px 12px",
-        background: hovered ? "var(--bg-elevated)" : "var(--bg-card)",
+        // Karta ciemniejsza niż jaśniejsze tło strony (--bg-elevated) — hierarchia odwrócona
+        // względem poprzedniej wersji, karty mają wyraźnie odcinać się od jaśniejszego płótna,
+        // nie wtapiać się w nie. Hover tylko przez obwódkę/cień (bez zmiany blura — świadomie,
+        // patrz sekcja "Diagnoza INP" w CLAUDE.md, dużo kart z blurem kosztowało realny czas
+        // interakcji na tej stronie).
+        background: "var(--bg)",
         border: "1px solid var(--border)",
         borderRadius: "var(--radius-sm)",
         cursor: "pointer",
-        transition: "background 120ms, box-shadow 120ms, border-color 120ms",
+        transition: "box-shadow 120ms, border-color 120ms",
         boxShadow: hovered ? "var(--shadow-card)" : "var(--shadow-sm)",
         borderColor: hovered ? "var(--border-hover)" : "var(--border)",
         flexShrink: 0,
@@ -359,8 +375,6 @@ function KanbanColumn({
         flexDirection: "column",
         minWidth: 240,
         width: 240,
-        minHeight: 0,
-        height: "100%",
         flexShrink: 0,
       }}
     >
@@ -399,7 +413,7 @@ function KanbanColumn({
             fontSize: 11,
             fontWeight: 600,
             color: "var(--text-tertiary)",
-            background: "var(--bg-elevated)",
+            background: "var(--bg)",
             padding: "1px 6px",
             borderRadius: "var(--radius-xs)",
             border: "1px solid var(--border)",
@@ -424,15 +438,18 @@ function KanbanColumn({
         </div>
       )}
 
-      {/* Cards — internal scroll, droppable when kolumna jest częścią grupy przeciągalnej */}
+      {/* Cards — scroll wewnętrzny z limitem wysokości (nie flex:1 na całą wysokość viewportu —
+          sekcje grup są teraz ułożone pionowo, strona przewija się w pionie), droppable gdy
+          kolumna jest częścią grupy przeciągalnej. */}
       <div
+        className="pipeline-kanban-scroll"
         ref={draggable ? setNodeRef : undefined}
         style={{
           display: "flex",
           flexDirection: "column",
           gap: 6,
           overflowY: "auto",
-          flex: 1,
+          maxHeight: 480,
           paddingRight: 2,
           paddingBottom: 4,
           borderRadius: "var(--radius-sm)",
@@ -1341,7 +1358,7 @@ export default function PipelinePage() {
   const visibleClients = showUtracone ? clients : clients.filter((c) => !c.utracony);
   const utraconeCount = clients.filter((c) => c.utracony).length;
 
-  const grouped = KANBAN_VISIBLE_STATUSES.reduce<Record<string, PipelineClientDetailed[]>>(
+  const grouped = ALL_VISIBLE_STATUSES.reduce<Record<string, PipelineClientDetailed[]>>(
     (acc, s) => {
       const bucket = visibleClients.filter((c) => c.status === s);
       bucket.sort((a, b) => {
@@ -1358,6 +1375,18 @@ export default function PipelinePage() {
   // liczba w nagłówku przestrzeliwała sumę kart faktycznie widocznych w kolumnach Kanbanu.
   const totalActive = visibleClients.filter((c) => c.status !== "Niekwalifikowany").length;
 
+  // Sekcje grup Kanbanu (patrz KANBAN_GROUPS) posortowane malejąco wg liczby kart — grupa z
+  // największym ruchem zawsze na górze, "Nieaktywne" naturalnie spada na dół gdy jest małe.
+  // Przeliczane na żywo z visibleClients, nie sztywna kolejność.
+  const groupsWithCounts = KANBAN_GROUPS.map((g) => {
+    const count = g.statuses.reduce((sum, s) => sum + (grouped[s]?.length ?? 0), 0);
+    const sumPln = g.statuses.reduce(
+      (sum, s) => sum + (grouped[s] ?? []).reduce((a, c) => a + (c.cenaWdrozenia || 0), 0),
+      0,
+    );
+    return { ...g, count, sumPln };
+  }).sort((a, b) => b.count - a.count);
+
   return (
     <div
       style={{
@@ -1365,23 +1394,51 @@ export default function PipelinePage() {
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
-        background: "var(--bg)",
+        background: "var(--bg-elevated)",
       }}
     >
-      {/* Header */}
-      <PageHeader icon={null} title="Pipeline">
-        {!loading && (
-          <span
+      {/* Header — dwuwierszowy, celowo osobny od współdzielonego PageHeader (48px, jeden
+          wiersz): tytuł/licznik mają być czytelne z drugiej strony pokoju, pasek narzędzi
+          (Live/Utracone/Sortowanie/Odśwież) osobnym, spójnym rzędem pod spodem, nie stłoczony
+          po prawej stronie tytułu. */}
+      <div
+        style={{
+          flexShrink: 0,
+          padding: "16px 20px 12px",
+          borderBottom: "1px solid var(--border)",
+          background: "var(--bg-elevated)",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "baseline", gap: 14, flexWrap: "wrap" }}>
+          <h1
             style={{
+              margin: 0,
               fontFamily: "var(--font-sans)",
-              fontSize: 11,
-              color: "var(--text-tertiary)",
+              fontSize: 22,
+              fontWeight: 700,
+              color: "var(--text-primary)",
+              letterSpacing: "-0.02em",
             }}
           >
-            {totalActive} aktywnych
-          </span>
-        )}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: "auto" }}>
+            Pipeline
+          </h1>
+          {!loading && (
+            <span
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 14,
+                fontWeight: 500,
+                color: "var(--text-secondary)",
+              }}
+            >
+              Aktywnych klientów: {totalActive}
+            </span>
+          )}
+        </div>
+
+        <div
+          style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12, flexWrap: "wrap" }}
+        >
           <div
             title="Kanban aktualizuje się na żywo dla wszystkich (Supabase Realtime)"
             style={{
@@ -1400,31 +1457,6 @@ export default function PipelinePage() {
             <Radio size={11} />
             Live
           </div>
-          {utraconeCount > 0 && (
-            <button
-              onClick={() => setShowUtracone((v) => !v)}
-              title={
-                showUtracone
-                  ? "Ukryj utracone leady"
-                  : `Pokaż ${utraconeCount} utraconych leadów (dziś ukryte)`
-              }
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 5,
-                padding: "5px 10px",
-                background: showUtracone ? "var(--error-bg)" : "transparent",
-                border: `1px solid ${showUtracone ? "var(--error-border)" : "var(--border)"}`,
-                borderRadius: "var(--radius-xs)",
-                cursor: "pointer",
-                color: showUtracone ? "var(--error-text)" : "var(--text-secondary)",
-                fontSize: 12,
-                fontFamily: "var(--font-sans)",
-              }}
-            >
-              {showUtracone ? "Ukryj utracone" : `Utracone (${utraconeCount})`}
-            </button>
-          )}
           <button
             onClick={toggleSortDirection}
             title={
@@ -1437,7 +1469,7 @@ export default function PipelinePage() {
               alignItems: "center",
               gap: 5,
               padding: "5px 10px",
-              background: "transparent",
+              background: "var(--bg)",
               border: "1px solid var(--border)",
               borderRadius: "var(--radius-xs)",
               cursor: "pointer",
@@ -1457,7 +1489,7 @@ export default function PipelinePage() {
               alignItems: "center",
               gap: 5,
               padding: "5px 10px",
-              background: "transparent",
+              background: "var(--bg)",
               border: "1px solid var(--border)",
               borderRadius: "var(--radius-xs)",
               cursor: loading ? "default" : "pointer",
@@ -1472,8 +1504,33 @@ export default function PipelinePage() {
             />
             Odśwież
           </button>
+          {utraconeCount > 0 && (
+            <button
+              onClick={() => setShowUtracone((v) => !v)}
+              title={
+                showUtracone
+                  ? "Ukryj utracone leady"
+                  : `Pokaż ${utraconeCount} utraconych leadów (dziś ukryte)`
+              }
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 5,
+                padding: "5px 10px",
+                background: showUtracone ? "var(--error-bg)" : "var(--bg)",
+                border: `1px solid ${showUtracone ? "var(--error-border)" : "var(--border)"}`,
+                borderRadius: "var(--radius-xs)",
+                cursor: "pointer",
+                color: showUtracone ? "var(--error-text)" : "var(--text-secondary)",
+                fontSize: 12,
+                fontFamily: "var(--font-sans)",
+              }}
+            >
+              {showUtracone ? "Ukryj utracone" : `Utracone (${utraconeCount})`}
+            </button>
+          )}
         </div>
-      </PageHeader>
+      </div>
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -1483,6 +1540,7 @@ export default function PipelinePage() {
         }
         .pipeline-kanban-scroll::-webkit-scrollbar {
           height: 7px;
+          width: 7px;
         }
         .pipeline-kanban-scroll::-webkit-scrollbar-track {
           background: transparent;
@@ -1498,12 +1556,16 @@ export default function PipelinePage() {
 
       {/* Body */}
       <div style={{ flex: 1, overflow: "hidden", display: "flex", position: "relative" }}>
-        {/* Kanban — jeden poziomy rząd, scroll w poziomie */}
+        {/* Kanban — sekcje grup (patrz KANBAN_GROUPS) ułożone pionowo jedna pod drugą,
+            posortowane wg liczby kart malejąco, strona przewija się w pionie. Wewnątrz każdej
+            sekcji kolumny statusu w poziomym rzędzie, jak dotąd. */}
         <div
+          className="pipeline-kanban-scroll"
           style={{
             flex: 1,
-            overflow: "hidden",
-            padding: "12px 16px",
+            overflowY: "auto",
+            overflowX: "hidden",
+            padding: "16px 20px",
             display: "flex",
             flexDirection: "column",
           }}
@@ -1555,28 +1617,61 @@ export default function PipelinePage() {
             </div>
           ) : (
             <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-              <div
-                className="pipeline-kanban-scroll"
-                style={{
-                  display: "flex",
-                  gap: 12,
-                  flex: 1,
-                  minHeight: 0,
-                  overflowX: "auto",
-                  overflowY: "hidden",
-                  paddingBottom: 4,
-                }}
-              >
-                {KANBAN_VISIBLE_STATUSES.map((status) => (
-                  <KanbanColumn
-                    key={status}
-                    status={status}
-                    clients={grouped[status] ?? []}
-                    draggable={KANBAN_DRAGGABLE_STATUSES.includes(status)}
-                    onClientClick={(c) => setSelected(c)}
-                    onIncrement={handleIncrementProby}
-                    onDragAttempt={() => showToast(LOCKED_DRAG_MESSAGE)}
-                  />
+              <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+                {groupsWithCounts.map((group) => (
+                  <div key={group.key}>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "baseline",
+                        gap: 8,
+                        marginBottom: 8,
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontFamily: "var(--font-sans)",
+                          fontSize: 13,
+                          fontWeight: 700,
+                          color: "var(--text-primary)",
+                          letterSpacing: "-0.01em",
+                        }}
+                      >
+                        {group.label}
+                      </span>
+                      <span
+                        style={{
+                          fontFamily: "var(--font-sans)",
+                          fontSize: 12,
+                          color: "var(--text-tertiary)",
+                        }}
+                      >
+                        {group.count} {pluralKarty(group.count)}
+                        {group.sumPln > 0 ? ` · ${fmtPln(group.sumPln)}` : ""}
+                      </span>
+                    </div>
+                    <div
+                      className="pipeline-kanban-scroll"
+                      style={{
+                        display: "flex",
+                        gap: 12,
+                        overflowX: "auto",
+                        paddingBottom: 4,
+                      }}
+                    >
+                      {group.statuses.map((status) => (
+                        <KanbanColumn
+                          key={status}
+                          status={status}
+                          clients={grouped[status] ?? []}
+                          draggable={KANBAN_DRAGGABLE_STATUSES.includes(status)}
+                          onClientClick={(c) => setSelected(c)}
+                          onIncrement={handleIncrementProby}
+                          onDragAttempt={() => showToast(LOCKED_DRAG_MESSAGE)}
+                        />
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
               <DragOverlay>

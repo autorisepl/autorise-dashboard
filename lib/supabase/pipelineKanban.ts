@@ -37,3 +37,37 @@ export const KANBAN_DRAGGABLE_STATUSES: string[] = [
   "Wdrożenie",
   "Retainer",
 ];
+
+export interface KanbanGroup {
+  key: string;
+  label: string;
+  statuses: string[];
+}
+
+// Kanban 2026-08-24: kolumny statusu pogrupowane w poziome sekcje wg makro-etapu procesu,
+// sekcje ułożone pionowo jedna pod drugą, posortowane w UI wg liczby kart malejąco (najwięcej
+// kart na górze) — nie sztywna kolejność, przeliczana na żywo z danych. Suma zbiorów statusów
+// w KANBAN_GROUPS musi pokrywać się 1:1 z KANBAN_VISIBLE_STATUSES (żaden status nie zostaje
+// bez grupy, żaden nie duplikuje się w dwóch grupach).
+export const KANBAN_GROUPS: KanbanGroup[] = [
+  {
+    key: "sprzedaz",
+    label: "Kwalifikacja i sprzedaż",
+    statuses: ["Nowy lead", "Kwalifikacja", "Discovery umówione", "Finalizacja"],
+  },
+  {
+    key: "wdrozenie",
+    label: "Wdrożenie",
+    statuses: ["Kickoff", "Wdrożenie"],
+  },
+  {
+    key: "retainer",
+    label: "Retainer",
+    statuses: ["Retainer"],
+  },
+  {
+    key: "nieaktywne",
+    label: "Nieaktywne",
+    statuses: ["Niekwalifikowany", "Nieaktywny (follow up)"],
+  },
+];
