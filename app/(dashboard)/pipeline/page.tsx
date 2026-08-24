@@ -22,6 +22,7 @@ import {
   Phone,
   Radio,
   RefreshCw,
+  UserX,
   X,
 } from "lucide-react";
 import type { CSSProperties } from "react";
@@ -220,6 +221,16 @@ function ClientCard({
             flexShrink: 0,
           }}
         />
+        {/* Ikona przekreślonego użytkownika dla utraconych leadów — feedback 2026-08-24.
+            Świadomie NIE przenosimy karty do osobnej grupy/kolumny: lead może zostać utracony
+            na dowolnym etapie (Nowy lead równie dobrze jak Finalizacja), a status realnie
+            pokazuje GDZIE odpadł — to cenna informacja, którą zbiorcza "grupa utraconych"
+            by zgubiła. Filtr "Utracone (N)" w headerze już realizuje "oddzielną listę"
+            (domyślnie ukryte, jeden przełącznik pokazuje wszystkie) — ta ikona to dodatkowy,
+            natychmiastowy sygnał wizualny, gdy filtr jest włączony. */}
+        {client.utracony && (
+          <UserX size={14} strokeWidth={2.5} color="var(--error-text)" style={{ flexShrink: 0 }} />
+        )}
         <div
           style={{
             fontFamily: "var(--font-sans)",
@@ -460,7 +471,10 @@ function KanbanColumn({
         flexShrink: 0,
       }}
     >
-      {/* Column header */}
+      {/* Column header — etykieta statusu jako kolorowa plakietka (kolor z STATUS_COLORS,
+          ten sam co kropka na karcie/badge ICP), nie płaski szary tekst (feedback 2026-08-24:
+          "żeby się znacząco wyróżniało, ale pasowało do wszystkiego" — reużywa istniejący
+          system kolorów statusów zamiast nowej palety). */}
       <div
         style={{
           padding: "6px 10px 8px",
@@ -471,24 +485,37 @@ function KanbanColumn({
         }}
       >
         <div
-          style={{ width: 9, height: 9, borderRadius: "50%", background: color, flexShrink: 0 }}
-        />
-        <span
           style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: 13,
-            fontWeight: 700,
-            color: "var(--text-primary)",
-            letterSpacing: "0.02em",
-            textTransform: "uppercase",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "4px 9px",
+            borderRadius: "var(--radius-sm)",
+            background: `${color}26`,
+            border: `1px solid ${color}70`,
             flex: 1,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
+            minWidth: 0,
           }}
         >
-          {status}
-        </span>
+          <div
+            style={{ width: 7, height: 7, borderRadius: "50%", background: color, flexShrink: 0 }}
+          />
+          <span
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 12,
+              fontWeight: 800,
+              color,
+              letterSpacing: "0.02em",
+              textTransform: "uppercase",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {status}
+          </span>
+        </div>
         <span
           style={{
             fontFamily: "var(--font-sans)",
@@ -523,8 +550,9 @@ function KanbanColumn({
       {/* Cards — wysokość STAŁA (nie max-height zależny od zawartości), żeby wszystkie kolumny
           w rzędzie miały identyczną wysokość niezależnie od liczby kart (feedback 2026-08-24:
           kolumna z 40 kartami rozjeżdżała cały rząd względem sąsiadów z 0-1 kartą). Mieści
-          dokładnie ~2 karty, dalej scroll wewnętrzny. Droppable gdy kolumna jest częścią grupy
-          przeciągalnej. */}
+          2 PEŁNE karty bez przycięcia (nawet z e-mailem/telefonem/plakietką Test/Utracony —
+          najbardziej rozbudowany realny wariant), reszta scrolluje. Droppable gdy kolumna jest
+          częścią grupy przeciągalnej. */}
       <div
         className="pipeline-kanban-scroll"
         ref={draggable ? setNodeRef : undefined}
@@ -533,7 +561,7 @@ function KanbanColumn({
           flexDirection: "column",
           gap: 6,
           overflowY: "auto",
-          height: 238,
+          height: 310,
           paddingRight: 2,
           paddingBottom: 4,
           borderRadius: "var(--radius-sm)",
@@ -830,7 +858,10 @@ function ClientPanel({
         </button>
       </div>
 
-      <div style={{ padding: "14px 16px", flex: 1, overflowY: "auto" }}>
+      <div
+        className="pipeline-kanban-scroll"
+        style={{ padding: "14px 16px", flex: 1, overflowY: "auto" }}
+      >
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
           <div
             style={{
@@ -1749,21 +1780,32 @@ export default function PipelinePage() {
           ) : (
             <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
               <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
-                {groupsWithCounts.map((group) => (
+                {groupsWithCounts.map((group, i) => (
                   <div key={group.key}>
+                    {/* Divider między sekcjami grup (nie przed pierwszą) — feedback 2026-08-24,
+                        czytelniejsze rozgraniczenie niż sam odstęp. */}
+                    {i > 0 && (
+                      <div
+                        style={{
+                          height: 1,
+                          background: "rgba(255,255,255,0.15)",
+                          marginBottom: 22,
+                        }}
+                      />
+                    )}
                     <div
                       style={{
                         display: "flex",
                         alignItems: "baseline",
-                        gap: 8,
-                        marginBottom: 8,
+                        gap: 10,
+                        marginBottom: 10,
                       }}
                     >
                       <span
                         style={{
                           fontFamily: "var(--font-sans)",
-                          fontSize: 16,
-                          fontWeight: 700,
+                          fontSize: 20,
+                          fontWeight: 800,
                           color: "var(--text-primary)",
                           letterSpacing: "-0.01em",
                         }}
@@ -1773,8 +1815,8 @@ export default function PipelinePage() {
                       <span
                         style={{
                           fontFamily: "var(--font-sans)",
-                          fontSize: 14,
-                          fontWeight: 500,
+                          fontSize: 15,
+                          fontWeight: 600,
                           color: "var(--text-secondary)",
                         }}
                       >
