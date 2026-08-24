@@ -29,9 +29,10 @@ export function ContactAttemptsBadge({
       }}
     >
       <Phone
-        size={11}
-        color={proby >= 3 ? "var(--error)" : "var(--text-tertiary)"}
-        strokeWidth={2}
+        size={13}
+        color={proby >= 3 ? "var(--error-text)" : "var(--text-primary)"}
+        strokeWidth={2.5}
+        fill="currentColor"
       />
       <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
         {[1, 2, 3].map((n) => (
