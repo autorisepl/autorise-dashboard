@@ -12,13 +12,11 @@ import {
 } from "@dnd-kit/core";
 import {
   ArrowDownAZ,
-  ArrowRight,
   ArrowUpAZ,
   CheckCircle2,
   Clock,
   Copy,
   ExternalLink,
-  LayoutGrid,
   Loader2,
   Phone,
   Radio,
@@ -52,15 +50,15 @@ const PIPELINE_SORT_KEY = "autorise_pipeline_sort_direction";
 // potrzebuje tych samych etykiet dla tabeli czasu bazowego per moduł.
 
 const STATUS_COLORS: Record<string, string> = {
-  "Nowy lead": "var(--accent)",
-  Kwalifikacja: "#9333ea",
+  "Nowy lead": "#3b82f6",
+  Kwalifikacja: "#c026d3",
   "Discovery umówione": "#06b6d4",
-  Finalizacja: "#f59e0b",
+  Niekwalifikowany: "#6b7280",
+  "Nieaktywny (follow up)": "#eab308",
+  Finalizacja: "#f97316",
   Kickoff: "#22c55e",
-  Wdrożenie: "#10b981",
-  Retainer: "#0ea5e9",
-  Niekwalifikowany: "var(--text-tertiary)",
-  "Nieaktywny (follow up)": "var(--warning)",
+  Wdrożenie: "#14b8a6",
+  Retainer: "#e879f9",
   Upsell: "#0ea5e9",
   "Zakończona współpraca": "#7c8a9c",
 };
@@ -104,6 +102,29 @@ function initials(name: string): string {
   return (parts[0][0] + parts[1][0]).toUpperCase();
 }
 
+// "Cytaty klienta" — surowy tekst z jednym wpisem na linię, cytat i adnotacja rozdzielone
+// "|||". Wpis bez separatora (starsze dane sprzed tego formatu) wyświetla się jako sam cytat,
+// bez adnotacji, zamiast znikać albo wywalać się na parsowaniu.
+function parseCytaty(raw: string): { cytat: string; adnotacja: string }[] {
+  return raw
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const [cytat, adnotacja = ""] = line.split("|||").map((s) => s.trim());
+      return { cytat, adnotacja };
+    });
+}
+
+// "Uwagi Agenta 1/2" — jedna ściana tekstu z numeracją "1. 2. 3." wewnątrz, bez podziału linii.
+// Rozdziel przed każdym numerem punktu (nie na kropce w ogóle, żeby nie ciąć zdań w środku).
+function parseUwagi(raw: string): string[] {
+  return raw
+    .split(/\s+(?=\d+\.\s)/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 // ── Client card ──────────────────────────────────────────────────────
 
 function ClientCard({
@@ -144,7 +165,7 @@ function ClientCard({
             height: 24,
             borderRadius: "50%",
             background: `${color}22`,
-            border: `1px solid ${color}55`,
+            border: `1px solid ${color}88`,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -354,7 +375,7 @@ function KanbanColumn({
         }}
       >
         <div
-          style={{ width: 7, height: 7, borderRadius: "50%", background: color, flexShrink: 0 }}
+          style={{ width: 9, height: 9, borderRadius: "50%", background: color, flexShrink: 0 }}
         />
         <span
           style={{
@@ -457,6 +478,89 @@ function KanbanColumn({
   );
 }
 
+// Pole tożsamości klienta (Firma/Kontakt/Telefon/E-mail) edytowalne inline — klik przełącza
+// na input, zapis na blur, ten sam wzorzec co Notatka zespołu / Powód utraty.
+function EditableField({
+  label,
+  value,
+  onSave,
+  disabled,
+}: {
+  label: string;
+  value: string;
+  onSave: (next: string) => void;
+  disabled: boolean;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+
+  useEffect(() => {
+    setDraft(value);
+  }, [value]);
+
+  const commit = () => {
+    setEditing(false);
+    if (draft !== value) onSave(draft);
+  };
+
+  return (
+    <div>
+      <div
+        style={{
+          fontSize: 10,
+          fontWeight: 600,
+          letterSpacing: "0.07em",
+          textTransform: "uppercase",
+          color: "var(--text-tertiary)",
+          marginBottom: 3,
+          fontFamily: "var(--font-sans)",
+        }}
+      >
+        {label}
+      </div>
+      {editing ? (
+        <input
+          autoFocus
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+          }}
+          disabled={disabled}
+          style={{
+            width: "100%",
+            padding: "3px 6px",
+            margin: "-3px -6px",
+            borderRadius: "var(--radius-xs)",
+            border: "1px solid var(--accent-border)",
+            background: "var(--bg-elevated)",
+            fontSize: 13,
+            color: "var(--text-primary)",
+            fontFamily: "var(--font-sans)",
+            boxSizing: "border-box",
+          }}
+        />
+      ) : (
+        <div
+          onClick={() => !disabled && setEditing(true)}
+          style={{
+            fontSize: 13,
+            color: value ? "var(--text-primary)" : "var(--text-placeholder)",
+            fontFamily: "var(--font-sans)",
+            cursor: disabled ? "default" : "text",
+            padding: "3px 6px",
+            margin: "-3px -6px",
+            borderRadius: "var(--radius-xs)",
+          }}
+        >
+          {value || "—"}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Side panel ───────────────────────────────────────────────────────
 
 function ClientPanel({
@@ -541,17 +645,24 @@ function ClientPanel({
     }
   };
 
-  const notatkiJakosciowe = [
-    { label: "Cytaty klienta", value: client.cytatyKlienta },
-    { label: "Uwagi Agenta 1", value: client.uwagiAgenta1 },
-    { label: "Uwagi Agenta 2", value: client.uwagiFAgent2 },
-  ].filter((n) => n.value);
+  // Pola tożsamości (Firma/Kontakt/Telefon/E-mail) edytowalne inline przez EditableField —
+  // jeden generyczny zapis, pole PATCH nazwane 1:1 jak klucz body /api/notion/pipeline-update.
+  const saveField = (field: "firma" | "kontakt" | "telefon" | "email", value: string) => {
+    setSaving(true);
+    fetch("/api/notion/pipeline-update", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pageId: client.id, [field]: value }),
+    })
+      .then(() => onUpdated())
+      .finally(() => setSaving(false));
+  };
+
+  const cytaty = client.cytatyKlienta ? parseCytaty(client.cytatyKlienta) : [];
+  const uwagiAgenta1 = client.uwagiAgenta1 ? parseUwagi(client.uwagiAgenta1) : [];
+  const uwagiAgenta2 = client.uwagiFAgent2 ? parseUwagi(client.uwagiFAgent2) : [];
 
   const rows = [
-    { label: "Firma", value: client.firma },
-    { label: "Kontakt", value: client.kontakt },
-    { label: "Telefon", value: client.telefon },
-    { label: "E-mail", value: client.email },
     { label: "NIP", value: client.nip },
     { label: "Status", value: client.status },
     { label: "Ocena ICP", value: client.ocenaICP },
@@ -803,10 +914,10 @@ function ClientPanel({
           </div>
         </div>
 
-        {/* Notatki jakościowe — Cytaty klienta / Uwagi Agenta 1 / Uwagi Agenta 2, dotąd
-            zapisywane wyłącznie do Notion bez żadnego miejsca do przeczytania ich w
-            dashboardzie. Widoczne od razu, nie wymaga scrollowania w typowej karcie. */}
-        {notatkiJakosciowe.length > 0 && (
+        {/* Cytaty klienta — pary [cytat, adnotacja] rozdzielone "|||", każda para osobnym
+            blokiem (cytat wyróżniony lewym borderem, adnotacja pod nim drugorzędnym tekstem).
+            Dotąd renderowane jako jedna ściana surowego tekstu. */}
+        {cytaty.length > 0 && (
           <div style={{ marginBottom: 16 }}>
             <div
               style={{
@@ -819,45 +930,108 @@ function ClientPanel({
                 fontFamily: "var(--font-sans)",
               }}
             >
-              Notatki jakościowe
+              Cytaty klienta
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {notatkiJakosciowe.map((n) => (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {cytaty.map((c, i) => (
                 <div
-                  key={n.label}
-                  style={{
-                    padding: "8px 10px",
-                    borderRadius: "var(--radius-xs)",
-                    background: "var(--bg-elevated)",
-                    border: "1px solid var(--border)",
-                  }}
+                  key={`${i}-${c.cytat.slice(0, 20)}`}
+                  style={{ borderLeft: "2px solid var(--accent-border)", paddingLeft: 8 }}
                 >
                   <div
                     style={{
-                      fontSize: 10,
-                      fontWeight: 600,
-                      color: "var(--text-tertiary)",
-                      marginBottom: 3,
-                      fontFamily: "var(--font-sans)",
-                    }}
-                  >
-                    {n.label}
-                  </div>
-                  <div
-                    style={{
                       fontSize: 12,
+                      fontStyle: "italic",
                       color: "var(--text-primary)",
                       fontFamily: "var(--font-sans)",
-                      whiteSpace: "pre-wrap",
                     }}
                   >
-                    {n.value}
+                    „{c.cytat}”
                   </div>
+                  {c.adnotacja && (
+                    <div
+                      style={{
+                        fontSize: 11,
+                        color: "var(--text-tertiary)",
+                        marginTop: 2,
+                        fontFamily: "var(--font-sans)",
+                      }}
+                    >
+                      {c.adnotacja}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
           </div>
         )}
+
+        {/* Uwagi Agenta 1/2 — rozdzielone na osobne punkty (dotąd jedna ściana tekstu z
+            numeracją "1. 2. 3." wewnątrz, bez podziału linii). */}
+        {[
+          { label: "Uwagi Agenta 1", points: uwagiAgenta1 },
+          { label: "Uwagi Agenta 2", points: uwagiAgenta2 },
+        ]
+          .filter((s) => s.points.length > 0)
+          .map((section) => (
+            <div key={section.label} style={{ marginBottom: 16 }}>
+              <div
+                style={{
+                  fontSize: 10,
+                  fontWeight: 600,
+                  letterSpacing: "0.07em",
+                  textTransform: "uppercase",
+                  color: "var(--text-tertiary)",
+                  marginBottom: 6,
+                  fontFamily: "var(--font-sans)",
+                }}
+              >
+                {section.label}
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {section.points.map((point, i) => (
+                  <div
+                    key={`${section.label}-${i}`}
+                    style={{
+                      fontSize: 12,
+                      color: "var(--text-primary)",
+                      fontFamily: "var(--font-sans)",
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {point}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 12 }}>
+          <EditableField
+            label="Firma"
+            value={client.firma}
+            onSave={(v) => saveField("firma", v)}
+            disabled={saving}
+          />
+          <EditableField
+            label="Kontakt"
+            value={client.kontakt}
+            onSave={(v) => saveField("kontakt", v)}
+            disabled={saving}
+          />
+          <EditableField
+            label="Telefon"
+            value={client.telefon}
+            onSave={(v) => saveField("telefon", v)}
+            disabled={saving}
+          />
+          <EditableField
+            label="E-mail"
+            value={client.email}
+            onSave={(v) => saveField("email", v)}
+            disabled={saving}
+          />
+        </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {rows.map(({ label, value }) => (
@@ -949,26 +1123,6 @@ function ClientPanel({
         </div>
 
         <div style={{ marginTop: 20, display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <a
-            href={`https://notion.so/${client.id.replace(/-/g, "")}`}
-            target="_blank"
-            rel="noreferrer"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 5,
-              fontSize: 12,
-              color: "var(--text-secondary)",
-              textDecoration: "none",
-              padding: "6px 10px",
-              border: "1px solid var(--border)",
-              borderRadius: "var(--radius-xs)",
-              fontFamily: "var(--font-sans)",
-            }}
-          >
-            <ArrowRight size={12} />
-            Otwórz w Notion
-          </a>
           <a
             href={`/prezentacja.html?id=${encodeURIComponent(client.id)}`}
             target="_blank"
@@ -1215,7 +1369,7 @@ export default function PipelinePage() {
       }}
     >
       {/* Header */}
-      <PageHeader icon={<LayoutGrid size={15} color="var(--accent)" />} title="Pipeline">
+      <PageHeader icon={null} title="Pipeline">
         {!loading && (
           <span
             style={{

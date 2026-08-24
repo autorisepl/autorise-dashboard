@@ -24,6 +24,7 @@ const bodySchema = z.object({
   firma: z.string().optional(),
   kontakt: z.string().optional(),
   telefon: z.string().optional(),
+  email: z.string().optional(),
   notatki: z.string().optional(),
   dniDostepow: z.number().nullable().optional(),
   uwagiWarunki: z.string().nullable().optional(),
@@ -81,6 +82,7 @@ export async function PATCH(req: Request) {
         console.warn(`normalizePhonePL: nie udało się znormalizować "${d.telefon}"`);
       columns.telefon = normalized ?? d.telefon;
     }
+    if (d.email !== undefined) columns.email = d.email;
     if (d.notatki !== undefined) columns.notatki = d.notatki;
     if (d.dniDostepow !== undefined) columns.warunki_umowy_dni_dostepow = d.dniDostepow;
     if (d.uwagiWarunki !== undefined) columns.warunki_umowy_uwagi = d.uwagiWarunki;
