@@ -1,10 +1,7 @@
-import { Client } from "@notionhq/client";
-import type { PageObjectResponse } from "@notionhq/client/build/src/api-endpoints";
 import { NextResponse } from "next/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
-
-const notion = new Client({ auth: process.env.NOTION_TOKEN });
 
 // Gwarancja to procent czasu bazowego klienta (minimum 70%, patrz AGENT1_SYSTEM_PROMPT i
 // SZKIC_UMOWA_AUTORISE.md §4, wersja umowy 2026-07-24), nie sztywna liczba firmowa — ten sam
@@ -28,25 +25,17 @@ const DNI_ROBOCZE_MC = 21;
 const DOMYSLNA_CENA_WDROZENIA = 18000;
 const DOMYSLNY_RETAINER = 4000;
 
-function extractText(prop: PageObjectResponse["properties"][string] | undefined): string {
-  if (!prop) return "";
-  if (prop.type === "rich_text")
-    return prop.rich_text
-      .map((t) => t.plain_text)
-      .join("")
-      .trim();
-  if (prop.type === "title")
-    return prop.title
-      .map((t) => t.plain_text)
-      .join("")
-      .trim();
-  return "";
-}
-
-function extractNumber(prop: PageObjectResponse["properties"][string] | undefined): number {
-  if (!prop) return 0;
-  if (prop.type === "number") return prop.number ?? 0;
-  return 0;
+interface PrezentacjaRow {
+  firma: string;
+  koszt_problemu_pln_mc: number | null;
+  koszt_roczny_pln_rok: number | null;
+  godziny_wpisywania_spedytor: number | null;
+  spedytorzy: number | null;
+  tms: string | null;
+  cena_wdrozenia: number | null;
+  retainer_pln_mc: number | null;
+  bol_glowny: string | null;
+  czas_bazowy_potwierdzony_h_mc: number | null;
 }
 
 type BolKategoria = "dokumenty" | "tms" | "komunikacja" | "widocznosc" | null;
@@ -72,19 +61,32 @@ export async function GET(req: Request) {
   }
 
   try {
-    const page = (await notion.pages.retrieve({ page_id: id })) as PageObjectResponse;
-    const props = page.properties;
+    const supabase = createAdminClient();
+    const { data: row, error } = await supabase
+      .from("pipeline")
+      .select(
+        "firma, koszt_problemu_pln_mc, koszt_roczny_pln_rok, godziny_wpisywania_spedytor, spedytorzy, tms, cena_wdrozenia, retainer_pln_mc, bol_glowny, czas_bazowy_potwierdzony_h_mc",
+      )
+      .eq("id", id)
+      .maybeSingle<PrezentacjaRow>();
 
-    const firma = extractText(props["Firma"]);
-    const kosztMiesiecznie = extractNumber(props["Koszt problemu PLN/mc"]);
-    const kosztRoczny = extractNumber(props["Koszt roczny PLN/rok"]);
-    const godzinyDziennie = extractNumber(props["Godziny wpisywania / spedytor"]);
-    const spedytorzy = extractNumber(props["Spedytorzy"]);
-    const tms = extractText(props["TMS"]);
-    const cenaWdrozenia = extractNumber(props["Cena wdrożenia"]);
-    const retainer = extractNumber(props["Retainer PLN/mc"]);
-    const bolGlowny = extractText(props["Ból główny"]);
-    const czasBazowyPotwierdzony = extractNumber(props["Czas bazowy potwierdzony h/mc"]);
+    if (error) {
+      return NextResponse.json({ znaleziono: false, error: error.message }, { status: 500 });
+    }
+    if (!row) {
+      return NextResponse.json({ znaleziono: false });
+    }
+
+    const firma = row.firma ?? "";
+    const kosztMiesiecznie = row.koszt_problemu_pln_mc ?? 0;
+    const kosztRoczny = row.koszt_roczny_pln_rok ?? 0;
+    const godzinyDziennie = row.godziny_wpisywania_spedytor ?? 0;
+    const spedytorzy = row.spedytorzy ?? 0;
+    const tms = row.tms ?? "";
+    const cenaWdrozenia = row.cena_wdrozenia ?? 0;
+    const retainer = row.retainer_pln_mc ?? 0;
+    const bolGlowny = row.bol_glowny ?? "";
+    const czasBazowyPotwierdzony = row.czas_bazowy_potwierdzony_h_mc ?? 0;
 
     // roi = h/mc CAŁEGO biura, nie surowa wartość dzienna na osobę (patrz stała
     // DNI_ROBOCZE_MC wyżej). Brak "Spedytorzy" w Notion nie może cicho wyzerować
@@ -150,12 +152,7 @@ export async function GET(req: Request) {
       ostrzezenie,
     });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Błąd Notion";
-    // notion.pages.retrieve rzuca dla nieistniejącego/niedostępnego id — traktuj jako "nie znaleziono",
-    // nie jako błąd serwera, żeby frontend mógł cicho przełączyć się na fallback.
-    if (msg.toLowerCase().includes("could not find") || msg.toLowerCase().includes("not found")) {
-      return NextResponse.json({ znaleziono: false });
-    }
+    const msg = err instanceof Error ? err.message : "Błąd Supabase";
     return NextResponse.json({ znaleziono: false, error: msg }, { status: 500 });
   }
 }
