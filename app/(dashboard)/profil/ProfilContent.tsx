@@ -89,6 +89,13 @@ const AUTH_ERROR_LABELS: Record<string, string> = {
   redirect_uri_mismatch: "Niezgodność adresu przekierowania. Sprawdź konfigurację OAuth.",
   invalid_grant:
     "Kod autoryzacji wygasł lub został już użyty. Kliknij Połącz z Google jeszcze raz, bez cofania się w przeglądarce.",
+  // Zdiagnozowane 2026-08-25 z logów błędów Vercel (get_runtime_errors): "The provided
+  // client secret is invalid" — GOOGLE_CLIENT_SECRET w env produkcyjnym nie zgadza się
+  // z GOOGLE_CLIENT_ID (albo sekret został zrotowany w Google Cloud Console po stronie
+  // dostawcy). To NIE jest problem po stronie usera ani kodu tej strony — do naprawy
+  // wyłącznie przez zaktualizowanie zmiennej w Vercel + redeploy.
+  invalid_client:
+    "Błąd konfiguracji po stronie Autorise: nieprawidłowy sekret OAuth Google (nie Twoja wina). Zgłoszone do zespołu.",
 };
 
 function StatusBanner() {
