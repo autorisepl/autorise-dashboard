@@ -559,7 +559,12 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
             flexShrink: 0,
           }}
         >
-          <UserCircle2 size={22} color="var(--brand-blue-text)" fill="currentColor" strokeWidth={1.3} />
+          <UserCircle2
+            size={22}
+            color="var(--brand-blue-text)"
+            fill="currentColor"
+            strokeWidth={1.3}
+          />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
