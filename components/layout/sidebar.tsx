@@ -117,6 +117,23 @@ function useSessionTimerLabel(): string | null {
   return `Sesja ${h}h ${m}m`;
 }
 
+// ── Name formatting ─────────────────────────────────────────────────
+
+// team_display_name w Supabase to wolny tekst wpisany ręcznie przy zakładaniu konta —
+// bez gwarancji wielkości liter ("michał roth", "MICHAŁ ROTH"). Wyświetlamy zawsze z
+// wielkiej litery każdego słowa, nie zmieniając wartości w bazie. toLocaleUpperCase/
+// LowerCase("pl-PL") zamiast zwykłego toUpperCase — poprawne traktowanie ą/ę/ł/ż itd.
+function toDisplayName(name: string): string {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .map(
+      (word) =>
+        word.charAt(0).toLocaleUpperCase("pl-PL") + word.slice(1).toLocaleLowerCase("pl-PL"),
+    )
+    .join(" ");
+}
+
 // ── Role ────────────────────────────────────────────────────────────
 
 const SETTER_VISIBLE_HREFS = [
@@ -129,45 +146,53 @@ const SETTER_VISIBLE_HREFS = [
 
 // ── Nav structure ───────────────────────────────────────────────────
 
-// A2 (2026-07-16): redesign 3-grupowy wg context/PLAN_CLAUDE_CODE.md. Zakładka
-// "Pliki" usunięta (strona zostaje w kodzie, nielinkowana — ten sam wzorzec co
-// wcześniej /sesje i /analiza-narzedzi). "Agenci AI" i "Zadania" NIE są wymienione
-// w literalnej liście planu (Organizacja/Klienci/Wiedza i proces) — to realne
-// codzienne funkcje, nie osierocone strony jak Pliki, więc świadomie zachowane
-// i dopisane do najbliższej pasującej grupy zamiast po cichu usunięte; odstępstwo
-// zgłoszone w AUTORISE_SESSION_LOG.md zamiast czekać bezczynnie na potwierdzenie.
+// Runda 2 (2026-08-25, Michał: "mega bałagan i bez sensu"): stary podział 3-grupowy
+// mieszał w "Klienci" siedem niepowiązanych rzeczy (kwalifikacja, sprzedaż, wdrożenie,
+// utrzymanie, agenci, prezentacja, transkrypcja). Nowy podział 4-grupowy wg FAZY pracy,
+// nie wg tego "kto/co to jest":
+// - Klienci: przegląd i praca z klientem PO sprzedaży (pipeline jako punkt wejścia).
+// - Spotkania: narzędzia używane W TRAKCIE rozmowy z klientem (kwalifikacja, sprzedaż,
+//   prezentacja pokazywana na żywo, nagrywarka/transkrypcja tej samej rozmowy) — dokładnie
+//   grupa, o którą prosił Michał wprost.
+// - Organizacja: wewnętrzne metryki/planowanie/monitoring, nie dotyczy jednego klienta.
+// - Wiedza: statyczne materiały referencyjne (brand book, karta frameworku sprzedażowego).
 const NAV: {
   label: string;
   items: { href: string; label: string; icon: React.ElementType; exact?: boolean }[];
 }[] = [
   {
-    label: "Organizacja",
-    items: [
-      { href: "/pipeline", label: "Pipeline", icon: Kanban },
-      { href: "/statystyki", label: "Statystyki", icon: TrendingUp },
-      { href: "/planowanie", label: "Planowanie", icon: CalendarDays, exact: true },
-      { href: "/kontrola", label: "Kontrola", icon: Monitor },
-      { href: "/brand-book", label: "Brand Book", icon: BookOpen, exact: true },
-    ],
-  },
-  {
     label: "Klienci",
     items: [
-      { href: "/kwalifikacja", label: "Kwalifikacja", icon: Phone },
-      { href: "/sprzedaz", label: "Sprzedaż", icon: Target },
+      { href: "/pipeline", label: "Pipeline", icon: Kanban },
       { href: "/wdrozenie", label: "Wdrożenie", icon: Rocket, exact: true },
       { href: "/utrzymanie", label: "Utrzymanie", icon: LifeBuoy, exact: true },
       { href: "/agenci", label: "Agenci AI", icon: LayoutDashboard, exact: false },
+    ],
+  },
+  {
+    label: "Spotkania",
+    items: [
+      { href: "/kwalifikacja", label: "Kwalifikacja", icon: Phone },
+      { href: "/sprzedaz", label: "Sprzedaż", icon: Target },
       { href: "/prezentacja.html", label: "Prezentacja", icon: Presentation },
       { href: "/narzedzia", label: "Transkrypcja", icon: Mic, exact: true },
     ],
   },
   {
-    label: "Wiedza i proces",
+    label: "Organizacja",
+    items: [
+      { href: "/statystyki", label: "Statystyki", icon: TrendingUp },
+      { href: "/planowanie", label: "Planowanie", icon: CalendarDays, exact: true },
+      { href: "/kontrola", label: "Kontrola", icon: Monitor },
+    ],
+  },
+  {
+    label: "Wiedza",
     items: [
       // Mapa procesów / Baza wiedzy / Analiza narzędzi usunięte z nawigacji (Michał,
       // 2026-08-25) — strony zostają w kodzie nielinkowane, ten sam wzorzec co
       // wcześniej /pliki i /sesje (patrz CLAUDE.md).
+      { href: "/brand-book", label: "Brand Book", icon: BookOpen, exact: true },
       { href: "/agencja", label: "Karta (Agency Leaders)", icon: Users },
     ],
   },
@@ -231,10 +256,11 @@ function NavItem({
           <span
             style={{
               fontFamily: "var(--font-sans)",
-              fontSize: 13,
-              fontWeight: isActive ? 600 : hovered ? 500 : 400,
+              fontSize: 12.5,
+              fontWeight: isActive ? 700 : hovered ? 600 : 500,
               color: "#ffffff",
-              letterSpacing: "-0.01em",
+              textTransform: "uppercase",
+              letterSpacing: "0.03em",
               flex: 1,
               transition: "color 120ms",
               whiteSpace: "nowrap",
@@ -267,6 +293,8 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
   const role = identity?.role ?? null;
   const sessionLabel = useSessionTimerLabel();
   const [loggingOut, setLoggingOut] = useState(false);
+  const [settingsHovered, setSettingsHovered] = useState(false);
+  const [logoutHovered, setLogoutHovered] = useState(false);
 
   const handleLogout = async () => {
     if (loggingOut) return;
@@ -570,22 +598,26 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
               marginBottom: 4,
             }}
           >
-            {identity?.displayName ?? "Nieznany użytkownik"}
+            {identity ? toDisplayName(identity.displayName) : "Nieznany użytkownik"}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap" }}>
             {role && (
+              // Runda 2 (Michał: "musi być białą czcionką na tym niebieskim tle, tak jak
+              // stopnie w pogodzie") — samo tło/border zostają z ROLE_COLORS (ten sam
+              // przezroczysty tint co plakietka pogody), ale tekst zawsze biały zamiast
+              // wyblakłego koloru per rola, i trochę większa plakietka.
               <span
                 style={{
                   fontFamily: "var(--font-sans)",
-                  fontSize: 10,
+                  fontSize: 11,
                   fontWeight: 700,
                   textTransform: "uppercase",
                   letterSpacing: "0.04em",
-                  color: ROLE_COLORS[role].text,
+                  color: "#ffffff",
                   background: ROLE_COLORS[role].bg,
                   border: `1px solid ${ROLE_COLORS[role].border}`,
                   borderRadius: 999,
-                  padding: "2px 7px",
+                  padding: "3px 9px",
                   flexShrink: 0,
                 }}
               >
@@ -593,9 +625,13 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
               </span>
             )}
             {sessionLabel && (
-              // Ten sam ciężar wizualny co "ZAKTUALIZOWANO" w bloku deployu (Michał:
-              // "sesja jest mega do dupy, zrobiłbym to tak jak ZAKTUALIZOWANO") — pogrubiony
-              // biały wersalik zamiast wyblakłej szarej plakietki.
+              // Ten sam ciężar wizualny co "ZAKTUALIZOWANO" w bloku deployu — pogrubiony
+              // biały wersalik. Runda 2 (Michał: "napis SESJA musi być widoczny, ikonka
+              // wypełniona tak jak wszystkie"): etykieta "Sesja" nie jest już wycinana
+              // (textTransform:uppercase renderuje ją jako "SESJA"), a Clock — jak każda
+              // wielościeżkowa ikona Lucide w tym pliku — "wypełniona" przez bardzo gruby
+              // stroke zamiast fill (fill gubiłby wskazówki zegara, patrz komentarz przy
+              // NavItem), nie przez dosłowne fill, które by ją rozwaliło.
               <span
                 style={{
                   display: "inline-flex",
@@ -613,8 +649,8 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
                   textOverflow: "ellipsis",
                 }}
               >
-                <Clock size={12} strokeWidth={2.4} style={{ flexShrink: 0 }} />
-                {sessionLabel.replace("Sesja ", "")}
+                <Clock size={13} strokeWidth={2.75} style={{ flexShrink: 0 }} />
+                {sessionLabel}
               </span>
             )}
           </div>
@@ -623,6 +659,8 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
           href="/profil"
           onClick={onNavigate}
           title="Ustawienia konta"
+          onMouseEnter={() => setSettingsHovered(true)}
+          onMouseLeave={() => setSettingsHovered(false)}
           style={{
             display: "flex",
             alignItems: "center",
@@ -631,6 +669,8 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
             height: 28,
             borderRadius: 6,
             flexShrink: 0,
+            background: settingsHovered ? "var(--bg-hover)" : "transparent",
+            transition: "background 120ms",
             color: "#ffffff",
           }}
         >
@@ -641,6 +681,8 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
           onClick={() => void handleLogout()}
           disabled={loggingOut}
           title="Wyloguj"
+          onMouseEnter={() => setLogoutHovered(true)}
+          onMouseLeave={() => setLogoutHovered(false)}
           style={{
             display: "flex",
             alignItems: "center",
@@ -649,14 +691,15 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
             height: 28,
             borderRadius: 6,
             flexShrink: 0,
-            background: "transparent",
+            background: logoutHovered && !loggingOut ? "var(--error-bg)" : "transparent",
             border: "none",
             cursor: loggingOut ? "default" : "pointer",
             color: "var(--error-text)",
             opacity: loggingOut ? 0.5 : 1,
+            transition: "background 120ms",
           }}
         >
-          <LogOut size={16} strokeWidth={1.8} />
+          <LogOut size={17} strokeWidth={2.2} />
         </button>
       </div>
     </aside>
