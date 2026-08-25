@@ -13,6 +13,7 @@
     href="https://fonts.gstatic.com/s/robotomono/v31/L0x5DF4xlVMF-BfR8bXMIjhLq3-cXbKD.woff2">
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.15.0/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.15.0/CustomEase.min.js"></script>
@@ -81,6 +82,36 @@
       height: 100%; overflow: hidden;
       font-family: var(--font); background: var(--bg-soft); color: var(--text-primary);
     }
+
+    /* ── Slajd 1: ciemny motyw dashboardu (tokeny zgodne z app/globals.css), scoped do
+         #s1 wyłącznie — reszta slajdów zostaje na starym jasnym motywie do osobnej rundy. ── */
+    #s1 {
+      --bg: #17181b;
+      --bg-elevated: #201f23;
+      --border: rgba(255, 255, 255, 0.08);
+      --text-primary: #eeeae4;
+      --text-secondary: #b8b4ad;
+      --accent: #4379b1;
+      --accent-text: #7db8f0;
+      --accent-muted: rgba(67, 121, 177, 0.16);
+      --accent-border: rgba(67, 121, 177, 0.35);
+      --font-sans: 'Roboto', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg);
+      font-family: var(--font-sans);
+    }
+    #s1 .si { color: var(--text-primary); }
+    #s1 .tag { color: var(--accent-text); background: var(--accent-muted); border-color: var(--accent-border); }
+    #s1 .h1 { color: var(--text-primary); }
+    #s1 .blue { color: var(--accent); }
+    #s1 .sub { color: var(--text-secondary); }
+    #s1 .grid2 { grid-auto-rows: 1fr; }
+    #s1 .card {
+      background: var(--bg-elevated); border-color: var(--border); box-shadow: none;
+      display: flex; flex-direction: column; padding: 22px 24px; gap: 5px;
+    }
+    #s1 .c-icon { background: var(--bg); border: 1px solid var(--border); color: var(--text-secondary); margin-bottom: 10px; }
+    #s1 .c-title { color: var(--text-primary); }
+    #s1 .c-desc { color: var(--text-secondary); }
 
     /* ── Progress (element sygnaturowy) ── */
     #progress {
@@ -492,52 +523,37 @@
   <div class="slide" id="s1">
     <div class="si">
       <div class="tag ai" style="--i:0">01 · Problem</div>
-      <h1 class="h1 h1-hero ai" style="--i:1">Transport ręczny<br><span class="blue">kosztuje więcej,<br>niż myślisz.</span></h1>
-      <p class="sub ai" style="--i:2">Każdy spedytor codziennie traci czas na zadania, które może wykonać automat.</p>
+      <h1 class="h1 ai" style="--i:1">Od zlecenia do właściciela, wszystko dzieje się <span class="blue">ręcznie.</span></h1>
+      <p class="sub ai" style="--i:2">Cztery miejsca w firmie transportowej, gdzie ręczna praca kosztuje najwięcej czasu i pieniędzy.</p>
 
       <div class="grid2 ai" style="--i:3">
         <div class="card">
-          <div class="c-icon ic-warn">
-            <iconify-icon icon="tabler:clock"></iconify-icon>
+          <div class="c-icon">
+            <iconify-icon icon="tabler:edit"></iconify-icon>
           </div>
-          <div class="c-title">Manualne wpisywanie</div>
-          <p class="c-desc"><strong class="val-roi" style="color:var(--navy)">–</strong> h na spedytora miesięcznie przepada na ręczne wprowadzanie danych do systemu</p>
-        </div>
-        <div class="card">
-          <div class="c-icon ic-red">
-            <iconify-icon icon="tabler:file-invoice"></iconify-icon>
-          </div>
-          <div class="c-title">Opóźnione faktury</div>
-          <p class="c-desc"><strong class="val-bol" style="color:var(--navy)">–</strong> PLN rocznie zablokowane przez błędy i opóźnienia fakturowania</p>
-        </div>
-        <div class="card">
-          <div class="c-icon ic-red">
-            <iconify-icon icon="tabler:alert-triangle"></iconify-icon>
-          </div>
-          <div class="c-title">Błędy ludzkie</div>
-          <p class="c-desc">Każdy ręczny wpis to ryzyko. Literówka, zły numer, brakująca pozycja na fakturze.</p>
+          <div class="c-title">Ręczne wpisywanie zleceń</div>
+          <p class="c-desc">Spedytor ręcznie przepisuje każde zlecenie do TMS, jedno po drugim, cały dzień.</p>
         </div>
         <div class="card">
           <div class="c-icon">
-            <iconify-icon icon="tabler:eye"></iconify-icon>
+            <iconify-icon icon="tabler:file-invoice"></iconify-icon>
           </div>
-          <div class="c-title">Brak widoczności</div>
-          <p class="c-desc">Nie wiadomo co się dzieje z ładunkami, dopóki klient sam nie zadzwoni i nie zapyta.</p>
+          <div class="c-title">Dokumenty rozrzucone wszędzie</div>
+          <p class="c-desc">Spedytor szuka CMR i faktury w mailu i na WhatsAppie, żeby ręcznie dopiąć je do zlecenia.</p>
         </div>
-      </div>
-
-      <div class="donut-row ai" style="--i:5">
-        <svg width="76" height="76" viewBox="0 0 76 76">
-          <circle cx="38" cy="38" r="28" fill="none" stroke="var(--line)" stroke-width="9"/>
-          <circle cx="38" cy="38" r="28" fill="none" stroke="var(--blue)" stroke-width="9"
-            stroke-dasharray="109 176" stroke-linecap="round" transform="rotate(-90 38 38)"/>
-          <text x="38" y="43" text-anchor="middle" font-family="Roboto Mono,monospace" font-size="14" font-weight="700" fill="#0B1F3A">62%</text>
-        </svg>
-        <div>
-          <div style="font-size:15px;font-weight:700;color:var(--navy);">62% firm transportowych</div>
-          <div style="font-size:14px;color:var(--text-secondary);line-height:1.5;margin-top:3px;">
-            traci ponad <strong class="val-bol" style="color:var(--error)">–</strong> PLN rocznie<br>przez nieefektywność operacyjną
+        <div class="card">
+          <div class="c-icon">
+            <iconify-icon icon="tabler:bell"></iconify-icon>
           </div>
+          <div class="c-title">Klient dzwoni pierwszy</div>
+          <p class="c-desc">Zleceniodawca dzwoni z pytaniem o status, bo nikt go nie powiadomił, że coś ruszyło.</p>
+        </div>
+        <div class="card">
+          <div class="c-icon">
+            <iconify-icon icon="tabler:chart-dots-3"></iconify-icon>
+          </div>
+          <div class="c-title">Obraz firmy w kawałkach</div>
+          <p class="c-desc">Dane spływają do właściciela od kilku różnych osób, w rozsypce, nigdy z jednego miejsca.</p>
         </div>
       </div>
     </div>
