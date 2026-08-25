@@ -227,12 +227,7 @@ function NavItem({
           {/* Ikony zawsze białe i pogrubione (decyzja Michała 2026-08-25) — nie tylko w
               stanie aktywnym/hover, całe menu ma czytać się jako "wypełnione" białe glify,
               hierarchię aktywne/nieaktywne niesie teraz wyłącznie tło i kolor etykiety. */}
-          <Icon
-            size={15}
-            color="var(--text-primary)"
-            strokeWidth={2.2}
-            style={{ flexShrink: 0 }}
-          />
+          <Icon size={15} color="var(--text-primary)" strokeWidth={2.2} style={{ flexShrink: 0 }} />
           <span
             style={{
               fontFamily: "var(--font-sans)",
