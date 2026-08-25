@@ -100,34 +100,36 @@
       font-family: var(--font-sans);
     }
     #s1 .si { color: var(--text-primary); }
-    #s1 .tag { color: var(--accent-text); background: var(--accent-muted); border-color: var(--accent-border); }
-    #s1 .h1 { color: var(--text-primary); }
+    /* Runda 3: topper grubszy/bardziej świadomy zamiast domyślnej cienkiej pigułki — grubsza
+       czcionka, mocniejsza obwódka, kreska akcentu po lewej zamiast kropki-separatora "01 · ". */
+    #s1 .tag {
+      color: var(--accent-text); background: var(--accent-muted); border: 1.5px solid var(--accent-border);
+      font-weight: 900; padding: 7px 16px 7px 13px; border-left: 3px solid var(--accent);
+      margin-bottom: 22px;
+    }
+    #s1 .h1 { color: var(--text-primary); margin-bottom: 18px; }
     #s1 .blue { color: var(--accent); }
-    #s1 .sub { color: var(--text-secondary); }
-    #s1 .grid2 { grid-auto-rows: 1fr; }
+    #s1 .sub { color: var(--text-secondary); margin-bottom: 34px; font-size: clamp(17px, 1.7vw, 20px); }
+    #s1 .grid2 { grid-auto-rows: 1fr; gap: 20px; }
     #s1 .card {
-      /* Obwódka podniesiona do rgba(255,255,255,.22) — ten sam przepis co karta klienta w
-         /pipeline (ClientCard), gdzie var(--border) 8% białego okazało się za subtelne na
-         ciemnym tle (feedback 2026-08-24 tamże). Spójny język "widoczna karta" w całym
-         produkcie zamiast dwóch różnych progów kontrastu. */
-      background: var(--bg-elevated); border-color: rgba(255, 255, 255, 0.22); box-shadow: none;
-      display: flex; flex-direction: column; padding: 22px 24px; gap: 5px;
+      /* Runda 3: obwódka wraca do spójnego z resztą systemu języka accent-tinted (var(--border)
+         domyślnie — sam token jest w #s1 dociemniony do neutralnej szarości poniżej — zamiast
+         czystego białego rgba z rundy 2, które nie pasowało do reszty produktu). */
+      background: var(--bg-elevated); border-color: var(--border); box-shadow: none;
+      display: flex; flex-direction: column; padding: 34px 32px; gap: 8px;
     }
     #s1 .c-icon {
-      /* "WYPEŁNIONE (nie tylko obrys)" — plakietka ikony jako pełne kółko w kolorze accent
-         (ten sam wzorzec co awatar użytkownika w sidebarze: pełne wypełnione tło zamiast
-         przezroczystego tintu), nie próba wypełnienia samego glifu SVG — te ikony (tabler,
-         zarejestrowane lokalnie u góry pliku) są rysowane jako pojedyncza obrysowana ścieżka
-         (fill="none" stroke="currentColor"), więc dosłowne wymuszenie fill zgubiłoby kształt
-         (dokładnie ten sam problem opisany przy ikonach nawigacji w components/layout/sidebar.tsx).
-         Większy rozmiar (64px zamiast 48px) + biały glif na kolorowym tle = czytelnie
-         "wypełniona" plakietka bez psucia geometrii ikony. */
-      width: 64px; height: 64px; border-radius: 16px;
-      background: var(--accent); border: none; color: #ffffff; margin-bottom: 12px;
+      /* Runda 3: z powrotem do przezroczystego tintu — ten sam przepis co avatar/plakietki w
+         ClientCard (app/(dashboard)/pipeline/page.tsx): accent-muted tło, accent-border obwódka,
+         sam glif w pełnym nasyconym var(--accent). Płaski wypełniony kwadrat z rundy 2 był
+         osobnym, wymyślonym tylko na ten slajd językiem — to poprawka na wspólny. */
+      width: 68px; height: 68px; border-radius: 18px;
+      background: var(--accent-muted); border: 1px solid var(--accent-border); color: var(--accent);
+      margin-bottom: 16px;
     }
-    #s1 .c-icon iconify-icon { width: 30px; height: 30px; }
-    #s1 .c-title { color: var(--text-primary); }
-    #s1 .c-desc { color: var(--text-secondary); }
+    #s1 .c-icon iconify-icon { width: 32px; height: 32px; }
+    #s1 .c-title { color: var(--text-primary); font-size: 17px; }
+    #s1 .c-desc { color: var(--text-secondary); font-size: 15.5px; line-height: 1.6; }
 
     /* ── Progress (element sygnaturowy) ── */
     #progress {
@@ -506,15 +508,22 @@
       .tl-week { font-size: 8.5px; }
       .tl-label { font-size: 10.5px; }
 
-      /* Slajd 1: #s1 .c-icon/.card mają wyższą specyficzność (ID) niż zwykłe .c-icon/.card
-         powyżej, więc bez tych wpisów desktopowe 64px/22px24px "wygrywałyby" nawet na
-         wąskim ekranie i zderzały treść z logo w rogu (zauważone przy weryfikacji mobile
-         po rundzie 2). */
-      #s1 .c-icon { width: 44px; height: 44px; border-radius: 11px; margin-bottom: 6px; }
-      #s1 .c-icon iconify-icon { width: 21px; height: 21px; }
-      #s1 .card { padding: 12px 14px; }
-      #s1 .si { padding-bottom: 46px; }
-      #s1-logo { height: 18px; bottom: 8px; }
+      /* Slajd 1: #s1 .c-icon/.card/.tag/.sub/.grid2 mają wyższą specyficzność (ID) niż zwykłe
+         odpowiedniki powyżej, więc bez tych wpisów desktopowe wymiary/odstępy z rundy 3
+         (68px ikony, 34px padding kart, 34px margines pod podnagłówkiem, 20px gap gridu)
+         "wygrywałyby" nawet na wąskim ekranie i wypychały treść poza widoczny, nieprzewijalny
+         obszar slajdu (tekst 3-4 karty ucięty, zauważone przy weryfikacji mobile po rundzie 3). */
+      #s1 .tag { margin-bottom: 10px; }
+      #s1 .h1 { margin-bottom: 8px; }
+      #s1 .sub { margin-bottom: 12px; }
+      #s1 .grid2 { gap: 8px; }
+      #s1 .c-icon { width: 40px; height: 40px; border-radius: 10px; margin-bottom: 6px; }
+      #s1 .c-icon iconify-icon { width: 19px; height: 19px; }
+      #s1 .card { padding: 12px 14px; gap: 3px; }
+      #s1 .c-title { font-size: 14px; }
+      #s1 .c-desc { font-size: 13px; line-height: 1.5; }
+      #s1 .si { padding-bottom: 40px; }
+      #s1-logo { height: 16px; bottom: 8px; }
     }
   </style>
 </head>
