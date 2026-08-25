@@ -2,14 +2,11 @@
 
 import { motion } from "framer-motion";
 import {
-  BarChart2,
   BookOpen,
   CalendarDays,
   Clock,
-  GitBranch,
   Kanban,
   LayoutDashboard,
-  Library,
   LifeBuoy,
   LogOut,
   Mic,
@@ -20,7 +17,7 @@ import {
   Settings,
   Target,
   TrendingUp,
-  UserCircle2,
+  User,
   Users,
 } from "lucide-react";
 import Link from "next/link";
@@ -168,10 +165,10 @@ const NAV: {
   {
     label: "Wiedza i proces",
     items: [
+      // Mapa procesów / Baza wiedzy / Analiza narzędzi usunięte z nawigacji (Michał,
+      // 2026-08-25) — strony zostają w kodzie nielinkowane, ten sam wzorzec co
+      // wcześniej /pliki i /sesje (patrz CLAUDE.md).
       { href: "/agencja", label: "Karta (Agency Leaders)", icon: Users },
-      { href: "/mapa", label: "Mapa procesów", icon: GitBranch, exact: true },
-      { href: "/baza-wiedzy", label: "Baza wiedzy", icon: Library, exact: true },
-      { href: "/analiza-narzedzi", label: "Analiza narzędzi", icon: BarChart2, exact: true },
     ],
   },
 ];
@@ -225,17 +222,12 @@ function NavItem({
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
         >
-          {/* Ikony zawsze białe, WYPEŁNIONE (fill=currentColor, nie tylko gruby stroke) i
-              większe (decyzja Michała 2026-08-25, "ikonki miały być wypełnione i muszą być
-              większe"). Etykieta zawsze pełna biel — hierarchię aktywne/nieaktywne niesie
-              teraz wyłącznie tło i waga fontu, nie przygaszony kolor tekstu. */}
-          <Icon
-            size={18}
-            color="#ffffff"
-            fill="currentColor"
-            strokeWidth={1.8}
-            style={{ flexShrink: 0 }}
-          />
+          {/* fill="currentColor" cofnięty (2026-08-25, druga runda) — na ikonach Lucide
+              wielościeżkowych (Target, LifeBuoy, Kanban...) dosłowne wypełnienie zalewało
+              wnętrze i gubiło kształt, wyglądało "dziwacznie", nie jak wypełniona ikona.
+              Zamiast tego: czysty, bardzo gruby biały stroke — czytelny odpowiednik
+              "wypełnionej" ikony bez psucia geometrii. */}
+          <Icon size={18} color="#ffffff" strokeWidth={2.5} style={{ flexShrink: 0 }} />
           <span
             style={{
               fontFamily: "var(--font-sans)",
@@ -448,11 +440,11 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
           {timeStr}
         </div>
         {weather && (
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span
               style={{
                 fontFamily: "var(--font-sans)",
-                fontSize: 12,
+                fontSize: 14,
                 fontWeight: 700,
                 color: "var(--text-primary)",
                 textTransform: "uppercase",
@@ -464,13 +456,13 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
             <span
               style={{
                 fontFamily: "var(--font-sans)",
-                fontSize: 11,
+                fontSize: 13,
                 fontWeight: 700,
                 color: "#ffffff",
                 background: "var(--brand-blue-bg)",
-                border: "1px solid rgba(56, 182, 255, 0.5)",
+                border: "1px solid var(--brand-blue-border)",
                 borderRadius: 999,
-                padding: "1px 8px",
+                padding: "2px 10px",
                 fontVariantNumeric: "tabular-nums",
               }}
             >
@@ -546,25 +538,23 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
           gap: 10,
         }}
       >
+        {/* Awatar: pełne niebieskie kółko (--brand-blue, nie przezroczysty tint) + prosta
+            wypełniona sylwetka (User, nie UserCircle2) — UserCircle2 rysował WŁASNE kółko
+            w środku naszego kółka, przy jasnym tincie na tincie ikona ginęła całkowicie
+            (zgłoszenie Michała: "nie widać totalnie usera ikonki"). */}
         <div
           style={{
             width: 36,
             height: 36,
             borderRadius: "50%",
-            background: "var(--brand-blue-bg)",
-            border: "1px solid var(--brand-blue-border)",
+            background: "var(--brand-blue)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             flexShrink: 0,
           }}
         >
-          <UserCircle2
-            size={22}
-            color="var(--brand-blue-text)"
-            fill="currentColor"
-            strokeWidth={1.3}
-          />
+          <User size={19} color="#ffffff" fill="#ffffff" strokeWidth={1.5} />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
@@ -603,26 +593,27 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
               </span>
             )}
             {sessionLabel && (
+              // Ten sam ciężar wizualny co "ZAKTUALIZOWANO" w bloku deployu (Michał:
+              // "sesja jest mega do dupy, zrobiłbym to tak jak ZAKTUALIZOWANO") — pogrubiony
+              // biały wersalik zamiast wyblakłej szarej plakietki.
               <span
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
-                  gap: 3,
+                  gap: 4,
                   fontFamily: "var(--font-sans)",
-                  fontSize: 10,
-                  fontWeight: 600,
-                  color: "var(--text-secondary)",
-                  background: "var(--bg-hover)",
-                  border: "1px solid var(--border-sidebar-divider)",
-                  borderRadius: 999,
-                  padding: "2px 7px 2px 6px",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: "#ffffff",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.03em",
                   fontVariantNumeric: "tabular-nums",
                   whiteSpace: "nowrap",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                 }}
               >
-                <Clock size={10} strokeWidth={2} style={{ flexShrink: 0 }} />
+                <Clock size={12} strokeWidth={2.4} style={{ flexShrink: 0 }} />
                 {sessionLabel.replace("Sesja ", "")}
               </span>
             )}
