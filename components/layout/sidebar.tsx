@@ -326,7 +326,10 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
       }}
     >
       {/* 1. Logo — marka Autorise, zastępuje dawny tekstowy lockup + osobną etykietę
-          workspace'u (2026-08-24, jedno źródło tożsamości marki zamiast dwóch). */}
+          workspace'u (2026-08-24, jedno źródło tożsamości marki zamiast dwóch). Plik
+          public/logo.png jest ciasno przycięty (bez czarnego marginesu) w
+          scratchpad/crop_logo.py z branding/logo/logo.png, żeby wordmark wypełniał
+          całą wysokość nagłówka zamiast ginąć w dużym marginesie oryginału. */}
       <div
         style={{
           height: 64,
@@ -342,10 +345,8 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
           src="/logo.png"
           alt="Autorise"
           style={{
-            height: 38,
-            width: 38,
-            borderRadius: 9,
-            border: "1px solid var(--border)",
+            height: 30,
+            width: "auto",
             flexShrink: 0,
           }}
         />
