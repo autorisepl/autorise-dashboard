@@ -5,6 +5,7 @@ import {
   BarChart2,
   BookOpen,
   CalendarDays,
+  Clock,
   GitBranch,
   Kanban,
   LayoutDashboard,
@@ -30,7 +31,7 @@ import type { WeatherData } from "@/app/api/weather/route";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { logout } from "@/lib/auth/logout";
 import { useIdentity } from "@/lib/auth/RoleContext";
-import { ROLE_LABELS } from "@/lib/auth/resolveRole";
+import { ROLE_COLORS, ROLE_LABELS } from "@/lib/auth/resolveRole";
 
 // ── Weather hook ────────────────────────────────────────────────────
 
@@ -224,16 +225,23 @@ function NavItem({
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
         >
-          {/* Ikony zawsze białe i pogrubione (decyzja Michała 2026-08-25) — nie tylko w
-              stanie aktywnym/hover, całe menu ma czytać się jako "wypełnione" białe glify,
-              hierarchię aktywne/nieaktywne niesie teraz wyłącznie tło i kolor etykiety. */}
-          <Icon size={15} color="var(--text-primary)" strokeWidth={2.2} style={{ flexShrink: 0 }} />
+          {/* Ikony zawsze białe, WYPEŁNIONE (fill=currentColor, nie tylko gruby stroke) i
+              większe (decyzja Michała 2026-08-25, "ikonki miały być wypełnione i muszą być
+              większe"). Etykieta zawsze pełna biel — hierarchię aktywne/nieaktywne niesie
+              teraz wyłącznie tło i waga fontu, nie przygaszony kolor tekstu. */}
+          <Icon
+            size={18}
+            color="#ffffff"
+            fill="currentColor"
+            strokeWidth={1.8}
+            style={{ flexShrink: 0 }}
+          />
           <span
             style={{
               fontFamily: "var(--font-sans)",
               fontSize: 13,
               fontWeight: isActive ? 600 : hovered ? 500 : 400,
-              color: isActive || hovered ? "#ffffff" : "var(--text-secondary)",
+              color: "#ffffff",
               letterSpacing: "-0.01em",
               flex: 1,
               transition: "color 120ms",
@@ -293,8 +301,6 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
   const timeStr = now
     ? now.toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit", second: "2-digit" })
     : "";
-
-  const capitalizeFirst = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
   return (
     <aside
@@ -370,14 +376,15 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
             <div
               style={{
                 fontFamily: "var(--font-sans)",
-                fontSize: 11,
-                fontWeight: 500,
-                color: "var(--text-secondary)",
+                fontSize: 13,
+                fontWeight: 600,
+                color: "var(--text-primary)",
+                fontVariantNumeric: "tabular-nums",
               }}
             >
               {new Date(deploy.createdAt).toLocaleDateString("pl-PL", {
                 day: "numeric",
-                month: "short",
+                month: "long",
               })}{" "}
               ·{" "}
               {new Date(deploy.createdAt).toLocaleTimeString("pl-PL", {
@@ -417,12 +424,14 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
           style={{
             fontFamily: "var(--font-sans)",
             fontSize: 11,
-            fontWeight: 600,
+            fontWeight: 700,
             color: "var(--text-primary)",
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
             marginBottom: 3,
           }}
         >
-          {dateStr ? capitalizeFirst(dateStr) : ""}
+          {dateStr}
         </div>
         <div
           style={{
@@ -444,8 +453,10 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
               style={{
                 fontFamily: "var(--font-sans)",
                 fontSize: 12,
-                fontWeight: 500,
-                color: "var(--text-secondary)",
+                fontWeight: 700,
+                color: "var(--text-primary)",
+                textTransform: "uppercase",
+                letterSpacing: "0.04em",
               }}
             >
               {weather.city}
@@ -482,8 +493,23 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
         }}
       >
         {visibleNav.map((section, si) => (
-          <div key={si} style={{ marginBottom: 8 }}>
-            <SectionLabel paddingX={6}>{section.label}</SectionLabel>
+          <div
+            key={si}
+            style={{
+              marginBottom: 8,
+              // Divider MIĘDZY kategoriami (nie przed pierwszą) — dotąd zerowa
+              // widoczność granicy Organizacja/Klienci/Wiedza i proces (zgłoszenie
+              // Michała 2026-08-25).
+              borderTop: si > 0 ? "1px solid var(--border-sidebar-divider)" : "none",
+              paddingTop: si > 0 ? 8 : 0,
+            }}
+          >
+            <SectionLabel
+              paddingX={6}
+              style={{ color: "var(--text-primary)", fontSize: 11, letterSpacing: "0.06em" }}
+            >
+              {section.label}
+            </SectionLabel>
             <div style={{ display: "flex", flexDirection: "column", gap: 2, marginTop: 4 }}>
               {section.items.map((item) => (
                 <NavItem
@@ -505,59 +531,96 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
           DZIAŁająca ikona wylogowania wywołująca dokładnie tę samą logout() co przycisk
           "Wyloguj" w /profil. Rozwiązuje ostatecznie "wylogowanie tylko z /profil" —
           patrz proxy.ts, wpis "/profil" usunięty z SETTER_ALLOWED_PREFIXES w tej samej
-          rundzie, bo przestał być jedyną drogą do wylogowania settera. */}
+          rundzie, bo przestał być jedyną drogą do wylogowania settera.
+          Redesign 2026-08-25 (Michał, wg wizualnej inspiracji): awatar wypełniony, rola
+          i sesja jako dwie osobne, wyraźne odznaki zamiast jednej wyblakłej linijki
+          tekstu — rola kolorowana per ranga (ROLE_COLORS, ten sam wzorzec bg/border/text
+          co status Pipeline), sesja neutralną plakietką z ikoną zegara. */}
       <div
         style={{
           flexShrink: 0,
           borderTop: "1px solid var(--border-sidebar-divider)",
-          padding: "10px 12px",
+          padding: "12px",
           display: "flex",
           alignItems: "center",
-          gap: 8,
+          gap: 10,
         }}
       >
         <div
           style={{
-            width: 32,
-            height: 32,
+            width: 36,
+            height: 36,
             borderRadius: "50%",
-            background: "var(--bg-elevated)",
-            border: "1px solid var(--border)",
+            background: "var(--brand-blue-bg)",
+            border: "1px solid var(--brand-blue-border)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             flexShrink: 0,
           }}
         >
-          <UserCircle2 size={18} color="var(--text-secondary)" strokeWidth={1.5} />
+          <UserCircle2 size={22} color="var(--brand-blue-text)" fill="currentColor" strokeWidth={1.3} />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
             style={{
               fontFamily: "var(--font-sans)",
-              fontSize: 13,
-              fontWeight: 500,
-              color: "var(--text-primary)",
+              fontSize: 14,
+              fontWeight: 600,
+              color: "#ffffff",
               letterSpacing: "-0.01em",
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
+              marginBottom: 4,
             }}
           >
             {identity?.displayName ?? "Nieznany użytkownik"}
           </div>
-          <div
-            style={{
-              fontFamily: "var(--font-sans)",
-              fontSize: 10,
-              color: "var(--text-tertiary)",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
-            {role ? ROLE_LABELS[role] : "—"}
-            {sessionLabel ? ` · ${sessionLabel}` : ""}
+          <div style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap" }}>
+            {role && (
+              <span
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 10,
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.04em",
+                  color: ROLE_COLORS[role].text,
+                  background: ROLE_COLORS[role].bg,
+                  border: `1px solid ${ROLE_COLORS[role].border}`,
+                  borderRadius: 999,
+                  padding: "2px 7px",
+                  flexShrink: 0,
+                }}
+              >
+                {ROLE_LABELS[role]}
+              </span>
+            )}
+            {sessionLabel && (
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 3,
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 10,
+                  fontWeight: 600,
+                  color: "var(--text-secondary)",
+                  background: "var(--bg-hover)",
+                  border: "1px solid var(--border-sidebar-divider)",
+                  borderRadius: 999,
+                  padding: "2px 7px 2px 6px",
+                  fontVariantNumeric: "tabular-nums",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                <Clock size={10} strokeWidth={2} style={{ flexShrink: 0 }} />
+                {sessionLabel.replace("Sesja ", "")}
+              </span>
+            )}
           </div>
         </div>
         <Link
@@ -572,10 +635,10 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
             height: 28,
             borderRadius: 6,
             flexShrink: 0,
-            color: "var(--text-secondary)",
+            color: "#ffffff",
           }}
         >
-          <Settings size={15} strokeWidth={1.6} />
+          <Settings size={16} color="#ffffff" fill="currentColor" strokeWidth={1.3} />
         </Link>
         <button
           type="button"
@@ -597,7 +660,7 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
             opacity: loggingOut ? 0.5 : 1,
           }}
         >
-          <LogOut size={15} strokeWidth={1.6} />
+          <LogOut size={16} strokeWidth={1.8} />
         </button>
       </div>
     </aside>

@@ -60,3 +60,13 @@ export const ROLE_LABELS: Record<Role, string> = {
   setter: "Setter",
   closer: "Closer",
 };
+
+// Kolory odznaki rangi (karta użytkownika w sidebarze) — każda rola dostaje własny,
+// od razu rozpoznawalny kolor zamiast jednolitego szarego tekstu. Reużywa istniejących
+// par bg/border/text z design systemu (ten sam wzorzec co status Pipeline), nie wymyśla
+// nowej palety tylko dla tego jednego miejsca.
+export const ROLE_COLORS: Record<Role, { bg: string; border: string; text: string }> = {
+  admin: { bg: "var(--brand-blue-bg)", border: "var(--brand-blue-border)", text: "var(--brand-blue-text)" },
+  closer: { bg: "var(--warning-bg)", border: "var(--warning-border)", text: "var(--warning-text)" },
+  setter: { bg: "var(--success-bg)", border: "var(--success-border)", text: "var(--success-text)" },
+};
