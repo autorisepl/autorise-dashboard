@@ -100,12 +100,14 @@
       font-family: var(--font-sans);
     }
     #s1 .si { color: var(--text-primary); }
-    /* Runda 3: topper grubszy/bardziej świadomy zamiast domyślnej cienkiej pigułki — grubsza
-       czcionka, mocniejsza obwódka, kreska akcentu po lewej zamiast kropki-separatora "01 · ". */
+    /* Runda 4: topper znacznie większy i bardziej widoczny — czcionka 10.5px -> 16px, biała
+       ramka (rgba(255,255,255,.6)) zamiast koloru accent-border, który ginął na ciemnym tle;
+       kreska akcentu po lewej zostaje jako jedyny kolorowy element chipa. */
     #s1 .tag {
-      color: var(--accent-text); background: var(--accent-muted); border: 1.5px solid var(--accent-border);
-      font-weight: 900; padding: 7px 16px 7px 13px; border-left: 3px solid var(--accent);
-      margin-bottom: 22px;
+      color: var(--accent-text); background: var(--accent-muted); border: 2px solid rgba(255, 255, 255, 0.6);
+      font-weight: 900; font-size: 16px; letter-spacing: 0.06em; padding: 10px 22px 10px 18px;
+      border-left: 4px solid var(--accent);
+      margin-bottom: 26px;
     }
     #s1 .h1 { color: var(--text-primary); margin-bottom: 18px; }
     #s1 .blue { color: var(--accent); }
@@ -127,7 +129,13 @@
       background: var(--accent-muted); border: 1px solid var(--accent-border); color: var(--accent);
       margin-bottom: 16px;
     }
-    #s1 .c-icon iconify-icon { width: 32px; height: 32px; }
+    /* Runda 4: bug znaleziony przez getBoundingClientRect — iconify-icon renderuje wewnętrzny
+       SVG w jednostce 1em (font-size), NIE w CSS width/height hosta. Bez font-size dopasowanego
+       do width/height glif rysował się w domyślnym rozmiarze fontu strony (16px) wewnątrz 32px
+       hosta, a wewnętrzny margin:auto z shadow DOM iconify NIE centruje w pionie w kontekście
+       innym niż flex/grid — stąd glif wizualnie "uciekał" do góry i był za mały. font-size
+       ustawiony na dokładnie tę samą wartość co width/height eliminuje oba problemy naraz. */
+    #s1 .c-icon iconify-icon { width: 32px; height: 32px; font-size: 32px; }
     #s1 .c-title { color: var(--text-primary); font-size: 17px; }
     #s1 .c-desc { color: var(--text-secondary); font-size: 15.5px; line-height: 1.6; }
 
@@ -513,12 +521,12 @@
          (68px ikony, 34px padding kart, 34px margines pod podnagłówkiem, 20px gap gridu)
          "wygrywałyby" nawet na wąskim ekranie i wypychały treść poza widoczny, nieprzewijalny
          obszar slajdu (tekst 3-4 karty ucięty, zauważone przy weryfikacji mobile po rundzie 3). */
-      #s1 .tag { margin-bottom: 10px; }
+      #s1 .tag { margin-bottom: 10px; font-size: 12px; padding: 7px 14px 7px 11px; }
       #s1 .h1 { margin-bottom: 8px; }
       #s1 .sub { margin-bottom: 12px; }
       #s1 .grid2 { gap: 8px; }
       #s1 .c-icon { width: 40px; height: 40px; border-radius: 10px; margin-bottom: 6px; }
-      #s1 .c-icon iconify-icon { width: 19px; height: 19px; }
+      #s1 .c-icon iconify-icon { width: 19px; height: 19px; font-size: 19px; }
       #s1 .card { padding: 12px 14px; gap: 3px; }
       #s1 .c-title { font-size: 14px; }
       #s1 .c-desc { font-size: 13px; line-height: 1.5; }
