@@ -200,9 +200,9 @@ function NavItem({
             style={{
               position: "absolute",
               inset: 0,
-              background: "var(--bg-active)",
+              background: "var(--brand-blue-bg)",
               borderRadius: 7,
-              borderLeft: "2px solid var(--accent)",
+              borderLeft: "3px solid var(--brand-blue)",
             }}
             transition={{ type: "spring", stiffness: 500, damping: 38 }}
           />
@@ -214,34 +214,31 @@ function NavItem({
             alignItems: "center",
             gap: 8,
             height: 34,
-            paddingLeft: isActive ? 14 : 12,
+            paddingLeft: isActive ? 13 : 12,
             paddingRight: 10,
             borderRadius: 7,
             cursor: "pointer",
-            background: !isActive && hovered ? "var(--bg-hover)" : "transparent",
+            background: !isActive && hovered ? "var(--brand-blue-bg-hover)" : "transparent",
             transition: "background 120ms",
           }}
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
         >
+          {/* Ikony zawsze białe i pogrubione (decyzja Michała 2026-08-25) — nie tylko w
+              stanie aktywnym/hover, całe menu ma czytać się jako "wypełnione" białe glify,
+              hierarchię aktywne/nieaktywne niesie teraz wyłącznie tło i kolor etykiety. */}
           <Icon
             size={15}
-            color={
-              isActive ? "var(--accent)" : hovered ? "var(--text-primary)" : "var(--text-secondary)"
-            }
-            strokeWidth={1.6}
-            style={{ flexShrink: 0, transition: "color 120ms" }}
+            color="var(--text-primary)"
+            strokeWidth={2.2}
+            style={{ flexShrink: 0 }}
           />
           <span
             style={{
               fontFamily: "var(--font-sans)",
               fontSize: 13,
-              fontWeight: isActive ? 500 : 400,
-              color: isActive
-                ? "var(--accent)"
-                : hovered
-                  ? "var(--text-primary)"
-                  : "var(--text-secondary)",
+              fontWeight: isActive ? 600 : hovered ? 500 : 400,
+              color: isActive || hovered ? "#ffffff" : "var(--text-secondary)",
               letterSpacing: "-0.01em",
               flex: 1,
               transition: "color 120ms",
@@ -320,7 +317,7 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
         background: "var(--bg-sidebar)",
         backdropFilter: "blur(20px) saturate(180%)",
         WebkitBackdropFilter: "blur(20px) saturate(180%)",
-        borderRight: "1px solid var(--border)",
+        borderRight: "1px solid var(--border-sidebar-divider)",
         overflow: "hidden",
         zIndex: 10,
       }}
@@ -336,7 +333,7 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
           display: "flex",
           alignItems: "center",
           padding: "0 46px 0 14px" /* right 46px clears the toggle button at left:245px */,
-          borderBottom: "1px solid var(--border)",
+          borderBottom: "1px solid var(--border-sidebar-divider)",
           flexShrink: 0,
         }}
       >
@@ -357,7 +354,7 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
         <div
           style={{
             padding: "10px 16px",
-            borderBottom: "1px solid var(--border)",
+            borderBottom: "1px solid var(--border-sidebar-divider)",
             flexShrink: 0,
             display: "flex",
             alignItems: "center",
@@ -378,8 +375,9 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
             <div
               style={{
                 fontFamily: "var(--font-sans)",
-                fontSize: 10,
-                color: "var(--text-tertiary)",
+                fontSize: 11,
+                fontWeight: 500,
+                color: "var(--text-secondary)",
               }}
             >
               {new Date(deploy.createdAt).toLocaleDateString("pl-PL", {
@@ -409,11 +407,14 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
         </div>
       )}
 
-      {/* 3. Dziś */}
+      {/* 3. Dziś — data/godzina/miejscowość podniesione w hierarchii (Michał 2026-08-25:
+          "znacznie lepiej widoczna i pasująca do nowego motywu"), godzina teraz cięższa
+          zamiast cienkiej 300-wagi, plakietka miasta przełączona na --brand-blue (#38b6ff,
+          z logo) zamiast starego stonowanego --accent. */}
       <div
         style={{
           padding: "10px 16px 12px",
-          borderBottom: "1px solid var(--border)",
+          borderBottom: "1px solid var(--border-sidebar-divider)",
           flexShrink: 0,
         }}
       >
@@ -421,9 +422,9 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
           style={{
             fontFamily: "var(--font-sans)",
             fontSize: 11,
-            fontWeight: 500,
-            color: "var(--text-secondary)",
-            marginBottom: 2,
+            fontWeight: 600,
+            color: "var(--text-primary)",
+            marginBottom: 3,
           }}
         >
           {dateStr ? capitalizeFirst(dateStr) : ""}
@@ -431,13 +432,13 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
         <div
           style={{
             fontFamily: "var(--font-sans)",
-            fontSize: 22,
-            fontWeight: 300,
+            fontSize: 26,
+            fontWeight: 500,
             color: "var(--text-primary)",
             letterSpacing: "-0.02em",
             fontVariantNumeric: "tabular-nums",
             lineHeight: 1.1,
-            marginBottom: 6,
+            marginBottom: 8,
           }}
         >
           {timeStr}
@@ -447,7 +448,8 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
             <span
               style={{
                 fontFamily: "var(--font-sans)",
-                fontSize: 11,
+                fontSize: 12,
+                fontWeight: 500,
                 color: "var(--text-secondary)",
               }}
             >
@@ -457,10 +459,10 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
               style={{
                 fontFamily: "var(--font-sans)",
                 fontSize: 11,
-                fontWeight: 600,
-                color: "var(--text-primary)",
-                background: "var(--accent-muted)",
-                border: "1px solid var(--accent-border)",
+                fontWeight: 700,
+                color: "#ffffff",
+                background: "var(--brand-blue-bg)",
+                border: "1px solid rgba(56, 182, 255, 0.5)",
                 borderRadius: 999,
                 padding: "1px 8px",
                 fontVariantNumeric: "tabular-nums",
@@ -512,7 +514,7 @@ export function Sidebar({ open = false, onNavigate }: { open?: boolean; onNaviga
       <div
         style={{
           flexShrink: 0,
-          borderTop: "1px solid var(--border)",
+          borderTop: "1px solid var(--border-sidebar-divider)",
           padding: "10px 12px",
           display: "flex",
           alignItems: "center",

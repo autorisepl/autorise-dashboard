@@ -25,6 +25,10 @@
   --border:          rgba(255, 255, 255, 0.08);
   --border-hover:    rgba(255, 255, 255, 0.14);
   --border-sidebar:  rgba(255, 255, 255, 0.09);
+  /* Dividery WEWNĄTRZ sidebara (logo/deploy/dziś/karta usera) — świadomie mocniejsze
+     niż ogólny --border (0.08), bo na wąskiej 260px kolumnie subtelne linie ginęły
+     zupełnie (zgłoszenie Michała 2026-08-25, "dividery o wiele bardziej widoczne"). */
+  --border-sidebar-divider: rgba(255, 255, 255, 0.16);
   --border-focus:    rgba(67, 121, 177, 0.50);
 
   /* Tekst — ciepła biel/jasny szary, nie czysta biel */
@@ -46,6 +50,14 @@
      się w progu WCAG dla elementów UI/dużego tekstu, więc świadomie przyjęty tradeoff. */
   --accent:          #4379b1;
   --accent-hover:    #5588be;
+  /* Niebieski marki (z logo, #38b6ff) — jaśniejszy i bardziej nasycony niż stonowany
+     --accent powyżej, świadomie osobny token: dziś używany tylko w sidebarze (aktywna/
+     najechana pozycja menu) jako pierwszy krok w stronę pełnego motywu z logo, --accent
+     w reszcie dashboardu zostaje nietknięty do czasu kolejnej rundy (patrz CLAUDE.md,
+     sekcja "Plan: mono/czarno-biały kierunek wizualny"). */
+  --brand-blue:      #38b6ff;
+  --brand-blue-bg:   rgba(56, 182, 255, 0.24);
+  --brand-blue-bg-hover: rgba(56, 182, 255, 0.13);
   /* Tekst na tle --accent-muted (chipy/etykiety, 9-11px) — --accent samo (3.6:1) nie
      wystarcza dla MAŁEGO tekstu (próg AA to 4.5:1, 3.6:1 jest tylko dla UI/dużego tekstu,
      patrz komentarz wyżej). Dedykowany token, ten sam wzorzec co --success-text/--error-text/
