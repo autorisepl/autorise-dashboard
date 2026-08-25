@@ -550,8 +550,11 @@ function KanbanColumn({
       style={{
         display: "flex",
         flexDirection: "column",
-        minWidth: 240,
-        width: 240,
+        // +15% wg feedbacku (240 → 276) — karty klienta w kolumnie miały wygodniej mieścić
+        // treść (firma, kontakt, tagi), ten sam zabieg co wcześniej przy panelu bocznym
+        // (340 → 391, patrz ClientSidebar niżej).
+        minWidth: 276,
+        width: 276,
         flexShrink: 0,
       }}
     >

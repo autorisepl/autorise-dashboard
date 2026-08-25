@@ -10,6 +10,11 @@ const PUBLIC_PATHS = [
   // prezentacja.html jest publiczna (klient ogląda bez logowania) i fetchuje stąd swoje
   // dane personalizacji — musi być dostępne bez sesji, tak jak sama strona.
   "/api/notion/prezentacja-dane",
+  // Logo w rogu slajdu 1 (2026-08-25) — bez tego wpisu middleware przekierowywał
+  // niezalogowane żądanie /logo.png do /login, więc obrazek nigdy się nie ładował na
+  // publicznej prezentacji (matcher niżej wyklucza tylko _next/static, _next/image,
+  // favicon.ico i samo prezentacja.html — zwykłe pliki w public/ nie są z automatu pominięte).
+  "/logo.png",
 ];
 
 const SETTER_ALLOWED_PREFIXES = [

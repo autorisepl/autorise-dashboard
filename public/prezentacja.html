@@ -106,10 +106,26 @@
     #s1 .sub { color: var(--text-secondary); }
     #s1 .grid2 { grid-auto-rows: 1fr; }
     #s1 .card {
-      background: var(--bg-elevated); border-color: var(--border); box-shadow: none;
+      /* Obwódka podniesiona do rgba(255,255,255,.22) — ten sam przepis co karta klienta w
+         /pipeline (ClientCard), gdzie var(--border) 8% białego okazało się za subtelne na
+         ciemnym tle (feedback 2026-08-24 tamże). Spójny język "widoczna karta" w całym
+         produkcie zamiast dwóch różnych progów kontrastu. */
+      background: var(--bg-elevated); border-color: rgba(255, 255, 255, 0.22); box-shadow: none;
       display: flex; flex-direction: column; padding: 22px 24px; gap: 5px;
     }
-    #s1 .c-icon { background: var(--bg); border: 1px solid var(--border); color: var(--text-secondary); margin-bottom: 10px; }
+    #s1 .c-icon {
+      /* "WYPEŁNIONE (nie tylko obrys)" — plakietka ikony jako pełne kółko w kolorze accent
+         (ten sam wzorzec co awatar użytkownika w sidebarze: pełne wypełnione tło zamiast
+         przezroczystego tintu), nie próba wypełnienia samego glifu SVG — te ikony (tabler,
+         zarejestrowane lokalnie u góry pliku) są rysowane jako pojedyncza obrysowana ścieżka
+         (fill="none" stroke="currentColor"), więc dosłowne wymuszenie fill zgubiłoby kształt
+         (dokładnie ten sam problem opisany przy ikonach nawigacji w components/layout/sidebar.tsx).
+         Większy rozmiar (64px zamiast 48px) + biały glif na kolorowym tle = czytelnie
+         "wypełniona" plakietka bez psucia geometrii ikony. */
+      width: 64px; height: 64px; border-radius: 16px;
+      background: var(--accent); border: none; color: #ffffff; margin-bottom: 12px;
+    }
+    #s1 .c-icon iconify-icon { width: 30px; height: 30px; }
     #s1 .c-title { color: var(--text-primary); }
     #s1 .c-desc { color: var(--text-secondary); }
 
@@ -230,6 +246,15 @@
     .dot.active { background: var(--blue); transform: scale(1.5); }
     #counter { position: fixed; bottom: 14px; right: 14px; font-size: 10px; font-weight: 600; color: var(--text-tertiary); z-index: 200; letter-spacing: .03em; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
     #gen-date { position: fixed; bottom: 14px; left: 14px; font-size: 9.5px; font-weight: 600; color: var(--text-tertiary); opacity: .55; z-index: 200; letter-spacing: .03em; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+    /* Logo zamiast daty — wyłącznie na slajdzie 1 (jedyny ciemny na razie), patrz JS w
+       updateNav(). Data zostaje jak była na slajdach 2-7 (nadal jasny motyw). */
+    #s1-logo { position: fixed; bottom: 12px; left: 14px; height: 24px; width: auto; z-index: 200; display: none; }
+    /* Plakietka "Podgląd — dane przykładowe" na ciemnym tle slajdu 1 — te same tokeny co
+       reszta przebudowanego slajdu (accent-muted/accent-border/accent-text), zamiast
+       jasnego stylu odziedziczonego po globalnym #data-badge (var(--bg)/var(--line-strong)),
+       który na ciemnym płótnie wyglądał jak zapomniany jasny chip. */
+    #data-badge.on-dark { background: rgba(67,121,177,.16); border-color: rgba(67,121,177,.35); color: #7db8f0; }
+    #data-badge.on-dark.client { background: rgba(67,121,177,.16); border-color: rgba(67,121,177,.35); color: #7db8f0; }
 
     /* ── Slide inner ── */
     .si { flex: 1; display: flex; flex-direction: column; padding: 48px 64px 32px; max-width: 1080px; margin: 0 auto; width: 100%; justify-content: flex-start; }
@@ -480,6 +505,16 @@
       .tl-dot iconify-icon { width: 12px; height: 12px; }
       .tl-week { font-size: 8.5px; }
       .tl-label { font-size: 10.5px; }
+
+      /* Slajd 1: #s1 .c-icon/.card mają wyższą specyficzność (ID) niż zwykłe .c-icon/.card
+         powyżej, więc bez tych wpisów desktopowe 64px/22px24px "wygrywałyby" nawet na
+         wąskim ekranie i zderzały treść z logo w rogu (zauważone przy weryfikacji mobile
+         po rundzie 2). */
+      #s1 .c-icon { width: 44px; height: 44px; border-radius: 11px; margin-bottom: 6px; }
+      #s1 .c-icon iconify-icon { width: 21px; height: 21px; }
+      #s1 .card { padding: 12px 14px; }
+      #s1 .si { padding-bottom: 46px; }
+      #s1-logo { height: 18px; bottom: 8px; }
     }
   </style>
 </head>
@@ -522,7 +557,7 @@
   <!-- 1: PROBLEM -->
   <div class="slide" id="s1">
     <div class="si">
-      <div class="tag ai" style="--i:0">01 · Problem</div>
+      <div class="tag ai" style="--i:0">01 · Sytuacja dziś</div>
       <h1 class="h1 ai" style="--i:1">Od zlecenia do właściciela, wszystko dzieje się <span class="blue">ręcznie.</span></h1>
       <p class="sub ai" style="--i:2">Cztery miejsca w firmie transportowej, gdzie ręczna praca kosztuje najwięcej czasu i pieniędzy.</p>
 
@@ -531,15 +566,15 @@
           <div class="c-icon">
             <iconify-icon icon="tabler:edit"></iconify-icon>
           </div>
-          <div class="c-title">Ręczne wpisywanie zleceń</div>
-          <p class="c-desc">Spedytor ręcznie przepisuje każde zlecenie do TMS, jedno po drugim, cały dzień.</p>
+          <div class="c-title">Ręczna obsługa zleceń</div>
+          <p class="c-desc">Spedytor ręcznie wprowadza, sprawdza i poprawia każde zlecenie, zanim trafi do systemu.</p>
         </div>
         <div class="card">
           <div class="c-icon">
             <iconify-icon icon="tabler:file-invoice"></iconify-icon>
           </div>
           <div class="c-title">Dokumenty rozrzucone wszędzie</div>
-          <p class="c-desc">Spedytor szuka CMR i faktury w mailu i na WhatsAppie, żeby ręcznie dopiąć je do zlecenia.</p>
+          <p class="c-desc">CMR, faktury i potwierdzenia trafiają różnymi kanałami, ktoś musi je ręcznie dopiąć do właściwego zlecenia.</p>
         </div>
         <div class="card">
           <div class="c-icon">
@@ -941,6 +976,10 @@
 </div>
 <div id="counter">1 / 7</div>
 <div id="gen-date"></div>
+<!-- Logo widoczne wyłącznie na slajdzie 1 (ciemny motyw), w miejscu daty generowania —
+     przełączane w updateNav() przez cur===0, patrz komentarz przy tej funkcji niżej. -->
+<img id="s1-logo" src="/logo.png" alt="Autorise" />
+
 
 <!-- Arrows -->
 <button class="arr" id="btn-prev">
@@ -1255,6 +1294,16 @@ function updateNav() {
     const info = document.getElementById('edit-slide-info')
     if (info) info.textContent = 'Slajd ' + (cur + 1) + '/7 · ' + SLIDE_NAMES[cur]
   }
+  // Slajd 1 jest jedyny na razie ciemny — data w rogu i plakietka podglądu przełączają się
+  // na wersję dopasowaną do ciemnego tła tylko tam; slajdy 2-7 zostają bez zmian (jasny
+  // motyw), patrz #s1-logo/#data-badge.on-dark w <style>.
+  const onSlide1 = cur === 0
+  const genDate = document.getElementById('gen-date')
+  const s1Logo = document.getElementById('s1-logo')
+  if (genDate) genDate.style.display = onSlide1 ? 'none' : ''
+  if (s1Logo) s1Logo.style.display   = onSlide1 ? 'block' : 'none'
+  const dataBadge = document.getElementById('data-badge')
+  if (dataBadge) dataBadge.classList.toggle('on-dark', onSlide1)
 }
 
 let editMode = false
