@@ -194,7 +194,8 @@
     }
     #s2 .h1 { color: var(--text-primary); margin-bottom: 14px; }
     #s2 .blue { color: var(--accent); }
-    #s2 .sub { color: var(--text-secondary); font-size: clamp(17px, 1.7vw, 20px); margin-bottom: 30px !important; }
+    #s2 .sub { color: var(--text-secondary); font-size: clamp(17px, 1.7vw, 20px); margin-bottom: 14px !important; }
+    #s2 .divider { margin-bottom: 8px; }
 
     #s2 .vbar-track { background: var(--bg); }
     #s2 .vbar-lbl { color: var(--text-primary); text-transform: uppercase; }
@@ -276,6 +277,73 @@
     #s3 .c-icon iconify-icon { width: 27px; height: 27px; font-size: 27px; }
     #s3 .c-icon.ic-warn  { background: var(--warning-bg); border-color: var(--warning-border); color: var(--text-primary); }
     #s3 .c-icon.ic-green { background: var(--success-bg); border-color: var(--success-border); color: var(--text-primary); }
+
+    /* ── Slajd 4 "Rozwój systemu": ten sam ciemny motyw co #s1/#s2/#s3, scoped do #s4. Ta mapa
+         jest jedyną treścią slajdu (nie dodatkiem pod czymś innym jak .tl na dzisiejszym
+         slajdzie 6), więc dostaje dedykowane, znacznie większe klasy .rm-* zamiast reużycia
+         .tl-* — te same proporcje węzła (kropka+etykieta+tytuł+opis) co .tl, ale przeskalowane
+         do roli hero. Animacja wejścia w animateRoadmap() niżej w <script>. */
+    #s4 {
+      --bg: #17181b;
+      --bg-elevated: #201f23;
+      --border: rgba(255, 255, 255, 0.08);
+      --text-primary: #eeeae4;
+      --text-secondary: #b8b4ad;
+      --text-tertiary: #8c8880;
+      --accent: #38b6ff;
+      --accent-text: #7ecfff;
+      --accent-muted: rgba(56, 182, 255, 0.16);
+      --accent-border: rgba(56, 182, 255, 0.35);
+      --divider: rgba(255, 255, 255, 0.22);
+      --font-sans: 'Roboto', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg);
+      font-family: var(--font-sans);
+    }
+    #s4 .si { color: var(--text-primary); }
+    #s4 .tag {
+      color: var(--text-primary); background: var(--accent-muted); border: 2px solid rgba(255, 255, 255, 0.6);
+      font-weight: 900; font-size: 20px; letter-spacing: 0.05em; padding: 12px 26px 12px 20px;
+      border-left: 4px solid var(--accent);
+      margin-bottom: 26px;
+    }
+    #s4 .h1 { color: var(--text-primary); margin-bottom: 18px; }
+    #s4 .blue { color: var(--accent); }
+    #s4 .sub { color: var(--text-secondary); margin-bottom: 0; font-size: clamp(17px, 1.7vw, 20px); }
+
+    /* Mapa/oś — trzy węzły w rzędzie, połączone linią rysowaną progresywnie przez GSAP
+       (animateRoadmap). Węzły startują niewidoczne w czystym CSS (opacity:0 + przesunięcie)
+       zamiast czekać na JS, żeby nie było mrugnięcia pełną treścią przed animacją, gdyby
+       coś opóźniło start skryptu. */
+    #s4 .rm-map {
+      position: relative; display: flex; align-items: flex-start; justify-content: space-between;
+      width: 100%; max-width: 1120px; margin: 70px auto 0; padding: 0 10px;
+    }
+    #s4 .rm-track {
+      position: absolute; top: 62px; left: 15%; right: 15%; height: 5px;
+      background: rgba(255, 255, 255, 0.15); border-radius: 5px; overflow: hidden;
+    }
+    #s4 .rm-track-fill {
+      height: 100%; width: 0%; background: var(--accent); border-radius: 5px;
+      box-shadow: 0 0 16px rgba(56, 182, 255, 0.55);
+    }
+    #s4 .rm-node {
+      flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center;
+      position: relative; z-index: 1; padding: 0 22px;
+      opacity: 0; transform: translateY(18px);
+    }
+    #s4 .rm-dot {
+      width: 128px; height: 128px; border-radius: 50%; flex-shrink: 0;
+      background: var(--accent-muted); border: 3px solid var(--accent-border); color: var(--text-primary);
+      display: flex; align-items: center; justify-content: center; margin-bottom: 30px;
+      box-shadow: 0 0 0 7px var(--bg);
+    }
+    #s4 .rm-dot iconify-icon { width: 52px; height: 52px; font-size: 52px; }
+    #s4 .rm-week {
+      font-size: 15px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+      color: var(--accent-text); margin-bottom: 14px;
+    }
+    #s4 .rm-title { font-size: 29px; font-weight: 800; color: var(--text-primary); line-height: 1.25; margin-bottom: 16px; }
+    #s4 .rm-desc { font-size: 17.5px; line-height: 1.6; color: var(--text-secondary); max-width: 320px; }
 
     /* ── Divider (wspólny dla #s1/#s2/każdego kolejnego ciemnego slajdu) — jeden bazowy
        wygląd (var(--divider), zdefiniowany per-slajd tuż obok reszty tokenów tego slajdu),
@@ -531,7 +599,7 @@
     .s2-measure-card {
       width: 100%; display: flex; flex-direction: column; align-items: center;
       background: var(--bg-elevated); border: 3px solid rgba(255, 255, 255, 0.6); border-radius: 14px;
-      padding: 8px 24px;
+      padding: 4px 24px;
     }
     /* Dividery między sekcjami (bary / wynik / formuła) — .divider daje wspólny wygląd
        (kolor/grubość), tu tylko layout kontekstowy tego konkretnego miejsca. */
@@ -850,6 +918,7 @@
       #s2 .tag { margin-bottom: 8px; font-size: 14px; padding: 9px 17px 9px 13px; }
       #s2 .h1 { margin-bottom: 6px; }
       #s2 .sub { margin-bottom: 10px !important; }
+      #s2 .divider { margin-bottom: 10px; }
       #s2 .si { padding-bottom: 36px; }
       .s2-grid { grid-template-columns: 1fr; gap: 8px; }
       .s2-panels { gap: 8px; }
@@ -904,6 +973,21 @@
       #s3 .c-title { font-size: 13px; margin-bottom: 1px; }
       #s3 .c-desc { font-size: 11.5px; line-height: 1.35; }
       #s3 .si { padding-bottom: 16px; }
+
+      /* Slajd 4 "Rozwój systemu": trzy węzły w rzędzie nie mieszczą się na szerokości telefonu
+         z tak długimi opisami — układ pionowy, kropka-nad-kropką, linia łącząca (pozioma z
+         natury) znika, bo bez rzędu nie ma czego łączyć poziomo; sama kolejność węzłów od
+         góry do dołu już niesie tę samą narrację "co dalej". */
+      #s4 .tag { margin-bottom: 10px; font-size: 14px; padding: 9px 17px 9px 13px; }
+      #s4 .h1 { margin-bottom: 8px; }
+      #s4 .rm-map { flex-direction: column; align-items: center; gap: 20px; margin-top: 16px; padding: 0; }
+      #s4 .rm-track { display: none; }
+      #s4 .rm-node { padding: 0; max-width: 320px; }
+      #s4 .rm-dot { width: 54px; height: 54px; border-width: 2px; margin-bottom: 10px; }
+      #s4 .rm-dot iconify-icon { width: 22px; height: 22px; font-size: 22px; }
+      #s4 .rm-week { font-size: 11px; margin-bottom: 4px; }
+      #s4 .rm-title { font-size: 16.5px; margin-bottom: 5px; }
+      #s4 .rm-desc { font-size: 13px; line-height: 1.45; max-width: 300px; }
     }
   </style>
 </head>
@@ -922,7 +1006,7 @@
 
 <!-- Edit bar -->
 <div id="edit-bar">
-  <div id="edit-slide-info">Slajd 1/7</div>
+  <div id="edit-slide-info">Slajd 1/8</div>
   <div class="ei-sep"></div>
   <div class="ei"><label>Dziś h/mc</label><input id="ei-roi" type="number" placeholder="70"/></div>
   <div class="ei-sep"></div>
@@ -990,6 +1074,7 @@
       <div class="tag ai" style="--i:0">02 · Efekt wdrożenia</div>
       <h1 class="h1 ai" style="--i:1">Ile czasu <span class="blue">oszczędzasz</span> po wdrożeniu?</h1>
       <p class="sub ai" style="--i:2">Ten sam wolumen zleceń, ten sam spedytor, dwa sposoby ich obsługi.</p>
+      <div class="divider ai" style="--i:2"></div>
 
       <div class="s2-grid ai" style="--i:3">
         <!-- Lewa kolumna: koszt i zwrot policzone z danych klienta (duże, białe liczby —
@@ -1169,10 +1254,41 @@
     </div>
   </div>
 
-  <!-- 4: DLACZEGO MY -->
+  <!-- 4: ROZWÓJ SYSTEMU -->
   <div class="slide" id="s4">
     <div class="si">
-      <div class="tag ai" style="--i:0">04 · Dlaczego Autorise?</div>
+      <div class="tag ai" style="--i:0">04 · Rozwój systemu</div>
+      <h1 class="h1 ai" style="--i:1">To dopiero <span class="blue">początek.</span></h1>
+      <p class="sub ai" style="--i:2">Kolejne moduły dochodzą wtedy, gdy pierwszy system już pracuje i przynosi wynik.</p>
+
+      <div class="rm-map" id="rm-map">
+        <div class="rm-track"><div class="rm-track-fill"></div></div>
+        <div class="rm-node">
+          <div class="rm-dot"><iconify-icon icon="tabler:rocket"></iconify-icon></div>
+          <div class="rm-week">Dzień 1</div>
+          <div class="rm-title">Twoje 4 moduły</div>
+          <p class="rm-desc">System czyta zlecenia, dokumenty, powiadamia automatycznie i pokazuje Ci wszystko z jednego miejsca.</p>
+        </div>
+        <div class="rm-node">
+          <div class="rm-dot"><iconify-icon icon="tabler:shield-check-filled"></iconify-icon></div>
+          <div class="rm-week">Po 3 miesiącach</div>
+          <div class="rm-title">Kontrola nad marżą i ryzykiem</div>
+          <p class="rm-desc">Widzisz opłacalność każdego zlecenia zanim je przyjmiesz, i wiesz o naruszeniu Pakietu Mobilności zanim zrobi to kontrola drogowa.</p>
+        </div>
+        <div class="rm-node">
+          <div class="rm-dot"><iconify-icon icon="tabler:chart-dots-3"></iconify-icon></div>
+          <div class="rm-week">Po 6 miesiącach</div>
+          <div class="rm-title">Pełny obraz z jednego miejsca</div>
+          <p class="rm-desc">Cotygodniowy raport i asystent na WhatsApp, żeby zapytać o dowolną liczbę z firmy i dostać odpowiedź w kilka sekund.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5: DLACZEGO MY -->
+  <div class="slide" id="s5">
+    <div class="si">
+      <div class="tag ai" style="--i:0">05 · Dlaczego Autorise?</div>
       <h1 class="h1 ai" style="--i:1">Nie ERP.<br><span class="blue">Dedykowany automat<br>dla transportu.</span></h1>
 
       <div class="cmp-wrap ai" style="--i:2">
@@ -1202,10 +1318,10 @@
     </div>
   </div>
 
-  <!-- 5: PROCES -->
-  <div class="slide" id="s5">
+  <!-- 6: PROCES -->
+  <div class="slide" id="s6">
     <div class="si">
-      <div class="tag ai" style="--i:0">05 · Proces</div>
+      <div class="tag ai" style="--i:0">06 · Proces</div>
       <h1 class="h1 ai" style="--i:1">Od decyzji do live<br><span class="blue">w 4 tygodnie.</span></h1>
 
       <div class="steps ai" style="--i:2;margin-top:16px;">
@@ -1262,10 +1378,10 @@
     </div>
   </div>
 
-  <!-- 6: INWESTYCJA -->
-  <div class="slide" id="s6">
+  <!-- 7: INWESTYCJA -->
+  <div class="slide" id="s7">
     <div class="si">
-      <div class="tag ai" style="--i:0">06 · Inwestycja</div>
+      <div class="tag ai" style="--i:0">07 · Inwestycja</div>
       <h1 class="h1 ai" style="--i:1">Cena problemu<br><span class="blue">kontra cena rozwiązania.</span></h1>
 
       <div class="price-cards ai" style="--i:2">
@@ -1348,10 +1464,10 @@
     </div>
   </div>
 
-  <!-- 7: GWARANCJA + CTA -->
-  <div class="slide" id="s7">
+  <!-- 8: GWARANCJA + CTA -->
+  <div class="slide" id="s8">
     <div class="si">
-      <div class="tag ai" style="--i:0">07 · Gwarancja i następny krok</div>
+      <div class="tag ai" style="--i:0">08 · Gwarancja i następny krok</div>
 
       <div class="guar-row">
         <div class="guar-left ai" style="--i:1">
@@ -1458,9 +1574,9 @@
   <div class="dot" data-i="0"></div><div class="dot" data-i="1"></div>
   <div class="dot" data-i="2"></div><div class="dot" data-i="3"></div>
   <div class="dot" data-i="4"></div><div class="dot" data-i="5"></div>
-  <div class="dot" data-i="6"></div>
+  <div class="dot" data-i="6"></div><div class="dot" data-i="7"></div>
 </div>
-<div id="counter">1 / 7</div>
+<div id="counter">1 / 8</div>
 <div id="gen-date"></div>
 <!-- Logo widoczne wyłącznie na slajdzie 1 (ciemny motyw), w miejscu daty generowania —
      przełączane w updateNav() przez cur===0, patrz komentarz przy tej funkcji niżej. -->
@@ -1689,6 +1805,35 @@ function triggerStagger(slideEl) {
     })
   }
   if (slideEl.id === 's2') animateVbars(slideEl)
+  if (slideEl.id === 's4') animateRoadmap(slideEl)
+}
+
+// Slajd 4 "Rozwój systemu" — mapa jest jedyną treścią slajdu (nie dodatkiem pod czymś innym
+// jak .tl na slajdzie 6), więc dostaje własną, wolniejszą i bardziej celową sekwencję niż
+// generyczny 45ms stagger reużywany przez triggerStagger() dla zwykłych siatek kart: węzły
+// wchodzą jeden po drugim (fade+translateY, ta sama krzywa staggerEase co reszta talii), a
+// linia między nimi dorysowuje się do kolejnego węzła dokładnie w momencie, gdy on się
+// pojawia — "mapa się rozwija", nie wyskakuje w całości naraz.
+function animateRoadmap(slideEl) {
+  const nodes = [...slideEl.querySelectorAll('.rm-node')]
+  const fill = slideEl.querySelector('.rm-track-fill')
+  if (!nodes.length) return
+  if (!gsapReady || REDUCE_MOTION) {
+    nodes.forEach(n => { n.style.opacity = '1'; n.style.transform = 'none' })
+    if (fill) fill.style.width = '100%'
+    return
+  }
+  gsap.set(nodes, { opacity: 0, y: 18 })
+  if (fill) gsap.set(fill, { width: '0%' })
+  const tl = gsap.timeline({ delay: 0.15 })
+  nodes.forEach((node, i) => {
+    const t = i * 0.42
+    tl.to(node, { opacity: 1, y: 0, duration: 0.5, ease: staggerEase }, t)
+    if (i > 0 && fill) {
+      const pct = (i / (nodes.length - 1)) * 100
+      tl.to(fill, { width: pct + '%', duration: 0.42, ease: 'power2.inOut' }, t - 0.18)
+    }
+  })
 }
 
 // Narastanie słupków słupkowego wykresu Dziś/Po wdrożeniu (slajd 2), tylko przy
@@ -1847,7 +1992,7 @@ function animateS2Connectors(slideEl) {
   })
 }
 
-const TOTAL  = 7
+const TOTAL  = 8
 const slides = document.querySelectorAll('.slide')
 const dots   = document.querySelectorAll('.dot')
 let cur = 0
@@ -1910,12 +2055,12 @@ function updateNav() {
   document.getElementById('btn-next').style.opacity   = cur === TOTAL - 1 ? '0.22' : '1'
   if (editMode) {
     const info = document.getElementById('edit-slide-info')
-    if (info) info.textContent = 'Slajd ' + (cur + 1) + '/7 · ' + SLIDE_NAMES[cur]
+    if (info) info.textContent = 'Slajd ' + (cur + 1) + '/' + TOTAL + ' · ' + SLIDE_NAMES[cur]
   }
-  // Slajdy 1-3 są na razie ciemne — data w rogu i plakietka podglądu przełączają się na
-  // wersję dopasowaną do ciemnego tła tylko tam; slajdy 4-7 zostają bez zmian (jasny motyw),
+  // Slajdy 1-4 są na razie ciemne — data w rogu i plakietka podglądu przełączają się na
+  // wersję dopasowaną do ciemnego tła tylko tam; slajdy 5-8 zostają bez zmian (jasny motyw),
   // patrz #s1-logo/#data-badge.on-dark w <style>.
-  const onDarkSlide = cur === 0 || cur === 1 || cur === 2
+  const onDarkSlide = cur === 0 || cur === 1 || cur === 2 || cur === 3
   const genDate = document.getElementById('gen-date')
   const s1Logo = document.getElementById('s1-logo')
   if (genDate) genDate.style.display = onDarkSlide ? 'none' : ''
@@ -1925,7 +2070,7 @@ function updateNav() {
 }
 
 let editMode = false
-const SLIDE_NAMES = ['Problem', 'Efekt ROI', 'System', 'Dlaczego my', 'Proces', 'Inwestycja', 'Gwarancja']
+const SLIDE_NAMES = ['Problem', 'Efekt ROI', 'System', 'Rozwój', 'Dlaczego my', 'Proces', 'Inwestycja', 'Gwarancja']
 
 function setEdit(on) {
   editMode = on
@@ -1939,7 +2084,7 @@ function setEdit(on) {
   document.getElementById('btn-prev').style.display = d
   document.getElementById('btn-next').style.display = d
   tog.style.display = d
-  if (on) { const i = document.getElementById('edit-slide-info'); if (i) i.textContent = 'Slajd ' + (cur + 1) + '/7 · ' + SLIDE_NAMES[cur] }
+  if (on) { const i = document.getElementById('edit-slide-info'); if (i) i.textContent = 'Slajd ' + (cur + 1) + '/' + TOTAL + ' · ' + SLIDE_NAMES[cur] }
 }
 
 document.getElementById('edit-toggle').addEventListener('click', () => setEdit(!editMode))
