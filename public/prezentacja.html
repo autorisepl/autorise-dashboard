@@ -250,23 +250,32 @@
       background: var(--bg-elevated); border: 3px solid rgba(255, 255, 255, 0.6); box-shadow: none;
       padding: 22px 26px; gap: 8px;
     }
-    /* Label "Moduł N" — overline w kolorze akcentu (jedyny kolorowy overline w talii; reszta
-       overline'ów — .tl-week, SectionLabel w dashboardzie — używa text-tertiary), bo to
-       jawne odliczanie modułów 1-4, nie tylko drugorzędna etykieta sekcji. Ta sama recepta
-       wag/spacingu co SectionLabel.tsx (components/ui/SectionLabel.tsx): 800/0.08em/uppercase. */
+    /* Label "Moduł N" — zamiast płaskiego overline'u (za mało wyraźny na tak ważnej informacji
+       jak numer/tożsamość modułu), pełna odznaka: tintowane tło + obwódka, ten sam wzorzec
+       pudełka co .tag/ikony, tylko w skali pigułki. Divider pod tytułem oddziela "co to za
+       moduł" (ikona/odznaka/tytuł) od "co robi" (opis) — osobne wizualnie, bo to bardzo
+       ważny temat wyliczenia modułów, nie tylko kosmetyczny nagłówek. */
     #s3 .c-eyebrow {
-      font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
-      color: var(--accent); margin-bottom: 6px;
+      display: inline-flex; align-items: center; align-self: flex-start;
+      font-size: 13px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--accent-text); background: var(--accent-muted); border: 1.5px solid var(--accent-border);
+      border-radius: 100px; padding: 4px 14px;
+      margin-bottom: 4px;
     }
+    #s3 .card .divider { margin: 2px 0; }
     #s3 .c-title { color: var(--text-primary); font-size: 19px; }
     #s3 .c-desc  { color: var(--text-secondary); font-size: 17px; line-height: 1.6; }
+    /* Feedback rundy kolejnej: glif BIAŁY (text-primary) niezależnie od tła — dokładnie ten sam
+       przepis co #s1 .c-icon (biel na tincie kontrastuje lepiej niż kolor-na-kolorze), tło
+       zostaje tintowane per moduł (niebieski/pomarańczowy/zielony) jako jedyny nośnik
+       rozróżnienia koloru. */
     #s3 .c-icon {
       width: 58px; height: 58px; border-radius: 16px; margin-bottom: 12px;
-      background: var(--accent-muted); border: 2px solid var(--accent-border); color: var(--accent-text);
+      background: var(--accent-muted); border: 2px solid var(--accent-border); color: var(--text-primary);
     }
     #s3 .c-icon iconify-icon { width: 27px; height: 27px; font-size: 27px; }
-    #s3 .c-icon.ic-warn  { background: var(--warning-bg); border-color: var(--warning-border); color: var(--warning-text); }
-    #s3 .c-icon.ic-green { background: var(--success-bg); border-color: var(--success-border); color: var(--success-text); }
+    #s3 .c-icon.ic-warn  { background: var(--warning-bg); border-color: var(--warning-border); color: var(--text-primary); }
+    #s3 .c-icon.ic-green { background: var(--success-bg); border-color: var(--success-border); color: var(--text-primary); }
 
     /* ── Divider (wspólny dla #s1/#s2/każdego kolejnego ciemnego slajdu) — jeden bazowy
        wygląd (var(--divider), zdefiniowany per-slajd tuż obok reszty tokenów tego slajdu),
@@ -497,7 +506,7 @@
          teraz z naturalnej treści, nadmiar miejsca w kolumnie rozkłada .s2-panels
          (justify-content:center) wyżej, nie jeden rozdęty panel. */
       display: flex; align-items: center; gap: 20px;
-      background: var(--success-bg); border: 1px solid var(--success-border); border-radius: 14px;
+      background: var(--success-bg); border: 3px solid rgba(255, 255, 255, 0.6); border-radius: 14px;
       padding: 24px 28px;
     }
     .s2-risk-ic {
@@ -522,7 +531,7 @@
     .s2-measure-card {
       width: 100%; display: flex; flex-direction: column; align-items: center;
       background: var(--bg-elevated); border: 3px solid rgba(255, 255, 255, 0.6); border-radius: 14px;
-      padding: 14px 24px;
+      padding: 8px 24px;
     }
     /* Dividery między sekcjami (bary / wynik / formuła) — .divider daje wspólny wygląd
        (kolor/grubość), tu tylko layout kontekstowy tego konkretnego miejsca. */
@@ -624,11 +633,11 @@
       color: var(--text-secondary); margin-bottom: 6px;
     }
     /* Delikatny odstęp między kartami a strzałkami/"×" — wcześniej stykały się bez oddechu. */
-    .s2-formula-list { display: flex; flex-direction: column; align-items: stretch; width: 100%; max-width: 280px; gap: 3px; }
+    .s2-formula-list { display: flex; flex-direction: column; align-items: stretch; width: 100%; max-width: 280px; gap: 1px; }
     .s2-formula-item {
       text-align: center; font-size: 12px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase;
       color: var(--text-secondary); white-space: nowrap;
-      background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+      background: var(--bg); border: 3px solid rgba(255, 255, 255, 0.6); border-radius: 8px;
       padding: 7px 12px;
     }
     /* Runda "feedback 11 (pełna weryfikacja)": strzałka WYŚRODKOWANA dokładnie pod/nad
@@ -850,7 +859,7 @@
       .s2-panel-label { font-size: 14px; }
       .s2-panel-val { font-size: 22px; }
       .s2-panel-unit { font-size: 13px; margin-left: 5px; }
-      .s2-risk { padding: 10px 14px; gap: 10px; }
+      .s2-risk { padding: 10px 14px; gap: 10px; border-width: 2px; }
       .s2-risk-ic { width: 28px; height: 28px; border-radius: 8px; }
       .s2-risk-ic iconify-icon { width: 15px; height: 15px; font-size: 15px; }
       .s2-risk-label { font-size: 13px; margin-bottom: 3px; }
@@ -873,7 +882,7 @@
       .s2-result-label { margin-top: 2px; font-size: 10px; }
       .s2-formula-label { font-size: 10px; margin-bottom: 3px; }
       .s2-formula-list { max-width: 220px; gap: 2px; }
-      .s2-formula-item { font-size: 10px; padding: 4px 9px; }
+      .s2-formula-item { font-size: 10px; padding: 4px 9px; border-width: 2px; }
       .s2-formula-conn { height: 13px; }
       .s2-conn-svg { width: 15px; height: 15px; }
       .s2-formula-x { width: 16px; height: 16px; font-size: 9.5px; transform: translate(13px, -50%); }
@@ -888,7 +897,8 @@
       #s3 .divider { margin-bottom: 8px; }
       #s3 .grid2 { gap: 6px; }
       #s3 .card { padding: 9px 11px; gap: 2px; border-width: 1.5px; }
-      #s3 .c-eyebrow { font-size: 8.5px; margin-bottom: 2px; }
+      #s3 .c-eyebrow { font-size: 9px; padding: 2px 9px; margin-bottom: 1px; border-width: 1px; }
+      #s3 .card .divider { margin: 1px 0; }
       #s3 .c-icon { width: 32px; height: 32px; border-radius: 9px; margin-bottom: 4px; }
       #s3 .c-icon iconify-icon { width: 15px; height: 15px; font-size: 15px; }
       #s3 .c-title { font-size: 13px; margin-bottom: 1px; }
@@ -1125,6 +1135,7 @@
           </div>
           <div class="c-eyebrow">Moduł 1</div>
           <div class="c-title">Zlecenia bez przepisywania</div>
+          <div class="divider"></div>
           <p class="c-desc">System czyta zlecenie z PDF-a przychodzącego mailem, wyciąga trasę, ładunek, stawkę i terminy, i wpisuje je prosto do Twojego TMS, bez ręcznego przepisywania i bez pomyłek.</p>
         </div>
         <div class="card" data-module="dokumenty">
@@ -1133,6 +1144,7 @@
           </div>
           <div class="c-eyebrow">Moduł 2</div>
           <div class="c-title">Dokumenty bez szukania</div>
+          <div class="divider"></div>
           <p class="c-desc">CMR od kierowcy, POD z dostawy, faktura w PDF czy dane z Excela trafiają automatycznie do właściwego zlecenia, bez ręcznego szukania i przepisywania.</p>
         </div>
         <div class="card" data-module="powiadomienia">
@@ -1141,6 +1153,7 @@
           </div>
           <div class="c-eyebrow">Moduł 3</div>
           <div class="c-title">Statusy bez telefonu</div>
+          <div class="divider"></div>
           <p class="c-desc">Kierowcy i klienci dostają informację o każdym etapie zlecenia automatycznie, bez telefonów i bez ręcznie wysyłanych SMS-ów.</p>
         </div>
         <div class="card" data-module="dashboard">
@@ -1149,6 +1162,7 @@
           </div>
           <div class="c-eyebrow">Moduł 4</div>
           <div class="c-title">Pełny obraz firmy</div>
+          <div class="divider"></div>
           <p class="c-desc">Widzisz stan całej firmy w czasie rzeczywistym, z jednego miejsca, bez chaotycznych telefonów do spedytorów.</p>
         </div>
       </div>
