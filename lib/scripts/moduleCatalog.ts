@@ -8,16 +8,16 @@ export interface ModuleCatalogEntry {
 }
 
 export const MODULE_CATALOG: ModuleCatalogEntry[] = [
-  { code: "email-parser", label: "Automatyzacja TMS" },
-  { code: "document-ocr", label: "Dokumenty i pliki" },
-  { code: "whatsapp-alerts", label: "Powiadomienia automatyczne" },
+  { code: "email-parser", label: "Zlecenia bez przepisywania" },
+  { code: "document-ocr", label: "Dokumenty bez szukania" },
+  { code: "whatsapp-alerts", label: "Statusy bez telefonu" },
 ];
 
-// "Dashboard zarządczy" jest częścią KAŻDEGO wdrożenia (PR-0), nie osobnym, wybieranym ani
+// "Pełny obraz firmy" (dawniej "Dashboard zarządczy") jest częścią KAŻDEGO wdrożenia (PR-0), nie osobnym, wybieranym ani
 // wycenianym modułem — nie ma tu odpowiednika w MODULE_CATALOG i celowo NIE wchodzi do
 // kalkulatora ROI (kroki 2d-2g kwalifikacji, moduleRecommendation.ts). Trzymane wyłącznie
 // jako stała informacyjna, do użycia w miejscach opisujących pełny zakres wdrożenia.
-export const DASHBOARD_ZARZADCZY_LABEL = "Dashboard zarządczy";
+export const DASHBOARD_ZARZADCZY_LABEL = "Pełny obraz firmy";
 
 // "payment-monitor" (dawniej "Pilnowanie terminów płatności / KSeF") USUNIĘTY 2026-08-08 —
 // nie istnieje jako moduł w obecnym produkcie (prezentacja.html ma tylko 4 karty na slajdzie
