@@ -49,6 +49,9 @@
           'rocket': { body: '<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M4 13a8 8 0 0 1 7 7a6 6 0 0 0 3-5a9 9 0 0 0 6-8a3 3 0 0 0-3-3a9 9 0 0 0-8 6a6 6 0 0 0-5 3"/><path d="M7 14a6 6 0 0 0-3 6a6 6 0 0 0 6-3m4-8a1 1 0 1 0 2 0a1 1 0 1 0-2 0"/></g>' },
           'arrow-down': { body: '<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14m6-6l-6 6m-6-6l6 6"/>' },
           'arrow-right': { body: '<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14m-6 6l6-6m-6-6l6 6"/>' },
+          'trending-down': { body: '<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m3 7l6 6l4-4l8 8"/><path d="M21 10v7h-7"/></g>' },
+          'receipt-2': { body: '<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16l-3-2l-2 2l-2-2l-2 2l-2-2z"/><path d="M14 8h-2.5a1.5 1.5 0 0 0 0 3h1a1.5 1.5 0 0 1 0 3H10m2 0v1.5m0-9V8"/></g>' },
+          'shield-check-filled': { body: '<path fill="currentColor" d="m11.998 2l.118.007l.059.008l.061.013l.111.034a1 1 0 0 1 .217.112l.104.082l.255.218a11 11 0 0 0 7.189 2.537l.342-.01a1 1 0 0 1 1.005.717a13 13 0 0 1-9.208 16.25a1 1 0 0 1-.502 0A13 13 0 0 1 2.54 5.718a1 1 0 0 1 1.005-.717a11 11 0 0 0 7.531-2.527l.263-.225l.096-.075a1 1 0 0 1 .217-.112l.112-.034a1 1 0 0 1 .119-.021zm3.71 7.293a1 1 0 0 0-1.415 0L11 12.585l-1.293-1.292l-.094-.083a1 1 0 0 0-1.32 1.497l2 2l.094.083a1 1 0 0 0 1.32-.083l4-4l.083-.094a1 1 0 0 0-.083-1.32z"/>' },
         },
       })
     })
@@ -95,6 +98,11 @@
       --accent-text: #7ecfff;
       --accent-muted: rgba(56, 182, 255, 0.16);
       --accent-border: rgba(56, 182, 255, 0.35);
+      /* Dedykowany token dividera — var(--border) (.08 opacity) jest myślany jako subtelna
+         obwódka karty, nie samodzielna linia rozdzielająca; jako divider ginął kompletnie.
+         Wspólny dla #s1/#s2/każdego kolejnego ciemnego slajdu (ten sam mechanizm co
+         --accent) — jedna zmiana tutaj i w #s2 utrzymuje spójny wygląd wszędzie. */
+      --divider: rgba(255, 255, 255, 0.22);
       --font-sans: 'Roboto', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
       background: var(--bg);
       font-family: var(--font-sans);
@@ -102,22 +110,27 @@
     #s1 .si { color: var(--text-primary); }
     /* Runda 4: topper znacznie większy i bardziej widoczny — czcionka 10.5px -> 16px, biała
        ramka (rgba(255,255,255,.6)) zamiast koloru accent-border, który ginął na ciemnym tle;
-       kreska akcentu po lewej zostaje jako jedyny kolorowy element chipa. */
+       kreska akcentu po lewej zostaje jako jedyny kolorowy element chipa.
+       Runda "feedback 7": jeszcze większy (16px -> 20px), tekst BIAŁY (text-primary)
+       zamiast błękitu (accent-text) — błękit na przezroczystym błękitnym tle miał słaby
+       kontrast, biel czyta się od razu. */
     #s1 .tag {
-      color: var(--accent-text); background: var(--accent-muted); border: 2px solid rgba(255, 255, 255, 0.6);
-      font-weight: 900; font-size: 16px; letter-spacing: 0.06em; padding: 10px 22px 10px 18px;
+      color: var(--text-primary); background: var(--accent-muted); border: 2px solid rgba(255, 255, 255, 0.6);
+      font-weight: 900; font-size: 20px; letter-spacing: 0.05em; padding: 12px 26px 12px 20px;
       border-left: 4px solid var(--accent);
       margin-bottom: 26px;
     }
     #s1 .h1 { color: var(--text-primary); margin-bottom: 18px; }
     #s1 .blue { color: var(--accent); }
-    #s1 .sub { color: var(--text-secondary); margin-bottom: 34px; font-size: clamp(17px, 1.7vw, 20px); }
+    #s1 .sub { color: var(--text-secondary); margin-bottom: 26px; font-size: clamp(17px, 1.7vw, 20px); }
+    #s1 .divider { margin-bottom: 26px; }
     #s1 .grid2 { grid-auto-rows: 1fr; gap: 20px; }
     #s1 .card {
-      /* Runda 3: obwódka wraca do spójnego z resztą systemu języka accent-tinted (var(--border)
-         domyślnie — sam token jest w #s1 dociemniony do neutralnej szarości poniżej — zamiast
-         czystego białego rgba z rundy 2, które nie pasowało do reszty produktu). */
-      background: var(--bg-elevated); border-color: var(--border); box-shadow: none;
+      /* Runda "feedback 9": biała, zaokrąglona obwódka — ten sam przepis co .vbar-track na
+         slajdzie 2 (rgba(255,255,255,.6), 3px) — świadomie wraca do języka odrzuconego w
+         rundzie 3 (wtedy uznanego za niespójny z resztą produktu), bo teraz to produkt SAM
+         ustalił ten język (vbary, topper, odznaka -86%) i karty mają się z nim zgadzać. */
+      background: var(--bg-elevated); border: 3px solid rgba(255, 255, 255, 0.6); box-shadow: none;
       display: flex; flex-direction: column; padding: 34px 32px; gap: 8px;
     }
     #s1 .c-icon {
@@ -161,47 +174,32 @@
       --error-text: #ff9992;
       --error-bg: rgba(200, 72, 63, 0.16);
       --error-border: rgba(200, 72, 63, 0.35);
+      /* Ten sam token/wartość co #s1 — jeden spójny wygląd dividera na obu ciemnych
+         slajdach (i każdym kolejnym), patrz komentarz przy #s1 wyżej. */
+      --divider: rgba(255, 255, 255, 0.22);
       --font-sans: 'Roboto', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
       background: var(--bg);
       font-family: var(--font-sans);
     }
     #s2 .si { color: var(--text-primary); }
     #s2 .tag {
-      color: var(--accent-text); background: var(--accent-muted); border: 2px solid rgba(255, 255, 255, 0.6);
-      font-weight: 900; font-size: 16px; letter-spacing: 0.06em; padding: 10px 22px 10px 18px;
+      color: var(--text-primary); background: var(--accent-muted); border: 2px solid rgba(255, 255, 255, 0.6);
+      font-weight: 900; font-size: 20px; letter-spacing: 0.05em; padding: 12px 26px 12px 20px;
       border-left: 4px solid var(--accent);
       margin-bottom: 26px;
     }
-    #s2 .h1 { color: var(--text-primary); }
+    #s2 .h1 { color: var(--text-primary); margin-bottom: 14px; }
     #s2 .blue { color: var(--accent); }
-    #s2 .sub { color: var(--text-secondary); font-size: clamp(17px, 1.7vw, 20px); margin-bottom: 28px !important; }
-    #s2 .header-row { margin-bottom: 14px; }
-    #s2 .hero-saved-val { color: var(--success-text); }
-    #s2 .hero-saved-label { color: var(--text-tertiary); }
+    #s2 .sub { color: var(--text-secondary); font-size: clamp(17px, 1.7vw, 20px); margin-bottom: 30px !important; }
 
-    #s2 .vbars { gap: 34px; margin-bottom: 28px; }
-    #s2 .vbar-num.red   { color: var(--error-text); }
-    #s2 .vbar-num.green { color: var(--success-text); }
-    #s2 .vbar-unit { color: var(--text-tertiary); }
-    #s2 .vbar-track { height: 220px; background: var(--bg-elevated); border-color: var(--border); }
-    #s2 .vbar-lbl { color: var(--text-primary); }
-    #s2 .vbar-diff { color: var(--accent-text); }
+    #s2 .vbar-track { background: var(--bg); }
+    #s2 .vbar-lbl { color: var(--text-primary); text-transform: uppercase; }
 
-    #s2 .stat-box { background: var(--bg-elevated); border-color: var(--border); box-shadow: none; padding: 20px 22px; }
-    #s2 .sb-red   { background: var(--error-bg) !important;   border-color: var(--error-border) !important; }
-    #s2 .sb-blue  { background: var(--accent-muted) !important; border-color: var(--accent-border) !important; }
-    #s2 .sb-green { background: var(--success-bg) !important; border-color: var(--success-border) !important; }
-    #s2 .st-tag { color: var(--text-tertiary); }
-    #s2 .st-val { color: var(--text-primary); }
-    #s2 .st-val.red   { color: var(--error-text); }
-    #s2 .st-val.blue  { color: var(--accent-text); }
-    #s2 .st-val.green { color: var(--success-text); }
-    /* Trzecia karta ("Ryzyko po naszej stronie") nie ma już liczby — pełne zdanie w miejsce
-       giant tabular-nums, żeby nie renderować tekstu w 36px monospace. */
-    #s2 .st-val.txt {
-      font-size: 15px; font-weight: 600; line-height: 1.45; letter-spacing: normal;
-      text-transform: none; font-family: var(--font-sans); color: var(--text-primary);
-    }
+    /* ── Divider (wspólny dla #s1/#s2/każdego kolejnego ciemnego slajdu) — jeden bazowy
+       wygląd (var(--divider), zdefiniowany per-slajd tuż obok reszty tokenów tego slajdu),
+       kontekstowe klasy (np. .s2-divider) dostrajają tylko layout (szerokość/margines),
+       nigdy kolor/grubość — to gwarantuje spójny wygląd wszędzie, gdziekolwiek się pojawi. */
+    .divider { width: 100%; height: 2px; background: var(--divider, var(--border)); }
 
     /* ── Progress (element sygnaturowy) ── */
     #progress {
@@ -320,15 +318,17 @@
     .dot.active { background: var(--blue); transform: scale(1.5); }
     #counter { position: fixed; bottom: 14px; right: 14px; font-size: 10px; font-weight: 600; color: var(--text-tertiary); z-index: 200; letter-spacing: .03em; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
     #gen-date { position: fixed; bottom: 14px; left: 14px; font-size: 9.5px; font-weight: 600; color: var(--text-tertiary); opacity: .55; z-index: 200; letter-spacing: .03em; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
-    /* Logo zamiast daty — wyłącznie na slajdzie 1 (jedyny ciemny na razie), patrz JS w
-       updateNav(). Data zostaje jak była na slajdach 2-7 (nadal jasny motyw). */
-    #s1-logo { position: fixed; bottom: 12px; left: 14px; height: 24px; width: auto; z-index: 200; display: none; }
-    /* Plakietka "Podgląd — dane przykładowe" na ciemnym tle slajdu 1 — te same tokeny co
-       reszta przebudowanego slajdu (accent-muted/accent-border/accent-text), zamiast
-       jasnego stylu odziedziczonego po globalnym #data-badge (var(--bg)/var(--line-strong)),
-       który na ciemnym płótnie wyglądał jak zapomniany jasny chip. */
-    #data-badge.on-dark { background: rgba(67,121,177,.16); border-color: rgba(67,121,177,.35); color: #7db8f0; }
-    #data-badge.on-dark.client { background: rgba(67,121,177,.16); border-color: rgba(67,121,177,.35); color: #7db8f0; }
+    /* Logo zamiast daty — na slajdach 1-2 (ciemne na razie), patrz JS w updateNav(). Data
+       zostaje jak była na slajdach 3-7 (nadal jasny motyw). */
+    /* Runda "feedback 7": +50% (24px -> 36px) i odsunięte od samego rogu (12/14px ->
+       28/30px) — wcześniej logo dosłownie stykało się z krawędziami ekranu. */
+    #s1-logo { position: fixed; bottom: 28px; left: 30px; height: 36px; width: auto; z-index: 200; display: none; }
+    /* Plakietka "Podgląd — dane przykładowe" na ciemnym tle slajdów 1-2 — te same tokeny co
+       reszta przebudowanych slajdów (accent-muted/accent-border/accent-text, #38b6ff — realny
+       niebieski marki), zamiast jasnego stylu odziedziczonego po globalnym #data-badge
+       (var(--bg)/var(--line-strong)), który na ciemnym płótnie wyglądał jak zapomniany jasny chip. */
+    #data-badge.on-dark { background: rgba(56,182,255,.16); border-color: rgba(56,182,255,.35); color: #7ecfff; }
+    #data-badge.on-dark.client { background: rgba(56,182,255,.16); border-color: rgba(56,182,255,.35); color: #7ecfff; }
 
     /* ── Slide inner ── */
     .si { flex: 1; display: flex; flex-direction: column; padding: 48px 64px 32px; max-width: 1080px; margin: 0 auto; width: 100%; justify-content: flex-start; }
@@ -373,53 +373,189 @@
     .c-title { font-size: 15px; font-weight: 700; margin-bottom: 3px; color: var(--navy); }
     .c-desc  { font-size: 15px; line-height: 1.55; color: var(--text-secondary); text-wrap: balance; }
 
+    /* ── Slajd 2, runda 3: dwukolumnowy układ — lewa kolumna trzy skumulowane panele
+       (koszt/zwrot/ryzyko), prawa kolumna sam pomiar (bary + wynik + formuła). ── */
+    .s2-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: 32px; align-items: stretch; }
+
+    /* ── Lewa kolumna: panele koszt/zwrot (duże białe liczby) + panel ryzyka (inny język) ── */
+    /* justify-content:center — kolumna wyrównuje się do wysokości prawej (grid align-items:
+       stretch), ale panele mają trzymać naturalną wysokość treści; nadmiar miejsca ma się
+       rozłożyć jako oddech nad/pod grupą, nie zostać upchnięty w jeden rozdęty panel
+       (patrz komentarz przy .s2-risk niżej — tam był wcześniejszy błąd). */
+    .s2-panels { display: flex; flex-direction: column; justify-content: center; gap: 18px; }
+    /* Runda "feedback 9": ten sam przepis obwódki co .vbar-track/#s1 .card — biała,
+       zaokrąglona, 3px — spójny język "ramek" w całej przebudowanej prezentacji. */
+    .s2-panel {
+      display: grid; grid-template-columns: auto 1fr; column-gap: 20px; row-gap: 6px; align-items: center;
+      background: var(--bg-elevated); border: 3px solid rgba(255, 255, 255, 0.6); border-radius: 14px;
+      padding: 26px 28px;
+    }
+    .s2-panel-ic {
+      grid-row: 1 / 3; flex-shrink: 0; width: 56px; height: 56px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .s2-panel-ic iconify-icon { width: 26px; height: 26px; font-size: 26px; }
+    .s2-panel-ic.ic-red  { background: var(--error-bg);   color: var(--error-text); }
+    .s2-panel-ic.ic-blue { background: var(--accent-muted); color: var(--accent-text); }
+    /* Runda "feedback 3": jeszcze większa (16px -> 19px) — ten sam rejestr co .sub pod
+       nagłówkiem slajdu (zdanie, nie tag), text-secondary, bez wersalików/liter-spacingu. */
+    .s2-panel-label { font-size: 19px; font-weight: 600; color: var(--text-secondary); }
+    /* Wartości znacznie większe i BIAŁE (text-primary) zamiast przygaszonego koloru
+       semantycznego — poprzednia wersja kodowała znaczenie kolorem (red/blue) kosztem
+       czytelności, teraz kolor niesie tylko ikona-odznaka obok, liczba ma być widoczna. */
+    .s2-panel-val {
+      font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+      font-size: clamp(38px, 3.2vw, 52px); font-weight: 700; letter-spacing: -.01em; line-height: 1.1;
+      color: var(--text-primary);
+    }
+    /* Jednostka (PLN / rok, mies.) większa niż wcześniej, ale świadomie MNIEJSZA niż
+       .s2-panel-label (19px) — hierarchia: liczba > etykieta > jednostka. */
+    .s2-panel-unit { font-size: 17px; font-weight: 600; color: var(--text-secondary); margin-left: 8px; font-family: var(--font-sans); }
+
+    /* Panel ryzyka — świadomie inny język: odznaka + zdanie, nie kolejna wielka liczba,
+       zielona (success) tonacja jako gwarancja/bezpieczeństwo, nie kolejny wynik do policzenia. */
+    .s2-risk {
+      /* Runda "feedback 2": USUNIĘTE flex:1 — to ono rozciągało panel na całą resztę
+         wysokości kolumny (dopasowanie do prawej strony), przez co dwa zdania tekstu
+         pływały w ogromnym, w połowie pustym boksie ("zapychacz smieciowy"). Wysokość
+         teraz z naturalnej treści, nadmiar miejsca w kolumnie rozkłada .s2-panels
+         (justify-content:center) wyżej, nie jeden rozdęty panel. */
+      display: flex; align-items: center; gap: 20px;
+      background: var(--success-bg); border: 1px solid var(--success-border); border-radius: 14px;
+      padding: 24px 28px;
+    }
+    .s2-risk-ic {
+      /* Tło jaśniejsze (biały tint zamiast czarnego) + wariant -filled ikony (grubszy,
+         wypełniony kształt zamiast cienkiego 2px obrysu) — poprzednia wersja była praktycznie
+         niewidoczna na ciemnozielonym tle. */
+      flex-shrink: 0; width: 50px; height: 50px; border-radius: 13px;
+      background: rgba(255, 255, 255, 0.14); color: var(--success-text);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .s2-risk-ic iconify-icon { width: 26px; height: 26px; font-size: 26px; }
+    /* Runda "feedback 3": "dokładnie tak samo" co etykiety paneli obok — 19px. */
+    .s2-risk-label { font-size: 19px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--success-text); margin-bottom: 8px; }
+    .s2-risk-text { font-size: 17px; font-weight: 600; line-height: 1.55; color: var(--text-primary); }
+
+    /* ── Prawa kolumna: pomiar oszczędności ── */
+    .s2-measure { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    /* Karta dopasowana do lewej kolumny (bg-elevated + border) — wcześniej bary/wynik/
+       formuła pływały luzem bez ramki, niespójnie z panelami po lewej. Ta sama biała 3px
+       obwódka co .s2-panel/.vbar-track. */
+    .s2-measure-card {
+      width: 100%; display: flex; flex-direction: column; align-items: center;
+      background: var(--bg-elevated); border: 3px solid rgba(255, 255, 255, 0.6); border-radius: 14px;
+      padding: 24px 24px;
+    }
+    /* Dividery między sekcjami (bary / wynik / formuła) — .divider daje wspólny wygląd
+       (kolor/grubość), tu tylko layout kontekstowy tego konkretnego miejsca. */
+    .s2-divider { max-width: 300px; margin: 16px 0; }
+
     /* ── Vertical bar chart (Dziś vs Po wdrożeniu) ── */
-    .vbars { display: flex; align-items: flex-end; justify-content: center; gap: 28px; margin-bottom: 20px; padding: 8px 0 0; }
-    .vbar-col { display: flex; flex-direction: column; align-items: center; width: 150px; }
+    /* position:relative — kontener dla nakładki SVG (strzałka) i etykiety %, obu
+       position:absolute, patrz niżej. padding-top rezerwuje miejsce na etykietę NAD
+       słupkami — wcześniej etykieta siedziała na samej krzywej i linia wizualnie ją
+       przecinała mimo nieprzezroczystego tła (wchodziła/wychodziła po przekątnej z rogów
+       boksu); teraz stoi w całości nad wykresem, poza zasięgiem linii. */
+    .vbars { position: relative; display: flex; align-items: flex-end; justify-content: center; gap: 64px; padding: 46px 6px 0; }
+    .vbar-col { display: flex; flex-direction: column; align-items: center; width: 128px; }
+    /* Runda "feedback 2": liczby BIAŁE (text-primary) i większe — kolorowanie liczby
+       samą barwą słupka (red/green) obok tak samo czerwonego/zielonego słupka gubiło
+       kontrast, sam słupek już niesie kolor/znaczenie. */
     .vbar-num {
       font-family: var(--font-mono); font-variant-numeric: tabular-nums;
-      font-size: clamp(30px, 4vw, 42px); font-weight: 700; letter-spacing: -.01em; line-height: 1;
-      margin-bottom: 10px; white-space: nowrap;
+      font-size: clamp(34px, 3.4vw, 46px); font-weight: 700; letter-spacing: -.01em; line-height: 1;
+      color: var(--text-primary); margin-bottom: 12px; white-space: nowrap;
     }
-    .vbar-num.red   { color: var(--error); }
-    .vbar-num.green { color: var(--success); }
-    .vbar-unit { font-size: 13px; font-weight: 600; color: var(--text-tertiary); margin-left: 3px; font-family: var(--font); }
+    .vbar-unit { font-size: 18px; font-weight: 700; color: var(--text-secondary); margin-left: 6px; font-family: var(--font-sans); }
+    /* Runda "feedback 6": ramka DOKŁADNIE tym samym kolorem co strzałka (var(--text-primary),
+       nie osobny odcień rgba) — te dwa elementy mają czytać się jako jeden spójny system
+       linii. Grubość 3px = ten sam stroke-width co #s2-arrow-path, ta sama "waga" wszędzie. */
     .vbar-track {
-      /* Runda "slajd 2, runda 2": szerokość zwężona ze 150px (pełna kolumna) do 88px,
-         wyśrodkowana w kolumnie przez align-items:center na .vbar-col — wcześniejszy
-         słupek na pełną szerokość kolumny wyglądał jak blok/bateria, nie wykres. */
-      width: 88px; height: 200px; border-radius: 3px 3px 0 0;
-      background: var(--bg-soft); border: 1px solid var(--line);
+      width: 82px; height: 150px; border-radius: 12px;
+      background: var(--bg-soft); border: 3px solid var(--text-primary);
       display: flex; align-items: flex-end; overflow: hidden;
     }
     /* Płaski, jednolity kolor zamiast gradientu jasny→ciemny — var(--error)/var(--success)
        rozwiązują się automatycznie na paletę #s2 dzięki temu, że #s2 nadpisuje te custom
-       properties lokalnie (ten sam mechanizm co .blue/var(--accent) na slajdzie 1). */
-    .vbar-fill { width: 100%; border-radius: 3px 3px 0 0; height: 0; min-height: 6px; transform-origin: bottom; }
+       properties lokalnie (ten sam mechanizm co .blue/var(--accent) na slajdzie 1).
+       Zaokrąglenie u góry dopasowane do tracka (12px), żeby przy słupku blisko 100%
+       wypełnienia narożniki fill'a nie "wystawały" kwadratowo poza zaokrągloną ramkę. */
+    .vbar-fill { width: 100%; border-radius: 9px 9px 0 0; height: 0; min-height: 6px; transform-origin: bottom; }
     .vbar-fill.red   { background: var(--error); }
     .vbar-fill.green { background: var(--success); }
-    .vbar-lbl { margin-top: 10px; font-size: 13px; font-weight: 700; color: var(--navy); }
-    .vbar-diff {
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 4px; padding-bottom: 44px; color: var(--blue);
-    }
-    .vbar-diff iconify-icon { width: 22px; height: 22px; }
-    .vbar-diff span {
-      font-family: var(--font-mono); font-variant-numeric: tabular-nums;
-      font-size: 15px; font-weight: 700; white-space: nowrap;
-    }
+    /* Runda "feedback 4": 12.5px był niewidoczny obok reszty przebudowanej typografii
+       slajdu (46-60px liczby, 19px etykiety) — podbite do 15px, litery-spacing dla
+       wyraźnego, "podpisowego" charakteru zamiast ginącej drobnicy. */
+    .vbar-lbl { margin-top: 10px; font-size: 15px; font-weight: 700; letter-spacing: .01em; color: var(--text-primary); }
 
-    /* ── Stat boxes ── */
-    .stat-boxes { display: flex; gap: 12px; flex-wrap: wrap; }
-    .stat-box { flex: 1; min-width: 150px; border-radius: 14px; padding: 16px 18px; background: var(--bg); border: 1px solid var(--line); box-shadow: 0 1px 2px rgba(11,31,58,.04), 0 8px 22px rgba(11,31,58,.05); }
-    .sb-red   { background: rgba(194,59,59,0.05)!important;  border-color: rgba(194,59,59,0.2)!important; }
-    .sb-blue  { background: rgba(29,95,224,0.05)!important;  border-color: rgba(29,95,224,0.2)!important; }
-    .sb-green { background: rgba(27,138,90,0.05)!important;  border-color: rgba(27,138,90,0.2)!important; }
-    .st-tag { font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 6px; }
-    .st-val { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: clamp(24px, 3vw, 36px); font-weight: 700; letter-spacing: -.01em; line-height: 1; color: var(--navy); }
-    .st-val.red   { color: var(--error); }
-    .st-val.blue  { color: var(--blue); }
-    .st-val.green { color: var(--success); }
+    /* Runda "feedback 3+4": strzałka BIAŁA (text-primary) zamiast akcentowego niebieskiego —
+       akcent zostaje wyłącznie dla odznaki -86% (niebieski = akcent/etykieta, biel = "twarda"
+       wartość liczbowa). SVG i etykieta leżą NAD .vbar-col (z-index), nie uczestniczą w
+       układzie flex (position:absolute). */
+    .s2-arrow-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: 2; }
+    #s2-arrow-path { fill: none; stroke: var(--text-primary); stroke-width: 3; stroke-linecap: round; }
+    #s2-arrow-head path { fill: var(--text-primary); }
+    /* Odznaka -86% przeniesiona z krzywej (gdzie linia wizualnie "wchodziła" w róg boksu
+       mimo nieprzezroczystego tła) na STAŁĄ pozycję nad całym wykresem — wyśrodkowana,
+       poza zasięgiem strzałki niezależnie od tego jak strome są słupki u danego klienta.
+       Runda "feedback 5": dokładny klon przepisu topper-chipa "02 · Efekt wdrożenia"
+       (ten sam #s2 .tag wyżej) — pigułka (100px), tło accent-muted, biała 2px obwódka +
+       4px kreska akcentu po lewej, JEDEN rozmiar (16px/900/uppercase) dla liczby i słowa
+       "czasu" zamiast wcześniejszej dwupoziomowej hierarchii wewnątrz odznaki. */
+    .s2-arrow-label {
+      position: absolute; top: 0; left: 50%; z-index: 3; transform: translate(-50%, 0);
+      display: flex; align-items: center; gap: 6px; white-space: nowrap;
+      color: var(--text-primary); background: var(--accent-muted); border: 2px solid rgba(255, 255, 255, 0.6);
+      font-weight: 900; font-size: 16px; letter-spacing: 0.06em;
+      border-radius: 100px; padding: 10px 22px 10px 18px;
+      border-left: 4px solid var(--accent);
+      opacity: 0;
+    }
+    .s2-arrow-label #vbar-diff-pct { font: inherit; letter-spacing: inherit; color: inherit; }
+    .s2-arrow-label-sub { font: inherit; letter-spacing: inherit; text-transform: uppercase; color: inherit; }
+
+    /* Wynik pomiaru — bary powyżej fizycznie "spinają się" w tę liczbę zamiast stać obok
+       niej bez związku, stąd znak "=" i wspólna oś pionowa z .vbars powyżej. */
+    .s2-result { display: flex; align-items: baseline; gap: 12px; }
+    .s2-result-eq { font-family: var(--font-mono); font-size: 28px; font-weight: 700; color: var(--text-tertiary); }
+    .s2-result-val {
+      font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+      font-size: clamp(46px, 5vw, 60px); font-weight: 700; letter-spacing: -.02em; line-height: 1;
+      color: var(--success-text);
+    }
+    /* Własna linia pod wynikiem (nie w tym samym rzędzie co 78px liczba, gdzie ginęła) —
+       text-secondary zamiast tertiary dla realnego kontrastu na ciemnym tle. */
+    .s2-result-label { margin-top: 6px; font-size: 14px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .05em; }
+
+    /* Formuła jako zasada liczenia — nagłówek-etykieta (znacznie większy niż poprzednio,
+       11px -> 15px) tłumaczy co to jest, każdy człon jako osobna obramowana "etykieta"
+       wersalikami (nie goły tekst) — czytelne, co odpowiada za co, mnożenie jako odznaka
+       "×" w kółku między nimi. */
+    .s2-formula-wrap { display: flex; flex-direction: column; align-items: center; }
+    .s2-formula-label {
+      font-size: 15px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase;
+      color: var(--text-secondary); margin-bottom: 12px;
+    }
+    /* Runda "feedback 7": człony formuły jeszcze większe (11.5px -> 14px), max-width
+       poszerzone (320 -> 420px), żeby przy większej czcionce zmieściły się po 2 w rzędzie
+       zamiast rozjechać się na dużo więcej linii. */
+    .s2-formula {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+      gap: 10px; max-width: 420px;
+    }
+    .s2-formula span:not(.s2-formula-x) {
+      font-size: 14px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase;
+      color: var(--text-secondary); white-space: nowrap;
+      background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+      padding: 8px 14px;
+    }
+    .s2-formula-x {
+      flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%;
+      background: var(--accent-muted); color: var(--accent-text);
+      font-size: 11px; font-weight: 800;
+      display: inline-flex; align-items: center; justify-content: center;
+    }
 
     /* ── Comparison table ── */
     .cmp-wrap { background: var(--bg); border-radius: 16px; border: 1px solid var(--line); box-shadow: 0 1px 2px rgba(11,31,58,.04), 0 10px 28px rgba(11,31,58,.05); overflow: hidden; margin-top: 20px; }
@@ -592,28 +728,61 @@
          (68px ikony, 34px padding kart, 34px margines pod podnagłówkiem, 20px gap gridu)
          "wygrywałyby" nawet na wąskim ekranie i wypychały treść poza widoczny, nieprzewijalny
          obszar slajdu (tekst 3-4 karty ucięty, zauważone przy weryfikacji mobile po rundzie 3). */
-      #s1 .tag { margin-bottom: 10px; font-size: 12px; padding: 7px 14px 7px 11px; }
+      #s1 .tag { margin-bottom: 10px; font-size: 14px; padding: 9px 17px 9px 13px; }
       #s1 .h1 { margin-bottom: 8px; }
-      #s1 .sub { margin-bottom: 12px; }
+      #s1 .sub { margin-bottom: 10px; }
+      #s1 .divider { margin-bottom: 10px; }
       #s1 .grid2 { gap: 8px; }
       #s1 .c-icon { width: 40px; height: 40px; border-radius: 10px; margin-bottom: 6px; }
       #s1 .c-icon iconify-icon { width: 19px; height: 19px; font-size: 19px; }
-      #s1 .card { padding: 12px 14px; gap: 3px; }
+      #s1 .card { padding: 12px 14px; gap: 3px; border-width: 2px; }
       #s1 .c-title { font-size: 14px; }
       #s1 .c-desc { font-size: 13px; line-height: 1.5; }
       #s1 .si { padding-bottom: 40px; }
-      #s1-logo { height: 16px; bottom: 8px; }
+      #s1-logo { height: 24px; bottom: 16px; left: 18px; }
 
-      /* Slajd 2: sam problem specyficzności co #s1 wyżej — #s2 .sub/.vbars/.vbar-track/
-         .stat-box mają wyższą specyficzność (ID) niż odpowiedniki dla pozostałych slajdów,
-         więc bez tych wpisów desktopowe rozmiary rundy "slajd 2" wygrywałyby na wąskim ekranie. */
-      #s2 .tag { margin-bottom: 10px; font-size: 12px; padding: 7px 14px 7px 11px; }
-      #s2 .header-row { margin-bottom: 6px; }
+      /* Slajd 2: sam problem specyficzności co #s1 wyżej — #s2 .tag/.sub mają wyższą
+         specyficzność (ID) niż odpowiedniki dla pozostałych slajdów, więc bez tych wpisów
+         desktopowe rozmiary rundy "slajd 2" wygrywałyby na wąskim ekranie. Dwukolumnowy
+         .s2-grid (panele + pomiar) na szerokości telefonu zwyczajnie się nie mieści —
+         jedna kolumna, panele nad pomiarem. */
+      #s2 .tag { margin-bottom: 8px; font-size: 14px; padding: 9px 17px 9px 13px; }
+      #s2 .h1 { margin-bottom: 6px; }
       #s2 .sub { margin-bottom: 10px !important; }
-      #s2 .vbars { gap: 14px; margin-bottom: 12px; }
-      #s2 .vbar-track { height: 120px; }
-      #s2 .stat-box { padding: 12px 14px; }
-      #s2 .st-val.txt { font-size: 12.5px; }
+      #s2 .si { padding-bottom: 36px; }
+      .s2-grid { grid-template-columns: 1fr; gap: 8px; }
+      .s2-panels { gap: 8px; }
+      .s2-panel { padding: 10px 14px; column-gap: 12px; border-width: 2px; }
+      .s2-panel-ic { width: 32px; height: 32px; border-radius: 9px; }
+      .s2-panel-ic iconify-icon { width: 16px; height: 16px; font-size: 16px; }
+      .s2-panel-label { font-size: 14px; }
+      .s2-panel-val { font-size: 22px; }
+      .s2-panel-unit { font-size: 13px; margin-left: 5px; }
+      .s2-risk { padding: 10px 14px; gap: 10px; }
+      .s2-risk-ic { width: 28px; height: 28px; border-radius: 8px; }
+      .s2-risk-ic iconify-icon { width: 15px; height: 15px; font-size: 15px; }
+      .s2-risk-label { font-size: 13px; margin-bottom: 3px; }
+      .s2-risk-text { font-size: 12.5px; line-height: 1.4; }
+      .s2-measure-card { padding: 14px 12px; border-radius: 12px; border-width: 2px; }
+      .s2-divider { margin: 10px 0; }
+      .vbars { gap: 40px; padding: 30px 0 0; }
+      .vbar-col { width: 70px; }
+      .vbar-num { font-size: 20px; margin-bottom: 5px; }
+      .vbar-unit { font-size: 13px; margin-left: 3px; }
+      .vbar-track { width: 42px; height: 56px; border-width: 2px; border-radius: 8px; }
+      .vbar-fill { border-radius: 6px 6px 0 0; }
+      .vbar-lbl { margin-top: 5px; font-size: 11.5px; }
+      #s2-arrow-path { stroke-width: 2; }
+      /* Pod numerem zamiast obok (flex-direction:column) — w rzędzie badge był szerszy
+         niż cały dostępny odstęp między słupkami i zachodził na "70 h/mc" / "10 h/mc". */
+      .s2-arrow-label { font-size: 11px; padding: 6px 12px 6px 9px; border-width: 1.5px; border-left-width: 3px; }
+      .s2-result-eq { font-size: 18px; }
+      .s2-result-val { font-size: 30px; }
+      .s2-result-label { margin-top: 3px; font-size: 11px; }
+      .s2-formula-label { font-size: 11px; margin-bottom: 8px; }
+      .s2-formula { gap: 5px; max-width: 260px; }
+      .s2-formula span:not(.s2-formula-x) { font-size: 10.5px; padding: 5px 9px; }
+      .s2-formula-x { width: 17px; height: 17px; font-size: 10px; }
     }
   </style>
 </head>
@@ -659,6 +828,7 @@
       <div class="tag ai" style="--i:0">01 · Sytuacja dziś</div>
       <h1 class="h1 ai" style="--i:1">Od zlecenia do właściciela, wszystko dzieje się <span class="blue">ręcznie.</span></h1>
       <p class="sub ai" style="--i:2">Cztery miejsca w firmie transportowej, gdzie ręczna praca kosztuje najwięcej czasu i pieniędzy.</p>
+      <div class="divider ai" style="--i:2"></div>
 
       <div class="grid2 ai" style="--i:3">
         <div class="card">
@@ -697,50 +867,95 @@
   <div class="slide" id="s2">
     <div class="si">
       <div class="tag ai" style="--i:0">02 · Efekt wdrożenia</div>
-
-      <div class="header-row ai" style="--i:1">
-        <h1 class="h1 h1-hero">Ile czasu <span class="blue">oszczędzasz</span><br>po wdrożeniu?</h1>
-        <div class="hero-saved">
-          <div class="hero-saved-val"><span id="val-saved">60</span>h</div>
-          <div class="hero-saved-label">oszczędność / mies.</div>
-          <!-- Statyczny opis metodologii, nie personalizowany — sama ZASADA liczenia,
-               konkretne dane klienta są już w barach 70h/10h obok. Celowo bez liczby "80h"
-               ani słowa "gwarancja" — to należy wyłącznie do slajdu 7. -->
-          <div class="hero-saved-formula">Liczba osób × godziny dziennie × 21 dni roboczych × stawka godzinowa</div>
-        </div>
-      </div>
-
+      <h1 class="h1 ai" style="--i:1">Ile czasu <span class="blue">oszczędzasz</span> po wdrożeniu?</h1>
       <p class="sub ai" style="--i:2">Ten sam wolumen zleceń, ten sam spedytor, dwa sposoby ich obsługi.</p>
 
-      <div class="vbars ai" style="--i:3">
-        <div class="vbar-col">
-          <div class="vbar-num red"><span class="val-roi">70</span><span class="vbar-unit">h/mc</span></div>
-          <div class="vbar-track"><div class="vbar-fill red" id="vbar-dzis"></div></div>
-          <div class="vbar-lbl">Dziś</div>
+      <div class="s2-grid ai" style="--i:3">
+        <!-- Lewa kolumna: koszt i zwrot policzone z danych klienta (duże, białe liczby —
+             wcześniej przygaszone kolorem czytały się gorzej niż samo tło), na dole panel
+             ryzyka celowo innym językiem wizualnym (odznaka + zdanie, nie kolejna wielka
+             liczba) — to gwarancja procesu, nie kolejny wynik liczbowy. -->
+        <div class="s2-panels">
+          <div class="s2-panel">
+            <div class="s2-panel-ic ic-red"><iconify-icon icon="tabler:trending-down"></iconify-icon></div>
+            <div class="s2-panel-label">Koszt nieefektywności</div>
+            <div class="s2-panel-val"><span class="val-bol-k">–</span><span class="s2-panel-unit">PLN / rok</span></div>
+          </div>
+          <div class="s2-panel">
+            <div class="s2-panel-ic ic-blue"><iconify-icon icon="tabler:receipt-2"></iconify-icon></div>
+            <div class="s2-panel-label">Zwrot inwestycji</div>
+            <div class="s2-panel-val"><span id="val-months">–</span><span class="s2-panel-unit">mies.</span></div>
+          </div>
+          <div class="s2-risk">
+            <div class="s2-risk-ic"><iconify-icon icon="tabler:shield-check-filled"></iconify-icon></div>
+            <div class="s2-risk-body">
+              <div class="s2-risk-label">Ryzyko po naszej stronie</div>
+              <p class="s2-risk-text">Jeśli nie osiągniemy uzgodnionego celu, zwrot całej kwoty wdrożenia.</p>
+            </div>
+          </div>
         </div>
-        <div class="vbar-diff">
-          <iconify-icon icon="tabler:arrow-down"></iconify-icon>
-          <span id="vbar-diff-pct">–</span>
-        </div>
-        <div class="vbar-col">
-          <div class="vbar-num green"><span class="val-po">10</span><span class="vbar-unit">h/mc</span></div>
-          <div class="vbar-track"><div class="vbar-fill green" id="vbar-po"></div></div>
-          <div class="vbar-lbl">Po wdrożeniu</div>
-        </div>
-      </div>
 
-      <div class="stat-boxes ai" style="--i:3">
-        <div class="stat-box sb-red">
-          <div class="st-tag">Koszt nieefektywności</div>
-          <div class="st-val red"><span class="val-bol-k">–</span> PLN/rok</div>
-        </div>
-        <div class="stat-box sb-blue">
-          <div class="st-tag">Zwrot inwestycji</div>
-          <div class="st-val blue"><span id="val-months">–</span> mies.</div>
-        </div>
-        <div class="stat-box sb-green">
-          <div class="st-tag">Ryzyko po naszej stronie</div>
-          <div class="st-val txt">Jeśli nie osiągniemy uzgodnionego celu, zwrot całej kwoty wdrożenia.</div>
+        <!-- Prawa kolumna: sam pomiar oszczędności — bary Dziś/Po wdrożeniu spinają się w
+             wynik (60h), pod nim formuła jako zasada liczenia, nie kolejna personalizowana
+             liczba (ta już jest w barach powyżej). -->
+        <div class="s2-measure">
+          <!-- Runda "feedback 3": prawa kolumna dostaje tę samą kartę co panele po lewej
+               (bg-elevated + border) — wcześniej tekst/bary pływały luzem na gołym tle
+               slajdu, bez ramki, niespójnie z lewą kolumną. Dividery między sekcjami
+               (bary / wynik / formuła) zamiast samych odstępów. -->
+          <div class="s2-measure-card">
+            <!-- Krzywa strzałka SVG od szczytu słupka "Dziś" do podstawy słupka
+                 "Po wdrożeniu" — pozycje policzone dynamicznie w JS (drawS2Arrow, z
+                 animateVbars) z realnej wysokości słupków, różnej dla każdego klienta.
+                 Etykieta -86% ma teraz własne, nieprzezroczyste tło (odznaka), więc
+                 linia strzałki chowa się POD nią zamiast wizualnie przecinać tekst. -->
+            <div class="vbars">
+              <div class="vbar-col">
+                <div class="vbar-num red"><span class="val-roi">70</span><span class="vbar-unit">h/mc</span></div>
+                <div class="vbar-track"><div class="vbar-fill red" id="vbar-dzis"></div></div>
+                <div class="vbar-lbl">Dziś</div>
+              </div>
+              <div class="vbar-col">
+                <div class="vbar-num green"><span class="val-po">10</span><span class="vbar-unit">h/mc</span></div>
+                <div class="vbar-track"><div class="vbar-fill green" id="vbar-po"></div></div>
+                <div class="vbar-lbl">Po wdrożeniu</div>
+              </div>
+              <svg class="s2-arrow-svg" id="s2-arrow-svg">
+                <defs>
+                  <marker id="s2-arrow-head" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+                    <path d="M0 0 L8 4 L0 8 Z" fill="currentColor" />
+                  </marker>
+                </defs>
+                <path id="s2-arrow-path" marker-end="url(#s2-arrow-head)" />
+              </svg>
+              <div class="s2-arrow-label" id="s2-arrow-label">
+                <span id="vbar-diff-pct">–</span><span class="s2-arrow-label-sub">czasu</span>
+              </div>
+            </div>
+
+            <div class="divider s2-divider"></div>
+
+            <div class="s2-result">
+              <span class="s2-result-eq">=</span>
+              <span class="s2-result-val"><span id="val-saved">60</span>h</span>
+            </div>
+            <!-- Etykieta wyniesiona z rzędu "= 60h" na własną linię — na wspólnej linii z
+                 liczbą 78px była wizualnie zmiażdżona i nieczytelna. -->
+            <div class="s2-result-label">oszczędność / mies.</div>
+
+            <div class="divider s2-divider"></div>
+
+            <!-- Statyczna zasada liczenia, nie personalizowana — konkretne dane klienta są
+                 już w barach powyżej. Celowo bez liczby "80h" i słowa "gwarancja" — to
+                 slajd 7. Każdy człon jako osobna oznaczona "etykieta" (obramowana, wersaliki)
+                 zamiast gołego tekstu — czytelne co odpowiada za co w formule. -->
+            <div class="s2-formula-wrap">
+              <div class="s2-formula-label">Jak liczymy oszczędność</div>
+              <div class="s2-formula">
+                <span>Liczba osób</span><span class="s2-formula-x">×</span><span>Godziny dziennie</span><span class="s2-formula-x">×</span><span>21 dni roboczych</span><span class="s2-formula-x">×</span><span>Stawka godzinowa</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1158,7 +1373,7 @@ function initModulePriority() {
   card.appendChild(tag)
 }
 
-function fmt(n) { return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') }
+function fmt(n) { return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') }
 
 function applyValues() {
   const { roi, po, bol, tms, gwar } = V
@@ -1326,14 +1541,87 @@ function animateVbars(slideEl) {
   // słupka animowane przez transform:scaleY z transform-origin:bottom — czysto kompozytorowe,
   // omija layout/paint całkowicie.
   targets.forEach(({ el, pct }) => { el.style.height = pct + '%' })
+  drawS2Arrow(slideEl)
   if (!gsapReady || REDUCE_MOTION) return
+  // Runda "feedback 7": wolniej (1.1s -> 1.6s), bardziej "dostojnie" — nadal wyłącznie
+  // transform:scaleY (kompozytor GPU), więc dłuższy czas trwania nie kosztuje płynności.
   targets.forEach(({ el }, i) => {
     gsap.fromTo(
       el,
       { scaleY: 0, transformOrigin: 'bottom' },
-      { scaleY: 1, duration: 1.1, delay: i * 0.15, ease: 'power3.out' },
+      { scaleY: 1, duration: 1.6, delay: i * 0.2, ease: 'power3.out' },
     )
   })
+}
+
+// Krzywa strzałka od szczytu słupka "Dziś" do podstawy słupka "Po wdrożeniu" (slajd 2) —
+// zastępuje starą plakietkę "-86%" stojącą osobno obok barów. Pozycje liczone
+// matematycznie z realnej (dynamicznej, różnej dla każdego klienta) wysokości słupków —
+// z .vbar-track (statyczny box, ustawiany raz w applyValues()) i dataset.target (%), NIE
+// z getBoundingClientRect() samego .vbar-fill — ten podczas animacji scaleY ma tymczasowo
+// "skurczony" bounding box i dałby błędny punkt startowy.
+function drawS2Arrow(slideEl) {
+  const wrap = slideEl.querySelector('.vbars')
+  const svg = slideEl.querySelector('#s2-arrow-svg')
+  const path = slideEl.querySelector('#s2-arrow-path')
+  const label = slideEl.querySelector('#s2-arrow-label')
+  const dzisFill = slideEl.querySelector('#vbar-dzis')
+  const poFill = slideEl.querySelector('#vbar-po')
+  if (!wrap || !svg || !path || !dzisFill || !poFill) return
+  const dzisTrack = dzisFill.closest('.vbar-track')
+  const poTrack = poFill.closest('.vbar-track')
+  if (!dzisTrack || !poTrack) return
+
+  const wrapRect = wrap.getBoundingClientRect()
+  const dzisRect = dzisTrack.getBoundingClientRect()
+  const poRect = poTrack.getBoundingClientRect()
+  const dzisPct = Number.parseFloat(dzisFill.dataset.target || '0') / 100
+
+  // Runda "feedback 6": start w prawym-górnym rogu słupka "Dziś" (prawa krawędź tracka,
+  // nie środek), koniec w lewym-dolnym rogu słupka "Po wdrożeniu" (lewa krawędź) — strzałka
+  // wygląda jak realny "wypływ" z jednego słupka w drugi, nie luźna linia unosząca się
+  // między nimi.
+  const x1 = dzisRect.right - wrapRect.left
+  const y1 = dzisRect.bottom - dzisRect.height * dzisPct - wrapRect.top
+  const rawX2 = poRect.left - wrapRect.left
+  const rawY2 = poRect.bottom - wrapRect.top
+
+  // Punkty kontrolne liczone z prawdziwego rogu (rawX2/rawY2), żeby kształt łuku został
+  // ten sam — dopiero końcówka linii jest cofnięta wzdłuż tej samej krzywej.
+  const cx1 = x1 + (rawX2 - x1) * 0.3
+  const cy1 = y1 + (rawY2 - y1) * 0.1
+  const cx2 = x1 + (rawX2 - x1) * 0.7
+  const cy2 = rawY2 - (rawY2 - y1) * 0.05
+
+  // Runda "feedback 8": grot NIE dotyka bezpośrednio ramki słupka — cofnięty o stały
+  // odstęp (gap) wzdłuż stycznej krzywej w tym punkcie (kierunek cx2->rawX2/rawY2),
+  // ten sam efekt jak naturalny odstęp na starcie linii przy słupku "Dziś".
+  const gap = 12
+  const dx = rawX2 - cx2, dy = rawY2 - cy2
+  const segLen = Math.hypot(dx, dy) || 1
+  const x2 = rawX2 - (dx / segLen) * gap
+  const y2 = rawY2 - (dy / segLen) * gap
+
+  path.setAttribute('d', `M ${x1} ${y1} C ${cx1} ${cy1} ${cx2} ${cy2} ${x2} ${y2}`)
+  // Etykieta -86% NIE jest już pozycjonowana względem krzywej — stoi na stałe nad całym
+  // wykresem (top:0; left:50%, patrz CSS #s2-arrow-label), poza zasięgiem linii
+  // niezależnie od tego jak strome są słupki u danego klienta.
+
+  if (!gsapReady || REDUCE_MOTION) {
+    path.style.strokeDasharray = 'none'
+    if (label) label.style.opacity = '1'
+    return
+  }
+  // Runda "feedback 7": wolniej i bardziej rozłożone w czasie (0.9s -> 1.3s, start 0.45 ->
+  // 0.6s) — nadal wyłącznie strokeDashoffset (kompozytor/paint, nie layout), więc dłuższy
+  // czas nie wprowadza żadnego zacinania.
+  const len = path.getTotalLength()
+  path.style.strokeDasharray = String(len)
+  path.style.strokeDashoffset = String(len)
+  gsap.to(path, { strokeDashoffset: 0, duration: 1.3, delay: 0.6, ease: 'power2.inOut' })
+  if (label) {
+    gsap.fromTo(label, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.6, delay: 1.85, ease: 'power2.out' })
+  }
 }
 
 const TOTAL  = 7
@@ -1401,16 +1689,16 @@ function updateNav() {
     const info = document.getElementById('edit-slide-info')
     if (info) info.textContent = 'Slajd ' + (cur + 1) + '/7 · ' + SLIDE_NAMES[cur]
   }
-  // Slajd 1 jest jedyny na razie ciemny — data w rogu i plakietka podglądu przełączają się
-  // na wersję dopasowaną do ciemnego tła tylko tam; slajdy 2-7 zostają bez zmian (jasny
-  // motyw), patrz #s1-logo/#data-badge.on-dark w <style>.
-  const onSlide1 = cur === 0
+  // Slajdy 1-2 są na razie ciemne — data w rogu i plakietka podglądu przełączają się na
+  // wersję dopasowaną do ciemnego tła tylko tam; slajdy 3-7 zostają bez zmian (jasny motyw),
+  // patrz #s1-logo/#data-badge.on-dark w <style>.
+  const onDarkSlide = cur === 0 || cur === 1
   const genDate = document.getElementById('gen-date')
   const s1Logo = document.getElementById('s1-logo')
-  if (genDate) genDate.style.display = onSlide1 ? 'none' : ''
-  if (s1Logo) s1Logo.style.display   = onSlide1 ? 'block' : 'none'
+  if (genDate) genDate.style.display = onDarkSlide ? 'none' : ''
+  if (s1Logo) s1Logo.style.display   = onDarkSlide ? 'block' : 'none'
   const dataBadge = document.getElementById('data-badge')
-  if (dataBadge) dataBadge.classList.toggle('on-dark', onSlide1)
+  if (dataBadge) dataBadge.classList.toggle('on-dark', onDarkSlide)
 }
 
 let editMode = false
