@@ -122,25 +122,28 @@
     }
     #s1 .h1 { color: var(--text-primary); margin-bottom: 18px; }
     #s1 .blue { color: var(--accent); }
-    #s1 .sub { color: var(--text-secondary); margin-bottom: 26px; font-size: clamp(17px, 1.7vw, 20px); }
-    #s1 .divider { margin-bottom: 26px; }
-    #s1 .grid2 { grid-auto-rows: 1fr; gap: 20px; }
+    #s1 .sub { color: var(--text-secondary); margin-bottom: 20px; font-size: clamp(17px, 1.7vw, 20px); }
+    #s1 .divider { margin-bottom: 20px; }
+    #s1 .grid2 { grid-auto-rows: 1fr; gap: 14px; }
     #s1 .card {
       /* Runda "feedback 9": biała, zaokrąglona obwódka — ten sam przepis co .vbar-track na
          slajdzie 2 (rgba(255,255,255,.6), 3px) — świadomie wraca do języka odrzuconego w
          rundzie 3 (wtedy uznanego za niespójny z resztą produktu), bo teraz to produkt SAM
-         ustalił ten język (vbary, topper, odznaka -86%) i karty mają się z nim zgadzać. */
+         ustalił ten język (vbary, topper, odznaka -86%) i karty mają się z nim zgadzać.
+         Runda "feedback 10": padding skompresowany (34/32 -> 26/28px) — powiększony tekst
+         tytułu/opisu potrzebował miejsca, żeby dwa rzędy kart zmieściły się w viewport. */
       background: var(--bg-elevated); border: 3px solid rgba(255, 255, 255, 0.6); box-shadow: none;
-      display: flex; flex-direction: column; padding: 34px 32px; gap: 8px;
+      display: flex; flex-direction: column; padding: 26px 28px; gap: 8px;
     }
     #s1 .c-icon {
       /* Runda 3: z powrotem do przezroczystego tintu — ten sam przepis co avatar/plakietki w
-         ClientCard (app/(dashboard)/pipeline/page.tsx): accent-muted tło, accent-border obwódka,
-         sam glif w pełnym nasyconym var(--accent). Płaski wypełniony kwadrat z rundy 2 był
-         osobnym, wymyślonym tylko na ten slajd językiem — to poprawka na wspólny. */
-      width: 68px; height: 68px; border-radius: 18px;
-      background: var(--accent-muted); border: 1px solid var(--accent-border); color: var(--accent);
-      margin-bottom: 16px;
+         ClientCard (app/(dashboard)/pipeline/page.tsx): accent-muted tło, accent-border obwódka.
+         Runda "feedback 10": sam glif BIAŁY (text-primary) zamiast var(--accent) — biel na
+         niebieskim tincie kontrastuje wyraźnie lepiej niż niebieski-na-niebieskim. Rozmiar
+         zmniejszony (68 -> 58px) razem z resztą karty, żeby zrobić miejsce większemu tekstowi. */
+      width: 58px; height: 58px; border-radius: 16px;
+      background: var(--accent-muted); border: 1px solid var(--accent-border); color: var(--text-primary);
+      margin-bottom: 12px;
     }
     /* Runda 4: bug znaleziony przez getBoundingClientRect — iconify-icon renderuje wewnętrzny
        SVG w jednostce 1em (font-size), NIE w CSS width/height hosta. Bez font-size dopasowanego
@@ -148,9 +151,10 @@
        hosta, a wewnętrzny margin:auto z shadow DOM iconify NIE centruje w pionie w kontekście
        innym niż flex/grid — stąd glif wizualnie "uciekał" do góry i był za mały. font-size
        ustawiony na dokładnie tę samą wartość co width/height eliminuje oba problemy naraz. */
-    #s1 .c-icon iconify-icon { width: 32px; height: 32px; font-size: 32px; }
-    #s1 .c-title { color: var(--text-primary); font-size: 17px; }
-    #s1 .c-desc { color: var(--text-secondary); font-size: 15.5px; line-height: 1.6; }
+    #s1 .c-icon iconify-icon { width: 27px; height: 27px; font-size: 27px; }
+    /* Runda "feedback 10": tytuł/opis kart jeszcze większe (17/15.5px -> 19/17px). */
+    #s1 .c-title { color: var(--text-primary); font-size: 19px; }
+    #s1 .c-desc { color: var(--text-secondary); font-size: 17px; line-height: 1.6; }
 
     /* ── Slajd 2: ten sam ciemny motyw co #s1, scoped do #s2 wyłącznie, konsekwentnie
          z rundą poprzednią — plus semantyczne --success/--error/--*-bg/--*-border/--*-text
@@ -194,6 +198,72 @@
 
     #s2 .vbar-track { background: var(--bg); }
     #s2 .vbar-lbl { color: var(--text-primary); text-transform: uppercase; }
+
+    /* ── Slajd 3: ten sam ciemny motyw co #s1/#s2, scoped do #s3 wyłącznie. Ikony modułów
+         dostają przezroczyste, koloru-akcentu tło + wyraźną obwódkę (ten sam wzorzec pudełka
+         co #s1 .c-icon), ale W ODRÓŻNIENIU od #s1 sam glif zostaje w pełnym kolorze modułu
+         (niebieski/pomarańczowy/zielony), nie bieli — jedyne świadome odejście od wzorca
+         slajdu 1, na wyraźną prośbę: kolor ma dalej rozróżniać moduły. --warning-* to nowy
+         token (brakował w #s1/#s2, żaden panel tam nie używał ic-warn) — ta sama metoda
+         "jasny tekst + tłumiony bg + widoczna obwódka" co już istniejące tokeny --success/--error. */
+    #s3 {
+      --bg: #17181b;
+      --bg-elevated: #201f23;
+      --border: rgba(255, 255, 255, 0.08);
+      --text-primary: #eeeae4;
+      --text-secondary: #b8b4ad;
+      --text-tertiary: #8c8880;
+      --accent: #38b6ff;
+      --accent-text: #7ecfff;
+      --accent-muted: rgba(56, 182, 255, 0.16);
+      --accent-border: rgba(56, 182, 255, 0.35);
+      --success: #2fa262;
+      --success-text: #6bdb9c;
+      --success-bg: rgba(47, 162, 98, 0.16);
+      --success-border: rgba(47, 162, 98, 0.35);
+      --warning: #d9932e;
+      --warning-text: #f0b458;
+      --warning-bg: rgba(217, 147, 46, 0.16);
+      --warning-border: rgba(217, 147, 46, 0.35);
+      --divider: rgba(255, 255, 255, 0.22);
+      --font-sans: 'Roboto', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg);
+      font-family: var(--font-sans);
+    }
+    #s3 .si { color: var(--text-primary); }
+    #s3 .tag {
+      color: var(--text-primary); background: var(--accent-muted); border: 2px solid rgba(255, 255, 255, 0.6);
+      font-weight: 900; font-size: 20px; letter-spacing: 0.05em; padding: 12px 26px 12px 20px;
+      border-left: 4px solid var(--accent);
+      margin-bottom: 22px;
+    }
+    #s3 .h1 { color: var(--text-primary); margin-bottom: 12px; }
+    #s3 .blue { color: var(--accent); }
+    #s3 .sub { color: var(--text-secondary); margin-bottom: 22px; font-size: clamp(16px, 1.6vw, 18px); }
+
+    #s3 .card { background: var(--bg-elevated); border: 2px solid rgba(255, 255, 255, 0.5); box-shadow: none; }
+    #s3 .c-title { color: var(--text-primary); }
+    #s3 .c-desc  { color: var(--text-secondary); }
+    #s3 .c-icon {
+      background: var(--accent-muted); border: 2px solid var(--accent-border); color: var(--accent-text);
+    }
+    #s3 .c-icon.ic-warn  { background: var(--warning-bg); border-color: var(--warning-border); color: var(--warning-text); }
+    #s3 .c-icon.ic-green { background: var(--success-bg); border-color: var(--success-border); color: var(--success-text); }
+
+    /* Oś "co dalej" — reużywa dokładnie komponent .tl ze slajdu 5 (ten sam wzorzec: numerowane/
+       ikonowe kropki na poziomej linii), tylko przemalowany na ciemno + nowa .tl-desc (krótki
+       podpis pod etykietą — oryginalny .tl na slajdzie 5 go nie potrzebował, tu jest kluczowy,
+       bo punkty 2 i 3 wymagają wyjaśnienia co się dokłada). */
+    #s3 .tl { margin-top: 14px; }
+    #s3 .tl-track { background: rgba(255, 255, 255, 0.15); }
+    #s3 .tl-track-fill { background: var(--accent); box-shadow: 0 0 12px rgba(56, 182, 255, 0.5); }
+    #s3 .tl-dot {
+      background: var(--bg-elevated); border: 2px solid var(--accent); color: var(--accent-text);
+      box-shadow: 0 0 0 4px var(--bg);
+    }
+    #s3 .tl-week { color: var(--text-tertiary); }
+    #s3 .tl-label { color: var(--text-primary); font-size: 14px; }
+    #s3 .tl-desc { font-size: 12px; line-height: 1.4; color: var(--text-secondary); margin-top: 4px; max-width: 200px; text-align: center; }
 
     /* ── Divider (wspólny dla #s1/#s2/każdego kolejnego ciemnego slajdu) — jeden bazowy
        wygląd (var(--divider), zdefiniowany per-slajd tuż obok reszty tokenów tego slajdu),
@@ -322,7 +392,8 @@
        zostaje jak była na slajdach 3-7 (nadal jasny motyw). */
     /* Runda "feedback 7": +50% (24px -> 36px) i odsunięte od samego rogu (12/14px ->
        28/30px) — wcześniej logo dosłownie stykało się z krawędziami ekranu. */
-    #s1-logo { position: fixed; bottom: 28px; left: 30px; height: 36px; width: auto; z-index: 200; display: none; }
+    /* Runda "feedback 10": jeszcze wyraźniej odsunięte od rogu (28/30 -> 36/40px). */
+    #s1-logo { position: fixed; bottom: 36px; left: 40px; height: 36px; width: auto; z-index: 200; display: none; }
     /* Plakietka "Podgląd — dane przykładowe" na ciemnym tle slajdów 1-2 — te same tokeny co
        reszta przebudowanych slajdów (accent-muted/accent-border/accent-text, #38b6ff — realny
        niebieski marki), zamiast jasnego stylu odziedziczonego po globalnym #data-badge
@@ -395,8 +466,10 @@
       display: flex; align-items: center; justify-content: center;
     }
     .s2-panel-ic iconify-icon { width: 26px; height: 26px; font-size: 26px; }
-    .s2-panel-ic.ic-red  { background: var(--error-bg);   color: var(--error-text); }
-    .s2-panel-ic.ic-blue { background: var(--accent-muted); color: var(--accent-text); }
+    /* Runda "feedback 10": glif BIAŁY niezależnie od tła (tint zostaje jako kolor kontekstu,
+       biel jako jedyny kolor ikony — lepszy kontrast niż tinted-na-tinted). */
+    .s2-panel-ic.ic-red  { background: var(--error-bg);   color: var(--text-primary); }
+    .s2-panel-ic.ic-blue { background: var(--accent-muted); color: var(--text-primary); }
     /* Runda "feedback 3": jeszcze większa (16px -> 19px) — ten sam rejestr co .sub pod
        nagłówkiem slajdu (zdanie, nie tag), text-secondary, bez wersalików/liter-spacingu. */
     .s2-panel-label { font-size: 19px; font-weight: 600; color: var(--text-secondary); }
@@ -427,9 +500,10 @@
     .s2-risk-ic {
       /* Tło jaśniejsze (biały tint zamiast czarnego) + wariant -filled ikony (grubszy,
          wypełniony kształt zamiast cienkiego 2px obrysu) — poprzednia wersja była praktycznie
-         niewidoczna na ciemnozielonym tle. */
+         niewidoczna na ciemnozielonym tle. Runda "feedback 10": glif biały, spójnie z
+         panelami obok. */
       flex-shrink: 0; width: 50px; height: 50px; border-radius: 13px;
-      background: rgba(255, 255, 255, 0.14); color: var(--success-text);
+      background: rgba(255, 255, 255, 0.14); color: var(--text-primary);
       display: flex; align-items: center; justify-content: center;
     }
     .s2-risk-ic iconify-icon { width: 26px; height: 26px; font-size: 26px; }
@@ -445,19 +519,18 @@
     .s2-measure-card {
       width: 100%; display: flex; flex-direction: column; align-items: center;
       background: var(--bg-elevated); border: 3px solid rgba(255, 255, 255, 0.6); border-radius: 14px;
-      padding: 24px 24px;
+      padding: 14px 24px;
     }
     /* Dividery między sekcjami (bary / wynik / formuła) — .divider daje wspólny wygląd
        (kolor/grubość), tu tylko layout kontekstowy tego konkretnego miejsca. */
-    .s2-divider { max-width: 300px; margin: 16px 0; }
+    .s2-divider { max-width: 300px; margin: 9px 0; }
 
     /* ── Vertical bar chart (Dziś vs Po wdrożeniu) ── */
-    /* position:relative — kontener dla nakładki SVG (strzałka) i etykiety %, obu
-       position:absolute, patrz niżej. padding-top rezerwuje miejsce na etykietę NAD
-       słupkami — wcześniej etykieta siedziała na samej krzywej i linia wizualnie ją
-       przecinała mimo nieprzezroczystego tła (wchodziła/wychodziła po przekątnej z rogów
-       boksu); teraz stoi w całości nad wykresem, poza zasięgiem linii. */
-    .vbars { position: relative; display: flex; align-items: flex-end; justify-content: center; gap: 64px; padding: 46px 6px 0; }
+    /* position:relative — kontener dla nakładki SVG (strzałka), position:absolute, patrz
+       niżej. Runda "feedback 11": padding-top zredukowany (32 -> 10px) — etykieta -86%,
+       która wcześniej potrzebowała tu miejsca, przeniosła się obok "= 60h"; odzyskane
+       miejsce oddane słupkom (patrz .vbar-track niżej). */
+    .vbars { position: relative; display: flex; align-items: flex-end; justify-content: center; gap: 64px; padding: 10px 6px 0; }
     .vbar-col { display: flex; flex-direction: column; align-items: center; width: 128px; }
     /* Runda "feedback 2": liczby BIAŁE (text-primary) i większe — kolorowanie liczby
        samą barwą słupka (red/green) obok tak samo czerwonego/zielonego słupka gubiło
@@ -465,14 +538,17 @@
     .vbar-num {
       font-family: var(--font-mono); font-variant-numeric: tabular-nums;
       font-size: clamp(34px, 3.4vw, 46px); font-weight: 700; letter-spacing: -.01em; line-height: 1;
-      color: var(--text-primary); margin-bottom: 12px; white-space: nowrap;
+      color: var(--text-primary); margin-bottom: 5px; white-space: nowrap;
     }
     .vbar-unit { font-size: 18px; font-weight: 700; color: var(--text-secondary); margin-left: 6px; font-family: var(--font-sans); }
     /* Runda "feedback 6": ramka DOKŁADNIE tym samym kolorem co strzałka (var(--text-primary),
        nie osobny odcień rgba) — te dwa elementy mają czytać się jako jeden spójny system
-       linii. Grubość 3px = ten sam stroke-width co #s2-arrow-path, ta sama "waga" wszędzie. */
+       linii. Grubość 3px = ten sam stroke-width co #s2-arrow-path, ta sama "waga" wszędzie.
+       Runda "feedback 11": 96 -> 116px — miejsce odzyskane z .vbars padding-top (etykieta
+       -86% przeniosła się obok "= 60h") oddane z powrotem słupkom. Runda "feedback 12":
+       116 -> 108px — kilka px oddane z powrotem formule (odstępy między kartami/strzałkami). */
     .vbar-track {
-      width: 82px; height: 150px; border-radius: 12px;
+      width: 82px; height: 108px; border-radius: 12px;
       background: var(--bg-soft); border: 3px solid var(--text-primary);
       display: flex; align-items: flex-end; overflow: hidden;
     }
@@ -495,20 +571,23 @@
        układzie flex (position:absolute). */
     .s2-arrow-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: 2; }
     #s2-arrow-path { fill: none; stroke: var(--text-primary); stroke-width: 3; stroke-linecap: round; }
-    #s2-arrow-head path { fill: var(--text-primary); }
-    /* Odznaka -86% przeniesiona z krzywej (gdzie linia wizualnie "wchodziła" w róg boksu
-       mimo nieprzezroczystego tła) na STAŁĄ pozycję nad całym wykresem — wyśrodkowana,
-       poza zasięgiem strzałki niezależnie od tego jak strome są słupki u danego klienta.
-       Runda "feedback 5": dokładny klon przepisu topper-chipa "02 · Efekt wdrożenia"
-       (ten sam #s2 .tag wyżej) — pigułka (100px), tło accent-muted, biała 2px obwódka +
-       4px kreska akcentu po lewej, JEDEN rozmiar (16px/900/uppercase) dla liczby i słowa
-       "czasu" zamiast wcześniejszej dwupoziomowej hierarchii wewnątrz odznaki. */
+    /* Grot: opacity:0 na start, pozycja/obrót ustawiane w JS (transform), patrz komentarz
+       przy znaczniku wyżej. */
+    #s2-arrow-head { fill: var(--text-primary); opacity: 0; }
+    /* Runda "feedback 11": odznaka -86% przeniesiona z miejsca nad wykresem (gdzie na
+       wąskim odstępie między słupkami nachodziła na "10 h/mc") obok wyniku "= 60h" — obie
+       wartości to "efekt końcowy", więc stoją razem, i nie ma już ryzyka kolizji z liczbami
+       nad barami niezależnie od proporcji słupków u danego klienta. Przepis wciąż ten sam
+       co topper-chip "02 · Efekt wdrożenia" (#s2 .tag) — pigułka, biała 2px obwódka, 4px
+       kreska akcentu po lewej, JEDEN rozmiar dla liczby i słowa "czasu". align-self:center
+       (nie baseline, dziedziczone z .s2-result) — pigułka ma się wyśrodkować względem
+       wysokości rzędu, nie równać do linii bazowej tekstu jak "=" i "60h". */
     .s2-arrow-label {
-      position: absolute; top: 0; left: 50%; z-index: 3; transform: translate(-50%, 0);
+      align-self: center;
       display: flex; align-items: center; gap: 6px; white-space: nowrap;
       color: var(--text-primary); background: var(--accent-muted); border: 2px solid rgba(255, 255, 255, 0.6);
-      font-weight: 900; font-size: 16px; letter-spacing: 0.06em;
-      border-radius: 100px; padding: 10px 22px 10px 18px;
+      font-weight: 900; font-size: 15px; letter-spacing: 0.05em;
+      border-radius: 100px; padding: 8px 18px 8px 15px;
       border-left: 4px solid var(--accent);
       opacity: 0;
     }
@@ -517,43 +596,53 @@
 
     /* Wynik pomiaru — bary powyżej fizycznie "spinają się" w tę liczbę zamiast stać obok
        niej bez związku, stąd znak "=" i wspólna oś pionowa z .vbars powyżej. */
-    .s2-result { display: flex; align-items: baseline; gap: 12px; }
-    .s2-result-eq { font-family: var(--font-mono); font-size: 28px; font-weight: 700; color: var(--text-tertiary); }
+    .s2-result { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px; }
+    .s2-result-main { display: flex; align-items: baseline; gap: 10px; }
+    .s2-result-eq { font-family: var(--font-mono); font-size: 24px; font-weight: 700; color: var(--text-tertiary); }
     .s2-result-val {
       font-family: var(--font-mono); font-variant-numeric: tabular-nums;
-      font-size: clamp(46px, 5vw, 60px); font-weight: 700; letter-spacing: -.02em; line-height: 1;
+      font-size: clamp(34px, 3.8vw, 44px); font-weight: 700; letter-spacing: -.02em; line-height: 1;
       color: var(--success-text);
     }
     /* Własna linia pod wynikiem (nie w tym samym rzędzie co 78px liczba, gdzie ginęła) —
        text-secondary zamiast tertiary dla realnego kontrastu na ciemnym tle. */
     .s2-result-label { margin-top: 6px; font-size: 14px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .05em; }
 
-    /* Formuła jako zasada liczenia — nagłówek-etykieta (znacznie większy niż poprzednio,
-       11px -> 15px) tłumaczy co to jest, każdy człon jako osobna obramowana "etykieta"
-       wersalikami (nie goły tekst) — czytelne, co odpowiada za co, mnożenie jako odznaka
-       "×" w kółku między nimi. */
-    .s2-formula-wrap { display: flex; flex-direction: column; align-items: center; }
+    /* Formuła jako zasada liczenia — nagłówek-etykieta tłumaczy co to jest.
+       Runda "feedback 10": pionowa lista zamiast wierszy owijających się pigułek — każdy
+       człon to osobna karta połączona z następną mini-strzałką (dokładnie ten sam
+       mechanizm rysowania co #s2-arrow-path/#s2-arrow-head między barami), obok niej
+       odznaka "×" jako mnożnik. Rozwiązuje przy okazji problem wcześniejszych rund —
+       długie, doprecyzowane etykiety już nie muszą się dopasowywać do zmiennej liczby
+       kolumn w wierszu, każda dostaje pełną szerokość karty. */
+    .s2-formula-wrap { display: flex; flex-direction: column; align-items: center; width: 100%; }
     .s2-formula-label {
       font-size: 15px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase;
-      color: var(--text-secondary); margin-bottom: 12px;
+      color: var(--text-secondary); margin-bottom: 6px;
     }
-    /* Runda "feedback 7": człony formuły jeszcze większe (11.5px -> 14px), max-width
-       poszerzone (320 -> 420px), żeby przy większej czcionce zmieściły się po 2 w rzędzie
-       zamiast rozjechać się na dużo więcej linii. */
-    .s2-formula {
-      display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
-      gap: 10px; max-width: 420px;
-    }
-    .s2-formula span:not(.s2-formula-x) {
-      font-size: 14px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase;
+    /* Delikatny odstęp między kartami a strzałkami/"×" — wcześniej stykały się bez oddechu. */
+    .s2-formula-list { display: flex; flex-direction: column; align-items: stretch; width: 100%; max-width: 280px; gap: 3px; }
+    .s2-formula-item {
+      text-align: center; font-size: 12px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase;
       color: var(--text-secondary); white-space: nowrap;
       background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
-      padding: 8px 14px;
+      padding: 7px 12px;
     }
+    /* Runda "feedback 11 (pełna weryfikacja)": strzałka WYŚRODKOWANA dokładnie pod/nad
+       kartami (jedyne dziecko flex w rzędzie) — wcześniej "×" obok niej w tym samym rzędzie
+       flex przesuwało całą parę [strzałka+×] w bok, więc sama strzałka nie leżała już na
+       tej samej osi co karty nad/pod nią. "×" wypięty z flexa (position:absolute), więc nie
+       wpływa na wyśrodkowanie strzałki. */
+    .s2-formula-conn { position: relative; display: flex; align-items: center; justify-content: center; height: 22px; }
+    .s2-conn-svg { width: 24px; height: 24px; overflow: visible; flex-shrink: 0; }
+    .s2-conn-path { fill: none; stroke: var(--text-primary); stroke-width: 2.5; stroke-linecap: round; }
+    .s2-conn-head { fill: var(--text-primary); opacity: 0; }
+    /* "×" biały w kółku akcentu — ta sama odznaka co przy strzałce Dziś/Po wdrożeniu. */
     .s2-formula-x {
-      flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%;
-      background: var(--accent-muted); color: var(--accent-text);
-      font-size: 11px; font-weight: 800;
+      position: absolute; top: 50%; left: 50%; transform: translate(19px, -50%);
+      width: 24px; height: 24px; border-radius: 50%;
+      background: var(--accent-muted); color: var(--text-primary);
+      font-size: 13px; font-weight: 800;
       display: inline-flex; align-items: center; justify-content: center;
     }
 
@@ -736,10 +825,10 @@
       #s1 .c-icon { width: 40px; height: 40px; border-radius: 10px; margin-bottom: 6px; }
       #s1 .c-icon iconify-icon { width: 19px; height: 19px; font-size: 19px; }
       #s1 .card { padding: 12px 14px; gap: 3px; border-width: 2px; }
-      #s1 .c-title { font-size: 14px; }
-      #s1 .c-desc { font-size: 13px; line-height: 1.5; }
+      #s1 .c-title { font-size: 15.5px; }
+      #s1 .c-desc { font-size: 14px; line-height: 1.5; }
       #s1 .si { padding-bottom: 40px; }
-      #s1-logo { height: 24px; bottom: 16px; left: 18px; }
+      #s1-logo { height: 24px; bottom: 20px; left: 22px; }
 
       /* Slajd 2: sam problem specyficzności co #s1 wyżej — #s2 .tag/.sub mają wyższą
          specyficzność (ID) niż odpowiedniki dla pozostałych slajdów, więc bez tych wpisów
@@ -763,26 +852,46 @@
       .s2-risk-ic iconify-icon { width: 15px; height: 15px; font-size: 15px; }
       .s2-risk-label { font-size: 13px; margin-bottom: 3px; }
       .s2-risk-text { font-size: 12.5px; line-height: 1.4; }
-      .s2-measure-card { padding: 14px 12px; border-radius: 12px; border-width: 2px; }
-      .s2-divider { margin: 10px 0; }
-      .vbars { gap: 40px; padding: 30px 0 0; }
+      .s2-measure-card { padding: 6px 12px; border-radius: 12px; border-width: 2px; }
+      .s2-divider { margin: 4px 0; }
+      .vbars { gap: 40px; padding: 12px 0 0; }
       .vbar-col { width: 70px; }
-      .vbar-num { font-size: 20px; margin-bottom: 5px; }
+      .vbar-num { font-size: 20px; margin-bottom: 2px; }
       .vbar-unit { font-size: 13px; margin-left: 3px; }
-      .vbar-track { width: 42px; height: 56px; border-width: 2px; border-radius: 8px; }
+      .vbar-track { width: 42px; height: 20px; border-width: 2px; border-radius: 8px; }
       .vbar-fill { border-radius: 6px 6px 0 0; }
-      .vbar-lbl { margin-top: 5px; font-size: 11.5px; }
+      .vbar-lbl { margin-top: 3px; font-size: 11.5px; }
       #s2-arrow-path { stroke-width: 2; }
       /* Pod numerem zamiast obok (flex-direction:column) — w rzędzie badge był szerszy
          niż cały dostępny odstęp między słupkami i zachodził na "70 h/mc" / "10 h/mc". */
       .s2-arrow-label { font-size: 11px; padding: 6px 12px 6px 9px; border-width: 1.5px; border-left-width: 3px; }
-      .s2-result-eq { font-size: 18px; }
-      .s2-result-val { font-size: 30px; }
-      .s2-result-label { margin-top: 3px; font-size: 11px; }
-      .s2-formula-label { font-size: 11px; margin-bottom: 8px; }
-      .s2-formula { gap: 5px; max-width: 260px; }
-      .s2-formula span:not(.s2-formula-x) { font-size: 10.5px; padding: 5px 9px; }
-      .s2-formula-x { width: 17px; height: 17px; font-size: 10px; }
+      .s2-result-eq { font-size: 15px; }
+      .s2-result-val { font-size: 20px; }
+      .s2-result-label { margin-top: 2px; font-size: 10px; }
+      .s2-formula-label { font-size: 10px; margin-bottom: 3px; }
+      .s2-formula-list { max-width: 220px; gap: 2px; }
+      .s2-formula-item { font-size: 10px; padding: 4px 9px; }
+      .s2-formula-conn { height: 13px; }
+      .s2-conn-svg { width: 15px; height: 15px; }
+      .s2-formula-x { width: 16px; height: 16px; font-size: 9.5px; transform: translate(13px, -50%); }
+
+      /* Slajd 3: sam problem specyficzności co #s1/#s2 wyżej. .tl-desc (podpisy pod punktami
+         osi) znika na telefonie — trzy dwuwierszowe opisy obok siebie na 390px szerokości
+         realnie by się nie zmieściły bez zawijania na 3+ linie i wypychania treści poza
+         viewport; tydzień+etykieta (już skompresowane generycznym .tl-week/.tl-label wyżej)
+         zostają jako wystarczający telegram na wąskim ekranie. */
+      #s3 .si { padding-bottom: 16px; }
+      #s3 .tag { margin-bottom: 8px; font-size: 14px; padding: 9px 17px 9px 13px; }
+      #s3 .h1 { margin-bottom: 6px; }
+      #s3 .sub { margin-bottom: 10px; }
+      #s3 .card { padding: 10px 12px; border-width: 1.5px; }
+      #s3 .c-icon { width: 40px; height: 40px; border-radius: 10px; margin-bottom: 6px; }
+      #s3 .c-icon iconify-icon { width: 19px; height: 19px; font-size: 19px; }
+      #s3 .c-title { font-size: 14px; }
+      #s3 .c-desc { font-size: 13px; line-height: 1.45; }
+      #s3 .si > div.ai[style*="text-transform"] { margin-top: 2px !important; }
+      #s3 .tl { margin-top: 6px; }
+      #s3 .tl-desc { display: none; }
     }
   </style>
 </head>
@@ -906,9 +1015,7 @@
           <div class="s2-measure-card">
             <!-- Krzywa strzałka SVG od szczytu słupka "Dziś" do podstawy słupka
                  "Po wdrożeniu" — pozycje policzone dynamicznie w JS (drawS2Arrow, z
-                 animateVbars) z realnej wysokości słupków, różnej dla każdego klienta.
-                 Etykieta -86% ma teraz własne, nieprzezroczyste tło (odznaka), więc
-                 linia strzałki chowa się POD nią zamiast wizualnie przecinać tekst. -->
+                 animateVbars) z realnej wysokości słupków, różnej dla każdego klienta. -->
             <div class="vbars">
               <div class="vbar-col">
                 <div class="vbar-num red"><span class="val-roi">70</span><span class="vbar-unit">h/mc</span></div>
@@ -920,24 +1027,34 @@
                 <div class="vbar-track"><div class="vbar-fill green" id="vbar-po"></div></div>
                 <div class="vbar-lbl">Po wdrożeniu</div>
               </div>
+              <!-- Grot NIE jest już SVG <marker> — marker-end ignoruje stroke-dasharray/
+                   dashoffset i renderuje się w pełni od razu, w klatce zerowej, zanim linia
+                   zdąży się narysować (stąd "grot jest już zanim pojawi się linia"). Osobny
+                   <path>, pozycjonowany i obracany w JS (transform), z własnym opacity:0 ->
+                   1 odpalanym DOPIERO gdy linia skończy rysowanie (onComplete tweena path). -->
               <svg class="s2-arrow-svg" id="s2-arrow-svg">
-                <defs>
-                  <marker id="s2-arrow-head" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
-                    <path d="M0 0 L8 4 L0 8 Z" fill="currentColor" />
-                  </marker>
-                </defs>
-                <path id="s2-arrow-path" marker-end="url(#s2-arrow-head)" />
+                <path id="s2-arrow-path" />
+                <path id="s2-arrow-head" d="M0 0 L9 4.5 L0 9 Z" />
               </svg>
-              <div class="s2-arrow-label" id="s2-arrow-label">
-                <span id="vbar-diff-pct">–</span><span class="s2-arrow-label-sub">czasu</span>
-              </div>
             </div>
 
             <div class="divider s2-divider"></div>
 
+            <!-- Runda "feedback 11": odznaka -86% przeniesiona tu, obok wyniku "= 60h" —
+                 nad wykresem nachodziła na "10 h/mc" na wąskim odstępie między słupkami.
+                 "=" i "60h" zamknięte w osobnej grupie (.s2-result-main) z własnym
+                 baseline-alignmentem (poprawna typografia dla dwóch różnych rozmiarów
+                 czcionki), zewnętrzny rząd centruje tę grupę i odznakę względem siebie jako
+                 dwa bloki — dokładne wyśrodkowanie zamiast niedopasowania o kilka px, które
+                 dawał wspólny baseline dla całej trójki. -->
             <div class="s2-result">
-              <span class="s2-result-eq">=</span>
-              <span class="s2-result-val"><span id="val-saved">60</span>h</span>
+              <div class="s2-result-main">
+                <span class="s2-result-eq">=</span>
+                <span class="s2-result-val"><span id="val-saved">60</span>h</span>
+              </div>
+              <div class="s2-arrow-label" id="s2-arrow-label">
+                <span id="vbar-diff-pct">–</span><span class="s2-arrow-label-sub">czasu</span>
+              </div>
             </div>
             <!-- Etykieta wyniesiona z rzędu "= 60h" na własną linię — na wspólnej linii z
                  liczbą 78px była wizualnie zmiażdżona i nieczytelna. -->
@@ -947,12 +1064,42 @@
 
             <!-- Statyczna zasada liczenia, nie personalizowana — konkretne dane klienta są
                  już w barach powyżej. Celowo bez liczby "80h" i słowa "gwarancja" — to
-                 slajd 7. Każdy człon jako osobna oznaczona "etykieta" (obramowana, wersaliki)
-                 zamiast gołego tekstu — czytelne co odpowiada za co w formule. -->
+                 slajd 7. "Liczba spedytorów" (nawiązanie do "ten sam spedytor" w
+                 podnagłówku tego slajdu), "Godziny dziennie tracone" (jasne że to czas
+                 MARNOWANY, nie neutralne godziny pracy).
+                 Runda "feedback 10": pionowa lista zamiast owijających się w wierszach
+                 pigułek — każdy człon połączony z następnym mini-strzałką w DOKŁADNIE tym
+                 samym stylu i mechanizmie co duża strzałka między barami (osobny <path>
+                 na grot, chowany do czasu aż linia się dorysuje — patrz animateS2Connectors
+                 w JS), obok niej odznaka "×" jako mnożnik. -->
             <div class="s2-formula-wrap">
               <div class="s2-formula-label">Jak liczymy oszczędność</div>
-              <div class="s2-formula">
-                <span>Liczba osób</span><span class="s2-formula-x">×</span><span>Godziny dziennie</span><span class="s2-formula-x">×</span><span>21 dni roboczych</span><span class="s2-formula-x">×</span><span>Stawka godzinowa</span>
+              <div class="s2-formula-list">
+                <div class="s2-formula-item">Liczba spedytorów</div>
+                <div class="s2-formula-conn">
+                  <svg class="s2-conn-svg" viewBox="0 0 24 24">
+                    <path class="s2-conn-path" d="M12 1 L12 16" />
+                    <path class="s2-conn-head" d="M6.5 13 L12 22 L17.5 13 Z" />
+                  </svg>
+                  <span class="s2-formula-x">×</span>
+                </div>
+                <div class="s2-formula-item">Godziny dziennie tracone</div>
+                <div class="s2-formula-conn">
+                  <svg class="s2-conn-svg" viewBox="0 0 24 24">
+                    <path class="s2-conn-path" d="M12 1 L12 16" />
+                    <path class="s2-conn-head" d="M6.5 13 L12 22 L17.5 13 Z" />
+                  </svg>
+                  <span class="s2-formula-x">×</span>
+                </div>
+                <div class="s2-formula-item">21 dni roboczych</div>
+                <div class="s2-formula-conn">
+                  <svg class="s2-conn-svg" viewBox="0 0 24 24">
+                    <path class="s2-conn-path" d="M12 1 L12 16" />
+                    <path class="s2-conn-head" d="M6.5 13 L12 22 L17.5 13 Z" />
+                  </svg>
+                  <span class="s2-formula-x">×</span>
+                </div>
+                <div class="s2-formula-item">Stawka godzinowa</div>
               </div>
             </div>
           </div>
@@ -974,7 +1121,7 @@
             <iconify-icon icon="tabler:truck"></iconify-icon>
           </div>
           <div class="c-title">Automatyzacja TMS</div>
-          <p class="c-desc">Zlecenia trafiają do <strong class="val-tms">Trans.eu</strong> bez klikania. Zero ręcznego wpisywania, zero pomyłek.</p>
+          <p class="c-desc">Zlecenie przychodzi mailem jako PDF. System odczytuje trasę, ładunek, stawkę i terminy, wpisuje je do Twojego TMS. Zero ręcznego przepisywania, zero pomyłek.</p>
         </div>
         <div class="card" data-module="dokumenty">
           <div class="c-icon ic-warn">
@@ -996,6 +1143,35 @@
           </div>
           <div class="c-title">Dashboard zarządczy</div>
           <p class="c-desc">Widoczność całej firmy w czasie rzeczywistym. Bez chaotycznych telefonów do spedytorów.</p>
+        </div>
+      </div>
+
+      <div class="ai" style="--i:4;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text-tertiary);margin-top:8px;">Co dalej, gdy pierwszy system już pracuje</div>
+      <div class="tl ai" style="--i:5">
+        <div class="tl-track"><div class="tl-track-fill"></div></div>
+        <div class="tl-point">
+          <div class="tl-dot">
+            <iconify-icon icon="tabler:rocket"></iconify-icon>
+          </div>
+          <div class="tl-week">Dzień 1</div>
+          <div class="tl-label">Twoje 4 moduły</div>
+          <p class="tl-desc">TMS, dokumenty, powiadomienia, dashboard.</p>
+        </div>
+        <div class="tl-point">
+          <div class="tl-dot">
+            <iconify-icon icon="tabler:shield-check-filled"></iconify-icon>
+          </div>
+          <div class="tl-week">Po 3 miesiącach</div>
+          <div class="tl-label">Analizator Rentowności, Tarcza ITD</div>
+          <p class="tl-desc">Gdy widzimy realne dane z Twojej firmy, dokładamy kalkulator marży zlecenia i monitoring naruszeń ITD.</p>
+        </div>
+        <div class="tl-point">
+          <div class="tl-dot">
+            <iconify-icon icon="tabler:chart-dots-3"></iconify-icon>
+          </div>
+          <div class="tl-week">Po 6 miesiącach</div>
+          <div class="tl-label">Centrum Dowodzenia</div>
+          <p class="tl-desc">Cotygodniowy raport i asystent na WhatsApp do pytania o dowolne dane firmy.</p>
         </div>
       </div>
     </div>
@@ -1174,7 +1350,7 @@
 
         <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--line);">
           <div style="font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:6px;">Co dalej po wdrożeniu</div>
-          <div style="font-size:13px;line-height:1.55;color:var(--text-secondary);">System Autorise to dopiero początek. Po kilku miesiącach retainera, gdy widzimy realne dane z Twojej firmy, rozbudowujemy go o kolejne moduły: kalkulator rentowności każdego zlecenia zanim je przyjmiesz, monitoring naruszeń Pakietu Mobilności zanim zrobi to inspekcja, cotygodniowy raport i asystent na WhatsApp do pytania o dowolne dane firmy. Każdy kolejny krok omawiamy dopiero wtedy, gdy pierwszy system już pracuje i przynosi wynik.</div>
+          <div style="font-size:13px;line-height:1.55;color:var(--text-secondary);">Zobaczyłeś już na slajdzie 3, jak ten system rośnie razem z Twoją firmą.</div>
         </div>
       </div>
     </div>
@@ -1542,6 +1718,7 @@ function animateVbars(slideEl) {
   // omija layout/paint całkowicie.
   targets.forEach(({ el, pct }) => { el.style.height = pct + '%' })
   drawS2Arrow(slideEl)
+  animateS2Connectors(slideEl)
   if (!gsapReady || REDUCE_MOTION) return
   // Runda "feedback 7": wolniej (1.1s -> 1.6s), bardziej "dostojnie" — nadal wyłącznie
   // transform:scaleY (kompozytor GPU), więc dłuższy czas trwania nie kosztuje płynności.
@@ -1564,6 +1741,7 @@ function drawS2Arrow(slideEl) {
   const wrap = slideEl.querySelector('.vbars')
   const svg = slideEl.querySelector('#s2-arrow-svg')
   const path = slideEl.querySelector('#s2-arrow-path')
+  const head = slideEl.querySelector('#s2-arrow-head')
   const label = slideEl.querySelector('#s2-arrow-label')
   const dzisFill = slideEl.querySelector('#vbar-dzis')
   const poFill = slideEl.querySelector('#vbar-po')
@@ -1603,12 +1781,21 @@ function drawS2Arrow(slideEl) {
   const y2 = rawY2 - (dy / segLen) * gap
 
   path.setAttribute('d', `M ${x1} ${y1} C ${cx1} ${cy1} ${cx2} ${cy2} ${x2} ${y2}`)
-  // Etykieta -86% NIE jest już pozycjonowana względem krzywej — stoi na stałe nad całym
-  // wykresem (top:0; left:50%, patrz CSS #s2-arrow-label), poza zasięgiem linii
-  // niezależnie od tego jak strome są słupki u danego klienta.
+  // Etykieta -86% już nie żyje w .vbars w ogóle — stoi obok "= 60h" (patrz HTML/CSS
+  // .s2-arrow-label), poza zasięgiem linii niezależnie od proporcji słupków klienta.
+
+  // Grot: kąt stycznej liczony z tego samego wektora (dx,dy) co odstęp wyżej — pozycja i
+  // obrót ustawione transformem (translate do punktu końcowego, rotate wg kąta, translate
+  // -4.5,-4.5 żeby środek trójkąta — nie jego róg — wypadł dokładnie w tym punkcie, ten
+  // sam mechanizm co refX/refY w starym <marker>).
+  if (head) {
+    const angleDeg = Math.atan2(dy, dx) * (180 / Math.PI)
+    head.setAttribute('transform', `translate(${x2} ${y2}) rotate(${angleDeg}) translate(-4.5 -4.5)`)
+  }
 
   if (!gsapReady || REDUCE_MOTION) {
     path.style.strokeDasharray = 'none'
+    if (head) head.style.opacity = '1'
     if (label) label.style.opacity = '1'
     return
   }
@@ -1618,10 +1805,54 @@ function drawS2Arrow(slideEl) {
   const len = path.getTotalLength()
   path.style.strokeDasharray = String(len)
   path.style.strokeDashoffset = String(len)
-  gsap.to(path, { strokeDashoffset: 0, duration: 1.3, delay: 0.6, ease: 'power2.inOut' })
+  gsap.to(path, {
+    strokeDashoffset: 0, duration: 1.3, delay: 0.6, ease: 'power2.inOut',
+    // Runda "feedback 9": grot renderował się w pełni od pierwszej klatki (SVG marker-end
+    // ignoruje stroke-dasharray/dashoffset) — pojawiał się ZANIM linia zdążyła dorysować
+    // się do niego. Teraz to osobny element, chowany (opacity:0) do chwili, gdy linia
+    // faktycznie dotrze na miejsce (onComplete tej samej tweeny). Animowane tylko opacity
+    // (nie scale/transform) — head ma już ustawiony transform atrybutem przez setAttribute
+    // wyżej (pozycja+obrót), a GSAP animujący transform na elemencie SVG potrafi go
+    // nadpisać/rozjechać z tym ręcznie ustawionym; samo opacity tego ryzyka nie niesie.
+    onComplete: () => {
+      if (head) gsap.fromTo(head, { opacity: 0 }, { opacity: 1, duration: 0.25, ease: 'power2.out' })
+    },
+  })
   if (label) {
     gsap.fromTo(label, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.6, delay: 1.85, ease: 'power2.out' })
   }
+}
+
+// Mini-strzałki łączące człony formuły "Jak liczymy oszczędność" (slajd 2) — dokładnie ten
+// sam mechanizm co drawS2Arrow() wyżej: linia rysowana przez strokeDashoffset, grot jako
+// osobny <path> chowany (opacity:0) do onComplete tweeny linii, żeby nie powtórzyć błędu
+// "grot widoczny zanim dorysuje się linia" (SVG marker-end ignoruje dashoffset). Geometria
+// jest tu stała (statyczny mini-SVG w viewBox 24x24, nie zależy od dynamicznych danych
+// klienta jak duża strzałka), więc nie trzeba liczyć pozycji z getBoundingClientRect.
+function animateS2Connectors(slideEl) {
+  const conns = [...slideEl.querySelectorAll('.s2-formula-conn')]
+  conns.forEach((conn, i) => {
+    const path = conn.querySelector('.s2-conn-path')
+    const head = conn.querySelector('.s2-conn-head')
+    if (!path) return
+    if (!gsapReady || REDUCE_MOTION) {
+      path.style.strokeDasharray = 'none'
+      if (head) head.style.opacity = '1'
+      return
+    }
+    const len = path.getTotalLength()
+    path.style.strokeDasharray = String(len)
+    path.style.strokeDashoffset = String(len)
+    // Start dopiero po tym jak duża strzałka między barami skończy się rysować (0.6+1.3=1.9s),
+    // potem trzy mini-strzałki jedna po drugiej — czytelna sekwencja "najpierw wynik na
+    // górze, potem jak się do niego doszło", nie wszystko naraz.
+    gsap.to(path, {
+      strokeDashoffset: 0, duration: 0.4, delay: 2.0 + i * 0.35, ease: 'power2.inOut',
+      onComplete: () => {
+        if (head) gsap.fromTo(head, { opacity: 0 }, { opacity: 1, duration: 0.2, ease: 'power2.out' })
+      },
+    })
+  })
 }
 
 const TOTAL  = 7
