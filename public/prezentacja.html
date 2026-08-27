@@ -310,55 +310,54 @@
     #s4 .blue { color: var(--accent); }
     #s4 .sub { color: var(--text-secondary); margin-bottom: 0; font-size: clamp(17px, 1.7vw, 20px); }
 
-    /* Mapa "wysp" — runda 2: zamiast trzech dużych węzłów (jeden na fazę), każdy z 7
-       konkretnych kroków dostaje własną wyspę (1.1-1.4 dzień 1, 2.1-2.2 po 3 mies., 3.1 po
-       6 mies.), połączonych strzałkami w obrębie fazy. Między fazami — .rm-transition:
-       osobny, pionowy akcent (kreskowana strzałka + krótkie zdanie), bo to nasze KONKRETNE
-       DZIAŁANIE (wdrożenie kolejnego modułu / spięcie raportu), nie kolejna wyspa modułu.
-       Animacja w animateRoadmap() niżej w <script>: wyspy i etykiety faz startują
-       niewidoczne w czystym CSS (bez czekania na JS), strzałki startują w pełni narysowane
-       (fallback bezpieczny), a JS ustawia stroke-dasharray/dashoffset dopiero po starcie,
-       tuż przed animacją — ten sam mechanizm co animateS2Connectors na slajdzie 2. */
-    #s4 .rm-map { width: 100%; max-width: 1040px; margin: 12px auto 0; display: flex; flex-direction: column; gap: 7px; }
-    #s4 .rm-phase { display: flex; flex-direction: column; align-items: center; }
-    /* Runda "premortem": etykieta fazy dostaje ten sam przepis co .tag (biała czcionka +
-       biała obwódka + kreska akcentu z lewej), nie płaski niebieski pigułkowy tekst — ten
-       ostatni ginął na ciemnym tle i czytał się jak niedopracowany, generyczny badge. */
+    /* Runda 3: z mapy "wysp" (7 małych okrągłych węzłów, ciasno) na KARTY — dzień 1 (4
+       moduły) nie da się uczciwie rozbić na osobne, duże elementy bez ciasnoty, więc dostaje
+       JEDNĄ szeroką kartę z modułami jako tagi w środku; reszta roadmapy (dotąd stłoczona w
+       maleńkie kółka z numerkami 2.1/2.2/3.1, bez numeracji — to nie krok-po-kroku instrukcja,
+       to lista tego co dokładamy) dostaje pełnowymiarowe karty jak na slajdzie 1/3 (bg-elevated
+       + biała 3px obwódka + ikona), z konkretnym, nie tylko "sprzedażowym" opisem MECHANIZMU
+       (skąd system bierze dane, nie tylko jaka jest korzyść). Strzałki między fazami: WPROST
+       przeniesiony przepis #s2-arrow-path/head (biały, rysowany przez GSAP), nie osobny,
+       nowy styl — ten sam "mocny moment" co Dziś->Po wdrożenia na slajdzie 2. */
+    #s4 .rm-map { width: 100%; max-width: 900px; margin: 10px auto 0; display: flex; flex-direction: column; align-items: center; gap: 6px; }
     #s4 .rm-phase-label {
       display: inline-flex; align-items: center;
-      font-size: 14px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase;
+      font-size: 12.5px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase;
       color: var(--text-primary); background: var(--accent-muted); border: 2px solid rgba(255, 255, 255, 0.55);
       border-left: 4px solid var(--accent);
-      border-radius: 100px; padding: 5px 18px 5px 14px; margin-bottom: 11px;
+      border-radius: 100px; padding: 4px 15px 4px 12px; margin-bottom: 3px;
       opacity: 0; transform: translateY(10px);
     }
-    #s4 .rm-row { display: flex; align-items: flex-start; justify-content: center; width: 100%; }
-    #s4 .rm-isl { display: flex; flex-direction: column; align-items: center; text-align: center; width: 204px; opacity: 0; transform: translateY(14px); }
-    #s4 .rm-isl-dot {
-      position: relative; width: 68px; height: 68px; border-radius: 50%; flex-shrink: 0;
-      background: var(--accent-muted); border: 2.5px solid var(--accent-border); color: var(--text-primary);
-      display: flex; align-items: center; justify-content: center; margin-bottom: 10px;
-      box-shadow: 0 0 0 5px var(--bg), 0 8px 22px rgba(56, 182, 255, 0.2);
+    #s4 .rm-arrow-wrap { display: flex; align-items: center; justify-content: center; height: 24px; opacity: 0; }
+    #s4 .rm-arrow-svg { width: 18px; height: 26px; overflow: visible; }
+    #s4 .rm-arrow-path { fill: none; stroke: var(--text-primary); stroke-width: 3; stroke-linecap: round; }
+    #s4 .rm-arrow-head { fill: var(--text-primary); opacity: 0; }
+
+    #s4 .rm-row-cards { display: flex; align-items: stretch; justify-content: center; gap: 14px; width: 100%; }
+    #s4 .rm-card {
+      background: var(--bg-elevated); border: 3px solid rgba(255, 255, 255, 0.6); border-radius: 14px;
+      padding: 12px 16px; text-align: left; display: flex; flex-direction: column;
+      opacity: 0; transform: translateY(14px);
     }
-    #s4 .rm-isl-dot iconify-icon { width: 28px; height: 28px; font-size: 28px; }
-    #s4 .rm-isl-num {
-      position: absolute; top: -5px; right: -5px; min-width: 23px; height: 23px; padding: 0 5px;
-      border-radius: 100px; background: var(--accent); color: #0c2536;
-      font-size: 11px; font-weight: 800; font-family: var(--font-mono);
-      display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 0 0 3px var(--bg);
+    #s4 .rm-card-wide { width: 100%; max-width: 640px; }
+    #s4 .rm-row-cards .rm-card { flex: 1; max-width: 300px; }
+    #s4 .rm-row-cards-single .rm-card { max-width: 420px; }
+    #s4 .rm-card-ic {
+      width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
+      background: var(--accent-muted); border: 2px solid var(--accent-border); color: var(--text-primary);
+      display: flex; align-items: center; justify-content: center; margin-bottom: 8px;
     }
-    #s4 .rm-isl-title { font-size: 15.5px; font-weight: 800; color: var(--text-primary); line-height: 1.25; margin-bottom: 4px; }
-    #s4 .rm-isl-desc { font-size: 12px; line-height: 1.38; color: var(--text-secondary); max-width: 185px; }
-    #s4 .rm-conn { flex-shrink: 0; width: 32px; height: 68px; display: flex; align-items: center; justify-content: center; }
-    #s4 .rm-conn-svg { width: 27px; height: 14px; overflow: visible; }
-    #s4 .rm-conn-path { fill: none; stroke: var(--accent); stroke-width: 2.75; stroke-linecap: round; }
-    #s4 .rm-conn-head { fill: var(--accent); opacity: 0; }
-    #s4 .rm-transition { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 1px 0; opacity: 0; }
-    #s4 .rm-transition-arrow { flex-shrink: 0; width: 13px; height: 18px; }
-    #s4 .rm-transition-path { fill: none; stroke: var(--accent-text); stroke-width: 2.25; stroke-linecap: round; stroke-dasharray: 3 4; }
-    #s4 .rm-transition-head { fill: var(--accent-text); opacity: 0; }
-    #s4 .rm-transition-text { font-size: 13.5px; font-style: italic; color: var(--text-primary); }
+    #s4 .rm-card-ic iconify-icon { width: 17px; height: 17px; font-size: 17px; }
+    #s4 .rm-card-title { font-size: 14.5px; font-weight: 800; color: var(--text-primary); margin-bottom: 4px; }
+    #s4 .rm-card-desc { font-size: 12px; line-height: 1.4; color: var(--text-secondary); }
+    #s4 .rm-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+    #s4 .rm-tag {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11.5px; font-weight: 700; color: var(--text-primary);
+      background: var(--accent-muted); border: 1.5px solid var(--accent-border); border-radius: 100px;
+      padding: 4px 11px 4px 8px;
+    }
+    #s4 .rm-tag iconify-icon { width: 12px; height: 12px; font-size: 12px; color: var(--accent-text); }
 
     /* ── Divider (wspólny dla #s1/#s2/każdego kolejnego ciemnego slajdu) — jeden bazowy
        wygląd (var(--divider), zdefiniowany per-slajd tuż obok reszty tokenów tego slajdu),
@@ -614,11 +613,12 @@
     .s2-measure-card {
       width: 100%; display: flex; flex-direction: column; align-items: center;
       background: var(--bg-elevated); border: 3px solid rgba(255, 255, 255, 0.6); border-radius: 14px;
-      padding: 4px 24px;
+      padding: 14px 24px;
     }
     /* Dividery między sekcjami (bary / wynik / formuła) — .divider daje wspólny wygląd
-       (kolor/grubość), tu tylko layout kontekstowy tego konkretnego miejsca. */
-    .s2-divider { max-width: 300px; margin: 9px 0; }
+       (kolor/grubość), tu tylko layout kontekstowy tego konkretnego miejsca. Feedback: karta
+       czuła się ciasna — góra/dół karty i odstępy między sekcjami dostają więcej oddechu. */
+    .s2-divider { max-width: 300px; margin: 13px 0; }
 
     /* ── Vertical bar chart (Dziś vs Po wdrożeniu) ── */
     /* position:relative — kontener dla nakładki SVG (strzałka), position:absolute, patrz
@@ -989,27 +989,26 @@
       #s3 .c-desc { font-size: 11.5px; line-height: 1.35; }
       #s3 .si { padding-bottom: 16px; }
 
-      /* Slajd 4 "Rozwój systemu": 7 wysp w rzędach po 4/2/1 nie mieszczą się obok siebie na
-         szerokości telefonu — każda faza staje w kolumnę (wyspa pod wyspą), strzałki poziome
-         .rm-conn znikają (nie ma już rzędu, więc nie ma czego łączyć w poziomie — sama
-         kolejność od góry do dołu niesie tę samą narrację), a opisy wysp .rm-isl-desc znikają
-         tym samym powodem co .tl-desc na slajdzie 3: 7 opisów jeden pod drugim realnie by nie
-         zmieściło się bez przewijania, numer+ikona+tytuł to wystarczający telegram. */
+      /* Slajd 4 "Rozwój systemu": dwie karty obok siebie (faza "po 3 miesiącach") nie mieszczą
+         się na szerokości telefonu z pełnym opisem — układ pionowy, karta pod kartą, ten sam
+         porządek co desktop, tylko bez rzędu. */
       #s4 .tag { margin-bottom: 8px; font-size: 14px; padding: 9px 17px 9px 13px; }
       #s4 .h1 { margin-bottom: 6px; }
-      #s4 .rm-map { gap: 4px; margin-top: 8px; }
-      #s4 .rm-phase-label { font-size: 11px; padding: 3px 13px 3px 10px; margin-bottom: 4px; }
-      #s4 .rm-row { flex-direction: column; gap: 4px; }
-      #s4 .rm-conn { display: none; }
-      #s4 .rm-isl { width: 100%; max-width: 260px; }
-      #s4 .rm-isl-dot { width: 38px; height: 38px; border-width: 2px; margin-bottom: 3px; }
-      #s4 .rm-isl-dot iconify-icon { width: 17px; height: 17px; font-size: 17px; }
-      #s4 .rm-isl-num { min-width: 16px; height: 16px; font-size: 8px; }
-      #s4 .rm-isl-title { font-size: 13px; }
-      #s4 .rm-isl-desc { display: none; }
-      #s4 .rm-transition { padding: 0; gap: 6px; }
-      #s4 .rm-transition-arrow { width: 11px; height: 15px; }
-      #s4 .rm-transition-text { font-size: 11px; }
+      #s4 .rm-map { gap: 5px; margin-top: 8px; }
+      #s4 .rm-phase-label { font-size: 10.5px; padding: 3px 11px 3px 9px; margin-bottom: 1px; }
+      #s4 .rm-arrow-wrap { height: 17px; }
+      #s4 .rm-arrow-svg { width: 13px; height: 16px; }
+      #s4 .rm-row-cards { flex-direction: column; gap: 5px; }
+      #s4 .rm-card { padding: 9px 12px; }
+      #s4 .rm-card-wide { max-width: 320px; }
+      #s4 .rm-row-cards .rm-card, #s4 .rm-row-cards-single .rm-card { max-width: 320px; }
+      #s4 .rm-card-ic { width: 27px; height: 27px; margin-bottom: 5px; }
+      #s4 .rm-card-ic iconify-icon { width: 13px; height: 13px; font-size: 13px; }
+      #s4 .rm-card-title { font-size: 12.5px; margin-bottom: 2px; }
+      #s4 .rm-card-desc { font-size: 10.5px; line-height: 1.32; }
+      #s4 .rm-tags { gap: 4px; margin-top: 6px; }
+      #s4 .rm-tag { font-size: 9.5px; padding: 3px 8px 3px 6px; }
+      #s4 .rm-tag iconify-icon { width: 10px; height: 10px; font-size: 10px; }
     }
   </style>
 </head>
@@ -1284,70 +1283,42 @@
       <p class="sub ai" style="--i:2">Kolejne moduły dochodzą wtedy, gdy pierwszy system już pracuje i przynosi wynik.</p>
 
       <div class="rm-map" id="rm-map">
-        <div class="rm-phase">
-          <div class="rm-phase-label">Dzień 1</div>
-          <div class="rm-row">
-            <div class="rm-isl">
-              <div class="rm-isl-dot"><iconify-icon icon="tabler:truck"></iconify-icon><span class="rm-isl-num">1.1</span></div>
-              <div class="rm-isl-title">Zlecenia bez przepisywania</div>
-              <p class="rm-isl-desc">System czyta zlecenia z PDF-a i wpisuje je do TMS.</p>
-            </div>
-            <div class="rm-conn"><svg class="rm-conn-svg" viewBox="0 0 26 14"><path class="rm-conn-path" d="M1 7 H20"/><path class="rm-conn-head" d="M15 2 L23 7 L15 12 Z"/></svg></div>
-            <div class="rm-isl">
-              <div class="rm-isl-dot"><iconify-icon icon="tabler:scan"></iconify-icon><span class="rm-isl-num">1.2</span></div>
-              <div class="rm-isl-title">Dokumenty bez szukania</div>
-              <p class="rm-isl-desc">CMR, POD i faktury trafiają do zlecenia same.</p>
-            </div>
-            <div class="rm-conn"><svg class="rm-conn-svg" viewBox="0 0 26 14"><path class="rm-conn-path" d="M1 7 H20"/><path class="rm-conn-head" d="M15 2 L23 7 L15 12 Z"/></svg></div>
-            <div class="rm-isl">
-              <div class="rm-isl-dot"><iconify-icon icon="tabler:bell"></iconify-icon><span class="rm-isl-num">1.3</span></div>
-              <div class="rm-isl-title">Statusy bez telefonu</div>
-              <p class="rm-isl-desc">Kierowcy i klienci wiedzą, co się dzieje.</p>
-            </div>
-            <div class="rm-conn"><svg class="rm-conn-svg" viewBox="0 0 26 14"><path class="rm-conn-path" d="M1 7 H20"/><path class="rm-conn-head" d="M15 2 L23 7 L15 12 Z"/></svg></div>
-            <div class="rm-isl">
-              <div class="rm-isl-dot"><iconify-icon icon="tabler:chart-dots-3"></iconify-icon><span class="rm-isl-num">1.4</span></div>
-              <div class="rm-isl-title">Pełny obraz firmy</div>
-              <p class="rm-isl-desc">Widzisz całą firmę z jednego miejsca.</p>
-            </div>
+        <div class="rm-phase-label">Dzień 1</div>
+        <div class="rm-card rm-card-wide">
+          <div class="rm-card-title">System operacyjny Twojej firmy, gotowy od pierwszego dnia</div>
+          <p class="rm-card-desc">Zlecenia, dokumenty, powiadomienia i pełny obraz firmy — wszystko automatycznie, z jednego miejsca.</p>
+          <div class="rm-tags">
+            <div class="rm-tag"><iconify-icon icon="tabler:truck"></iconify-icon>Zlecenia bez przepisywania</div>
+            <div class="rm-tag"><iconify-icon icon="tabler:scan"></iconify-icon>Dokumenty bez szukania</div>
+            <div class="rm-tag"><iconify-icon icon="tabler:bell"></iconify-icon>Statusy bez telefonu</div>
+            <div class="rm-tag"><iconify-icon icon="tabler:chart-dots-3"></iconify-icon>Pełny obraz firmy</div>
           </div>
         </div>
 
-        <div class="rm-transition">
-          <svg class="rm-transition-arrow" viewBox="0 0 16 22"><path class="rm-transition-path" d="M8 1 V17"/><path class="rm-transition-head" d="M3 13 L8 20 L13 13 Z"/></svg>
-          <p class="rm-transition-text">Wdrażamy kolejny etap, gdy widzimy realne dane z Twojej firmy.</p>
-        </div>
+        <div class="rm-arrow-wrap" id="rm-arrow-1"><svg class="rm-arrow-svg" viewBox="0 0 22 32"><path class="rm-arrow-path" d="M11 2 V22"/><path class="rm-arrow-head" d="M3 17 L11 29 L19 17 Z"/></svg></div>
 
-        <div class="rm-phase">
-          <div class="rm-phase-label">Po 3 miesiącach</div>
-          <div class="rm-row">
-            <div class="rm-isl">
-              <div class="rm-isl-dot"><iconify-icon icon="tabler:receipt-2"></iconify-icon><span class="rm-isl-num">2.1</span></div>
-              <div class="rm-isl-title">Analizator Rentowności</div>
-              <p class="rm-isl-desc">Widzisz opłacalność zlecenia zanim je przyjmiesz.</p>
-            </div>
-            <div class="rm-conn"><svg class="rm-conn-svg" viewBox="0 0 26 14"><path class="rm-conn-path" d="M1 7 H20"/><path class="rm-conn-head" d="M15 2 L23 7 L15 12 Z"/></svg></div>
-            <div class="rm-isl">
-              <div class="rm-isl-dot"><iconify-icon icon="tabler:shield-check-filled"></iconify-icon><span class="rm-isl-num">2.2</span></div>
-              <div class="rm-isl-title">Tarcza ITD</div>
-              <p class="rm-isl-desc">Wiesz o naruszeniu Pakietu Mobilności pierwszy.</p>
-            </div>
+        <div class="rm-phase-label">Po 3 miesiącach</div>
+        <div class="rm-row-cards">
+          <div class="rm-card">
+            <div class="rm-card-ic"><iconify-icon icon="tabler:receipt-2"></iconify-icon></div>
+            <div class="rm-card-title">Analizator Rentowności</div>
+            <p class="rm-card-desc">Liczymy marżę zlecenia z trasy i stawki, zanim je przyjmiesz.</p>
+          </div>
+          <div class="rm-card">
+            <div class="rm-card-ic"><iconify-icon icon="tabler:shield-check-filled"></iconify-icon></div>
+            <div class="rm-card-title">Tarcza ITD</div>
+            <p class="rm-card-desc">Pilnujemy czasu jazdy kierowców i ostrzegamy o naruszeniu Pakietu Mobilności pierwsi.</p>
           </div>
         </div>
 
-        <div class="rm-transition">
-          <svg class="rm-transition-arrow" viewBox="0 0 16 22"><path class="rm-transition-path" d="M8 1 V17"/><path class="rm-transition-head" d="M3 13 L8 20 L13 13 Z"/></svg>
-          <p class="rm-transition-text">Łączymy dane w jeden, cotygodniowy raport.</p>
-        </div>
+        <div class="rm-arrow-wrap" id="rm-arrow-2"><svg class="rm-arrow-svg" viewBox="0 0 22 32"><path class="rm-arrow-path" d="M11 2 V22"/><path class="rm-arrow-head" d="M3 17 L11 29 L19 17 Z"/></svg></div>
 
-        <div class="rm-phase">
-          <div class="rm-phase-label">Po 6 miesiącach</div>
-          <div class="rm-row">
-            <div class="rm-isl">
-              <div class="rm-isl-dot"><iconify-icon icon="tabler:mail"></iconify-icon><span class="rm-isl-num">3.1</span></div>
-              <div class="rm-isl-title">Centrum Dowodzenia</div>
-              <p class="rm-isl-desc">Raport i asystent na WhatsApp na żądanie.</p>
-            </div>
+        <div class="rm-phase-label">Po 6 miesiącach</div>
+        <div class="rm-row-cards rm-row-cards-single">
+          <div class="rm-card">
+            <div class="rm-card-ic"><iconify-icon icon="tabler:mail"></iconify-icon></div>
+            <div class="rm-card-title">Centrum Dowodzenia</div>
+            <p class="rm-card-desc">Cotygodniowy raport i asystent na WhatsApp, który odpowiada o dowolne dane firmy w kilka sekund.</p>
           </div>
         </div>
       </div>
@@ -1877,66 +1848,54 @@ function triggerStagger(slideEl) {
   if (slideEl.id === 's4') animateRoadmap(slideEl)
 }
 
-// Slajd 4 "Rozwój systemu" — mapa "wysp": 7 konkretnych kroków (1.1-1.4 dzień 1, 2.1-2.2 po
-// 3 mies., 3.1 po 6 mies.) w 3 fazach. Sekwencja: etykieta fazy -> wyspa -> strzałka do
-// kolejnej wyspy (dorysowuje się dokładnie w momencie przejścia) -> ... -> po ostatniej
-// wyspie fazy, jeśli jest kolejna faza, .rm-transition (kreskowana strzałka + zdanie o
-// konkretnym działaniu) -> kolejna etykieta fazy. Ten sam mechanizm rysowania linii co
-// animateS2Connectors (stroke-dasharray/dashoffset liczone z realnej długości ścieżki),
-// tylko rozpięty na całą mapę zamiast jednej pionowej listy.
+// Slajd 4 "Rozwój systemu" — runda 3 (karty zamiast wysp): dzień 1 to jedna szeroka karta
+// (4 moduły jako tagi w środku), po niej dwie karty "po 3 miesiącach" obok siebie, potem
+// jedna karta "po 6 miesiącach". Sekwencja: etykieta fazy -> karta/karty -> strzałka w dół
+// (dokładnie ten sam przepis co #s2-arrow-path/head — biała, rysowana przez GSAP przez
+// realną długość ścieżki, ten sam "mocny moment" co Dziś->Po wdrożenia na slajdzie 2) ->
+// kolejna etykieta fazy...
 function animateRoadmap(slideEl) {
-  const phases = [...slideEl.querySelectorAll('.rm-phase')]
-  const transitions = [...slideEl.querySelectorAll('.rm-transition')]
-  if (!phases.length) return
+  const map = slideEl.querySelector('.rm-map')
+  if (!map) return
+  const children = [...map.children]
 
   const setFinal = () => {
-    slideEl.querySelectorAll('.rm-phase-label, .rm-isl, .rm-transition').forEach(el => {
-      el.style.opacity = '1'; el.style.transform = 'none'
-    })
-    slideEl.querySelectorAll('.rm-conn-head, .rm-transition-head').forEach(h => { h.style.opacity = '1' })
+    children.forEach(el => { el.style.opacity = '1'; el.style.transform = 'none' })
+    slideEl.querySelectorAll('.rm-arrow-head').forEach(h => { h.style.opacity = '1' })
   }
   if (!gsapReady || REDUCE_MOTION) { setFinal(); return }
 
-  const connPaths = [...slideEl.querySelectorAll('.rm-conn-path, .rm-transition-path')]
-  connPaths.forEach(p => {
+  const arrowPaths = [...slideEl.querySelectorAll('.rm-arrow-path')]
+  arrowPaths.forEach(p => {
     const len = p.getTotalLength()
     p.style.strokeDasharray = String(len)
     p.style.strokeDashoffset = String(len)
   })
 
-  gsap.set(slideEl.querySelectorAll('.rm-phase-label'), { opacity: 0, y: 10 })
-  gsap.set(slideEl.querySelectorAll('.rm-isl'), { opacity: 0, y: 14 })
-  gsap.set(slideEl.querySelectorAll('.rm-transition'), { opacity: 0 })
+  gsap.set(slideEl.querySelectorAll('.rm-phase-label, .rm-card'), { opacity: 0, y: 14 })
+  gsap.set(slideEl.querySelectorAll('.rm-arrow-wrap'), { opacity: 0 })
 
   const tl = gsap.timeline({ delay: 0.15 })
   let t = 0
-  phases.forEach((phase, pIdx) => {
-    const label = phase.querySelector('.rm-phase-label')
-    const items = [...phase.querySelector('.rm-row').children]
-
-    tl.to(label, { opacity: 1, y: 0, duration: 0.32, ease: staggerEase }, t)
-    t += 0.2
-
-    items.forEach(item => {
-      if (item.classList.contains('rm-isl')) {
-        tl.to(item, { opacity: 1, y: 0, duration: 0.38, ease: staggerEase }, t)
-        t += 0.26
-      } else if (item.classList.contains('rm-conn')) {
-        const path = item.querySelector('.rm-conn-path')
-        const head = item.querySelector('.rm-conn-head')
-        if (path) tl.to(path, { strokeDashoffset: 0, duration: 0.24, ease: 'power2.inOut' }, t - 0.1)
-        if (head) tl.to(head, { opacity: 1, duration: 0.14 }, t + 0.13)
-        t += 0.14
-      }
-    })
-
-    const transition = transitions[pIdx]
-    if (transition) {
-      const path = transition.querySelector('.rm-transition-path')
-      const head = transition.querySelector('.rm-transition-head')
-      tl.to(transition, { opacity: 1, duration: 0.28, ease: staggerEase }, t)
-      if (path) tl.to(path, { strokeDashoffset: 0, duration: 0.38, ease: 'power2.inOut' }, t + 0.05)
-      if (head) tl.to(head, { opacity: 1, duration: 0.18 }, t + 0.4)
+  children.forEach(child => {
+    if (child.classList.contains('rm-phase-label')) {
+      tl.to(child, { opacity: 1, y: 0, duration: 0.34, ease: staggerEase }, t)
+      t += 0.24
+    } else if (child.classList.contains('rm-card-wide')) {
+      tl.to(child, { opacity: 1, y: 0, duration: 0.45, ease: staggerEase }, t)
+      t += 0.4
+    } else if (child.classList.contains('rm-row-cards')) {
+      const cards = [...child.querySelectorAll('.rm-card')]
+      cards.forEach((card, i) => {
+        tl.to(card, { opacity: 1, y: 0, duration: 0.42, ease: staggerEase }, t + i * 0.16)
+      })
+      t += 0.16 * (cards.length - 1) + 0.42
+    } else if (child.classList.contains('rm-arrow-wrap')) {
+      const path = child.querySelector('.rm-arrow-path')
+      const head = child.querySelector('.rm-arrow-head')
+      tl.to(child, { opacity: 1, duration: 0.2 }, t)
+      if (path) tl.to(path, { strokeDashoffset: 0, duration: 0.45, ease: 'power2.inOut' }, t)
+      if (head) tl.to(head, { opacity: 1, duration: 0.2 }, t + 0.4)
       t += 0.55
     }
   })
