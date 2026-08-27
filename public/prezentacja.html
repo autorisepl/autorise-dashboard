@@ -258,10 +258,10 @@
        ważny temat wyliczenia modułów, nie tylko kosmetyczny nagłówek. */
     #s3 .c-eyebrow {
       display: inline-flex; align-items: center; align-self: flex-start;
-      font-size: 13px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
-      color: var(--accent-text); background: var(--accent-muted); border: 1.5px solid var(--accent-border);
-      border-radius: 100px; padding: 4px 14px;
-      margin-bottom: 4px;
+      font-size: 15px; font-weight: 900; letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--text-primary); background: var(--accent-muted); border: 1.5px solid var(--accent-border);
+      border-radius: 100px; padding: 5px 16px;
+      margin-bottom: 6px;
     }
     #s3 .card .divider { margin: 2px 0; }
     #s3 .c-title { color: var(--text-primary); font-size: 19px; }
@@ -319,42 +319,46 @@
        niewidoczne w czystym CSS (bez czekania na JS), strzałki startują w pełni narysowane
        (fallback bezpieczny), a JS ustawia stroke-dasharray/dashoffset dopiero po starcie,
        tuż przed animacją — ten sam mechanizm co animateS2Connectors na slajdzie 2. */
-    #s4 .rm-map { width: 100%; max-width: 980px; margin: 22px auto 0; display: flex; flex-direction: column; gap: 12px; }
+    #s4 .rm-map { width: 100%; max-width: 1040px; margin: 12px auto 0; display: flex; flex-direction: column; gap: 7px; }
     #s4 .rm-phase { display: flex; flex-direction: column; align-items: center; }
+    /* Runda "premortem": etykieta fazy dostaje ten sam przepis co .tag (biała czcionka +
+       biała obwódka + kreska akcentu z lewej), nie płaski niebieski pigułkowy tekst — ten
+       ostatni ginął na ciemnym tle i czytał się jak niedopracowany, generyczny badge. */
     #s4 .rm-phase-label {
       display: inline-flex; align-items: center;
-      font-size: 12.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase;
-      color: var(--accent-text); background: var(--accent-muted); border: 1.5px solid var(--accent-border);
-      border-radius: 100px; padding: 4px 16px; margin-bottom: 12px;
+      font-size: 14px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase;
+      color: var(--text-primary); background: var(--accent-muted); border: 2px solid rgba(255, 255, 255, 0.55);
+      border-left: 4px solid var(--accent);
+      border-radius: 100px; padding: 5px 18px 5px 14px; margin-bottom: 11px;
       opacity: 0; transform: translateY(10px);
     }
     #s4 .rm-row { display: flex; align-items: flex-start; justify-content: center; width: 100%; }
-    #s4 .rm-isl { display: flex; flex-direction: column; align-items: center; text-align: center; width: 186px; opacity: 0; transform: translateY(14px); }
+    #s4 .rm-isl { display: flex; flex-direction: column; align-items: center; text-align: center; width: 204px; opacity: 0; transform: translateY(14px); }
     #s4 .rm-isl-dot {
-      position: relative; width: 60px; height: 60px; border-radius: 50%; flex-shrink: 0;
+      position: relative; width: 68px; height: 68px; border-radius: 50%; flex-shrink: 0;
       background: var(--accent-muted); border: 2.5px solid var(--accent-border); color: var(--text-primary);
-      display: flex; align-items: center; justify-content: center; margin-bottom: 9px;
-      box-shadow: 0 0 0 5px var(--bg);
+      display: flex; align-items: center; justify-content: center; margin-bottom: 10px;
+      box-shadow: 0 0 0 5px var(--bg), 0 8px 22px rgba(56, 182, 255, 0.2);
     }
-    #s4 .rm-isl-dot iconify-icon { width: 24px; height: 24px; font-size: 24px; }
+    #s4 .rm-isl-dot iconify-icon { width: 28px; height: 28px; font-size: 28px; }
     #s4 .rm-isl-num {
-      position: absolute; top: -5px; right: -5px; min-width: 21px; height: 21px; padding: 0 5px;
+      position: absolute; top: -5px; right: -5px; min-width: 23px; height: 23px; padding: 0 5px;
       border-radius: 100px; background: var(--accent); color: #0c2536;
-      font-size: 10px; font-weight: 800; font-family: var(--font-mono);
+      font-size: 11px; font-weight: 800; font-family: var(--font-mono);
       display: flex; align-items: center; justify-content: center;
       box-shadow: 0 0 0 3px var(--bg);
     }
-    #s4 .rm-isl-title { font-size: 14px; font-weight: 800; color: var(--text-primary); line-height: 1.25; margin-bottom: 3px; }
-    #s4 .rm-isl-desc { font-size: 11.5px; line-height: 1.4; color: var(--text-secondary); max-width: 168px; }
-    #s4 .rm-conn { flex-shrink: 0; width: 30px; height: 60px; display: flex; align-items: center; justify-content: center; }
-    #s4 .rm-conn-svg { width: 24px; height: 13px; overflow: visible; }
-    #s4 .rm-conn-path { fill: none; stroke: var(--accent-border); stroke-width: 2.5; stroke-linecap: round; }
-    #s4 .rm-conn-head { fill: var(--accent-border); opacity: 0; }
-    #s4 .rm-transition { display: flex; align-items: center; justify-content: center; gap: 9px; padding: 2px 0; opacity: 0; }
+    #s4 .rm-isl-title { font-size: 15.5px; font-weight: 800; color: var(--text-primary); line-height: 1.25; margin-bottom: 4px; }
+    #s4 .rm-isl-desc { font-size: 12px; line-height: 1.38; color: var(--text-secondary); max-width: 185px; }
+    #s4 .rm-conn { flex-shrink: 0; width: 32px; height: 68px; display: flex; align-items: center; justify-content: center; }
+    #s4 .rm-conn-svg { width: 27px; height: 14px; overflow: visible; }
+    #s4 .rm-conn-path { fill: none; stroke: var(--accent); stroke-width: 2.75; stroke-linecap: round; }
+    #s4 .rm-conn-head { fill: var(--accent); opacity: 0; }
+    #s4 .rm-transition { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 1px 0; opacity: 0; }
     #s4 .rm-transition-arrow { flex-shrink: 0; width: 13px; height: 18px; }
-    #s4 .rm-transition-path { fill: none; stroke: var(--text-tertiary); stroke-width: 2; stroke-linecap: round; stroke-dasharray: 3 4; }
-    #s4 .rm-transition-head { fill: var(--text-tertiary); opacity: 0; }
-    #s4 .rm-transition-text { font-size: 13px; font-style: italic; color: var(--text-secondary); }
+    #s4 .rm-transition-path { fill: none; stroke: var(--accent-text); stroke-width: 2.25; stroke-linecap: round; stroke-dasharray: 3 4; }
+    #s4 .rm-transition-head { fill: var(--accent-text); opacity: 0; }
+    #s4 .rm-transition-text { font-size: 13.5px; font-style: italic; color: var(--text-primary); }
 
     /* ── Divider (wspólny dla #s1/#s2/każdego kolejnego ciemnego slajdu) — jeden bazowy
        wygląd (var(--divider), zdefiniowany per-slajd tuż obok reszty tokenów tego slajdu),
@@ -977,7 +981,7 @@
       #s3 .divider { margin-bottom: 8px; }
       #s3 .grid2 { gap: 6px; }
       #s3 .card { padding: 9px 11px; gap: 2px; border-width: 1.5px; }
-      #s3 .c-eyebrow { font-size: 9px; padding: 2px 9px; margin-bottom: 1px; border-width: 1px; }
+      #s3 .c-eyebrow { font-size: 10.5px; padding: 3px 11px; margin-bottom: 2px; border-width: 1px; }
       #s3 .card .divider { margin: 1px 0; }
       #s3 .c-icon { width: 32px; height: 32px; border-radius: 9px; margin-bottom: 4px; }
       #s3 .c-icon iconify-icon { width: 15px; height: 15px; font-size: 15px; }
@@ -991,21 +995,21 @@
          kolejność od góry do dołu niesie tę samą narrację), a opisy wysp .rm-isl-desc znikają
          tym samym powodem co .tl-desc na slajdzie 3: 7 opisów jeden pod drugim realnie by nie
          zmieściło się bez przewijania, numer+ikona+tytuł to wystarczający telegram. */
-      #s4 .tag { margin-bottom: 10px; font-size: 14px; padding: 9px 17px 9px 13px; }
-      #s4 .h1 { margin-bottom: 8px; }
-      #s4 .rm-map { gap: 5px; margin-top: 10px; }
-      #s4 .rm-phase-label { font-size: 10.5px; padding: 3px 12px; margin-bottom: 5px; }
-      #s4 .rm-row { flex-direction: column; gap: 5px; }
+      #s4 .tag { margin-bottom: 8px; font-size: 14px; padding: 9px 17px 9px 13px; }
+      #s4 .h1 { margin-bottom: 6px; }
+      #s4 .rm-map { gap: 4px; margin-top: 8px; }
+      #s4 .rm-phase-label { font-size: 11px; padding: 3px 13px 3px 10px; margin-bottom: 4px; }
+      #s4 .rm-row { flex-direction: column; gap: 4px; }
       #s4 .rm-conn { display: none; }
       #s4 .rm-isl { width: 100%; max-width: 260px; }
       #s4 .rm-isl-dot { width: 38px; height: 38px; border-width: 2px; margin-bottom: 3px; }
-      #s4 .rm-isl-dot iconify-icon { width: 18px; height: 18px; font-size: 18px; }
+      #s4 .rm-isl-dot iconify-icon { width: 17px; height: 17px; font-size: 17px; }
       #s4 .rm-isl-num { min-width: 16px; height: 16px; font-size: 8px; }
-      #s4 .rm-isl-title { font-size: 12.5px; }
+      #s4 .rm-isl-title { font-size: 13px; }
       #s4 .rm-isl-desc { display: none; }
       #s4 .rm-transition { padding: 0; gap: 6px; }
-      #s4 .rm-transition-arrow { width: 10px; height: 14px; }
-      #s4 .rm-transition-text { font-size: 10.5px; }
+      #s4 .rm-transition-arrow { width: 11px; height: 15px; }
+      #s4 .rm-transition-text { font-size: 11px; }
     }
   </style>
 </head>
