@@ -251,16 +251,20 @@
       background: var(--bg-elevated); border: 3px solid rgba(255, 255, 255, 0.6); box-shadow: none;
       padding: 22px 26px; gap: 8px;
     }
-    /* Label "Moduł N" — zamiast płaskiego overline'u (za mało wyraźny na tak ważnej informacji
-       jak numer/tożsamość modułu), pełna odznaka: tintowane tło + obwódka, ten sam wzorzec
-       pudełka co .tag/ikony, tylko w skali pigułki. Divider pod tytułem oddziela "co to za
-       moduł" (ikona/odznaka/tytuł) od "co robi" (opis) — osobne wizualnie, bo to bardzo
-       ważny temat wyliczenia modułów, nie tylko kosmetyczny nagłówek. */
+    /* Runda 5: ikona przenosi się na prawą stronę karty (tam jest zapasowe miejsce), znacząco
+       większa — .c-head to rząd (tekst po lewej, ikona po prawej), zwolnione po lewej miejsce
+       idzie w większą odznakę "Moduł N". Label "Moduł N" — zamiast płaskiego overline'u (za
+       mało wyraźny na tak ważnej informacji jak numer/tożsamość modułu), pełna odznaka:
+       tintowane tło + obwódka, ten sam wzorzec pudełka co .tag/ikony, tylko w skali pigułki.
+       Divider pod nagłówkiem oddziela "co to za moduł" (ikona/odznaka/tytuł) od "co robi"
+       (opis) — osobne wizualnie, bo to bardzo ważny temat wyliczenia modułów. */
+    #s3 .c-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 8px; }
+    #s3 .c-headtext { display: flex; flex-direction: column; min-width: 0; }
     #s3 .c-eyebrow {
       display: inline-flex; align-items: center; align-self: flex-start;
-      font-size: 15px; font-weight: 900; letter-spacing: 0.06em; text-transform: uppercase;
+      font-size: 18px; font-weight: 900; letter-spacing: 0.06em; text-transform: uppercase;
       color: var(--text-primary); background: var(--accent-muted); border: 1.5px solid var(--accent-border);
-      border-radius: 100px; padding: 5px 16px;
+      border-radius: 100px; padding: 7px 20px;
       margin-bottom: 6px;
     }
     #s3 .card .divider { margin: 2px 0; }
@@ -269,12 +273,12 @@
     /* Feedback rundy kolejnej: glif BIAŁY (text-primary) niezależnie od tła — dokładnie ten sam
        przepis co #s1 .c-icon (biel na tincie kontrastuje lepiej niż kolor-na-kolorze), tło
        zostaje tintowane per moduł (niebieski/pomarańczowy/zielony) jako jedyny nośnik
-       rozróżnienia koloru. */
+       rozróżnienia koloru. Runda 5: 58 -> 72px, teraz po prawej stronie karty. */
     #s3 .c-icon {
-      width: 58px; height: 58px; border-radius: 16px; margin-bottom: 12px;
+      width: 72px; height: 72px; border-radius: 18px; flex-shrink: 0;
       background: var(--accent-muted); border: 2px solid var(--accent-border); color: var(--text-primary);
     }
-    #s3 .c-icon iconify-icon { width: 27px; height: 27px; font-size: 27px; }
+    #s3 .c-icon iconify-icon { width: 34px; height: 34px; font-size: 34px; }
     #s3 .c-icon.ic-warn  { background: var(--warning-bg); border-color: var(--warning-border); color: var(--text-primary); }
     #s3 .c-icon.ic-green { background: var(--success-bg); border-color: var(--success-border); color: var(--text-primary); }
 
@@ -312,67 +316,68 @@
     #s4 .blue { color: var(--accent); }
     #s4 .sub { color: var(--text-secondary); margin-bottom: 0; font-size: clamp(15px, 1.4vw, 17px); }
 
-    /* Runda 3: z mapy "wysp" (7 małych okrągłych węzłów, ciasno) na KARTY — dzień 1 (4
-       moduły) nie da się uczciwie rozbić na osobne, duże elementy bez ciasnoty, więc dostaje
-       JEDNĄ szeroką kartę z modułami jako tagi w środku; reszta roadmapy (dotąd stłoczona w
-       maleńkie kółka z numerkami 2.1/2.2/3.1, bez numeracji — to nie krok-po-kroku instrukcja,
-       to lista tego co dokładamy) dostaje pełnowymiarowe karty jak na slajdzie 1/3 (bg-elevated
-       + biała 3px obwódka + ikona), z konkretnym, nie tylko "sprzedażowym" opisem MECHANIZMU
-       (skąd system bierze dane, nie tylko jaka jest korzyść). Strzałki między fazami: WPROST
-       przeniesiony przepis #s2-arrow-path/head (biały, rysowany przez GSAP), nie osobny,
-       nowy styl — ten sam "mocny moment" co Dziś->Po wdrożenia na slajdzie 2. */
-    #s4 .rm-map { width: 100%; max-width: 800px; margin: 2px auto 0; display: flex; flex-direction: column; align-items: center; gap: 6px; }
-    #s4 .rm-phase-label {
-      display: inline-flex; align-items: center;
-      font-size: 12px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase;
-      color: var(--text-primary); background: var(--accent-muted); border: 2px solid rgba(255, 255, 255, 0.55);
-      border-left: 4px solid var(--accent);
-      border-radius: 100px; padding: 4px 14px 4px 11px; margin-bottom: 2px;
-      opacity: 0; transform: translateY(10px);
-    }
-    #s4 .rm-arrow-wrap { display: flex; align-items: center; justify-content: center; height: 14px; opacity: 0; }
-    #s4 .rm-arrow-svg { width: 14px; height: 16px; overflow: visible; }
-    #s4 .rm-arrow-path { fill: none; stroke: var(--text-primary); stroke-width: 3; stroke-linecap: round; }
-    #s4 .rm-arrow-head { fill: var(--text-primary); opacity: 0; }
+    /* Runda 5: pełna przebudowa na język KART slajdu 3 — reużywamy wprost .card/.c-head/
+       .c-headtext/.c-eyebrow/.c-title/.c-icon/.divider/.c-desc (te same klasy, scoped pod
+       #s4 z tymi samymi tokenami ciemnego motywu), żeby wygląd był identyczny z modułami
+       slajdu 3, nie tylko "w tym stylu". Etykieta fazy wchodzi DO KARTY jako .c-eyebrow
+       (jak "Moduł N"), nie jako osobna pigułka nad kartą. Karta-matka ("system operacyjny")
+       dostaje listę modułów pionowo (.rm-module-list); dwie karty produktów upsell dostają
+       trzy linie .rm-info (Dla kogo / Jak działa / Rezultat — etykieta podkreślona w kolorze
+       akcentu, WARTOŚĆ zwykłym tekstem, nie wtopione w zdanie). Połączenia między fazami to
+       animowane krzywe SVG (.rm-flow-*), rozgałęzienie 1→2 i złączenie 2→1, wyliczane w JS
+       z realnych pozycji kart (layoutFlowSvgs), rysowane GSAP-em jak istniejące strzałki. */
+    #s4 .rm-map { width: 100%; max-width: 860px; margin: 4px auto 0; display: flex; flex-direction: column; align-items: stretch; position: relative; }
 
-    /* Runda 4: karty wyraźnie większe niż poprzednia (miniaturkowa) wersja, ale skalibrowane
-       do budżetu wysokości slajdu — rytm pionowy MIĘDZY fazami (etykieta/strzałka) zostaje
-       ciasny, oddech rośnie WEWNĄTRZ kart (padding, odstępy tytuł/DLA KOGO/opis). */
-    #s4 .rm-row-cards { display: flex; align-items: stretch; justify-content: center; gap: 14px; width: 100%; }
-    #s4 .rm-card {
-      background: var(--bg-elevated); border: 3px solid rgba(255, 255, 255, 0.6); border-radius: 14px;
-      padding: 16px 20px; text-align: left; display: flex; flex-direction: column;
+    #s4 .card {
+      background: var(--bg-elevated); border: 3px solid rgba(255, 255, 255, 0.6); border-radius: 16px;
+      box-shadow: none; padding: 13px 18px; text-align: left;
       opacity: 0; transform: translateY(14px);
     }
-    #s4 .rm-card-wide { width: 100%; max-width: 720px; }
-    #s4 .rm-row-cards .rm-card { flex: 1; max-width: 380px; }
-    #s4 .rm-row-cards-single .rm-card { max-width: 460px; }
-    #s4 .rm-card-ic {
-      width: 38px; height: 38px; border-radius: 11px; flex-shrink: 0;
-      background: var(--accent-muted); border: 2px solid var(--accent-border); color: var(--text-primary);
-      display: flex; align-items: center; justify-content: center; margin-bottom: 8px;
-    }
-    #s4 .rm-card-ic iconify-icon { width: 19px; height: 19px; font-size: 19px; }
-    #s4 .rm-card-title { font-size: 16px; font-weight: 800; color: var(--text-primary); margin-bottom: 3px; }
-    #s4 .rm-card-desc { font-size: 13.5px; line-height: 1.42; color: var(--text-secondary); }
-    /* Linia "DLA KOGO": plakietka + wartość zwykłym tekstem, osobna od opisu — nie wtopiona
-       w zdanie, jak reszta overline'ów w tej prezentacji (.c-eyebrow / .rm-phase-label). */
-    #s4 .rm-dla-kogo { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; margin: 0 0 6px; }
-    #s4 .rm-dla-kogo-tag {
-      display: inline-flex; align-items: center; flex-shrink: 0;
-      font-size: 9.5px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase;
+    #s4 .c-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 3px; }
+    #s4 .c-headtext { display: flex; flex-direction: column; min-width: 0; }
+    #s4 .c-eyebrow {
+      display: inline-flex; align-items: center; align-self: flex-start;
+      font-size: 11px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase;
       color: var(--text-primary); background: var(--accent-muted); border: 1.5px solid var(--accent-border);
-      border-radius: 100px; padding: 3px 9px;
+      border-radius: 100px; padding: 3px 12px; margin-bottom: 4px;
     }
-    #s4 .rm-dla-kogo-val { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
-    #s4 .rm-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-    #s4 .rm-tag {
-      display: inline-flex; align-items: center; gap: 5px;
-      font-size: 12px; font-weight: 700; color: var(--text-primary);
-      background: var(--accent-muted); border: 1.5px solid var(--accent-border); border-radius: 100px;
-      padding: 4px 11px 4px 8px;
+    #s4 .c-title { color: var(--text-primary); font-size: 16px; font-weight: 800; }
+    #s4 .c-icon {
+      width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
+      background: var(--accent-muted); border: 2px solid var(--accent-border); color: var(--text-primary);
+      display: flex; align-items: center; justify-content: center;
     }
-    #s4 .rm-tag iconify-icon { width: 12px; height: 12px; font-size: 12px; color: var(--accent-text); }
+    #s4 .c-icon iconify-icon { width: 20px; height: 20px; font-size: 20px; }
+    #s4 .card .divider { margin: 4px 0; }
+    #s4 .c-desc { color: var(--text-secondary); font-size: 12.5px; line-height: 1.38; }
+
+    #s4 .card-hero { width: 100%; }
+    #s4 .rm-module-list { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+    #s4 .rm-module-item { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 700; color: var(--text-primary); }
+    #s4 .rm-module-item iconify-icon { width: 16px; height: 16px; font-size: 16px; color: var(--accent-text); flex-shrink: 0; }
+
+    #s4 .rm-row-cards { display: flex; align-items: stretch; justify-content: center; gap: 16px; width: 100%; }
+    #s4 .rm-row-cards .card { flex: 1; max-width: 400px; display: flex; flex-direction: column; }
+    #s4 .rm-row-cards-single .card { max-width: 460px; margin: 0 auto; }
+
+    /* Linie "Dla kogo / Jak działa / Rezultat": etykieta podkreślona w kolorze akcentu (druga
+       opcja z briefu obok plakietki — tu lżejsza wizualnie, bo są trzy z rzędu), wartość
+       zwykłym tekstem w tym samym akapicie, osobna linia na wpis. */
+    #s4 .rm-info { margin-top: 4px; }
+    #s4 .rm-info-tag {
+      font-size: 9.5px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase;
+      color: var(--accent-text); text-decoration: underline; text-decoration-color: var(--accent);
+      text-underline-offset: 2px; margin-right: 6px;
+    }
+    #s4 .rm-info-val { font-size: 12px; line-height: 1.36; color: var(--text-secondary); }
+
+    /* Złącza między fazami: SVG w zarezerwowanym pasie wysokości, path 'd' wyliczany w JS
+       (layoutFlowSvgs) z realnych rect'ów kart — krzywa S z pionową styczną na obu końcach
+       (patrz komentarz przy layoutFlowSvgs), więc statyczny grot strzałki pasuje bez rotacji. */
+    #s4 .rm-flow-slot { width: 100%; height: 34px; position: relative; }
+    #s4 .rm-flow-svg { position: absolute; top: 0; left: 0; overflow: visible; }
+    #s4 .rm-flow-path { fill: none; stroke: var(--text-primary); stroke-width: 3; stroke-linecap: round; }
+    #s4 .rm-flow-head { fill: var(--text-primary); opacity: 0; }
 
     /* ── Divider (wspólny dla #s1/#s2/każdego kolejnego ciemnego slajdu) — jeden bazowy
        wygląd (var(--divider), zdefiniowany per-slajd tuż obok reszty tokenów tego slajdu),
@@ -996,10 +1001,11 @@
       #s3 .divider { margin-bottom: 8px; }
       #s3 .grid2 { gap: 6px; }
       #s3 .card { padding: 9px 11px; gap: 2px; border-width: 1.5px; }
+      #s3 .c-head { gap: 8px; margin-bottom: 3px; }
       #s3 .c-eyebrow { font-size: 10.5px; padding: 3px 11px; margin-bottom: 2px; border-width: 1px; }
       #s3 .card .divider { margin: 1px 0; }
-      #s3 .c-icon { width: 32px; height: 32px; border-radius: 9px; margin-bottom: 4px; }
-      #s3 .c-icon iconify-icon { width: 15px; height: 15px; font-size: 15px; }
+      #s3 .c-icon { width: 38px; height: 38px; border-radius: 10px; margin-bottom: 0; }
+      #s3 .c-icon iconify-icon { width: 18px; height: 18px; font-size: 18px; }
       #s3 .c-title { font-size: 13px; margin-bottom: 1px; }
       #s3 .c-desc { font-size: 11.5px; line-height: 1.35; }
       #s3 .si { padding-bottom: 16px; }
@@ -1010,24 +1016,26 @@
       #s4 .tag { margin-bottom: 7px; font-size: 14px; padding: 9px 17px 9px 13px; }
       #s4 .h1 { font-size: clamp(21px, 6.2vw, 26px); margin-bottom: 5px; }
       #s4 .sub { font-size: 12.5px; }
-      #s4 .rm-map { gap: 4px; margin-top: 4px; }
-      #s4 .rm-phase-label { font-size: 10px; padding: 2px 9px 2px 7px; margin-bottom: 0; }
-      #s4 .rm-arrow-wrap { height: 11px; }
-      #s4 .rm-arrow-svg { width: 11px; height: 13px; }
-      #s4 .rm-row-cards { flex-direction: column; gap: 4px; }
-      #s4 .rm-card { padding: 9px 12px; border-radius: 12px; }
-      #s4 .rm-card-wide { max-width: 320px; }
-      #s4 .rm-row-cards .rm-card, #s4 .rm-row-cards-single .rm-card { max-width: 320px; }
-      #s4 .rm-card-ic { width: 24px; height: 24px; border-radius: 7px; margin-bottom: 4px; }
-      #s4 .rm-card-ic iconify-icon { width: 12px; height: 12px; font-size: 12px; }
-      #s4 .rm-card-title { font-size: 12px; margin-bottom: 1px; }
-      #s4 .rm-card-desc { font-size: 10px; line-height: 1.3; }
-      #s4 .rm-dla-kogo { gap: 4px; margin: 0 0 4px; }
-      #s4 .rm-dla-kogo-tag { font-size: 8px; padding: 2px 6px; }
-      #s4 .rm-dla-kogo-val { font-size: 10px; }
-      #s4 .rm-tags { gap: 3px; margin-top: 5px; }
-      #s4 .rm-tag { font-size: 9px; padding: 3px 7px 3px 5px; }
-      #s4 .rm-tag iconify-icon { width: 9px; height: 9px; font-size: 9px; }
+      #s4 .rm-map { gap: 0; margin-top: 2px; }
+      #s4 .card { padding: 8px 11px; border-radius: 11px; }
+      #s4 .c-head { gap: 6px; margin-bottom: 2px; }
+      #s4 .c-eyebrow { font-size: 8.5px; padding: 2px 8px; margin-bottom: 2px; }
+      #s4 .c-title { font-size: 12.5px; }
+      #s4 .c-icon { width: 26px; height: 26px; border-radius: 8px; }
+      #s4 .c-icon iconify-icon { width: 13px; height: 13px; font-size: 13px; }
+      #s4 .card .divider { margin: 3px 0; }
+      #s4 .c-desc { font-size: 10px; line-height: 1.3; }
+      /* Lista modułów w karcie-matce w mobile: siatka 2 kolumn zamiast pionowej listy —
+         cztery wiersze kosztowałyby zbyt dużo wysokości przy i tak napiętym budżecie. */
+      #s4 .rm-module-list { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 8px; margin-top: 4px; }
+      #s4 .rm-module-item { gap: 5px; font-size: 9.5px; }
+      #s4 .rm-module-item iconify-icon { width: 12px; height: 12px; font-size: 12px; }
+      #s4 .rm-row-cards { flex-direction: column; gap: 6px; }
+      #s4 .rm-row-cards .card, #s4 .rm-row-cards-single .card { max-width: 320px; }
+      #s4 .rm-info { margin-top: 3px; }
+      #s4 .rm-info-tag { font-size: 7.5px; margin-right: 3px; }
+      #s4 .rm-info-val { font-size: 10px; line-height: 1.28; }
+      #s4 .rm-flow-slot { height: 20px; }
     }
   </style>
 </head>
@@ -1255,38 +1263,54 @@
 
       <div class="grid2 ai" style="--i:3">
         <div class="card" data-module="tms">
-          <div class="c-icon">
-            <iconify-icon icon="tabler:truck"></iconify-icon>
+          <div class="c-head">
+            <div class="c-headtext">
+              <div class="c-eyebrow">Moduł 1</div>
+              <div class="c-title">Zlecenia bez przepisywania</div>
+            </div>
+            <div class="c-icon">
+              <iconify-icon icon="tabler:truck"></iconify-icon>
+            </div>
           </div>
-          <div class="c-eyebrow">Moduł 1</div>
-          <div class="c-title">Zlecenia bez przepisywania</div>
           <div class="divider"></div>
           <p class="c-desc">System czyta zlecenie z PDF-a przychodzącego mailem, wyciąga trasę, ładunek, stawkę i terminy, i wpisuje je prosto do Twojego TMS, bez ręcznego przepisywania i bez pomyłek.</p>
         </div>
         <div class="card" data-module="dokumenty">
-          <div class="c-icon ic-warn">
-            <iconify-icon icon="tabler:scan"></iconify-icon>
+          <div class="c-head">
+            <div class="c-headtext">
+              <div class="c-eyebrow">Moduł 2</div>
+              <div class="c-title">Dokumenty bez szukania</div>
+            </div>
+            <div class="c-icon ic-warn">
+              <iconify-icon icon="tabler:scan"></iconify-icon>
+            </div>
           </div>
-          <div class="c-eyebrow">Moduł 2</div>
-          <div class="c-title">Dokumenty bez szukania</div>
           <div class="divider"></div>
           <p class="c-desc">CMR od kierowcy, POD z dostawy, faktura w PDF czy dane z Excela trafiają automatycznie do właściwego zlecenia, bez ręcznego szukania i przepisywania.</p>
         </div>
         <div class="card" data-module="powiadomienia">
-          <div class="c-icon ic-green">
-            <iconify-icon icon="tabler:bell"></iconify-icon>
+          <div class="c-head">
+            <div class="c-headtext">
+              <div class="c-eyebrow">Moduł 3</div>
+              <div class="c-title">Statusy bez telefonu</div>
+            </div>
+            <div class="c-icon ic-green">
+              <iconify-icon icon="tabler:bell"></iconify-icon>
+            </div>
           </div>
-          <div class="c-eyebrow">Moduł 3</div>
-          <div class="c-title">Statusy bez telefonu</div>
           <div class="divider"></div>
           <p class="c-desc">Kierowcy i klienci dostają informację o każdym etapie zlecenia automatycznie, bez telefonów i bez ręcznie wysyłanych SMS-ów.</p>
         </div>
         <div class="card" data-module="dashboard">
-          <div class="c-icon">
-            <iconify-icon icon="tabler:chart-dots-3"></iconify-icon>
+          <div class="c-head">
+            <div class="c-headtext">
+              <div class="c-eyebrow">Moduł 4</div>
+              <div class="c-title">Pełny obraz firmy</div>
+            </div>
+            <div class="c-icon">
+              <iconify-icon icon="tabler:chart-dots-3"></iconify-icon>
+            </div>
           </div>
-          <div class="c-eyebrow">Moduł 4</div>
-          <div class="c-title">Pełny obraz firmy</div>
           <div class="divider"></div>
           <p class="c-desc">Widzisz stan całej firmy w czasie rzeczywistym, z jednego miejsca, bez chaotycznych telefonów do spedytorów.</p>
         </div>
@@ -1302,45 +1326,74 @@
       <p class="sub ai" style="--i:2">Kolejne moduły dochodzą wtedy, gdy pierwszy system już pracuje i przynosi wynik.</p>
 
       <div class="rm-map" id="rm-map">
-        <div class="rm-phase-label">Od uruchomienia</div>
-        <div class="rm-card rm-card-wide">
-          <div class="rm-card-title">Twój system operacyjny</div>
-          <p class="rm-card-desc">Zlecenia, dokumenty, powiadomienia i pełny obraz firmy, wdrożone pod Twoje procesy i pracujące od dnia uruchomienia.</p>
-          <div class="rm-tags">
-            <div class="rm-tag"><iconify-icon icon="tabler:truck"></iconify-icon>Zlecenia bez przepisywania</div>
-            <div class="rm-tag"><iconify-icon icon="tabler:scan"></iconify-icon>Dokumenty bez szukania</div>
-            <div class="rm-tag"><iconify-icon icon="tabler:bell"></iconify-icon>Statusy bez telefonu</div>
-            <div class="rm-tag"><iconify-icon icon="tabler:chart-dots-3"></iconify-icon>Pełny obraz firmy</div>
+        <div class="card card-hero" id="rm-hero">
+          <div class="c-head">
+            <div class="c-headtext">
+              <div class="c-eyebrow">Od uruchomienia</div>
+              <div class="c-title">Twój system operacyjny</div>
+            </div>
+            <div class="c-icon"><iconify-icon icon="tabler:rocket"></iconify-icon></div>
+          </div>
+          <div class="divider"></div>
+          <p class="c-desc">Zlecenia, dokumenty, powiadomienia i pełny obraz firmy, wdrożone pod Twoje procesy i pracujące od dnia uruchomienia.</p>
+          <div class="rm-module-list">
+            <div class="rm-module-item"><iconify-icon icon="tabler:truck"></iconify-icon>Zlecenia bez przepisywania</div>
+            <div class="rm-module-item"><iconify-icon icon="tabler:scan"></iconify-icon>Dokumenty bez szukania</div>
+            <div class="rm-module-item"><iconify-icon icon="tabler:bell"></iconify-icon>Statusy bez telefonu</div>
+            <div class="rm-module-item"><iconify-icon icon="tabler:chart-dots-3"></iconify-icon>Pełny obraz firmy</div>
           </div>
         </div>
 
-        <div class="rm-arrow-wrap" id="rm-arrow-1"><svg class="rm-arrow-svg" viewBox="0 0 22 32"><path class="rm-arrow-path" d="M11 2 V22"/><path class="rm-arrow-head" d="M3 17 L11 29 L19 17 Z"/></svg></div>
+        <div class="rm-flow-slot" id="rm-flow-1">
+          <svg class="rm-flow-svg"><path class="rm-flow-path" id="rm-flow-1a"/><path class="rm-flow-head" id="rm-flow-1a-head"/><path class="rm-flow-path" id="rm-flow-1b"/><path class="rm-flow-head" id="rm-flow-1b-head"/></svg>
+        </div>
 
-        <div class="rm-phase-label">Od 3. miesiąca, gdy pasuje</div>
-        <div class="rm-row-cards">
-          <div class="rm-card">
-            <div class="rm-card-ic"><iconify-icon icon="tabler:receipt-2"></iconify-icon></div>
-            <div class="rm-card-title">Analizator Rentowności</div>
-            <div class="rm-dla-kogo"><span class="rm-dla-kogo-tag">Dla kogo</span><span class="rm-dla-kogo-val">Flota 15+ pojazdów albo 50+ zleceń tygodniowo</span></div>
-            <p class="rm-card-desc">Liczymy marżę zlecenia z trasy, paliwa i stawki, zanim je przyjmiesz. Widzisz, czy warto, zanim się zgodzisz.</p>
+        <div class="rm-row-cards" id="rm-group2">
+          <div class="card" id="rm-card-2a">
+            <div class="c-head">
+              <div class="c-headtext">
+                <div class="c-eyebrow">Od 3. miesiąca, gdy pasuje</div>
+                <div class="c-title">Analizator Rentowności</div>
+              </div>
+              <div class="c-icon"><iconify-icon icon="tabler:receipt-2"></iconify-icon></div>
+            </div>
+            <div class="divider"></div>
+            <div class="rm-info"><span class="rm-info-tag">Dla kogo</span><span class="rm-info-val">Flota 15+ pojazdów albo 50+ zleceń tygodniowo.</span></div>
+            <div class="rm-info"><span class="rm-info-tag">Jak działa</span><span class="rm-info-val">Liczy marżę zlecenia z trasy, paliwa i stawki, zanim je przyjmiesz.</span></div>
+            <div class="rm-info"><span class="rm-info-tag">Rezultat</span><span class="rm-info-val">Widzisz, czy się opłaca, zanim się zgodzisz.</span></div>
           </div>
-          <div class="rm-card">
-            <div class="rm-card-ic"><iconify-icon icon="tabler:shield-check-filled"></iconify-icon></div>
-            <div class="rm-card-title">Tarcza ITD</div>
-            <div class="rm-dla-kogo"><span class="rm-dla-kogo-tag">Dla kogo</span><span class="rm-dla-kogo-val">Międzynarodówka albo kabotaż, flota od 10 pojazdów</span></div>
-            <p class="rm-card-desc">Codziennie sprawdzamy dane z tachografów i ostrzegamy, zanim inspekcja znajdzie naruszenie Pakietu Mobilności.</p>
+          <div class="card" id="rm-card-2b">
+            <div class="c-head">
+              <div class="c-headtext">
+                <div class="c-eyebrow">Od 3. miesiąca, gdy pasuje</div>
+                <div class="c-title">Tarcza ITD</div>
+              </div>
+              <div class="c-icon"><iconify-icon icon="tabler:shield-check-filled"></iconify-icon></div>
+            </div>
+            <div class="divider"></div>
+            <div class="rm-info"><span class="rm-info-tag">Dla kogo</span><span class="rm-info-val">Międzynarodówka albo kabotaż, flota od 10 pojazdów.</span></div>
+            <div class="rm-info"><span class="rm-info-tag">Jak działa</span><span class="rm-info-val">Codziennie sprawdza dane z tachografów i porównuje je z limitami Pakietu Mobilności.</span></div>
+            <div class="rm-info"><span class="rm-info-tag">Rezultat</span><span class="rm-info-val">Wiesz o naruszeniu, zanim znajdzie je inspekcja.</span></div>
           </div>
         </div>
 
-        <div class="rm-arrow-wrap" id="rm-arrow-2"><svg class="rm-arrow-svg" viewBox="0 0 22 32"><path class="rm-arrow-path" d="M11 2 V22"/><path class="rm-arrow-head" d="M3 17 L11 29 L19 17 Z"/></svg></div>
+        <div class="rm-flow-slot" id="rm-flow-2">
+          <svg class="rm-flow-svg"><path class="rm-flow-path" id="rm-flow-2a"/><path class="rm-flow-head" id="rm-flow-2a-head"/><path class="rm-flow-path" id="rm-flow-2b"/><path class="rm-flow-head" id="rm-flow-2b-head"/></svg>
+        </div>
 
-        <div class="rm-phase-label">Od 6. miesiąca, przy 2+ modułach</div>
         <div class="rm-row-cards rm-row-cards-single">
-          <div class="rm-card">
-            <div class="rm-card-ic"><iconify-icon icon="tabler:mail"></iconify-icon></div>
-            <div class="rm-card-title">Centrum Dowodzenia</div>
-            <div class="rm-dla-kogo"><span class="rm-dla-kogo-tag">Dla kogo</span><span class="rm-dla-kogo-val">Klienci korzystający już z minimum dwóch modułów</span></div>
-            <p class="rm-card-desc">Cotygodniowy raport i asystent na WhatsApp, żeby zapytać o dowolną liczbę z firmy i dostać odpowiedź od razu.</p>
+          <div class="card" id="rm-card-3">
+            <div class="c-head">
+              <div class="c-headtext">
+                <div class="c-eyebrow">Od 6. miesiąca, przy 2+ modułach</div>
+                <div class="c-title">Centrum Dowodzenia</div>
+              </div>
+              <div class="c-icon"><iconify-icon icon="tabler:mail"></iconify-icon></div>
+            </div>
+            <div class="divider"></div>
+            <div class="rm-info"><span class="rm-info-tag">Dla kogo</span><span class="rm-info-val">Klienci korzystający już z minimum dwóch modułów.</span></div>
+            <div class="rm-info"><span class="rm-info-tag">Jak działa</span><span class="rm-info-val">Cotygodniowy raport i asystent na WhatsApp, który odpowiada o dowolne dane z firmy.</span></div>
+            <div class="rm-info"><span class="rm-info-tag">Rezultat</span><span class="rm-info-val">Odpowiedź na pytanie o firmę masz w kilka sekund, bez szukania w arkuszach.</span></div>
           </div>
         </div>
       </div>
@@ -1870,57 +1923,122 @@ function triggerStagger(slideEl) {
   if (slideEl.id === 's4') animateRoadmap(slideEl)
 }
 
-// Slajd 4 "Rozwój systemu" — runda 3 (karty zamiast wysp): dzień 1 to jedna szeroka karta
-// (4 moduły jako tagi w środku), po niej dwie karty "po 3 miesiącach" obok siebie, potem
-// jedna karta "po 6 miesiącach". Sekwencja: etykieta fazy -> karta/karty -> strzałka w dół
-// (dokładnie ten sam przepis co #s2-arrow-path/head — biała, rysowana przez GSAP przez
-// realną długość ścieżki, ten sam "mocny moment" co Dziś->Po wdrożenia na slajdzie 2) ->
-// kolejna etykieta fazy...
+// Slajd 4 "Rozwój systemu" — runda 5: karty w JĘZYKU slajdu 3 (.card/.c-head/.c-icon
+// reużyte wprost). Karta-matka "system operacyjny" rozgałęzia się na dwa produkty upsell
+// (Analizator Rentowności / Tarcza ITD, stąd DWIE krzywe wychodzące z lewej i prawej strony
+// karty), które z kolei ZŁĄCZAJĄ SIĘ w jedną krzywą prowadzącą do Centrum Dowodzenia (jeden
+// produkt, dostępny dopiero przy 2+ modułach). Krzywe (.rm-flow-path) liczone w JS z realnych
+// pozycji kart (layoutFlowSvg/buildSCurve — S-krzywa z pionową styczną na obu końcach, więc
+// statyczny grot pasuje bez rotacji), rysowane GSAP-em jak każda inna strzałka w tej
+// prezentacji. Kolejność: karta-matka -> moduły w niej (stagger) -> rozgałęzienie -> karty
+// produktów -> złączenie -> Centrum Dowodzenia.
+function buildSCurve(x0, y0, x1, y1) {
+  const midY = y0 + (y1 - y0) * 0.55
+  return `M ${x0} ${y0} C ${x0} ${midY} ${x1} ${y1 - (y1 - y0) * 0.45} ${x1} ${y1}`
+}
+
+function layoutFlowSvg(slotEl, fromEls, toEls) {
+  const map = slotEl.closest('.rm-map')
+  const mapRect = map.getBoundingClientRect()
+  const slotRect = slotEl.getBoundingClientRect()
+  const svg = slotEl.querySelector('svg')
+  const w = slotRect.width
+  const h = slotRect.height
+  svg.setAttribute('viewBox', `0 0 ${w} ${h}`)
+  svg.style.width = `${w}px`
+  svg.style.height = `${h}px`
+
+  const centerX = (el) => {
+    const r = el.getBoundingClientRect()
+    return r.left - mapRect.left + r.width / 2
+  }
+
+  let pairs
+  if (fromEls.length === 1 && toEls.length === 2) {
+    const hero = fromEls[0].getBoundingClientRect()
+    const heroLeftX = hero.left - mapRect.left + hero.width * 0.22
+    const heroRightX = hero.left - mapRect.left + hero.width * 0.78
+    pairs = [[heroLeftX, centerX(toEls[0])], [heroRightX, centerX(toEls[1])]]
+  } else if (fromEls.length === 2 && toEls.length === 1) {
+    const targetX = centerX(toEls[0])
+    pairs = [[centerX(fromEls[0]), targetX], [centerX(fromEls[1]), targetX]]
+  } else {
+    pairs = fromEls.map((el, i) => [centerX(el), centerX(toEls[i] || toEls[0])])
+  }
+
+  const paths = [...slotEl.querySelectorAll('.rm-flow-path')]
+  const heads = [...slotEl.querySelectorAll('.rm-flow-head')]
+  pairs.forEach(([x0, x1], i) => {
+    const path = paths[i]
+    const head = heads[i]
+    if (!path) return
+    path.setAttribute('d', buildSCurve(x0, 0, x1, h))
+    if (head) head.setAttribute('d', `M ${x1 - 6} ${h - 10} L ${x1} ${h} L ${x1 + 6} ${h - 10} Z`)
+  })
+}
+
 function animateRoadmap(slideEl) {
   const map = slideEl.querySelector('.rm-map')
   if (!map) return
-  const children = [...map.children]
+  const hero = map.querySelector('#rm-hero')
+  const moduleItems = [...map.querySelectorAll('.rm-module-item')]
+  const flow1 = map.querySelector('#rm-flow-1')
+  const cards2 = [...map.querySelectorAll('#rm-group2 .card')]
+  const flow2 = map.querySelector('#rm-flow-2')
+  const card3 = map.querySelector('#rm-card-3')
+  if (!hero || !flow1 || !cards2.length || !flow2 || !card3) return
 
+  layoutFlowSvg(flow1, [hero], cards2)
+  layoutFlowSvg(flow2, cards2, [card3])
+
+  const heroCards = [hero, ...cards2, card3]
   const setFinal = () => {
-    children.forEach(el => { el.style.opacity = '1'; el.style.transform = 'none' })
-    slideEl.querySelectorAll('.rm-arrow-head').forEach(h => { h.style.opacity = '1' })
+    heroCards.forEach(el => { el.style.opacity = '1'; el.style.transform = 'none' })
+    moduleItems.forEach(el => { el.style.opacity = '1'; el.style.transform = 'none' })
+    slideEl.querySelectorAll('.rm-flow-head').forEach(h => { h.style.opacity = '1' })
   }
   if (!gsapReady || REDUCE_MOTION) { setFinal(); return }
 
-  const arrowPaths = [...slideEl.querySelectorAll('.rm-arrow-path')]
-  arrowPaths.forEach(p => {
+  const flowPaths = [...slideEl.querySelectorAll('.rm-flow-path')]
+  flowPaths.forEach(p => {
     const len = p.getTotalLength()
     p.style.strokeDasharray = String(len)
     p.style.strokeDashoffset = String(len)
   })
 
-  gsap.set(slideEl.querySelectorAll('.rm-phase-label, .rm-card'), { opacity: 0, y: 14 })
-  gsap.set(slideEl.querySelectorAll('.rm-arrow-wrap'), { opacity: 0 })
+  gsap.set(heroCards, { opacity: 0, y: 14 })
+  gsap.set(moduleItems, { opacity: 0, y: 8 })
+
+  const drawFlow = (slotEl, atTime, tl) => {
+    slotEl.querySelectorAll('.rm-flow-path').forEach(p => {
+      tl.to(p, { strokeDashoffset: 0, duration: 0.5, ease: 'power2.inOut' }, atTime)
+    })
+    slotEl.querySelectorAll('.rm-flow-head').forEach(h => {
+      tl.to(h, { opacity: 1, duration: 0.2 }, atTime + 0.42)
+    })
+  }
 
   const tl = gsap.timeline({ delay: 0.15 })
   let t = 0
-  children.forEach(child => {
-    if (child.classList.contains('rm-phase-label')) {
-      tl.to(child, { opacity: 1, y: 0, duration: 0.34, ease: staggerEase }, t)
-      t += 0.24
-    } else if (child.classList.contains('rm-card-wide')) {
-      tl.to(child, { opacity: 1, y: 0, duration: 0.45, ease: staggerEase }, t)
-      t += 0.4
-    } else if (child.classList.contains('rm-row-cards')) {
-      const cards = [...child.querySelectorAll('.rm-card')]
-      cards.forEach((card, i) => {
-        tl.to(card, { opacity: 1, y: 0, duration: 0.42, ease: staggerEase }, t + i * 0.16)
-      })
-      t += 0.16 * (cards.length - 1) + 0.42
-    } else if (child.classList.contains('rm-arrow-wrap')) {
-      const path = child.querySelector('.rm-arrow-path')
-      const head = child.querySelector('.rm-arrow-head')
-      tl.to(child, { opacity: 1, duration: 0.2 }, t)
-      if (path) tl.to(path, { strokeDashoffset: 0, duration: 0.45, ease: 'power2.inOut' }, t)
-      if (head) tl.to(head, { opacity: 1, duration: 0.2 }, t + 0.4)
-      t += 0.55
-    }
+  tl.to(hero, { opacity: 1, y: 0, duration: 0.45, ease: staggerEase }, t)
+  t += 0.32
+  moduleItems.forEach((item, i) => {
+    tl.to(item, { opacity: 1, y: 0, duration: 0.3, ease: staggerEase }, t + i * 0.1)
   })
+  t += moduleItems.length * 0.1 + 0.18
+
+  drawFlow(flow1, t, tl)
+  t += 0.62
+
+  cards2.forEach((card, i) => {
+    tl.to(card, { opacity: 1, y: 0, duration: 0.42, ease: staggerEase }, t + i * 0.14)
+  })
+  t += 0.14 * (cards2.length - 1) + 0.36
+
+  drawFlow(flow2, t, tl)
+  t += 0.62
+
+  tl.to(card3, { opacity: 1, y: 0, duration: 0.45, ease: staggerEase }, t)
 }
 
 // Narastanie słupków słupkowego wykresu Dziś/Po wdrożeniu (slajd 2), tylko przy
