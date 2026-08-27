@@ -316,74 +316,64 @@
     #s4 .blue { color: var(--accent); }
     #s4 .sub { color: var(--text-secondary); margin-bottom: 0; font-size: clamp(15px, 1.4vw, 17px); }
 
-    /* Runda 7: karta-matka WYRAŹNIE zminimalizowana (klient widział te same 4 moduły na
-       slajdzie 3 chwilę wcześniej — tu tylko ikona/tytuł/jedno zdanie z liczbą modułów, bez
-       powtórnej listy), a odzyskane miejsce idzie w większe, bardziej czytelne karty produktów
-       upsell. Złącza między fazami WRACAJĄ do najprostszego, sprawdzonego języka tej
-       prezentacji — pojedyncza pionowa linia + grot (dokładnie ten sam przepis co
-       .s2-conn-path/.s2-conn-head), nie autorskie rozgałęzienie/złączenie, które mimo kilku
-       podejść nadal wyglądało niespójnie z resztą decku. Etykieta fazy przerywa tę linię
-       (plakietka z pełnym tłem). "Dla kogo / Jak działa / Rezultat": plakietka NAD tekstem
-       (nie obok), wartość to pełne, konkretne zdanie zawijane normalnie jak akapit. */
-    #s4 .rm-map { width: 100%; max-width: 1000px; margin: 2px auto 0; display: flex; flex-direction: column; align-items: stretch; position: relative; }
+    /* Runda 8: usunięta karta-matka "Twój system operacyjny" — to jest flagowy produkt, od
+       którego klient zaczyna współpracę, nie element roadmapy dalszego rozwoju, a slajd 3
+       już w pełni pokazuje te 4 moduły. Slajd 4 jest teraz WYŁĄCZNIE mapą rozszerzeń: rząd
+       dwóch produktów (Analizator Rentowności / Tarcza ITD) i pojedyncza prosta linia w dół
+       do Centrum Dowodzenia — bez węzła startowego, więc tylko JEDNO złącze w całym slajdzie
+       (koniec z dwoma złączami/etykietami fazy, które trzeba było godzić z sobą wizualnie).
+       Nagłówek karty wyśrodkowany (ikona + odznaka fazy + tytuł w kolumnie, nie w rzędzie) —
+       ta sama plakietka co "Moduł N" na slajdzie 3, tylko z treścią fazy zamiast numeru.
+       "Dla kogo / Jak działa / Rezultat": odznaka WIĘKSZA niż wartość (ten sam ciężar co
+       .c-eyebrow), wartość jasna (text-primary, nie secondary) i wyraźnie większa — poprzednia
+       wersja ginęła (za mały kontrast, za mały rozmiar). */
+    #s4 .rm-map { width: 100%; max-width: 960px; margin: 8px auto 0; display: flex; flex-direction: column; align-items: stretch; position: relative; }
 
     #s4 .card {
       background: var(--bg-elevated); border: 3px solid rgba(255, 255, 255, 0.6); border-radius: 18px;
       box-shadow: none; padding: 12px 18px; text-align: left;
       opacity: 0; transform: translateY(14px);
     }
-    #s4 .c-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 5px; }
-    #s4 .c-headtext { display: flex; flex-direction: column; min-width: 0; }
+    #s4 .c-head-centered { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 5px; margin-bottom: 6px; }
     #s4 .c-eyebrow {
-      display: inline-flex; align-items: center; align-self: flex-start;
+      display: inline-flex; align-items: center;
       font-size: 12px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase;
       color: var(--text-primary); background: var(--accent-muted); border: 1.5px solid var(--accent-border);
-      border-radius: 100px; padding: 4px 13px; margin-bottom: 5px;
+      border-radius: 100px; padding: 4px 13px;
     }
-    #s4 .c-title { color: var(--text-primary); font-size: 18px; font-weight: 800; }
+    #s4 .c-title { color: var(--text-primary); font-size: 19px; font-weight: 800; }
     #s4 .c-icon {
-      width: 44px; height: 44px; border-radius: 13px; flex-shrink: 0;
+      width: 42px; height: 42px; border-radius: 13px; flex-shrink: 0;
       background: var(--accent-muted); border: 2px solid var(--accent-border); color: var(--text-primary);
       display: flex; align-items: center; justify-content: center;
     }
-    #s4 .c-icon iconify-icon { width: 21px; height: 21px; font-size: 21px; }
+    #s4 .c-icon iconify-icon { width: 20px; height: 20px; font-size: 20px; }
     #s4 .card .divider { margin: 5px 0; }
-    #s4 .c-desc { color: var(--text-secondary); font-size: 13.5px; line-height: 1.36; }
 
-    #s4 .card-hero { width: 100%; }
+    #s4 .rm-row-cards { display: flex; align-items: stretch; justify-content: center; gap: 22px; width: 100%; }
+    #s4 .rm-row-cards .card { flex: 1; max-width: 460px; display: flex; flex-direction: column; }
+    #s4 .rm-row-cards-single .card { max-width: 520px; margin: 0 auto; }
 
-    #s4 .rm-row-cards { display: flex; align-items: stretch; justify-content: center; gap: 20px; width: 100%; }
-    #s4 .rm-row-cards .card { flex: 1; max-width: 480px; display: flex; flex-direction: column; }
-    #s4 .rm-row-cards-single .card { max-width: 540px; margin: 0 auto; }
-
-    /* "Dla kogo / Jak działa / Rezultat": plakietka na WŁASNEJ linii, wartość jako akapit
-       pod nią, zawijany normalnie — nie wymuszona jedna linia obok etykiety. */
+    /* "Dla kogo / Jak działa / Rezultat": odznaka NAD wartością, ta sama plakietka co
+       .c-eyebrow (ten sam rozmiar/wagę — musi być większa niż tekst pod nią, nie odwrotnie).
+       Wartość jasna i czytelna, zawijana normalnie jak akapit. */
     #s4 .rm-info { margin-top: 7px; }
     #s4 .rm-info:first-of-type { margin-top: 0; }
     #s4 .rm-info-tag {
       display: inline-flex; align-items: center; margin-bottom: 4px;
-      font-size: 11px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase;
+      font-size: 12px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase;
       color: var(--text-primary); background: var(--accent-muted); border: 1.5px solid var(--accent-border);
-      border-radius: 100px; padding: 3px 11px;
+      border-radius: 100px; padding: 4px 13px;
     }
-    #s4 .rm-info-val { display: block; font-size: 12.5px; line-height: 1.26; color: var(--text-secondary); }
+    #s4 .rm-info-val { display: block; font-size: 13px; line-height: 1.3; color: var(--text-primary); }
 
-    /* Złącze między fazami: pojedyncza prosta linia (ten sam przepis co .s2-conn-path/head),
-       etykieta fazy jako plakietka z pełnym tłem NA linii (przerywa ją, jak w klasycznych
-       diagramach przepływu), bez rozgałęzień do poszczególnych kart. */
-    #s4 .rm-flow-slot { width: 100%; height: 46px; position: relative; }
+    /* Jedyne złącze na slajdzie: prosta linia + grot (ten sam przepis co .s2-conn-path/head),
+       bez etykiety fazy NA linii — faza jest teraz odznaką na każdej karcie (.c-eyebrow),
+       więc linia może być czysto wizualnym łącznikiem, bez ryzyka zasłonięcia plakietką. */
+    #s4 .rm-flow-slot { width: 100%; height: 28px; position: relative; }
     #s4 .rm-flow-svg { position: absolute; top: 0; left: 0; overflow: visible; }
     #s4 .rm-flow-path { fill: none; stroke: var(--text-primary); stroke-width: 3; stroke-linecap: round; }
     #s4 .rm-flow-head { fill: var(--text-primary); opacity: 0; }
-    #s4 .rm-flow-phase {
-      position: absolute; transform: translate(-50%, -50%); white-space: nowrap;
-      display: inline-flex; align-items: center;
-      font-size: 12.5px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase;
-      color: var(--text-primary); background: var(--bg-elevated); border: 2px solid rgba(255, 255, 255, 0.55);
-      border-left: 4px solid var(--accent);
-      border-radius: 100px; padding: 5px 16px 5px 13px;
-      opacity: 0;
-    }
 
     /* ── Divider (wspólny dla #s1/#s2/każdego kolejnego ciemnego slajdu) — jeden bazowy
        wygląd (var(--divider), zdefiniowany per-slajd tuż obok reszty tokenów tego slajdu),
@@ -1023,21 +1013,19 @@
       #s4 .h1 { font-size: clamp(18px, 5.2vw, 22px); margin-bottom: 3px; }
       #s4 .sub { font-size: 11px; }
       #s4 .rm-map { gap: 0; margin-top: 1px; }
-      #s4 .card { padding: 6px 10px; border-radius: 11px; }
-      #s4 .c-head { gap: 5px; margin-bottom: 1px; }
-      #s4 .c-eyebrow { font-size: 8px; padding: 2px 7px; margin-bottom: 2px; }
+      #s4 .card { padding: 7px 10px; border-radius: 11px; }
+      #s4 .c-head-centered { gap: 3px; margin-bottom: 3px; }
+      #s4 .c-eyebrow { font-size: 8px; padding: 2px 8px; }
       #s4 .c-title { font-size: 12px; }
-      #s4 .c-icon { width: 22px; height: 22px; border-radius: 7px; }
-      #s4 .c-icon iconify-icon { width: 11px; height: 11px; font-size: 11px; }
-      #s4 .card .divider { margin: 2px 0; }
-      #s4 .c-desc { font-size: 9.5px; line-height: 1.24; }
+      #s4 .c-icon { width: 26px; height: 26px; border-radius: 8px; }
+      #s4 .c-icon iconify-icon { width: 13px; height: 13px; font-size: 13px; }
+      #s4 .card .divider { margin: 3px 0; }
       #s4 .rm-row-cards { flex-direction: column; gap: 5px; }
       #s4 .rm-row-cards .card, #s4 .rm-row-cards-single .card { max-width: 354px; }
       #s4 .rm-info { margin-top: 3px; }
-      #s4 .rm-info-tag { font-size: 6.5px; padding: 1px 6px; margin-bottom: 1px; }
-      #s4 .rm-info-val { font-size: 9px; line-height: 1.18; }
-      #s4 .rm-flow-slot { height: 50px; }
-      #s4 .rm-flow-phase { font-size: 7.5px; padding: 2px 8px 2px 6px; border-left-width: 3px; }
+      #s4 .rm-info-tag { font-size: 7.5px; padding: 2px 8px; margin-bottom: 2px; }
+      #s4 .rm-info-val { font-size: 9.5px; line-height: 1.22; }
+      #s4 .rm-flow-slot { height: 18px; }
     }
   </style>
 </head>
@@ -1328,30 +1316,12 @@
       <p class="sub ai" style="--i:2">Kolejne moduły dochodzą wtedy, gdy pierwszy system już pracuje i przynosi wynik.</p>
 
       <div class="rm-map" id="rm-map">
-        <div class="card card-hero" id="rm-hero">
-          <div class="c-head">
-            <div class="c-headtext">
-              <div class="c-eyebrow">Od pierwszego dnia</div>
-              <div class="c-title">Twój system operacyjny</div>
-            </div>
-            <div class="c-icon"><iconify-icon icon="tabler:rocket"></iconify-icon></div>
-          </div>
-          <div class="divider"></div>
-          <p class="c-desc">Cztery moduły: zlecenia, dokumenty, powiadomienia i pełny obraz firmy, wdrożone pod Twoje procesy i pracujące od dnia uruchomienia.</p>
-        </div>
-
-        <div class="rm-flow-slot" id="rm-flow-1">
-          <svg class="rm-flow-svg"><path class="rm-flow-path"/><path class="rm-flow-head"/></svg>
-          <div class="rm-flow-phase">Od 3. miesiąca · jeśli pasuje</div>
-        </div>
-
         <div class="rm-row-cards" id="rm-group2">
           <div class="card" id="rm-card-2a">
-            <div class="c-head">
-              <div class="c-headtext">
-                <div class="c-title">Analizator Rentowności</div>
-              </div>
+            <div class="c-head-centered">
               <div class="c-icon"><iconify-icon icon="tabler:receipt-2"></iconify-icon></div>
+              <div class="c-eyebrow">Rozszerzenie od 3. miesiąca</div>
+              <div class="c-title">Analizator Rentowności</div>
             </div>
             <div class="divider"></div>
             <div class="rm-info"><span class="rm-info-tag">Dla kogo</span><p class="rm-info-val">Flota 15+ pojazdów albo minimum 50 zleceń tygodniowo.</p></div>
@@ -1359,11 +1329,10 @@
             <div class="rm-info"><span class="rm-info-tag">Rezultat</span><p class="rm-info-val">Widzisz dokładną kwotę zysku, zanim potwierdzisz zlecenie.</p></div>
           </div>
           <div class="card" id="rm-card-2b">
-            <div class="c-head">
-              <div class="c-headtext">
-                <div class="c-title">Tarcza ITD</div>
-              </div>
+            <div class="c-head-centered">
               <div class="c-icon"><iconify-icon icon="tabler:shield-check-filled"></iconify-icon></div>
+              <div class="c-eyebrow">Rozszerzenie od 3. miesiąca</div>
+              <div class="c-title">Tarcza ITD</div>
             </div>
             <div class="divider"></div>
             <div class="rm-info"><span class="rm-info-tag">Dla kogo</span><p class="rm-info-val">Firmy robiące międzynarodówkę albo kabotaż.</p></div>
@@ -1374,16 +1343,14 @@
 
         <div class="rm-flow-slot" id="rm-flow-2">
           <svg class="rm-flow-svg"><path class="rm-flow-path"/><path class="rm-flow-head"/></svg>
-          <div class="rm-flow-phase">Od 6. miesiąca · przy 2+ modułach</div>
         </div>
 
         <div class="rm-row-cards rm-row-cards-single">
           <div class="card" id="rm-card-3">
-            <div class="c-head">
-              <div class="c-headtext">
-                <div class="c-title">Centrum Dowodzenia</div>
-              </div>
+            <div class="c-head-centered">
               <div class="c-icon"><iconify-icon icon="tabler:mail"></iconify-icon></div>
+              <div class="c-eyebrow">Rozszerzenie od 6. miesiąca · 2+ moduły</div>
+              <div class="c-title">Centrum Dowodzenia</div>
             </div>
             <div class="divider"></div>
             <div class="rm-info"><span class="rm-info-tag">Dla kogo</span><p class="rm-info-val">Klienci korzystający już z minimum dwóch modułów.</p></div>
@@ -1918,12 +1885,10 @@ function triggerStagger(slideEl) {
   if (slideEl.id === 's4') animateRoadmap(slideEl)
 }
 
-// Slajd 4 "Rozwój systemu" — runda 7: karta-matka zminimalizowana (klient widział te 4
-// moduły na slajdzie 3), złącza między fazami WRACAJĄ do najprostszego, już sprawdzonego
-// języka tej prezentacji — pojedyncza pionowa linia + grot (dokładnie ten sam przepis co
-// .s2-conn-path/.s2-conn-head), po dwóch nieudanych podejściach z autorskim rozgałęzieniem/
-// złączeniem (rundy 5-6), które mimo poprawek nadal wyglądało niespójnie z resztą decku.
-// Etykieta fazy przerywa tę linię (plakietka z pełnym tłem, jak poprzednio).
+// Slajd 4 "Rozwój systemu" — runda 8: bez karty-matki (usunięta, patrz komentarz przy #s4
+// .rm-map wyżej), więc tylko JEDNO złącze na całym slajdzie — rząd dwóch produktów w dół do
+// Centrum Dowodzenia. Prosta linia + grot (ten sam przepis co .s2-conn-path/.s2-conn-head),
+// bez etykiety na linii — faza jest teraz odznaką na każdej karcie (.c-eyebrow).
 function layoutSimpleFlow(slotEl) {
   const slotRect = slotEl.getBoundingClientRect()
   const svg = slotEl.querySelector('svg')
@@ -1938,29 +1903,21 @@ function layoutSimpleFlow(slotEl) {
   path.setAttribute('d', `M ${cx} 0 L ${cx} ${h}`)
   const head = slotEl.querySelector('.rm-flow-head')
   head.setAttribute('d', `M ${cx - 6} ${h - 10} L ${cx} ${h} L ${cx + 6} ${h - 10} Z`)
-
-  const phase = slotEl.querySelector('.rm-flow-phase')
-  if (phase) { phase.style.left = `${cx}px`; phase.style.top = `${h / 2}px` }
 }
 
 function animateRoadmap(slideEl) {
   const map = slideEl.querySelector('.rm-map')
   if (!map) return
-  const hero = map.querySelector('#rm-hero')
-  const flow1 = map.querySelector('#rm-flow-1')
   const cards2 = [...map.querySelectorAll('#rm-group2 .card')]
   const flow2 = map.querySelector('#rm-flow-2')
   const card3 = map.querySelector('#rm-card-3')
-  if (!hero || !flow1 || !cards2.length || !flow2 || !card3) return
+  if (!cards2.length || !flow2 || !card3) return
 
-  layoutSimpleFlow(flow1)
   layoutSimpleFlow(flow2)
 
-  const allCards = [hero, ...cards2, card3]
-  const flowPhases = [...slideEl.querySelectorAll('.rm-flow-phase')]
+  const allCards = [...cards2, card3]
   const setFinal = () => {
     allCards.forEach(el => { el.style.opacity = '1'; el.style.transform = 'none' })
-    flowPhases.forEach(p => { p.style.opacity = '1' })
     slideEl.querySelectorAll('.rm-flow-head').forEach(h => { h.style.opacity = '1' })
   }
   if (!gsapReady || REDUCE_MOTION) { setFinal(); return }
@@ -1973,31 +1930,18 @@ function animateRoadmap(slideEl) {
   })
 
   gsap.set(allCards, { opacity: 0, y: 14 })
-  gsap.set(flowPhases, { opacity: 0 })
-
-  const drawFlow = (slotEl, atTime, tl) => {
-    const path = slotEl.querySelector('.rm-flow-path')
-    const head = slotEl.querySelector('.rm-flow-head')
-    const phase = slotEl.querySelector('.rm-flow-phase')
-    tl.to(path, { strokeDashoffset: 0, duration: 0.42, ease: 'power2.inOut' }, atTime)
-    tl.to(phase, { opacity: 1, duration: 0.22 }, atTime + 0.16)
-    tl.to(head, { opacity: 1, duration: 0.18 }, atTime + 0.36)
-  }
 
   const tl = gsap.timeline({ delay: 0.15 })
   let t = 0
-  tl.to(hero, { opacity: 1, y: 0, duration: 0.45, ease: staggerEase }, t)
-  t += 0.4
-
-  drawFlow(flow1, t, tl)
-  t += 0.56
-
   cards2.forEach((card, i) => {
     tl.to(card, { opacity: 1, y: 0, duration: 0.42, ease: staggerEase }, t + i * 0.14)
   })
-  t += 0.14 * (cards2.length - 1) + 0.36
+  t += 0.14 * (cards2.length - 1) + 0.4
 
-  drawFlow(flow2, t, tl)
+  const path = flow2.querySelector('.rm-flow-path')
+  const head = flow2.querySelector('.rm-flow-head')
+  tl.to(path, { strokeDashoffset: 0, duration: 0.42, ease: 'power2.inOut' }, t)
+  tl.to(head, { opacity: 1, duration: 0.18 }, t + 0.36)
   t += 0.56
 
   tl.to(card3, { opacity: 1, y: 0, duration: 0.45, ease: staggerEase }, t)
