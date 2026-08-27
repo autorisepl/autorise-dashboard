@@ -304,11 +304,13 @@
       color: var(--text-primary); background: var(--accent-muted); border: 2px solid rgba(255, 255, 255, 0.6);
       font-weight: 900; font-size: 20px; letter-spacing: 0.05em; padding: 12px 26px 12px 20px;
       border-left: 4px solid var(--accent);
-      margin-bottom: 26px;
+      margin-bottom: 16px;
     }
-    #s4 .h1 { color: var(--text-primary); margin-bottom: 18px; }
+    /* Runda 4: nagłówek o stopień mniejszy niż na innych slajdach — na tym slajdzie treść
+       (karty roadmapy) jest bohaterem, nie hasło "To dopiero początek". */
+    #s4 .h1 { color: var(--text-primary); font-size: clamp(30px, 3.4vw, 40px); margin-bottom: 8px; }
     #s4 .blue { color: var(--accent); }
-    #s4 .sub { color: var(--text-secondary); margin-bottom: 0; font-size: clamp(17px, 1.7vw, 20px); }
+    #s4 .sub { color: var(--text-secondary); margin-bottom: 0; font-size: clamp(15px, 1.4vw, 17px); }
 
     /* Runda 3: z mapy "wysp" (7 małych okrągłych węzłów, ciasno) na KARTY — dzień 1 (4
        moduły) nie da się uczciwie rozbić na osobne, duże elementy bez ciasnoty, więc dostaje
@@ -319,41 +321,54 @@
        (skąd system bierze dane, nie tylko jaka jest korzyść). Strzałki między fazami: WPROST
        przeniesiony przepis #s2-arrow-path/head (biały, rysowany przez GSAP), nie osobny,
        nowy styl — ten sam "mocny moment" co Dziś->Po wdrożenia na slajdzie 2. */
-    #s4 .rm-map { width: 100%; max-width: 900px; margin: 10px auto 0; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    #s4 .rm-map { width: 100%; max-width: 800px; margin: 2px auto 0; display: flex; flex-direction: column; align-items: center; gap: 6px; }
     #s4 .rm-phase-label {
       display: inline-flex; align-items: center;
-      font-size: 12.5px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase;
+      font-size: 12px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase;
       color: var(--text-primary); background: var(--accent-muted); border: 2px solid rgba(255, 255, 255, 0.55);
       border-left: 4px solid var(--accent);
-      border-radius: 100px; padding: 4px 15px 4px 12px; margin-bottom: 3px;
+      border-radius: 100px; padding: 4px 14px 4px 11px; margin-bottom: 2px;
       opacity: 0; transform: translateY(10px);
     }
-    #s4 .rm-arrow-wrap { display: flex; align-items: center; justify-content: center; height: 24px; opacity: 0; }
-    #s4 .rm-arrow-svg { width: 18px; height: 26px; overflow: visible; }
+    #s4 .rm-arrow-wrap { display: flex; align-items: center; justify-content: center; height: 14px; opacity: 0; }
+    #s4 .rm-arrow-svg { width: 14px; height: 16px; overflow: visible; }
     #s4 .rm-arrow-path { fill: none; stroke: var(--text-primary); stroke-width: 3; stroke-linecap: round; }
     #s4 .rm-arrow-head { fill: var(--text-primary); opacity: 0; }
 
+    /* Runda 4: karty wyraźnie większe niż poprzednia (miniaturkowa) wersja, ale skalibrowane
+       do budżetu wysokości slajdu — rytm pionowy MIĘDZY fazami (etykieta/strzałka) zostaje
+       ciasny, oddech rośnie WEWNĄTRZ kart (padding, odstępy tytuł/DLA KOGO/opis). */
     #s4 .rm-row-cards { display: flex; align-items: stretch; justify-content: center; gap: 14px; width: 100%; }
     #s4 .rm-card {
       background: var(--bg-elevated); border: 3px solid rgba(255, 255, 255, 0.6); border-radius: 14px;
-      padding: 12px 16px; text-align: left; display: flex; flex-direction: column;
+      padding: 16px 20px; text-align: left; display: flex; flex-direction: column;
       opacity: 0; transform: translateY(14px);
     }
-    #s4 .rm-card-wide { width: 100%; max-width: 640px; }
-    #s4 .rm-row-cards .rm-card { flex: 1; max-width: 300px; }
-    #s4 .rm-row-cards-single .rm-card { max-width: 420px; }
+    #s4 .rm-card-wide { width: 100%; max-width: 720px; }
+    #s4 .rm-row-cards .rm-card { flex: 1; max-width: 380px; }
+    #s4 .rm-row-cards-single .rm-card { max-width: 460px; }
     #s4 .rm-card-ic {
-      width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
+      width: 38px; height: 38px; border-radius: 11px; flex-shrink: 0;
       background: var(--accent-muted); border: 2px solid var(--accent-border); color: var(--text-primary);
       display: flex; align-items: center; justify-content: center; margin-bottom: 8px;
     }
-    #s4 .rm-card-ic iconify-icon { width: 17px; height: 17px; font-size: 17px; }
-    #s4 .rm-card-title { font-size: 14.5px; font-weight: 800; color: var(--text-primary); margin-bottom: 4px; }
-    #s4 .rm-card-desc { font-size: 12px; line-height: 1.4; color: var(--text-secondary); }
-    #s4 .rm-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+    #s4 .rm-card-ic iconify-icon { width: 19px; height: 19px; font-size: 19px; }
+    #s4 .rm-card-title { font-size: 16px; font-weight: 800; color: var(--text-primary); margin-bottom: 3px; }
+    #s4 .rm-card-desc { font-size: 13.5px; line-height: 1.42; color: var(--text-secondary); }
+    /* Linia "DLA KOGO": plakietka + wartość zwykłym tekstem, osobna od opisu — nie wtopiona
+       w zdanie, jak reszta overline'ów w tej prezentacji (.c-eyebrow / .rm-phase-label). */
+    #s4 .rm-dla-kogo { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; margin: 0 0 6px; }
+    #s4 .rm-dla-kogo-tag {
+      display: inline-flex; align-items: center; flex-shrink: 0;
+      font-size: 9.5px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase;
+      color: var(--text-primary); background: var(--accent-muted); border: 1.5px solid var(--accent-border);
+      border-radius: 100px; padding: 3px 9px;
+    }
+    #s4 .rm-dla-kogo-val { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+    #s4 .rm-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
     #s4 .rm-tag {
       display: inline-flex; align-items: center; gap: 5px;
-      font-size: 11.5px; font-weight: 700; color: var(--text-primary);
+      font-size: 12px; font-weight: 700; color: var(--text-primary);
       background: var(--accent-muted); border: 1.5px solid var(--accent-border); border-radius: 100px;
       padding: 4px 11px 4px 8px;
     }
@@ -992,23 +1007,27 @@
       /* Slajd 4 "Rozwój systemu": dwie karty obok siebie (faza "po 3 miesiącach") nie mieszczą
          się na szerokości telefonu z pełnym opisem — układ pionowy, karta pod kartą, ten sam
          porządek co desktop, tylko bez rzędu. */
-      #s4 .tag { margin-bottom: 8px; font-size: 14px; padding: 9px 17px 9px 13px; }
-      #s4 .h1 { margin-bottom: 6px; }
-      #s4 .rm-map { gap: 5px; margin-top: 8px; }
-      #s4 .rm-phase-label { font-size: 10.5px; padding: 3px 11px 3px 9px; margin-bottom: 1px; }
-      #s4 .rm-arrow-wrap { height: 17px; }
-      #s4 .rm-arrow-svg { width: 13px; height: 16px; }
-      #s4 .rm-row-cards { flex-direction: column; gap: 5px; }
-      #s4 .rm-card { padding: 9px 12px; }
+      #s4 .tag { margin-bottom: 7px; font-size: 14px; padding: 9px 17px 9px 13px; }
+      #s4 .h1 { font-size: clamp(21px, 6.2vw, 26px); margin-bottom: 5px; }
+      #s4 .sub { font-size: 12.5px; }
+      #s4 .rm-map { gap: 4px; margin-top: 4px; }
+      #s4 .rm-phase-label { font-size: 10px; padding: 2px 9px 2px 7px; margin-bottom: 0; }
+      #s4 .rm-arrow-wrap { height: 11px; }
+      #s4 .rm-arrow-svg { width: 11px; height: 13px; }
+      #s4 .rm-row-cards { flex-direction: column; gap: 4px; }
+      #s4 .rm-card { padding: 9px 12px; border-radius: 12px; }
       #s4 .rm-card-wide { max-width: 320px; }
       #s4 .rm-row-cards .rm-card, #s4 .rm-row-cards-single .rm-card { max-width: 320px; }
-      #s4 .rm-card-ic { width: 27px; height: 27px; margin-bottom: 5px; }
-      #s4 .rm-card-ic iconify-icon { width: 13px; height: 13px; font-size: 13px; }
-      #s4 .rm-card-title { font-size: 12.5px; margin-bottom: 2px; }
-      #s4 .rm-card-desc { font-size: 10.5px; line-height: 1.32; }
-      #s4 .rm-tags { gap: 4px; margin-top: 6px; }
-      #s4 .rm-tag { font-size: 9.5px; padding: 3px 8px 3px 6px; }
-      #s4 .rm-tag iconify-icon { width: 10px; height: 10px; font-size: 10px; }
+      #s4 .rm-card-ic { width: 24px; height: 24px; border-radius: 7px; margin-bottom: 4px; }
+      #s4 .rm-card-ic iconify-icon { width: 12px; height: 12px; font-size: 12px; }
+      #s4 .rm-card-title { font-size: 12px; margin-bottom: 1px; }
+      #s4 .rm-card-desc { font-size: 10px; line-height: 1.3; }
+      #s4 .rm-dla-kogo { gap: 4px; margin: 0 0 4px; }
+      #s4 .rm-dla-kogo-tag { font-size: 8px; padding: 2px 6px; }
+      #s4 .rm-dla-kogo-val { font-size: 10px; }
+      #s4 .rm-tags { gap: 3px; margin-top: 5px; }
+      #s4 .rm-tag { font-size: 9px; padding: 3px 7px 3px 5px; }
+      #s4 .rm-tag iconify-icon { width: 9px; height: 9px; font-size: 9px; }
     }
   </style>
 </head>
@@ -1283,10 +1302,10 @@
       <p class="sub ai" style="--i:2">Kolejne moduły dochodzą wtedy, gdy pierwszy system już pracuje i przynosi wynik.</p>
 
       <div class="rm-map" id="rm-map">
-        <div class="rm-phase-label">Dzień 1</div>
+        <div class="rm-phase-label">Od uruchomienia</div>
         <div class="rm-card rm-card-wide">
-          <div class="rm-card-title">System operacyjny Twojej firmy, gotowy od pierwszego dnia</div>
-          <p class="rm-card-desc">Zlecenia, dokumenty, powiadomienia i pełny obraz firmy — wszystko automatycznie, z jednego miejsca.</p>
+          <div class="rm-card-title">Twój system operacyjny</div>
+          <p class="rm-card-desc">Zlecenia, dokumenty, powiadomienia i pełny obraz firmy, wdrożone pod Twoje procesy i pracujące od dnia uruchomienia.</p>
           <div class="rm-tags">
             <div class="rm-tag"><iconify-icon icon="tabler:truck"></iconify-icon>Zlecenia bez przepisywania</div>
             <div class="rm-tag"><iconify-icon icon="tabler:scan"></iconify-icon>Dokumenty bez szukania</div>
@@ -1297,28 +1316,31 @@
 
         <div class="rm-arrow-wrap" id="rm-arrow-1"><svg class="rm-arrow-svg" viewBox="0 0 22 32"><path class="rm-arrow-path" d="M11 2 V22"/><path class="rm-arrow-head" d="M3 17 L11 29 L19 17 Z"/></svg></div>
 
-        <div class="rm-phase-label">Po 3 miesiącach</div>
+        <div class="rm-phase-label">Od 3. miesiąca, gdy pasuje</div>
         <div class="rm-row-cards">
           <div class="rm-card">
             <div class="rm-card-ic"><iconify-icon icon="tabler:receipt-2"></iconify-icon></div>
             <div class="rm-card-title">Analizator Rentowności</div>
-            <p class="rm-card-desc">Liczymy marżę zlecenia z trasy i stawki, zanim je przyjmiesz.</p>
+            <div class="rm-dla-kogo"><span class="rm-dla-kogo-tag">Dla kogo</span><span class="rm-dla-kogo-val">Flota 15+ pojazdów albo 50+ zleceń tygodniowo</span></div>
+            <p class="rm-card-desc">Liczymy marżę zlecenia z trasy, paliwa i stawki, zanim je przyjmiesz. Widzisz, czy warto, zanim się zgodzisz.</p>
           </div>
           <div class="rm-card">
             <div class="rm-card-ic"><iconify-icon icon="tabler:shield-check-filled"></iconify-icon></div>
             <div class="rm-card-title">Tarcza ITD</div>
-            <p class="rm-card-desc">Pilnujemy czasu jazdy kierowców i ostrzegamy o naruszeniu Pakietu Mobilności pierwsi.</p>
+            <div class="rm-dla-kogo"><span class="rm-dla-kogo-tag">Dla kogo</span><span class="rm-dla-kogo-val">Międzynarodówka albo kabotaż, flota od 10 pojazdów</span></div>
+            <p class="rm-card-desc">Codziennie sprawdzamy dane z tachografów i ostrzegamy, zanim inspekcja znajdzie naruszenie Pakietu Mobilności.</p>
           </div>
         </div>
 
         <div class="rm-arrow-wrap" id="rm-arrow-2"><svg class="rm-arrow-svg" viewBox="0 0 22 32"><path class="rm-arrow-path" d="M11 2 V22"/><path class="rm-arrow-head" d="M3 17 L11 29 L19 17 Z"/></svg></div>
 
-        <div class="rm-phase-label">Po 6 miesiącach</div>
+        <div class="rm-phase-label">Od 6. miesiąca, przy 2+ modułach</div>
         <div class="rm-row-cards rm-row-cards-single">
           <div class="rm-card">
             <div class="rm-card-ic"><iconify-icon icon="tabler:mail"></iconify-icon></div>
             <div class="rm-card-title">Centrum Dowodzenia</div>
-            <p class="rm-card-desc">Cotygodniowy raport i asystent na WhatsApp, który odpowiada o dowolne dane firmy w kilka sekund.</p>
+            <div class="rm-dla-kogo"><span class="rm-dla-kogo-tag">Dla kogo</span><span class="rm-dla-kogo-val">Klienci korzystający już z minimum dwóch modułów</span></div>
+            <p class="rm-card-desc">Cotygodniowy raport i asystent na WhatsApp, żeby zapytać o dowolną liczbę z firmy i dostać odpowiedź od razu.</p>
           </div>
         </div>
       </div>
