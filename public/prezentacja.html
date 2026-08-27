@@ -310,40 +310,51 @@
     #s4 .blue { color: var(--accent); }
     #s4 .sub { color: var(--text-secondary); margin-bottom: 0; font-size: clamp(17px, 1.7vw, 20px); }
 
-    /* Mapa/oś — trzy węzły w rzędzie, połączone linią rysowaną progresywnie przez GSAP
-       (animateRoadmap). Węzły startują niewidoczne w czystym CSS (opacity:0 + przesunięcie)
-       zamiast czekać na JS, żeby nie było mrugnięcia pełną treścią przed animacją, gdyby
-       coś opóźniło start skryptu. */
-    #s4 .rm-map {
-      position: relative; display: flex; align-items: flex-start; justify-content: space-between;
-      width: 100%; max-width: 1120px; margin: 70px auto 0; padding: 0 10px;
+    /* Mapa "wysp" — runda 2: zamiast trzech dużych węzłów (jeden na fazę), każdy z 7
+       konkretnych kroków dostaje własną wyspę (1.1-1.4 dzień 1, 2.1-2.2 po 3 mies., 3.1 po
+       6 mies.), połączonych strzałkami w obrębie fazy. Między fazami — .rm-transition:
+       osobny, pionowy akcent (kreskowana strzałka + krótkie zdanie), bo to nasze KONKRETNE
+       DZIAŁANIE (wdrożenie kolejnego modułu / spięcie raportu), nie kolejna wyspa modułu.
+       Animacja w animateRoadmap() niżej w <script>: wyspy i etykiety faz startują
+       niewidoczne w czystym CSS (bez czekania na JS), strzałki startują w pełni narysowane
+       (fallback bezpieczny), a JS ustawia stroke-dasharray/dashoffset dopiero po starcie,
+       tuż przed animacją — ten sam mechanizm co animateS2Connectors na slajdzie 2. */
+    #s4 .rm-map { width: 100%; max-width: 980px; margin: 22px auto 0; display: flex; flex-direction: column; gap: 12px; }
+    #s4 .rm-phase { display: flex; flex-direction: column; align-items: center; }
+    #s4 .rm-phase-label {
+      display: inline-flex; align-items: center;
+      font-size: 12.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase;
+      color: var(--accent-text); background: var(--accent-muted); border: 1.5px solid var(--accent-border);
+      border-radius: 100px; padding: 4px 16px; margin-bottom: 12px;
+      opacity: 0; transform: translateY(10px);
     }
-    #s4 .rm-track {
-      position: absolute; top: 62px; left: 15%; right: 15%; height: 5px;
-      background: rgba(255, 255, 255, 0.15); border-radius: 5px; overflow: hidden;
+    #s4 .rm-row { display: flex; align-items: flex-start; justify-content: center; width: 100%; }
+    #s4 .rm-isl { display: flex; flex-direction: column; align-items: center; text-align: center; width: 186px; opacity: 0; transform: translateY(14px); }
+    #s4 .rm-isl-dot {
+      position: relative; width: 60px; height: 60px; border-radius: 50%; flex-shrink: 0;
+      background: var(--accent-muted); border: 2.5px solid var(--accent-border); color: var(--text-primary);
+      display: flex; align-items: center; justify-content: center; margin-bottom: 9px;
+      box-shadow: 0 0 0 5px var(--bg);
     }
-    #s4 .rm-track-fill {
-      height: 100%; width: 0%; background: var(--accent); border-radius: 5px;
-      box-shadow: 0 0 16px rgba(56, 182, 255, 0.55);
+    #s4 .rm-isl-dot iconify-icon { width: 24px; height: 24px; font-size: 24px; }
+    #s4 .rm-isl-num {
+      position: absolute; top: -5px; right: -5px; min-width: 21px; height: 21px; padding: 0 5px;
+      border-radius: 100px; background: var(--accent); color: #0c2536;
+      font-size: 10px; font-weight: 800; font-family: var(--font-mono);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 0 3px var(--bg);
     }
-    #s4 .rm-node {
-      flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center;
-      position: relative; z-index: 1; padding: 0 22px;
-      opacity: 0; transform: translateY(18px);
-    }
-    #s4 .rm-dot {
-      width: 128px; height: 128px; border-radius: 50%; flex-shrink: 0;
-      background: var(--accent-muted); border: 3px solid var(--accent-border); color: var(--text-primary);
-      display: flex; align-items: center; justify-content: center; margin-bottom: 30px;
-      box-shadow: 0 0 0 7px var(--bg);
-    }
-    #s4 .rm-dot iconify-icon { width: 52px; height: 52px; font-size: 52px; }
-    #s4 .rm-week {
-      font-size: 15px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
-      color: var(--accent-text); margin-bottom: 14px;
-    }
-    #s4 .rm-title { font-size: 29px; font-weight: 800; color: var(--text-primary); line-height: 1.25; margin-bottom: 16px; }
-    #s4 .rm-desc { font-size: 17.5px; line-height: 1.6; color: var(--text-secondary); max-width: 320px; }
+    #s4 .rm-isl-title { font-size: 14px; font-weight: 800; color: var(--text-primary); line-height: 1.25; margin-bottom: 3px; }
+    #s4 .rm-isl-desc { font-size: 11.5px; line-height: 1.4; color: var(--text-secondary); max-width: 168px; }
+    #s4 .rm-conn { flex-shrink: 0; width: 30px; height: 60px; display: flex; align-items: center; justify-content: center; }
+    #s4 .rm-conn-svg { width: 24px; height: 13px; overflow: visible; }
+    #s4 .rm-conn-path { fill: none; stroke: var(--accent-border); stroke-width: 2.5; stroke-linecap: round; }
+    #s4 .rm-conn-head { fill: var(--accent-border); opacity: 0; }
+    #s4 .rm-transition { display: flex; align-items: center; justify-content: center; gap: 9px; padding: 2px 0; opacity: 0; }
+    #s4 .rm-transition-arrow { flex-shrink: 0; width: 13px; height: 18px; }
+    #s4 .rm-transition-path { fill: none; stroke: var(--text-tertiary); stroke-width: 2; stroke-linecap: round; stroke-dasharray: 3 4; }
+    #s4 .rm-transition-head { fill: var(--text-tertiary); opacity: 0; }
+    #s4 .rm-transition-text { font-size: 13px; font-style: italic; color: var(--text-secondary); }
 
     /* ── Divider (wspólny dla #s1/#s2/każdego kolejnego ciemnego slajdu) — jeden bazowy
        wygląd (var(--divider), zdefiniowany per-slajd tuż obok reszty tokenów tego slajdu),
@@ -974,20 +985,27 @@
       #s3 .c-desc { font-size: 11.5px; line-height: 1.35; }
       #s3 .si { padding-bottom: 16px; }
 
-      /* Slajd 4 "Rozwój systemu": trzy węzły w rzędzie nie mieszczą się na szerokości telefonu
-         z tak długimi opisami — układ pionowy, kropka-nad-kropką, linia łącząca (pozioma z
-         natury) znika, bo bez rzędu nie ma czego łączyć poziomo; sama kolejność węzłów od
-         góry do dołu już niesie tę samą narrację "co dalej". */
+      /* Slajd 4 "Rozwój systemu": 7 wysp w rzędach po 4/2/1 nie mieszczą się obok siebie na
+         szerokości telefonu — każda faza staje w kolumnę (wyspa pod wyspą), strzałki poziome
+         .rm-conn znikają (nie ma już rzędu, więc nie ma czego łączyć w poziomie — sama
+         kolejność od góry do dołu niesie tę samą narrację), a opisy wysp .rm-isl-desc znikają
+         tym samym powodem co .tl-desc na slajdzie 3: 7 opisów jeden pod drugim realnie by nie
+         zmieściło się bez przewijania, numer+ikona+tytuł to wystarczający telegram. */
       #s4 .tag { margin-bottom: 10px; font-size: 14px; padding: 9px 17px 9px 13px; }
       #s4 .h1 { margin-bottom: 8px; }
-      #s4 .rm-map { flex-direction: column; align-items: center; gap: 20px; margin-top: 16px; padding: 0; }
-      #s4 .rm-track { display: none; }
-      #s4 .rm-node { padding: 0; max-width: 320px; }
-      #s4 .rm-dot { width: 54px; height: 54px; border-width: 2px; margin-bottom: 10px; }
-      #s4 .rm-dot iconify-icon { width: 22px; height: 22px; font-size: 22px; }
-      #s4 .rm-week { font-size: 11px; margin-bottom: 4px; }
-      #s4 .rm-title { font-size: 16.5px; margin-bottom: 5px; }
-      #s4 .rm-desc { font-size: 13px; line-height: 1.45; max-width: 300px; }
+      #s4 .rm-map { gap: 5px; margin-top: 10px; }
+      #s4 .rm-phase-label { font-size: 10.5px; padding: 3px 12px; margin-bottom: 5px; }
+      #s4 .rm-row { flex-direction: column; gap: 5px; }
+      #s4 .rm-conn { display: none; }
+      #s4 .rm-isl { width: 100%; max-width: 260px; }
+      #s4 .rm-isl-dot { width: 38px; height: 38px; border-width: 2px; margin-bottom: 3px; }
+      #s4 .rm-isl-dot iconify-icon { width: 18px; height: 18px; font-size: 18px; }
+      #s4 .rm-isl-num { min-width: 16px; height: 16px; font-size: 8px; }
+      #s4 .rm-isl-title { font-size: 12.5px; }
+      #s4 .rm-isl-desc { display: none; }
+      #s4 .rm-transition { padding: 0; gap: 6px; }
+      #s4 .rm-transition-arrow { width: 10px; height: 14px; }
+      #s4 .rm-transition-text { font-size: 10.5px; }
     }
   </style>
 </head>
@@ -1262,24 +1280,71 @@
       <p class="sub ai" style="--i:2">Kolejne moduły dochodzą wtedy, gdy pierwszy system już pracuje i przynosi wynik.</p>
 
       <div class="rm-map" id="rm-map">
-        <div class="rm-track"><div class="rm-track-fill"></div></div>
-        <div class="rm-node">
-          <div class="rm-dot"><iconify-icon icon="tabler:rocket"></iconify-icon></div>
-          <div class="rm-week">Dzień 1</div>
-          <div class="rm-title">Twoje 4 moduły</div>
-          <p class="rm-desc">System czyta zlecenia, dokumenty, powiadamia automatycznie i pokazuje Ci wszystko z jednego miejsca.</p>
+        <div class="rm-phase">
+          <div class="rm-phase-label">Dzień 1</div>
+          <div class="rm-row">
+            <div class="rm-isl">
+              <div class="rm-isl-dot"><iconify-icon icon="tabler:truck"></iconify-icon><span class="rm-isl-num">1.1</span></div>
+              <div class="rm-isl-title">Zlecenia bez przepisywania</div>
+              <p class="rm-isl-desc">System czyta zlecenia z PDF-a i wpisuje je do TMS.</p>
+            </div>
+            <div class="rm-conn"><svg class="rm-conn-svg" viewBox="0 0 26 14"><path class="rm-conn-path" d="M1 7 H20"/><path class="rm-conn-head" d="M15 2 L23 7 L15 12 Z"/></svg></div>
+            <div class="rm-isl">
+              <div class="rm-isl-dot"><iconify-icon icon="tabler:scan"></iconify-icon><span class="rm-isl-num">1.2</span></div>
+              <div class="rm-isl-title">Dokumenty bez szukania</div>
+              <p class="rm-isl-desc">CMR, POD i faktury trafiają do zlecenia same.</p>
+            </div>
+            <div class="rm-conn"><svg class="rm-conn-svg" viewBox="0 0 26 14"><path class="rm-conn-path" d="M1 7 H20"/><path class="rm-conn-head" d="M15 2 L23 7 L15 12 Z"/></svg></div>
+            <div class="rm-isl">
+              <div class="rm-isl-dot"><iconify-icon icon="tabler:bell"></iconify-icon><span class="rm-isl-num">1.3</span></div>
+              <div class="rm-isl-title">Statusy bez telefonu</div>
+              <p class="rm-isl-desc">Kierowcy i klienci wiedzą, co się dzieje.</p>
+            </div>
+            <div class="rm-conn"><svg class="rm-conn-svg" viewBox="0 0 26 14"><path class="rm-conn-path" d="M1 7 H20"/><path class="rm-conn-head" d="M15 2 L23 7 L15 12 Z"/></svg></div>
+            <div class="rm-isl">
+              <div class="rm-isl-dot"><iconify-icon icon="tabler:chart-dots-3"></iconify-icon><span class="rm-isl-num">1.4</span></div>
+              <div class="rm-isl-title">Pełny obraz firmy</div>
+              <p class="rm-isl-desc">Widzisz całą firmę z jednego miejsca.</p>
+            </div>
+          </div>
         </div>
-        <div class="rm-node">
-          <div class="rm-dot"><iconify-icon icon="tabler:shield-check-filled"></iconify-icon></div>
-          <div class="rm-week">Po 3 miesiącach</div>
-          <div class="rm-title">Kontrola nad marżą i ryzykiem</div>
-          <p class="rm-desc">Widzisz opłacalność każdego zlecenia zanim je przyjmiesz, i wiesz o naruszeniu Pakietu Mobilności zanim zrobi to kontrola drogowa.</p>
+
+        <div class="rm-transition">
+          <svg class="rm-transition-arrow" viewBox="0 0 16 22"><path class="rm-transition-path" d="M8 1 V17"/><path class="rm-transition-head" d="M3 13 L8 20 L13 13 Z"/></svg>
+          <p class="rm-transition-text">Wdrażamy kolejny etap, gdy widzimy realne dane z Twojej firmy.</p>
         </div>
-        <div class="rm-node">
-          <div class="rm-dot"><iconify-icon icon="tabler:chart-dots-3"></iconify-icon></div>
-          <div class="rm-week">Po 6 miesiącach</div>
-          <div class="rm-title">Pełny obraz z jednego miejsca</div>
-          <p class="rm-desc">Cotygodniowy raport i asystent na WhatsApp, żeby zapytać o dowolną liczbę z firmy i dostać odpowiedź w kilka sekund.</p>
+
+        <div class="rm-phase">
+          <div class="rm-phase-label">Po 3 miesiącach</div>
+          <div class="rm-row">
+            <div class="rm-isl">
+              <div class="rm-isl-dot"><iconify-icon icon="tabler:receipt-2"></iconify-icon><span class="rm-isl-num">2.1</span></div>
+              <div class="rm-isl-title">Analizator Rentowności</div>
+              <p class="rm-isl-desc">Widzisz opłacalność zlecenia zanim je przyjmiesz.</p>
+            </div>
+            <div class="rm-conn"><svg class="rm-conn-svg" viewBox="0 0 26 14"><path class="rm-conn-path" d="M1 7 H20"/><path class="rm-conn-head" d="M15 2 L23 7 L15 12 Z"/></svg></div>
+            <div class="rm-isl">
+              <div class="rm-isl-dot"><iconify-icon icon="tabler:shield-check-filled"></iconify-icon><span class="rm-isl-num">2.2</span></div>
+              <div class="rm-isl-title">Tarcza ITD</div>
+              <p class="rm-isl-desc">Wiesz o naruszeniu Pakietu Mobilności pierwszy.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="rm-transition">
+          <svg class="rm-transition-arrow" viewBox="0 0 16 22"><path class="rm-transition-path" d="M8 1 V17"/><path class="rm-transition-head" d="M3 13 L8 20 L13 13 Z"/></svg>
+          <p class="rm-transition-text">Łączymy dane w jeden, cotygodniowy raport.</p>
+        </div>
+
+        <div class="rm-phase">
+          <div class="rm-phase-label">Po 6 miesiącach</div>
+          <div class="rm-row">
+            <div class="rm-isl">
+              <div class="rm-isl-dot"><iconify-icon icon="tabler:mail"></iconify-icon><span class="rm-isl-num">3.1</span></div>
+              <div class="rm-isl-title">Centrum Dowodzenia</div>
+              <p class="rm-isl-desc">Raport i asystent na WhatsApp na żądanie.</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1808,30 +1873,67 @@ function triggerStagger(slideEl) {
   if (slideEl.id === 's4') animateRoadmap(slideEl)
 }
 
-// Slajd 4 "Rozwój systemu" — mapa jest jedyną treścią slajdu (nie dodatkiem pod czymś innym
-// jak .tl na slajdzie 6), więc dostaje własną, wolniejszą i bardziej celową sekwencję niż
-// generyczny 45ms stagger reużywany przez triggerStagger() dla zwykłych siatek kart: węzły
-// wchodzą jeden po drugim (fade+translateY, ta sama krzywa staggerEase co reszta talii), a
-// linia między nimi dorysowuje się do kolejnego węzła dokładnie w momencie, gdy on się
-// pojawia — "mapa się rozwija", nie wyskakuje w całości naraz.
+// Slajd 4 "Rozwój systemu" — mapa "wysp": 7 konkretnych kroków (1.1-1.4 dzień 1, 2.1-2.2 po
+// 3 mies., 3.1 po 6 mies.) w 3 fazach. Sekwencja: etykieta fazy -> wyspa -> strzałka do
+// kolejnej wyspy (dorysowuje się dokładnie w momencie przejścia) -> ... -> po ostatniej
+// wyspie fazy, jeśli jest kolejna faza, .rm-transition (kreskowana strzałka + zdanie o
+// konkretnym działaniu) -> kolejna etykieta fazy. Ten sam mechanizm rysowania linii co
+// animateS2Connectors (stroke-dasharray/dashoffset liczone z realnej długości ścieżki),
+// tylko rozpięty na całą mapę zamiast jednej pionowej listy.
 function animateRoadmap(slideEl) {
-  const nodes = [...slideEl.querySelectorAll('.rm-node')]
-  const fill = slideEl.querySelector('.rm-track-fill')
-  if (!nodes.length) return
-  if (!gsapReady || REDUCE_MOTION) {
-    nodes.forEach(n => { n.style.opacity = '1'; n.style.transform = 'none' })
-    if (fill) fill.style.width = '100%'
-    return
+  const phases = [...slideEl.querySelectorAll('.rm-phase')]
+  const transitions = [...slideEl.querySelectorAll('.rm-transition')]
+  if (!phases.length) return
+
+  const setFinal = () => {
+    slideEl.querySelectorAll('.rm-phase-label, .rm-isl, .rm-transition').forEach(el => {
+      el.style.opacity = '1'; el.style.transform = 'none'
+    })
+    slideEl.querySelectorAll('.rm-conn-head, .rm-transition-head').forEach(h => { h.style.opacity = '1' })
   }
-  gsap.set(nodes, { opacity: 0, y: 18 })
-  if (fill) gsap.set(fill, { width: '0%' })
+  if (!gsapReady || REDUCE_MOTION) { setFinal(); return }
+
+  const connPaths = [...slideEl.querySelectorAll('.rm-conn-path, .rm-transition-path')]
+  connPaths.forEach(p => {
+    const len = p.getTotalLength()
+    p.style.strokeDasharray = String(len)
+    p.style.strokeDashoffset = String(len)
+  })
+
+  gsap.set(slideEl.querySelectorAll('.rm-phase-label'), { opacity: 0, y: 10 })
+  gsap.set(slideEl.querySelectorAll('.rm-isl'), { opacity: 0, y: 14 })
+  gsap.set(slideEl.querySelectorAll('.rm-transition'), { opacity: 0 })
+
   const tl = gsap.timeline({ delay: 0.15 })
-  nodes.forEach((node, i) => {
-    const t = i * 0.42
-    tl.to(node, { opacity: 1, y: 0, duration: 0.5, ease: staggerEase }, t)
-    if (i > 0 && fill) {
-      const pct = (i / (nodes.length - 1)) * 100
-      tl.to(fill, { width: pct + '%', duration: 0.42, ease: 'power2.inOut' }, t - 0.18)
+  let t = 0
+  phases.forEach((phase, pIdx) => {
+    const label = phase.querySelector('.rm-phase-label')
+    const items = [...phase.querySelector('.rm-row').children]
+
+    tl.to(label, { opacity: 1, y: 0, duration: 0.32, ease: staggerEase }, t)
+    t += 0.2
+
+    items.forEach(item => {
+      if (item.classList.contains('rm-isl')) {
+        tl.to(item, { opacity: 1, y: 0, duration: 0.38, ease: staggerEase }, t)
+        t += 0.26
+      } else if (item.classList.contains('rm-conn')) {
+        const path = item.querySelector('.rm-conn-path')
+        const head = item.querySelector('.rm-conn-head')
+        if (path) tl.to(path, { strokeDashoffset: 0, duration: 0.24, ease: 'power2.inOut' }, t - 0.1)
+        if (head) tl.to(head, { opacity: 1, duration: 0.14 }, t + 0.13)
+        t += 0.14
+      }
+    })
+
+    const transition = transitions[pIdx]
+    if (transition) {
+      const path = transition.querySelector('.rm-transition-path')
+      const head = transition.querySelector('.rm-transition-head')
+      tl.to(transition, { opacity: 1, duration: 0.28, ease: staggerEase }, t)
+      if (path) tl.to(path, { strokeDashoffset: 0, duration: 0.38, ease: 'power2.inOut' }, t + 0.05)
+      if (head) tl.to(head, { opacity: 1, duration: 0.18 }, t + 0.4)
+      t += 0.55
     }
   })
 }
