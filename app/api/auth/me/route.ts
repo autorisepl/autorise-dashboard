@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { resolveRole } from "@/lib/auth/resolveRole";
+import { resolveIdentity } from "@/lib/auth/resolveRole";
+import { lookupIdentityByEmail } from "@/lib/auth/teamLookup";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -12,10 +13,11 @@ export async function GET() {
   const {
     data: { session },
   } = await supabase.auth.getSession();
-  const role = resolveRole(session?.access_token);
+  let identity = resolveIdentity(session?.access_token);
+  if (!identity && user?.email) identity = await lookupIdentityByEmail(user.email);
 
-  if (!role) {
+  if (!identity) {
     return NextResponse.json({ role: null, email: null }, { status: 401 });
   }
-  return NextResponse.json({ role, email: user?.email ?? null });
+  return NextResponse.json({ role: identity.role, email: user?.email ?? null });
 }

@@ -218,7 +218,7 @@ function ClientCard({
         // praktycznie niewidoczny) — feedback 2026-08-24: karty miały wyglądać wyraźnie
         // obramowane na biało, nie wtopione w tło.
         background: "var(--bg)",
-        border: `1px solid ${hovered ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.22)"}`,
+        border: `1px solid ${hovered ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.42)"}`,
         borderRadius: "var(--radius-sm)",
         cursor: "pointer",
         transition: "box-shadow 120ms, border-color 120ms",
@@ -247,6 +247,35 @@ function ClientCard({
           {name}
         </div>
       </div>
+
+      {client.qualificationCallDone && (
+        <div
+          style={{
+            marginBottom: 6,
+            paddingBottom: 6,
+            borderBottom: "1px solid rgba(255,255,255,0.42)",
+          }}
+        >
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              padding: "3px 10px",
+              borderRadius: "var(--radius-xs)",
+              background: "var(--success-bg)",
+              border: "1px solid rgba(255,255,255,0.5)",
+              color: "var(--success-text)",
+              fontFamily: "var(--font-sans)",
+              fontSize: 11,
+              fontWeight: 800,
+              letterSpacing: "0.04em",
+              textTransform: "uppercase",
+            }}
+          >
+            Rozmowa odbyta
+          </span>
+        </div>
+      )}
 
       <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
         {client.jestTestowy && (
@@ -305,7 +334,7 @@ function ClientCard({
               height: 22,
               borderRadius: "50%",
               background: "var(--bg-elevated)",
-              border: "1px solid rgba(255,255,255,0.22)",
+              border: "1px solid rgba(255,255,255,0.42)",
               flexShrink: 0,
             }}
           >
@@ -388,7 +417,7 @@ function ClientCard({
                   height: 22,
                   borderRadius: "50%",
                   background: "var(--bg-elevated)",
-                  border: "1px solid rgba(255,255,255,0.22)",
+                  border: "1px solid rgba(255,255,255,0.42)",
                   flexShrink: 0,
                 }}
               >
@@ -421,7 +450,7 @@ function ClientCard({
                   height: 22,
                   borderRadius: "50%",
                   background: "var(--bg-elevated)",
-                  border: "1px solid rgba(255,255,255,0.22)",
+                  border: "1px solid rgba(255,255,255,0.42)",
                   flexShrink: 0,
                 }}
               >
@@ -457,7 +486,7 @@ function ClientCard({
           gap: 8,
           marginTop: 8,
           paddingTop: 8,
-          borderTop: "1px solid rgba(255,255,255,0.22)",
+          borderTop: "1px solid rgba(255,255,255,0.42)",
         }}
       >
         <ContactAttemptsBadge
@@ -473,7 +502,7 @@ function ClientCard({
               padding: "4px 10px",
               borderRadius: "var(--radius-xs)",
               background: "var(--accent)",
-              border: "1px solid rgba(255,255,255,0.35)",
+              border: "1px solid rgba(255,255,255,0.5)",
               color: "var(--text-on-accent)",
               fontFamily: "var(--font-sans)",
               fontSize: 12,
@@ -1553,7 +1582,7 @@ function ClientPanel({
             gap: 7,
             height: 40,
             borderRadius: "var(--radius-xs)",
-            border: "1px solid rgba(255,255,255,0.35)",
+            border: "1px solid rgba(255,255,255,0.5)",
             background: "var(--accent)",
             color: "var(--text-on-accent)",
             fontFamily: "var(--font-sans)",
@@ -1884,7 +1913,7 @@ export default function PipelinePage() {
               gap: 5,
               padding: "5px 10px",
               background: "var(--bg)",
-              border: "1px solid rgba(255,255,255,0.28)",
+              border: "1px solid rgba(255,255,255,0.42)",
               borderRadius: "var(--radius-xs)",
               cursor: "pointer",
               color: "var(--text-primary)",
@@ -1918,7 +1947,7 @@ export default function PipelinePage() {
                 width: 200,
                 padding: "5px 10px 5px 30px",
                 background: "var(--bg)",
-                border: "1px solid rgba(255,255,255,0.28)",
+                border: "1px solid rgba(255,255,255,0.42)",
                 borderRadius: "var(--radius-xs)",
                 color: "var(--text-primary)",
                 fontSize: 12,
@@ -1936,7 +1965,7 @@ export default function PipelinePage() {
               gap: 5,
               padding: "5px 10px",
               background: "var(--bg)",
-              border: "1px solid rgba(255,255,255,0.28)",
+              border: "1px solid rgba(255,255,255,0.42)",
               borderRadius: "var(--radius-xs)",
               cursor: loading ? "default" : "pointer",
               color: "var(--text-primary)",

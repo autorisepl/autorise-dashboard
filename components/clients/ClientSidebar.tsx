@@ -48,10 +48,11 @@ interface ClientSidebarProps {
   /** Id klientów, dla których zarejestrowano odbytą rozmowę kwalifikacyjną — zielona
    * plakietka na karcie klienta. */
   callDoneClientIds?: string[];
-  /** Nazwa sprzedawcy przypisanego do zaznaczonego klienta — profil na dole panelu. */
-  sellerLabel?: string | null;
-  /** Pokaż link "Otwórz prezentację" na dole panelu (domyślnie tak). W /kwalifikacja
-   * wyłączone — prezentacja jest dopiero na etapie sprzedaży. */
+  /** Nazwa sprzedawcy per klient (klucz = client.id) — pokazywana wprost na karcie klienta. */
+  sellerNameById?: Record<string, string>;
+  /** Pokaż link "Otwórz prezentację" + "Odznacz klienta" na dole panelu (domyślnie tak).
+   * W /kwalifikacja wyłączone — prezentacja jest dopiero na etapie sprzedaży, a odznaczasz
+   * klienta klikając go ponownie na liście. */
   showPresentation?: boolean;
 }
 
@@ -67,7 +68,7 @@ export function ClientSidebar({
   headerLabel = "Klienci",
   emptyLabel = "Brak klientów",
   callDoneClientIds,
-  sellerLabel,
+  sellerNameById,
   showPresentation = true,
 }: ClientSidebarProps) {
   const callDoneSet = new Set(callDoneClientIds ?? []);
@@ -135,7 +136,7 @@ export function ClientSidebar({
           width: 30,
           height: 30,
           borderRadius: "50%",
-          border: "1px solid rgba(255,255,255,0.28)",
+          border: "1px solid rgba(255,255,255,0.42)",
           background: "var(--bg-elevated)",
           boxShadow: "var(--shadow-card)",
           cursor: "pointer",
@@ -154,7 +155,7 @@ export function ClientSidebar({
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.color = "var(--text-primary)";
-          e.currentTarget.style.borderColor = "rgba(255,255,255,0.28)";
+          e.currentTarget.style.borderColor = "rgba(255,255,255,0.42)";
           e.currentTarget.style.boxShadow = "var(--shadow-card)";
         }}
       >
@@ -215,25 +216,31 @@ export function ClientSidebar({
                   marginBottom: 8,
                 }}
               >
+                {/* Plakietka statusu — ten sam wygląd co "Nowy lead" w /pipeline:
+                    kolor akcentu z alfą, biała kropka, białe wersaliki. */}
                 <span
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
-                    gap: 6,
-                    padding: "5px 10px",
-                    borderRadius: "var(--radius-xs)",
-                    background: "var(--accent)",
-                    border: "1px solid rgba(255,255,255,0.28)",
-                    color: "var(--text-on-accent)",
+                    gap: 7,
+                    height: 30,
+                    padding: "0 11px",
+                    borderRadius: "var(--radius-sm)",
+                    background: "#4379b126",
+                    border: "1px solid #4379b170",
+                    color: "var(--text-primary)",
                     fontFamily: "var(--font-sans)",
                     fontSize: 12,
                     fontWeight: 800,
-                    letterSpacing: "0.04em",
+                    letterSpacing: "0.02em",
                     textTransform: "uppercase",
                   }}
                 >
+                  <span
+                    style={{ width: 7, height: 7, borderRadius: "50%", background: "#ffffff" }}
+                  />
                   {groupByStatus ? "Klienci" : headerLabel}
-                  <span style={{ fontWeight: 700, opacity: 0.85 }}>{filtered.length}</span>
+                  <span style={{ fontWeight: 700, opacity: 0.75 }}>{filtered.length}</span>
                 </span>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <button
@@ -242,11 +249,12 @@ export function ClientSidebar({
                     style={{
                       display: "flex",
                       alignItems: "center",
+                      justifyContent: "center",
                       gap: 4,
-                      height: 28,
-                      padding: "0 8px",
+                      height: 30,
+                      padding: "0 9px",
                       background: "var(--bg)",
-                      border: "1px solid rgba(255,255,255,0.28)",
+                      border: "1px solid rgba(255,255,255,0.42)",
                       borderRadius: "var(--radius-xs)",
                       cursor: "pointer",
                       color: "var(--text-primary)",
@@ -256,9 +264,9 @@ export function ClientSidebar({
                     }}
                   >
                     {sortDir === "asc" ? (
-                      <ArrowDownAZ size={14} strokeWidth={2.5} />
+                      <ArrowDownAZ size={15} strokeWidth={2.5} />
                     ) : (
-                      <ArrowUpAZ size={14} strokeWidth={2.5} />
+                      <ArrowUpAZ size={15} strokeWidth={2.5} />
                     )}
                   </button>
                   <button
@@ -269,17 +277,17 @@ export function ClientSidebar({
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      width: 28,
-                      height: 28,
+                      width: 30,
+                      height: 30,
                       background: "var(--bg)",
-                      border: "1px solid rgba(255,255,255,0.28)",
+                      border: "1px solid rgba(255,255,255,0.42)",
                       borderRadius: "var(--radius-xs)",
                       cursor: loading ? "not-allowed" : "pointer",
                       color: "var(--text-primary)",
                     }}
                   >
                     <RefreshCw
-                      size={13}
+                      size={14}
                       strokeWidth={2.5}
                       style={{ animation: loading ? "spin 1s linear infinite" : "none" }}
                     />
@@ -293,7 +301,7 @@ export function ClientSidebar({
                   gap: 6,
                   height: 32,
                   background: "var(--bg)",
-                  border: "1px solid rgba(255,255,255,0.28)",
+                  border: "1px solid rgba(255,255,255,0.42)",
                   borderRadius: "var(--radius-xs)",
                   padding: "0 10px",
                 }}
@@ -343,6 +351,7 @@ export function ClientSidebar({
                             selected={selected}
                             onSelect={onSelect}
                             callDone={callDoneSet.has(c.id)}
+                            sellerName={sellerNameById?.[c.id] ?? null}
                           />
                         ))}
                       </div>
@@ -355,6 +364,7 @@ export function ClientSidebar({
                       selected={selected}
                       onSelect={onSelect}
                       callDone={callDoneSet.has(c.id)}
+                      sellerName={sellerNameById?.[c.id] ?? null}
                     />
                   ))}
               {filtered.length === 0 && (
@@ -372,7 +382,7 @@ export function ClientSidebar({
               )}
             </div>
 
-            {selected && (showPresentation || sellerLabel) && (
+            {selected && showPresentation && (
               <div
                 style={{
                   padding: "12px",
@@ -384,96 +394,46 @@ export function ClientSidebar({
                   gap: 10,
                 }}
               >
-                {sellerLabel && (
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <span
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        width: 34,
-                        height: 34,
-                        borderRadius: "50%",
-                        background: "var(--accent)",
-                        border: "1px solid rgba(255,255,255,0.35)",
-                        flexShrink: 0,
-                      }}
-                    >
-                      <User size={17} strokeWidth={2.5} color="var(--text-on-accent)" />
-                    </span>
-                    <div style={{ minWidth: 0 }}>
-                      <div
-                        style={{
-                          fontFamily: "var(--font-sans)",
-                          fontSize: 10,
-                          fontWeight: 800,
-                          letterSpacing: "0.08em",
-                          textTransform: "uppercase",
-                          color: "var(--text-tertiary)",
-                        }}
-                      >
-                        Sprzedawca
-                      </div>
-                      <div
-                        style={{
-                          fontFamily: "var(--font-sans)",
-                          fontSize: 15,
-                          fontWeight: 800,
-                          color: "var(--text-primary)",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {sellerLabel}
-                      </div>
-                    </div>
-                  </div>
-                )}
-                {showPresentation && (
-                  <a
-                    href={`/prezentacja.html?id=${encodeURIComponent(selected.id)}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 5,
-                      background: "var(--accent-muted)",
-                      border: "1px solid var(--accent-border)",
-                      borderRadius: 8,
-                      padding: "6px 8px",
-                      cursor: "pointer",
-                      color: "var(--accent)",
-                      fontSize: 11,
-                      fontWeight: 600,
-                      fontFamily: "var(--font-sans)",
-                      textDecoration: "none",
-                    }}
-                  >
-                    <ExternalLink size={11} />
-                    Otwórz prezentację
-                  </a>
-                )}
-                {showPresentation && (
-                  <button
-                    onClick={() => onSelect(null)}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 5,
-                      background: "transparent",
-                      border: "none",
-                      cursor: "pointer",
-                      color: "var(--text-tertiary)",
-                      fontSize: 11,
-                      fontFamily: "var(--font-sans)",
-                    }}
-                  >
-                    <X size={11} />
-                    Odznacz klienta
-                  </button>
-                )}
+                <a
+                  href={`/prezentacja.html?id=${encodeURIComponent(selected.id)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 5,
+                    background: "var(--accent-muted)",
+                    border: "1px solid var(--accent-border)",
+                    borderRadius: 8,
+                    padding: "6px 8px",
+                    cursor: "pointer",
+                    color: "var(--accent)",
+                    fontSize: 11,
+                    fontWeight: 600,
+                    fontFamily: "var(--font-sans)",
+                    textDecoration: "none",
+                  }}
+                >
+                  <ExternalLink size={11} />
+                  Otwórz prezentację
+                </a>
+                <button
+                  onClick={() => onSelect(null)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 5,
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "var(--text-tertiary)",
+                    fontSize: 11,
+                    fontFamily: "var(--font-sans)",
+                  }}
+                >
+                  <X size={11} />
+                  Odznacz klienta
+                </button>
               </div>
             )}
           </>
@@ -490,7 +450,7 @@ function ContactAttemptsMeter({ proby }: { proby: number }) {
       style={{
         marginTop: 10,
         paddingTop: 10,
-        borderTop: "1px solid rgba(255,255,255,0.22)",
+        borderTop: "1px solid rgba(255,255,255,0.42)",
         display: "flex",
         flexDirection: "column",
         gap: 6,
@@ -521,7 +481,7 @@ function ContactAttemptsMeter({ proby }: { proby: number }) {
                 width: 28,
                 height: 28,
                 borderRadius: "50%",
-                border: `1.5px solid ${done ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.28)"}`,
+                border: `1.5px solid ${done ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.42)"}`,
                 background: done ? "var(--accent)" : "transparent",
                 color: done ? "var(--text-on-accent)" : "var(--text-tertiary)",
                 fontFamily: "var(--font-sans)",
@@ -558,11 +518,13 @@ function ClientRow({
   selected,
   onSelect,
   callDone,
+  sellerName,
 }: {
   client: PipelineClientDetailed;
   selected: PipelineClientDetailed | null;
   onSelect: (c: PipelineClientDetailed | null) => void;
   callDone?: boolean;
+  sellerName?: string | null;
 }) {
   const isSelected = selected?.id === client.id;
   const [hovered, setHovered] = useState(false);
@@ -584,7 +546,7 @@ function ClientRow({
             ? "rgba(67, 121, 177, 0.55)"
             : hovered
               ? "rgba(255,255,255,0.4)"
-              : "rgba(255,255,255,0.22)"
+              : "rgba(255,255,255,0.42)"
         }`,
         boxShadow: hovered || isSelected ? "var(--shadow-card)" : "var(--shadow-sm)",
         transition: "border-color 120ms, box-shadow 120ms",
@@ -607,7 +569,7 @@ function ClientRow({
           style={{
             marginTop: 8,
             paddingTop: 8,
-            borderTop: "1px solid rgba(255,255,255,0.22)",
+            borderTop: "1px solid rgba(255,255,255,0.42)",
           }}
         >
           <span
@@ -618,7 +580,7 @@ function ClientRow({
               padding: "5px 12px",
               borderRadius: "var(--radius-xs)",
               background: "var(--success-bg)",
-              border: "1px solid rgba(255,255,255,0.35)",
+              border: "1px solid rgba(255,255,255,0.5)",
               color: "var(--success-text)",
               fontFamily: "var(--font-sans)",
               fontSize: 13,
@@ -637,7 +599,7 @@ function ClientRow({
           style={{
             marginTop: 8,
             paddingTop: 8,
-            borderTop: "1px solid rgba(255,255,255,0.22)",
+            borderTop: "1px solid rgba(255,255,255,0.42)",
             display: "flex",
             flexDirection: "column",
             gap: 6,
@@ -654,7 +616,7 @@ function ClientRow({
                   height: 20,
                   borderRadius: "50%",
                   background: "var(--bg-elevated)",
-                  border: "1px solid rgba(255,255,255,0.22)",
+                  border: "1px solid rgba(255,255,255,0.42)",
                   flexShrink: 0,
                 }}
               >
@@ -681,6 +643,61 @@ function ClientRow({
       )}
       {typeof client.liczbaProb === "number" && client.liczbaProb > 0 && (
         <ContactAttemptsMeter proby={client.liczbaProb} />
+      )}
+      {sellerName && (
+        <div
+          style={{
+            marginTop: 10,
+            paddingTop: 10,
+            borderTop: "1px solid rgba(255,255,255,0.42)",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 22,
+              height: 22,
+              borderRadius: "50%",
+              background: "var(--accent)",
+              border: "1px solid rgba(255,255,255,0.5)",
+              flexShrink: 0,
+            }}
+          >
+            <User size={12} strokeWidth={2.5} color="var(--text-on-accent)" />
+          </span>
+          <div style={{ minWidth: 0 }}>
+            <div
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 10,
+                fontWeight: 800,
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+                color: "var(--text-tertiary)",
+              }}
+            >
+              Sprzedawca
+            </div>
+            <div
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 13,
+                fontWeight: 700,
+                color: "var(--text-primary)",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {sellerName}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

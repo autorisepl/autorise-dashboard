@@ -95,7 +95,7 @@ export function ClientContactDetails({
           height: 22,
           borderRadius: "50%",
           background: "var(--bg-elevated)",
-          border: "1px solid rgba(255,255,255,0.28)",
+          border: "1px solid rgba(255,255,255,0.42)",
           flexShrink: 0,
         }}
       >

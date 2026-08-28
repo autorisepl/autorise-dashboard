@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { resolveRole } from "@/lib/auth/resolveRole";
+import { resolveIdentity } from "@/lib/auth/resolveRole";
+import { lookupIdentityByEmail } from "@/lib/auth/teamLookup";
 import { createMiddlewareClient } from "@/lib/supabase/middleware";
 
 const PUBLIC_PATHS = [
@@ -62,7 +63,13 @@ export async function proxy(request: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession();
 
-  const role = resolveRole(session?.access_token);
+  // Najpierw claimsy z JWT (Custom Access Token hook). Jeśli ich nie ma (hook wyłączony
+  // w Dashboardzie albo stary token) — fallback: rola po e-mailu wprost z Supabase.
+  let identity = resolveIdentity(session?.access_token);
+  if (!identity && user?.email) {
+    identity = await lookupIdentityByEmail(user.email);
+  }
+  const role = identity?.role ?? null;
 
   if (!role) {
     const loginUrl = new URL("/login", request.url);

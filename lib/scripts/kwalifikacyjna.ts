@@ -38,8 +38,8 @@ export const STEPS_K: Step[] = [
       { t: "client", text: "Tak, słucham." },
       {
         t: "say",
-        text: "Dzień dobry, mówi {IMIĘ_SPRZEDAWCY} z Autorise. Widziałem że wypełnił Pan formularz o oszczędności czasu w biurze dla firm transportowych, z gwarancją efektu zapisaną w umowie.",
-        cel: "Klient od razu wie po co dzwonisz i co oferujemy, zanim uzna to za nachalną sprzedaż.",
+        text: "Dzień dobry, mówi {IMIĘ_SPRZEDAWCY} z Autorise. Widziałem że wypełnił Pan formularz o oszczędności czasu w biurze dla firm transportowych. Pracujemy na gwarancji w umowie: efekt albo zwrot pełnej sumy.",
+        cel: "Klient od razu wie po co dzwonisz i co oferujemy, zanim uzna to za nachalną sprzedaż. Gwarancja zwrotu zdejmuje z niego ryzyko już na starcie.",
       },
     ],
     nextStepId: "diagnoza_otwarcie",
@@ -97,7 +97,7 @@ export const STEPS_K: Step[] = [
         {
           trigger: "„Niech Pan mi najpierw opowie czym się zajmujecie”",
           action: "Prosisz o dwa pytania zanim opowiesz, potem wracasz do diagnozy.",
-          openObjectionId: "ok_najpierw_opowiedz",
+          openObjectionId: "ok_nie_kojarzy",
           tone: "neutral",
         },
       ],
@@ -730,19 +730,14 @@ export const STEPS_K: Step[] = [
 export const OBJECTIONS_K: Objection[] = [
   // Obiekcje otwierające — każda kończy się przejściem do kroku 2
   {
-    id: "ok_nb",
-    label: "Nie pamiętam żadnego formularza",
+    id: "ok_nie_kojarzy",
+    label: "Nie kojarzy / nie wie o co chodzi / co Pan sprzedaje / to nie ja wypełniałem",
     stage: "opening",
     script:
-      "Jasne, tych reklam jest sporo. Mamy sprawdzony system, który przyspiesza pracę przy zleceniach, CMR-ach i fakturach, tym co dziś ktoś u Pana przepisuje ręcznie. Mam dwa pytania zanim opowiem więcej, ma Pan chwilę?",
-    nextStepId: "diagnoza_otwarcie",
-  },
-  {
-    id: "ok_cc",
-    label: "Co Pan sprzedaje? O co chodzi? / Od razu pyta o cenę",
-    stage: "opening",
-    script:
-      "Mamy sprawdzony system, który przyspiesza pracę w firmach transportowych, na przykład przy zleceniach, CMR-ach i fakturach. Zanim powiem więcej, chcę wiedzieć jak to u Pana wygląda dziś. Mam dwa pytania, dobrze?",
+      "Już tłumaczę. Autorise buduje firmom transportowym rozwiązania, które zdejmują z biura powtarzalną, ręczną robotę, każdą taką gdzie ktoś przepisuje albo przekleja dane z jednego miejsca w drugie. Nie wiem jeszcze co u Pana zajmuje najwięcej czasu, więc zamiast zgadywać, chciałbym zadać kilka krótkich pytań o to jak wygląda u Pana zwykły dzień w biurze. Od razu będzie wiadomo, czy jest tu w ogóle co usprawniać. Możemy tak zrobić?",
+    followup:
+      "W skrócie, pomagamy odzyskać czas, który biuro traci na ręcznych czynnościach, a efekt jest zapisany w umowie na gwarancję, więc Pan nie ryzykuje. Reszta zależy od tego co powie mi Pan o swojej firmie.",
+    note: "Jedna odpowiedź na wszystkie warianty 'nie kojarzę / o co chodzi / co sprzedajecie / to nie ja / niech Pan opowie'. NIE zakładaj że klient ma akurat problem z przepisywaniem dokumentów, NIE zawężaj do jednego modułu. Otwierasz temat szeroko i przechodzisz do pytań. Jeśli mówi że wypełnił ktoś inny albo że musi to przemyśleć: „Rozumiem, to bez znaczenia, i tak najlepiej sprawdzić to na Pana liczbach.” i przechodzisz do pytań. Jeśli po pytaniach dalej chce się namyślić, ustaw follow-up w Pipeline z konkretną datą.",
     nextStepId: "diagnoza_otwarcie",
   },
   {
@@ -750,18 +745,7 @@ export const OBJECTIONS_K: Objection[] = [
     label: "Od razu chce umówić spotkanie",
     stage: "opening",
     script:
-      "Chętnie. Żeby spotkanie miało sens dla nas obu, muszę zadać trzy krótkie pytania o firmę. Dwie minuty. Dobrze?",
-    nextStepId: "diagnoza_otwarcie",
-  },
-  {
-    id: "ok_najpierw_opowiedz",
-    label: "Niech Pan mi najpierw opowie czym się zajmujecie",
-    stage: "opening",
-    script:
-      "Jasne, powiem w dwóch zdaniach, ale żeby to miało sens, chciałbym najpierw zrozumieć z czym Pan dziś pracuje. Mogę zadać dwa pytania?",
-    followup:
-      "Pomagamy firmom transportowym ograniczyć ręczne wpisywanie zleceń i dokumentów, z gwarancją efektu zapisaną w umowie.",
-    note: "Followup wyłącznie jeśli klient nadal nalega przed odpowiedzią na pytania. To jedno zdanie z wynikiem, nie opis usługi.",
+      "Chętnie. Żeby spotkanie miało sens dla nas obu, chciałbym najpierw zadać kilka krótkich pytań o firmę. To dosłownie chwila. Dobrze?",
     nextStepId: "diagnoza_otwarcie",
   },
   {
@@ -769,17 +753,8 @@ export const OBJECTIONS_K: Objection[] = [
     label: "Wyślij na maila",
     stage: "opening",
     script:
-      "Mogę wysłać materiały, ale wolałbym zadać dwa krótkie pytania, zajmie to góra minutę, żeby nie były to ogólne informacje tylko coś dopasowane pod Pana firmę.",
-    note: "Jeśli klient nadal odmawia rozmowy: 'Rozumiem, wyślę ogólne informacje na [email z Pipeline], a jeśli po przeczytaniu będzie Pan chciał pogłębić temat, zapraszam do kontaktu.' Status: follow-up, nie zamknięta sprawa.",
-    nextStepId: "diagnoza_otwarcie",
-  },
-  {
-    id: "ok_nie_ja",
-    label: "To nie ja wypełniałem / zgłosiła żona / muszę to przemyśleć",
-    stage: "opening",
-    script:
-      "Rozumiem, formularz mógł wypełnić ktoś z rodziny albo z biura. To nic nie zmienia, bo i tak najlepiej sprawdzić to na Pana liczbach. Zadam dwa krótkie pytania o firmę i od razu będzie Pan wiedział czy temat jest dla Pana, czy nie. Dobrze?",
-    note: "Jedna odpowiedź na wszystkie warianty 'to nie ja / ktoś inny / muszę przemyśleć' na starcie. Nie wchodź w to kto i dlaczego wypełnił, przenieś rozmowę na konkret firmy. Jeśli po dwóch pytaniach klient dalej chce się namyślić, ustaw follow-up w Pipeline z konkretną datą.",
+      "Mogę wysłać materiały, ale wolałbym zadać kilka krótkich pytań, to naprawdę chwila, żeby nie były to ogólne informacje tylko coś dopasowanego pod Pana firmę.",
+    note: "Jeśli klient nadal odmawia rozmowy: „Rozumiem, wyślę ogólne informacje na [email z Pipeline], a jeśli po przeczytaniu będzie Pan chciał pogłębić temat, zapraszam do kontaktu.” Status: follow-up, nie zamknięta sprawa.",
     nextStepId: "diagnoza_otwarcie",
   },
   // Standardowe obiekcje
@@ -788,7 +763,7 @@ export const OBJECTIONS_K: Objection[] = [
     label: "Nie mam teraz czasu (pierwsze NIE)",
     stage: "opening",
     script:
-      "Rozumiem, ale biura spedycji z którymi pracuję tracą miesięcznie kilkadziesiąt godzin na ręczne przepisywanie dokumentów, to realnie kilka tysięcy złotych. Ma Pan te dwie minuty?",
+      "Rozumiem. Zajmę Panu naprawdę chwilę, a chodzi o czas i pieniądze które biuro traci co miesiąc na powtarzalnej, ręcznej robocie. Da rady teraz, czy woli Pan żebym oddzwonił o konkretnej porze?",
   },
   {
     id: "ok2",
@@ -948,11 +923,26 @@ export const ICP_RULES: IcpRule[] = [
   { ok: false, label: "Odrzuć", val: "< 2 osoby w biurze LUB potencjał ROI < 80h/mc łącznie" },
 ];
 
+// Krótkie potwierdzenia + mostki do kolejnego pytania. Potwierdzenie utrzymuje
+// kontakt i pokazuje że słuchasz, mostek płynnie prowadzi do następnego etapu bez
+// urwania rozmowy. Grupowane po funkcji, żeby setter szybko znalazł właściwą frazę.
 export const ACKNOWLEDGMENT_PHRASES = [
+  // Potwierdzenie, że słyszysz i rozumiesz
   "Rozumiem, to sporo.",
-  "Jasne, widzę o co chodzi.",
+  "Jasne, widzę dokładnie o czym Pan mówi.",
   "To ma sens, dziękuję że Pan to wyjaśnił.",
-  "Dobrze, zanotowałem.",
-  "Rozumiem, czyli tak to u Pana wygląda.",
-  "To pomaga mi zrozumieć sytuację.",
+  "Rozumiem, czyli tak to u Pana teraz wygląda.",
+  "Dobrze, zanotowałem, to jest dla mnie ważne.",
+  "Wiele firm z którymi rozmawiam ma podobnie.",
+  // Mostek do kolejnego pytania
+  "Skoro tak, to pozwoli Pan że dopytam o jedną rzecz.",
+  "To mi dużo mówi, chciałbym jeszcze zrozumieć drugą stronę.",
+  "Żeby to policzyć rzetelnie, potrzebuję jeszcze jednej liczby.",
+  "Dobrze, a teraz najważniejsze pytanie z mojej strony.",
+  // Zbicie napięcia / gdy klient się spina
+  "Spokojnie, na razie tylko zbieram obraz sytuacji, nic Pana nie zobowiązuje.",
+  "Nie sprzedaję Panu niczego przez telefon, po prostu sprawdzam czy to ma sens.",
+  // Domknięcie wątku przed przejściem dalej
+  "Dobrze, to mam już wystarczająco żeby przejść do konkretów.",
+  "To wszystko układa się w całość, przejdźmy do tego co z tego wynika.",
 ];

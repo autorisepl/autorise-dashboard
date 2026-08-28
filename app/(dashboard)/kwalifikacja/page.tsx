@@ -66,8 +66,8 @@ function toSentences(text: string): string[] {
 // szukał podczas rozmowy na żywo. Każdy krok renderuje je tak samo jak krok
 // OPENING: rozwijane wiersze z gotową odpowiedzią w miejscu.
 const STEP_OBJECTIONS: Record<string, string[]> = {
-  opener: ["ok_nb", "ok_nie_ja", "ok_cc", "ok1", "ok_em"],
-  diagnoza_otwarcie: ["po_co_to_pytanie", "ok_nie_ja"],
+  opener: ["ok_nie_kojarzy", "ok1", "ok_em", "ok_ms"],
+  diagnoza_otwarcie: ["po_co_to_pytanie", "ok_nie_kojarzy"],
   diagnoza_icp_flota: ["icp_ponizej_progu", "spedytorzy_dorazni"],
   diagnoza_icp_decydent: ["icp_nie_decydent"],
   diagnoza_tms: ["konkurencja_m365"],
@@ -127,7 +127,7 @@ function Card({
     <div
       style={{
         background: "var(--bg-elevated)",
-        border: "1px solid rgba(255,255,255,0.22)",
+        border: "1px solid rgba(255,255,255,0.42)",
         borderRadius: "var(--radius-md)",
         boxShadow: "var(--shadow-sm)",
         overflow: "hidden",
@@ -232,7 +232,7 @@ function CalculatorFlagsBar({ flags }: { flags: Record<string, boolean> }) {
               padding: "3px 9px",
               borderRadius: "var(--radius-xs)",
               background: "var(--accent)",
-              border: "1px solid rgba(255,255,255,0.3)",
+              border: "1px solid rgba(255,255,255,0.42)",
             }}
           >
             {src?.label ?? k}
@@ -411,7 +411,7 @@ function GroupRow({
   const fieldStyle: React.CSSProperties = {
     height: 36,
     borderRadius: "var(--radius-xs)",
-    border: "1px solid rgba(255,255,255,0.28)",
+    border: "1px solid rgba(255,255,255,0.42)",
     padding: "0 10px",
     fontFamily: "var(--font-sans)",
     fontSize: 13,
@@ -734,7 +734,7 @@ function ScriptKalkulator({
                     gap: 5,
                     padding: "6px 12px",
                     borderRadius: "var(--radius-xs)",
-                    border: `1px solid ${on ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.28)"}`,
+                    border: `1px solid ${on ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.42)"}`,
                     background: on ? "var(--accent)" : "var(--bg)",
                     color: on ? "var(--text-on-accent)" : "var(--text-primary)",
                     fontFamily: "var(--font-sans)",
@@ -891,7 +891,7 @@ function InlineCaptureInput({
 function SectionCap({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <div style={{ borderTop: "1px solid rgba(255,255,255,0.22)", margin: "8px 0 10px" }} />
+      <div style={{ borderTop: "1px solid rgba(255,255,255,0.42)", margin: "8px 0 10px" }} />
       <div
         style={{
           fontFamily: "var(--font-sans)",
@@ -925,7 +925,7 @@ function CollapsibleAnswer({
   return (
     <div
       style={{
-        border: "1px solid rgba(255,255,255,0.22)",
+        border: "1px solid rgba(255,255,255,0.42)",
         borderRadius: 9,
         overflow: "hidden",
         background: "var(--bg)",
@@ -966,7 +966,7 @@ function CollapsibleAnswer({
         />
       </button>
       {open && (
-        <div style={{ padding: 12, borderTop: "1px solid rgba(255,255,255,0.22)" }}>{children}</div>
+        <div style={{ padding: 12, borderTop: "1px solid rgba(255,255,255,0.42)" }}>{children}</div>
       )}
     </div>
   );
@@ -1025,7 +1025,7 @@ function ScriptStep({
       id={`step-${step.id}`}
       style={{
         marginBottom: 10,
-        border: "1px solid rgba(255,255,255,0.22)",
+        border: "1px solid rgba(255,255,255,0.42)",
         borderRadius: "var(--radius-md)",
         background: "var(--bg-elevated)",
         boxShadow: "var(--shadow-sm)",
@@ -1126,7 +1126,7 @@ function ScriptStep({
                           width: 30,
                           height: 30,
                           borderRadius: 9,
-                          border: "1px solid rgba(255,255,255,0.28)",
+                          border: "1px solid rgba(255,255,255,0.42)",
                           background: line.t === "say" ? "var(--accent)" : "var(--bg-hover)",
                         }}
                       >
@@ -1158,7 +1158,7 @@ function ScriptStep({
                   style={{
                     width: 2,
                     alignSelf: "stretch",
-                    background: "rgba(255,255,255,0.22)",
+                    background: "rgba(255,255,255,0.42)",
                     borderRadius: 1,
                     margin: "0 11px",
                     flexShrink: 0,
@@ -1197,7 +1197,7 @@ function ScriptStep({
                         color: "var(--text-primary)",
                         marginTop: 8,
                         paddingLeft: 10,
-                        borderLeft: "2px solid rgba(255,255,255,0.35)",
+                        borderLeft: "2px solid rgba(255,255,255,0.5)",
                       }}
                     >
                       <span style={{ fontWeight: 700 }}>Cel: </span>
@@ -1933,7 +1933,7 @@ function PhrasesPanel({
   copiedId: string | null;
 }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
       {ACKNOWLEDGMENT_PHRASES.map((phrase, i) => (
         <div
           key={i}
@@ -1941,17 +1941,19 @@ function PhrasesPanel({
             display: "flex",
             alignItems: "center",
             gap: 8,
-            padding: "7px 10px",
-            borderRadius: 8,
-            border: "1px solid var(--border)",
+            padding: "10px 12px",
+            borderRadius: "var(--radius-sm)",
+            border: "1px solid rgba(255,255,255,0.42)",
             background: "var(--bg)",
+            boxShadow: "var(--shadow-sm)",
           }}
         >
           <span
             style={{
               flex: 1,
               fontFamily: "var(--font-sans)",
-              fontSize: 12,
+              fontSize: 14,
+              lineHeight: 1.5,
               color: "var(--text-primary)",
             }}
           >
@@ -1959,19 +1961,22 @@ function PhrasesPanel({
           </span>
           <button
             onClick={() => onCopy(`phrase-${i}`, phrase)}
+            title="Kopiuj"
             style={{
               flexShrink: 0,
-              padding: "3px 7px",
-              borderRadius: 5,
-              border: "1px solid var(--border)",
+              width: 26,
+              height: 26,
+              borderRadius: "var(--radius-xs)",
+              border: "1px solid rgba(255,255,255,0.42)",
               background: "transparent",
               cursor: "pointer",
-              color: copiedId === `phrase-${i}` ? "var(--success-text)" : "var(--text-tertiary)",
+              color: copiedId === `phrase-${i}` ? "var(--success-text)" : "var(--text-primary)",
               display: "flex",
               alignItems: "center",
+              justifyContent: "center",
             }}
           >
-            {copiedId === `phrase-${i}` ? <CheckCircle2 size={10} /> : <Copy size={10} />}
+            {copiedId === `phrase-${i}` ? <CheckCircle2 size={12} /> : <Copy size={12} />}
           </button>
         </div>
       ))}
@@ -2059,13 +2064,21 @@ export default function KwalifikacjaPage() {
     teamMembers.find((m) => m.id === selectedSellerId)?.displayName ?? null;
   const selectedCallDone = Boolean(selected?.qualificationCallDone);
   const callDoneIds = clients.filter((c) => c.qualificationCallDone).map((c) => c.id);
+  const sellerNameById: Record<string, string> = {};
+  for (const c of clients) {
+    const nm = c.assignedSellerId
+      ? teamMembers.find((m) => m.id === c.assignedSellerId)?.displayName
+      : null;
+    if (nm) sellerNameById[c.id] = nm;
+  }
 
-  // Wspólny styl etykiety w pasku narzędzi headera — białe wersaliki.
+  // Wspólny styl etykiety w pasku narzędzi headera — biała czcionka, ta sama
+  // wielkość co tekst na przycisku "Zarejestruj rozmowę" (12.5 / 800 / wersaliki).
   const TOOLBAR_LABEL: React.CSSProperties = {
     fontFamily: "var(--font-sans)",
-    fontSize: 11,
-    fontWeight: 700,
-    letterSpacing: "0.08em",
+    fontSize: 12.5,
+    fontWeight: 800,
+    letterSpacing: "0.05em",
     textTransform: "uppercase",
     color: "var(--text-primary)",
   };
@@ -2156,11 +2169,27 @@ export default function KwalifikacjaPage() {
   const fill = (text: string): string => {
     let out = text;
     const nominative = (selected?.kontakt || selected?.firma || "").trim().split(/\s+/)[0];
-    if (nominative) {
-      out = out.replace(/Pan \{IMIĘ\}/g, `${forma} ${nominative}`);
-      out = out.replace(/Pani \{IMIĘ\}/g, `${forma} ${nominative}`);
-    }
+    const isPani = forma === "Pani";
+
+    // Forma adresatywna w zdaniu otwierającym: "Pan {IMIĘ}" / "Pani {IMIĘ}" w treści
+    // skryptu → "Panie <wołacz>" / "Pani <wołacz>" (naturalny zwrot na głos).
+    const addr = `${isPani ? "Pani" : "Panie"} ${vocative.trim() || nominative || ""}`.trim();
+    out = out.replace(/\bP(?:an|ani) \{IMIĘ\}/g, addr || "Pan/Pani");
+
     if (vocative.trim()) out = out.replace(/\{IMIĘ\}/g, vocative.trim());
+    else if (nominative) out = out.replace(/\{IMIĘ\}/g, nominative);
+
+    // Cały skrypt reaguje na przełącznik Pan/Pani: samodzielne formy grzecznościowe
+    // w treści zamieniane na żeńskie, gdy wybrano "Pani". Kolejność od najdłuższych
+    // przypadków, żeby "Panem" nie złapało się wcześniej jako "Pan"+"em".
+    if (isPani) {
+      out = out
+        .replace(/\bPanem\b/g, "Panią")
+        .replace(/\bPanie\b/g, "Pani")
+        .replace(/\bPanu\b/g, "Pani")
+        .replace(/\bPana\b/g, "Pani")
+        .replace(/\bPan\b/g, "Pani");
+    }
     // Imię do zdania otwierającego: pierwsze imię przypisanego sprzedawcy
     // (z profilu Supabase), a jeśli brak przypisania — wartość z pola "Imię w skrypcie".
     const sellerFirst = selectedSellerName
@@ -2351,7 +2380,7 @@ export default function KwalifikacjaPage() {
               height: 34,
               padding: "0 14px",
               borderRadius: "var(--radius-xs)",
-              border: "1px solid rgba(255,255,255,0.3)",
+              border: "1px solid rgba(255,255,255,0.42)",
               background: selectedCallDone ? "var(--success-bg)" : "var(--bg)",
               color: selectedCallDone ? "var(--success-text)" : "var(--text-primary)",
               fontFamily: "var(--font-sans)",
@@ -2368,7 +2397,7 @@ export default function KwalifikacjaPage() {
             {selectedCallDone ? "Rozmowa odbyta" : "Zarejestruj rozmowę"}
           </button>
 
-          <div style={{ height: 24, width: 1, background: "rgba(255,255,255,0.28)" }} />
+          <div style={{ height: 24, width: 1, background: "rgba(255,255,255,0.42)" }} />
 
           {/* ── Przypisany sprzedawca (profile z Supabase / team_members) ── */}
           <span style={TOOLBAR_LABEL}>Sprzedawca</span>
@@ -2396,7 +2425,7 @@ export default function KwalifikacjaPage() {
                       height: 30,
                       padding: "0 12px",
                       borderRadius: "var(--radius-xs)",
-                      border: `1px solid ${active ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.28)"}`,
+                      border: `1px solid ${active ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.42)"}`,
                       background: active ? "var(--accent)" : "var(--bg-elevated)",
                       color: active ? "var(--text-on-accent)" : "var(--text-primary)",
                       fontFamily: "var(--font-sans)",
@@ -2423,7 +2452,7 @@ export default function KwalifikacjaPage() {
                 padding: "0 12px",
                 borderRadius: "var(--radius-xs)",
                 background: "var(--accent)",
-                border: "1px solid rgba(255,255,255,0.3)",
+                border: "1px solid rgba(255,255,255,0.42)",
                 color: "var(--text-on-accent)",
                 fontFamily: "var(--font-sans)",
                 fontSize: 12,
@@ -2447,7 +2476,7 @@ export default function KwalifikacjaPage() {
                 height: 30,
                 padding: "0 10px",
                 borderRadius: "var(--radius-xs)",
-                border: "1px solid rgba(255,255,255,0.28)",
+                border: "1px solid rgba(255,255,255,0.42)",
                 fontFamily: "var(--font-sans)",
                 fontSize: 13,
                 color: "var(--text-primary)",
@@ -2460,7 +2489,7 @@ export default function KwalifikacjaPage() {
 
           {selected && (
             <>
-              <div style={{ height: 24, width: 1, background: "rgba(255,255,255,0.28)" }} />
+              <div style={{ height: 24, width: 1, background: "rgba(255,255,255,0.42)" }} />
 
               {/* ── Próby kontaktu +/- ── */}
               <span style={TOOLBAR_LABEL}>Próby kontaktu</span>
@@ -2468,7 +2497,7 @@ export default function KwalifikacjaPage() {
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  border: "1px solid rgba(255,255,255,0.28)",
+                  border: "1px solid rgba(255,255,255,0.42)",
                   borderRadius: "var(--radius-xs)",
                   overflow: "hidden",
                 }}
@@ -2484,7 +2513,7 @@ export default function KwalifikacjaPage() {
                     alignItems: "center",
                     justifyContent: "center",
                     border: "none",
-                    borderRight: "1px solid rgba(255,255,255,0.28)",
+                    borderRight: "1px solid rgba(255,255,255,0.42)",
                     background: "var(--bg-elevated)",
                     color: "var(--text-primary)",
                     cursor: (selected.liczbaProb ?? 0) <= 0 ? "not-allowed" : "pointer",
@@ -2521,7 +2550,7 @@ export default function KwalifikacjaPage() {
                     alignItems: "center",
                     justifyContent: "center",
                     border: "none",
-                    borderLeft: "1px solid rgba(255,255,255,0.28)",
+                    borderLeft: "1px solid rgba(255,255,255,0.42)",
                     background: "var(--bg-elevated)",
                     color: "var(--text-primary)",
                     cursor: "pointer",
@@ -2531,7 +2560,7 @@ export default function KwalifikacjaPage() {
                 </button>
               </div>
 
-              <div style={{ height: 24, width: 1, background: "rgba(255,255,255,0.28)" }} />
+              <div style={{ height: 24, width: 1, background: "rgba(255,255,255,0.42)" }} />
 
               {/* ── Forma grzecznościowa ── */}
               <span style={TOOLBAR_LABEL}>Zwrot do klienta</span>
@@ -2545,7 +2574,7 @@ export default function KwalifikacjaPage() {
                       height: 30,
                       padding: "0 14px",
                       borderRadius: "var(--radius-xs)",
-                      border: `1px solid ${active ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.28)"}`,
+                      border: `1px solid ${active ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.42)"}`,
                       background: active ? "var(--accent)" : "var(--bg-elevated)",
                       color: active ? "var(--text-on-accent)" : "var(--text-primary)",
                       fontFamily: "var(--font-sans)",
@@ -2566,12 +2595,12 @@ export default function KwalifikacjaPage() {
                 <input
                   value={vocative}
                   onChange={(e) => setVocative(e.target.value)}
-                  placeholder="np. Panie Marku"
+                  placeholder="wołacz imienia, np. Marku"
                   style={{
                     height: 30,
                     padding: "0 10px",
                     borderRadius: "var(--radius-xs)",
-                    border: "1px solid rgba(255,255,255,0.28)",
+                    border: "1px solid rgba(255,255,255,0.42)",
                     fontFamily: "var(--font-sans)",
                     fontSize: 13,
                     color: "var(--text-primary)",
@@ -2599,7 +2628,7 @@ export default function KwalifikacjaPage() {
           headerLabel="Nowy lead"
           emptyLabel='Brak klientów "Nowy lead"'
           callDoneClientIds={callDoneIds}
-          sellerLabel={selectedSellerName}
+          sellerNameById={sellerNameById}
           showPresentation={false}
         />
 
