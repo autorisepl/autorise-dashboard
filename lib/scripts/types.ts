@@ -43,12 +43,16 @@ export interface Step {
   // Ten krok ma własne, wbudowane pole liczbowe zasilające kalkulator na
   // bieżąco, w momencie zbierania tej konkretnej informacji od klienta —
   // zamiast osobnego, oderwanego kalkulatora dalej w skrypcie (punkt 9).
-  captureField?: "osoby" | "stawka";
+  captureField?: "role" | "stawka";
   decision?: Decision;
-  // Jedno pole zamiast rozbitej listy "reakcji klienta": oczekiwana pozytywna
-  // reakcja + przejście dalej, napisane tak żeby pasowało do wielu wariantów
-  // pozytywnych. Każda reakcja niepozytywna jest obiekcją (STEP_OBJECTIONS).
+  // Oczekiwana pozytywna reakcja klienta — krótki opis dobrej odpowiedzi
+  // (zielona etykieta w UI). NIE instrukcja, NIE "przechodzisz do...". Reakcja
+  // niepozytywna jest zawsze obiekcją (STEP_OBJECTIONS).
   expected?: string;
+  // Gotowe zdanie mostkujące, które setter WYPOWIADA po odpowiedzi klienta,
+  // żeby płynnie przejść do kolejnego pytania — bez patrzenia w panel fraz
+  // potwierdzających. Renderowane jak linia "say" (ikona), reaguje na Pan/Pani.
+  transition?: string;
   // Krok steruje jednym modułem kalkulatora: setter zaznacza go jednym
   // kliknięciem w bloku "oczekiwana reakcja", gdy klient potwierdzi ręczną robotę.
   calculatorFlag?: string;

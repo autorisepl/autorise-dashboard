@@ -38,8 +38,8 @@ export const STEPS_K: Step[] = [
       { t: "client", text: "Tak, słucham." },
       {
         t: "say",
-        text: "Dzień dobry, z tej strony {IMIĘ_SPRZEDAWCY} z Autorise. Zostawił Pan u nas formularz w sprawie oszczędzania czasu w biurze, więc się odzywam. Krótko mówiąc, pomagamy firmom transportowym zdejmować z biura powtarzalną, ręczną robotę. Bierzemy to na siebie na tyle mocno, że umówiony efekt zapisujemy w umowie, a jeśli go nie dowieziemy, zwracamy całą kwotę.",
-        cel: "Klient od razu wie po co dzwonisz i że nie ryzykuje, zanim uzna to za nachalną sprzedaż.",
+        text: "Dzień dobry, z tej strony {IMIĘ_SPRZEDAWCY} z Autorise. Pomagamy firmom transportowym zdejmować z biura powtarzalną, ręczną robotę, i robimy to na tyle pewnie, że umówiony efekt zapisujemy w umowie. Jeśli go nie dowieziemy, zwracamy całą kwotę. Dzwonię, bo zostawił Pan u nas formularz o oszczędzaniu czasu w biurze i chcę sprawdzić, czy mamy jak Panu pomóc.",
+        cel: "Klient najpierw wie kto dzwoni i co robicie, potem po co ten telefon, i że nie ryzykuje.",
       },
     ],
     nextStepId: "diagnoza_otwarcie",
@@ -57,15 +57,16 @@ export const STEPS_K: Step[] = [
       },
       { t: "client", text: "[odpowiedź]" },
     ],
-    expected:
-      "Klient nazywa jakikolwiek konkretny powód, wyzwalacz albo bolączkę, choćby ogólnie. Krótko to potwierdzasz i przechodzisz do pytania o zespół i flotę. Każda inna reakcja, czyli nie wie, z ciekawości, nie ma problemu, albo każe najpierw opowiedzieć czym się zajmujecie, jest obiekcją poniżej.",
+    expected: "Klient nazywa konkretny powód, wyzwalacz albo bolączkę, choćby ogólnie.",
+    transition:
+      "Rozumiem, dziękuję. To już mi coś mówi. Zadam teraz kilka pytań o liczby, żeby dobrać skalę.",
   },
   {
     id: "diagnoza_icp_flota",
     nr: "2a",
     label: "ICP: FLOTA I BIURO",
     tag: "PYTASZ",
-    captureField: "osoby",
+    captureField: "role",
     lines: [
       {
         t: "say",
@@ -83,17 +84,19 @@ export const STEPS_K: Step[] = [
       },
       {
         t: "say",
-        text: "Ile osób pracuje w biurze? Chodzi mi o zlecenia, dokumenty, faktury.",
+        text: "Ile osób pracuje w biurze przy zleceniach, dokumentach i fakturach?",
         cel: "Twardy próg ICP, poniżej dwóch osób w biurze ból zwykle za mały żeby wdrożenie się zwróciło.",
       },
       {
         t: "say",
-        text: "A kto się czym zajmuje? Spedytorzy, ktoś od faktur, ktoś od dyspozycji?",
-        cel: "Zebrać podział ról, bo każdą przeniesiesz do kalkulatora jako osobny wiersz z własną stawką.",
+        text: "A jak to się rozkłada na role? Ilu jest spedytorów, ile osób od faktur i rozliczeń, czy jest ktoś od dyspozycji?",
+        cel: "Rozbić biuro na role. Wpisujesz je od razu w tabelę niżej, każda rola osobno, bo mają różne stawki i różny czas pracy ręcznej.",
       },
+      { t: "client", text: "[podział na role]" },
     ],
     expected:
-      "Klient podaje liczby i w biurze pracują co najmniej dwie osoby. Przechodzisz do pytania o decydenta. Jedna osoba bez realnego planu zatrudnienia w kilka miesięcy to obiekcja „Poniżej progu ICP” poniżej.",
+      "Klient podaje liczbę pojazdów i rozkład osób w biurze, co najmniej dwie osoby przy zleceniach i dokumentach.",
+    transition: "Jasne, notuję. Krótkie pytanie o to, kto u Was podejmuje decyzje.",
   },
   {
     id: "diagnoza_icp_decydent",
@@ -107,8 +110,8 @@ export const STEPS_K: Step[] = [
         cel: "Ustalić czy rozmawiasz z osobą decyzyjną, żeby nie umówić spotkania bez sensu.",
       },
     ],
-    expected:
-      "Klient jest właścicielem albo wspólnikiem. Przechodzisz do pytania o system i pracę ręczną. Jeśli decyduje ktoś inny, rozwiń obiekcję „Rozmówca nie jest decydentem” poniżej.",
+    expected: "Klient jest właścicielem albo wspólnikiem firmy.",
+    transition: "Dobrze. Przejdźmy do tego, jak dziś u Was wygląda praca z systemem i dokumentami.",
   },
   {
     id: "diagnoza_tms",
@@ -122,14 +125,11 @@ export const STEPS_K: Step[] = [
         cel: "Ustalić co klient już ma, żeby wiedzieć czego nie trzeba zastępować.",
       },
       { t: "client", text: "[odpowiedź]" },
-      {
-        t: "note",
-        text: "Klient wspomniał Microsoft 365 / Power Automate / Power Apps jako 'już mam to ogarnięte'.",
-        linkObjectionId: "konkurencja_m365",
-      },
     ],
     expected:
-      "Klient podaje nazwę systemu albo mówi że pracuje na Excelu, WhatsAppie i telefonie. Zapisujesz to dosłownie w Pipeline i przechodzisz do pytania o zlecenia. Praca wyłącznie przez cudzy panel, czyli Amazon Relay, panel kurierski albo giełdę z własnym rozliczeniem, to obiekcja „Pracuje tylko przez zewnętrzny panel” poniżej.",
+      "Klient podaje nazwę systemu albo mówi, że pracuje na Excelu, WhatsAppie i telefonie.",
+    transition:
+      "Rozumiem, zapisuję. Rozłożymy teraz na części to, co przechodzi przez biuro ręcznie.",
   },
   {
     id: "diagnoza_dokumenty_zlecenie",
@@ -140,17 +140,14 @@ export const STEPS_K: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Powie mi Pan, jak te zlecenia do Was trafiają? Ktoś to musi ręcznie przepisywać z maili czy PDF-ów do systemu?",
-        cel: "Sprawdzić czy przyjęcie zlecenia generuje pracę ręczną.",
+        text: "Zlecenia od Waszych klientów, te którymi zamawiają u Was przewóz, jak do Was trafiają? Ktoś przepisuje je ręcznie z maila albo PDF-a do systemu, czy wpadają tam same?",
+        cel: "Sprawdzić czy przyjęcie zlecenia od zleceniodawcy generuje pracę ręczną.",
       },
       { t: "client", text: "[opis]" },
-      {
-        t: "note",
-        text: "Jeśli klient nie rozumie pytania lub miesza je ze zleceniem dla kierowcy: „Chodzi mi o dokument od klienta który zamawia u Was transport, nie polecenie wyjazdu dla kierowcy.”",
-      },
     ],
     expected:
-      "Klient potwierdza, że ktoś ręcznie przepisuje zlecenia z maila, PDF-a albo zdjęcia. Mówisz „Rozumiem, czyli ktoś musi to za każdym razem ręcznie przepisać do systemu”, zaznaczasz moduł niżej i przechodzisz dalej. Jeśli zlecenia wpadają do systemu same, ten etap mają ogarnięty, zostaw moduł niezaznaczony.",
+      "Klient potwierdza, że ktoś ręcznie przepisuje przychodzące zlecenia z maila albo PDF-a do systemu.",
+    transition: "Rozumiem, czyli ktoś musi to za każdym razem przeklikać do systemu. Idźmy dalej.",
   },
   {
     id: "diagnoza_dokumenty_cmr",
@@ -178,7 +175,8 @@ export const STEPS_K: Step[] = [
       },
     ],
     expected:
-      "Klient mówi, że CMR i potwierdzenia wracają papierem albo zdjęciem i ktoś przepisuje z nich dane. Mówisz „Czyli to kolejny etap gdzie ktoś ręcznie przepisuje dane z papieru”, zaznaczasz moduł niżej i przechodzisz dalej. Jeśli mają to elektronicznie i zautomatyzowane, zostaw moduł niezaznaczony.",
+      "Klient mówi, że CMR i potwierdzenia dostawy wracają papierem albo zdjęciem i ktoś przepisuje z nich dane.",
+    transition: "Czyli to kolejne miejsce, gdzie ktoś ręcznie przepisuje z papieru. Lecę dalej.",
   },
   {
     id: "diagnoza_dokumenty_faktura",
@@ -193,9 +191,14 @@ export const STEPS_K: Step[] = [
         cel: "Sprawdzić skalę pracy ręcznej przy fakturach.",
       },
       { t: "client", text: "[odpowiedź]" },
+      {
+        t: "say",
+        text: "Ile mniej więcej faktur miesięcznie przez to przechodzi, licząc te wystawiane i te otrzymane?",
+        cel: "Zebrać wolumen faktur, przyda się przy szacowaniu czasu ręcznej pracy.",
+      },
     ],
-    expected:
-      "Klient mówi, że jedna osoba ręcznie wpisuje faktury. Dopytujesz „Ile mniej więcej faktur miesięcznie to jest, licząc te które wystawiacie i te które dostajecie”, zaznaczasz moduł niżej i przechodzisz dalej. Zewnętrzne biuro rachunkowe to obiekcja poniżej.",
+    expected: "Klient mówi, że ktoś w firmie ręcznie wpisuje faktury do księgowości.",
+    transition: "Dobrze, mam ten obszar. Jeszcze jedno pytanie z tej części.",
   },
   {
     id: "diagnoza_dokumenty_status",
@@ -211,24 +214,26 @@ export const STEPS_K: Step[] = [
       },
     ],
     expected:
-      "Klient mówi, że musi dzwonić do spedytora albo dopytywać o status. Mówisz „To osobny, ważny problem, niezależny od dokumentów”, zaznaczasz moduł niżej i przechodzisz do pytania o stawkę. Jeśli widzi status na bieżąco w systemie, ten obszar mają ogarnięty.",
+      "Klient mówi, że żeby poznać status zlecenia trzeba dzwonić do spedytora albo dopytywać.",
+    transition: "To osobny, ważny temat, niezależny od dokumentów. Przejdźmy do liczb.",
   },
   {
     id: "diagnoza_stawka",
     nr: "2h",
-    label: "STAWKA GODZINOWA W BIURZE",
+    label: "STAWKA GODZINOWA PER ROLA",
     tag: "PYTASZ",
     captureField: "stawka",
     lines: [
       {
         t: "say",
-        text: "Orientacyjnie, ile kosztuje Pana godzina pracy osoby w biurze, razem ze wszystkimi narzutami?",
-        cel: "Zebrać realną stawkę godzinową zamiast domyślnego szacunku.",
+        text: "Ile mniej więcej kosztuje Was godzina pracy takiej osoby, razem z narzutami? Jeśli spedytor i księgowość mają inne stawki, powie mi Pan osobno.",
+        cel: "Zebrać stawkę godzinową osobno dla każdej roli, bo do kalkulatora idą różne.",
       },
-      { t: "client", text: "[odpowiedź lub niechęć do podania]" },
+      { t: "client", text: "[stawki per rola lub niechęć do podania]" },
     ],
     expected:
-      "Klient podaje orientacyjną stawkę godzinową. Wpisujesz ją do kalkulatora i przechodzisz dalej. Jeśli nie chce podać kwoty, rozwiń obiekcję „Nie chce podać stawki” poniżej.",
+      "Klient podaje orientacyjną stawkę godzinową, choćby w widełkach, dla każdej roli albo jedną wspólną.",
+    transition: "Dziękuję. Zbiorę to teraz w całość i podam Panu konkretną liczbę.",
   },
   {
     id: "diagnoza_kalkulator",
@@ -239,12 +244,18 @@ export const STEPS_K: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Dokładny podział na poszczególne zadania zmierzymy razem na spotkaniu wdrożeniowym. Teraz potrzebuję orientacyjnej całości.",
+        text: "Ostatnia rzecz zanim policzę. Ile z dnia takiej osoby schodzi realnie na tę powtarzalną, ręczną robotę, o której mówiliśmy? Godzina, dwie, a może więcej?",
+        cel: "Bez godzin dziennie per rola cały wynik jest zgadywany, to jest liczba na której stoi reszta rozmowy.",
+      },
+      { t: "client", text: "[godziny dziennie per rola]" },
+      {
+        t: "say",
+        text: "Dokładny rozkład na poszczególne zadania zmierzymy razem na spotkaniu wdrożeniowym. Teraz liczę orientacyjną całość.",
         cel: "Ustawić oczekiwanie że to pierwsze przybliżenie, dokładny pomiar jest dopiero na spotkaniu wdrożeniowym.",
       },
       {
         t: "note",
-        text: "Kalkulator poniżej ma już role z pytania o zespół. Moduły zaznaczasz sam w krokach 2d do 2g, gdy klient potwierdzi ręczną robotę. Dopytaj tylko o godziny dziennie per rola, jeśli jeszcze nie padły.",
+        text: "Uzupełnij godziny dziennie przy każdej roli w tabeli niżej. Bez tego wynik jest niepełny. Moduły do wdrożenia pojawiają się z przycisków w krokach 2d do 2g, nie zaznaczasz ich tutaj.",
       },
     ],
     nextStepId: "diagnoza_liczba",
@@ -297,8 +308,9 @@ export const STEPS_K: Step[] = [
         text: "Zapamiętaj dokładne słowa klienta z tej odpowiedzi, przydadzą się żeby zacytować mu je dosłownie na rozmowie sprzedażowej. To działa bardzo mocno.",
       },
     ],
-    expected:
-      "Klient nazywa konkretnie, co zrobiłby z odzyskanym czasem. Potwierdzasz, zapisujesz jego słowa i przechodzisz do propozycji spotkania. Milczenie, obawa o zwolnienia albo przeskok do ceny to obiekcje poniżej.",
+    expected: "Klient konkretnie nazywa, co zrobiłby z odzyskanym czasem.",
+    transition:
+      "Zapiszę dokładnie to, co Pan powiedział. Przejdźmy do tego, jak sprawdzić to u Pana na spotkaniu.",
   },
   {
     id: "spotkanie",
@@ -328,8 +340,8 @@ export const STEPS_K: Step[] = [
       },
       { t: "client", text: "[proponuje porę albo nie chce ustalać teraz]" },
     ],
-    expected:
-      "Klient podaje konkretny dzień i porę. Rezerwujesz termin od razu na tej rozmowie, klient tylko potwierdza. Jeśli nie chce ustalać teraz, rozwiń obiekcję „Nie chce ustalać terminu teraz” poniżej.",
+    expected: "Klient podaje konkretny dzień i porę spotkania.",
+    transition: "Dobrze, rezerwuję ten termin od razu, potwierdzi mi go Pan za chwilę.",
   },
   {
     id: "spotkanie_rezerwacja",

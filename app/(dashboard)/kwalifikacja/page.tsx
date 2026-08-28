@@ -7,7 +7,6 @@ import {
   ChevronDown,
   Copy,
   FileText,
-  Lock,
   MessageSquare,
   Minus,
   PhoneCall,
@@ -312,17 +311,23 @@ function RecommendedModulesPanel({
 
 // ── Inline kalkulator wbudowany w skrypt ─────────────────────────────
 
-const PRACA_TYPES = [
-  { id: "zlecenia", label: "Automatyzacja TMS: wczytywanie zleceń z maila" },
-  { id: "cmr", label: "Dokumenty i pliki: CMR i potwierdzenia dostawy" },
-  { id: "faktury_recznie", label: "Dokumenty i pliki: faktury" },
-  { id: "komunikacja", label: "Powiadomienia automatyczne: status bez dzwonienia" },
-  { id: "inne", label: "Inne: do doprecyzowania ręcznie" },
-] as const;
+// Moduły wdrożeniowe (rodzaj pracy) wyprowadzane z potwierdzonych flag kalkulatora
+// (przyciski w krokach 2d-2g). Nazwy zgodne z context/PRODUKT_ZRODLO_PRAWDY.md.
+// "cmr" i "faktury_recznie" to ten sam moduł produktowy "Dokumenty i pliki".
+const MODULE_FROM_FLAG: { flags: string[]; label: string }[] = [
+  { flags: ["zlecenia"], label: "Automatyzacja TMS" },
+  { flags: ["cmr", "faktury_recznie"], label: "Dokumenty i pliki" },
+  { flags: ["komunikacja"], label: "Powiadomienia automatyczne" },
+];
 
-// Presety ról jednym kliknięciem (punkt "KALKULATOR ROI" przebudowy 2026-08-08) —
-// zero wpisywania nazw ręcznie w trakcie rozmowy, wartości domyślne to orientacyjny
-// punkt startowy do skorygowania na podstawie tego co powie klient.
+function modulesFromFlags(flags: Record<string, boolean>): string[] {
+  return MODULE_FROM_FLAG.filter((m) => m.flags.some((f) => flags[f])).map((m) => m.label);
+}
+
+// Presety ról jednym kliknięciem. Godziny startują od 0 — pytanie o godziny
+// dziennie na powtarzalną robotę jest osobnym krokiem (2i) i bez niego wynik
+// jest zerowy, celowo, żeby setter nie pominął tej liczby. Stawka to szacunek
+// kosztu pracy z narzutami, korygowany tym co poda klient.
 const ROLE_PRESETS: {
   id: string;
   label: string;
@@ -330,11 +335,10 @@ const ROLE_PRESETS: {
   godziny: number;
   stawka: number;
 }[] = [
-  { id: "spedytor", label: "Spedytor", osoby: 1, godziny: 2, stawka: 50 },
-  { id: "faktury", label: "Fakturzystka / księgowość", osoby: 1, godziny: 1.5, stawka: 45 },
-  { id: "dyspozytor", label: "Dyspozytor", osoby: 1, godziny: 1.5, stawka: 50 },
-  { id: "wlasciciel", label: "Właściciel", osoby: 1, godziny: 1, stawka: 80 },
-  { id: "inne", label: "Inne", osoby: 1, godziny: 1, stawka: 50 },
+  { id: "spedytor", label: "Spedytor", osoby: 1, godziny: 0, stawka: 50 },
+  { id: "faktury", label: "Faktury i rozliczenia", osoby: 1, godziny: 0, stawka: 45 },
+  { id: "dyspozytor", label: "Dyspozytor", osoby: 1, godziny: 0, stawka: 50 },
+  { id: "wlasciciel", label: "Właściciel", osoby: 1, godziny: 0, stawka: 80 },
 ];
 
 let groupIdCounter = 0;
@@ -397,38 +401,44 @@ function NumberField({
   );
 }
 
+type RolesMode = "count" | "rate" | "full";
+
+const ROLE_FIELD_STYLE: React.CSSProperties = {
+  height: 36,
+  borderRadius: "var(--radius-xs)",
+  border: "1px solid rgba(255,255,255,0.42)",
+  padding: "0 10px",
+  fontFamily: "var(--font-sans)",
+  fontSize: 13,
+  fontWeight: 600,
+  color: "var(--text-primary)",
+  background: "var(--bg)",
+  outline: "none",
+  width: "100%",
+};
+const ROLE_LABEL_STYLE: React.CSSProperties = {
+  fontFamily: "var(--font-sans)",
+  fontSize: 10,
+  fontWeight: 700,
+  color: "var(--text-primary)",
+  textTransform: "uppercase",
+  letterSpacing: "0.07em",
+};
+
 function GroupRow({
   group,
+  mode,
   onChange,
   onRemove,
-  removable,
 }: {
   group: CalculatorGroup;
+  mode: RolesMode;
   onChange: (patch: Partial<CalculatorGroup>) => void;
   onRemove: () => void;
-  removable: boolean;
 }) {
-  const fieldStyle: React.CSSProperties = {
-    height: 36,
-    borderRadius: "var(--radius-xs)",
-    border: "1px solid rgba(255,255,255,0.42)",
-    padding: "0 10px",
-    fontFamily: "var(--font-sans)",
-    fontSize: 13,
-    fontWeight: 600,
-    color: "var(--text-primary)",
-    background: "var(--bg)",
-    outline: "none",
-    width: "100%",
-  };
-  const labelStyle: React.CSSProperties = {
-    fontFamily: "var(--font-sans)",
-    fontSize: 10,
-    fontWeight: 700,
-    color: "var(--text-primary)",
-    textTransform: "uppercase",
-    letterSpacing: "0.07em",
-  };
+  const showOsoby = mode === "count" || mode === "full";
+  const showGodziny = mode === "full";
+  const showStawka = mode === "rate" || mode === "full";
   return (
     <div
       style={{
@@ -442,64 +452,180 @@ function GroupRow({
       }}
     >
       <label style={{ flex: 1.4, display: "flex", flexDirection: "column", gap: 4 }}>
-        <span style={labelStyle}>Rola</span>
+        <span style={ROLE_LABEL_STYLE}>Rola</span>
         <input
           value={group.label}
           onChange={(e) => onChange({ label: e.target.value })}
-          style={fieldStyle}
+          style={ROLE_FIELD_STYLE}
         />
       </label>
-      <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
-        <span style={labelStyle}>Osoby</span>
-        <NumberField
-          min={1}
-          max={50}
-          value={group.osoby}
-          onCommit={(n) => onChange({ osoby: n })}
-          style={fieldStyle}
+      {showOsoby && (
+        <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
+          <span style={ROLE_LABEL_STYLE}>Osoby</span>
+          <NumberField
+            min={1}
+            max={50}
+            value={group.osoby}
+            onCommit={(n) => onChange({ osoby: n })}
+            style={ROLE_FIELD_STYLE}
+          />
+        </label>
+      )}
+      {!showOsoby && (
+        <div style={{ flex: 1, ...ROLE_LABEL_STYLE, paddingBottom: 10, alignSelf: "flex-end" }}>
+          {group.osoby} {group.osoby === 1 ? "osoba" : "os."}
+        </div>
+      )}
+      {showGodziny && (
+        <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
+          <span style={ROLE_LABEL_STYLE}>Godz/dzień</span>
+          <NumberField
+            min={0}
+            max={12}
+            step={0.5}
+            value={group.godziny}
+            onCommit={(n) => onChange({ godziny: n })}
+            style={{
+              ...ROLE_FIELD_STYLE,
+              border: group.godziny ? ROLE_FIELD_STYLE.border : "1px solid var(--warning)",
+            }}
+          />
+        </label>
+      )}
+      {showStawka && (
+        <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
+          <span style={ROLE_LABEL_STYLE}>Stawka zł/h</span>
+          <NumberField
+            min={20}
+            max={200}
+            value={group.stawka}
+            onCommit={(n) => onChange({ stawka: n })}
+            style={ROLE_FIELD_STYLE}
+          />
+        </label>
+      )}
+      <button
+        onClick={onRemove}
+        title="Usuń rolę"
+        style={{
+          height: 36,
+          width: 34,
+          borderRadius: 8,
+          border: "1px solid var(--border)",
+          background: "var(--bg-elevated)",
+          color: "var(--error-text)",
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+        }}
+      >
+        <Trash2 size={13} />
+      </button>
+    </div>
+  );
+}
+
+// Wspólny edytor ról kalkulatora — używany w kroku 2a (liczba osób), 2h (stawki)
+// i 2i (pełna tabela). Jedno źródło stanu (calcGroups), progresywnie uzupełniane.
+function RolesEditor({
+  groups,
+  onChange,
+  mode,
+}: {
+  groups: CalculatorGroup[];
+  onChange: (groups: CalculatorGroup[]) => void;
+  mode: RolesMode;
+}) {
+  const addPreset = (p: (typeof ROLE_PRESETS)[number]) =>
+    onChange([
+      ...groups,
+      { id: newGroupId(), label: p.label, osoby: p.osoby, godziny: p.godziny, stawka: p.stawka },
+    ]);
+  const addCustom = () =>
+    onChange([
+      ...groups,
+      { id: newGroupId(), label: "Nowa rola", osoby: 1, godziny: 0, stawka: 50 },
+    ]);
+  const patch = (id: string, p: Partial<CalculatorGroup>) =>
+    onChange(groups.map((g) => (g.id === id ? { ...g, ...p } : g)));
+  const remove = (id: string) => onChange(groups.filter((g) => g.id !== id));
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      {(mode === "count" || mode === "full") && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+          {ROLE_PRESETS.map((p) => (
+            <button
+              key={p.id}
+              onClick={() => addPreset(p)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+                padding: "5px 10px",
+                borderRadius: 20,
+                border: "1px solid rgba(255,255,255,0.42)",
+                background: "var(--bg)",
+                color: "var(--text-primary)",
+                fontFamily: "var(--font-sans)",
+                fontSize: 11,
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              <Plus size={11} />
+              {p.label}
+            </button>
+          ))}
+        </div>
+      )}
+      {groups.map((g) => (
+        <GroupRow
+          key={g.id}
+          group={g}
+          mode={mode}
+          onChange={(p) => patch(g.id, p)}
+          onRemove={() => remove(g.id)}
         />
-      </label>
-      <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
-        <span style={labelStyle}>Godz/dzień</span>
-        <NumberField
-          min={0.5}
-          max={12}
-          step={0.5}
-          value={group.godziny}
-          onCommit={(n) => onChange({ godziny: n })}
-          style={fieldStyle}
-        />
-      </label>
-      <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
-        <span style={labelStyle}>Stawka zł/h</span>
-        <NumberField
-          min={20}
-          max={200}
-          value={group.stawka}
-          onCommit={(n) => onChange({ stawka: n })}
-          style={fieldStyle}
-        />
-      </label>
-      {removable && (
+      ))}
+      {(mode === "count" || mode === "full") && (
         <button
-          onClick={onRemove}
-          title="Usuń grupę"
+          onClick={addCustom}
           style={{
-            height: 36,
-            width: 34,
-            borderRadius: 8,
-            border: "1px solid var(--border)",
-            background: "var(--bg-elevated)",
-            color: "var(--error-text)",
-            cursor: "pointer",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            flexShrink: 0,
+            gap: 6,
+            padding: "7px 10px",
+            borderRadius: 8,
+            border: "1px dashed var(--text-tertiary)",
+            background: "transparent",
+            color: "var(--text-primary)",
+            fontFamily: "var(--font-sans)",
+            fontSize: 12,
+            fontWeight: 600,
+            cursor: "pointer",
           }}
         >
-          <Trash2 size={13} />
+          <Plus size={13} />
+          Dodaj rolę niestandardową
         </button>
+      )}
+      {groups.length === 0 && (
+        <div
+          style={{
+            fontFamily: "var(--font-sans)",
+            fontSize: 11,
+            color: "var(--text-tertiary)",
+            fontStyle: "italic",
+          }}
+        >
+          {mode === "count"
+            ? "Dodaj role z rozkładu, który podał klient."
+            : "Najpierw dodaj role w kroku 2a."}
+        </div>
       )}
     </div>
   );
@@ -516,63 +642,24 @@ function ScriptKalkulator({
   groups: CalculatorGroup[];
   onGroupsChange: (groups: CalculatorGroup[]) => void;
 }) {
-  const [manualSelected, setManualSelected] = useState<Set<string>>(
-    new Set(["zlecenia", "cmr", "faktury_recznie"]),
-  );
-
-  const isLocked = (id: string) => Boolean(autoFlags[id]);
-  const isOn = (id: string) => isLocked(id) || manualSelected.has(id);
-  const selected = new Set(PRACA_TYPES.map((pt) => pt.id).filter((id) => isOn(id)));
-
-  const toggle = (id: string) => {
-    if (isLocked(id)) return;
-    setManualSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
-  const updateGroup = (id: string, patch: Partial<CalculatorGroup>) => {
-    onGroupsChange(groups.map((g) => (g.id === id ? { ...g, ...patch } : g)));
-  };
-  const addGroup = (preset?: (typeof ROLE_PRESETS)[number]) => {
-    onGroupsChange([
-      ...groups,
-      preset
-        ? {
-            id: newGroupId(),
-            label: preset.label,
-            osoby: preset.osoby,
-            godziny: preset.godziny,
-            stawka: preset.stawka,
-          }
-        : { id: newGroupId(), label: "Nowa rola", osoby: 1, godziny: 2, stawka: 50 },
-    ]);
-  };
-  const removeGroup = (id: string) => {
-    onGroupsChange(groups.filter((g) => g.id !== id));
-  };
+  const fmt = (n: number) =>
+    n.toLocaleString("pl-PL", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
   const miesiecznieH = groups.reduce((sum, g) => sum + g.osoby * g.godziny * 22, 0);
   const miesieczniePLN = groups.reduce((sum, g) => sum + g.osoby * g.godziny * 22 * g.stawka, 0);
   const rocznie = miesieczniePLN * 12;
-  // 70% czasu bazowego, punkt startowy zgodny z domyślnym celem efektywności z
-  // context/PRODUKT_ZRODLO_PRAWDY.md (min. 70%) — to WSTĘPNY szacunek na etapie
-  // kwalifikacji, nie wiążąca gwarancja. Wiążąca liczba jest mierzona dopiero na
-  // spotkaniu wdrożeniowym (Załącznik 1 umowy), z realnie zmierzonych czasów, nie
-  // z deklaracji klienta na telefonie — dlatego etykieta niżej mówi "wstępny
-  // potencjał", nigdy "gwarancja", na tym etapie rozmowy.
+  // 70% czasu bazowego, zgodne z domyślnym celem efektywności z
+  // context/PRODUKT_ZRODLO_PRAWDY.md. To WSTĘPNY szacunek, nie gwarancja —
+  // wiążąca liczba jest mierzona przed podpisaniem umowy (Załącznik 1).
   const potencjalH = Math.round(miesiecznieH * 0.7);
 
-  const fmt = (n: number) =>
-    n.toLocaleString("pl-PL", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  const brakGodzin = groups.length > 0 && groups.some((g) => !g.godziny);
+  const modules = modulesFromFlags(autoFlags);
 
   const wynikZdanie =
-    groups.length === 1
-      ? `Przy ${groups[0].osoby} ${groups[0].osoby === 1 ? "osobie" : "osobach"} i ${groups[0].godziny} ${groups[0].godziny === 1 ? "godzinie" : "godzinach"} dziennie — to ${fmt(miesiecznieH)} godzin miesięcznie, czyli ${fmt(miesieczniePLN)} zł kosztu pracy. Rocznie ${fmt(rocznie)} zł.`
-      : `Łącznie dla ${groups.length} ról w firmie — to ${fmt(miesiecznieH)} godzin miesięcznie, czyli ${fmt(miesieczniePLN)} zł kosztu pracy. Rocznie ${fmt(rocznie)} zł.`;
+    groups.length === 0
+      ? "Dodaj role w kroku 2a i uzupełnij godziny dziennie, wtedy pojawi się tu liczba."
+      : `Łącznie dla ${groups.length} ${groups.length === 1 ? "roli" : "ról"} w biurze to ${fmt(miesiecznieH)} godzin miesięcznie, czyli ${fmt(miesieczniePLN)} zł kosztu pracy. Rocznie ${fmt(rocznie)} zł.`;
 
   return (
     <div
@@ -607,167 +694,90 @@ function ScriptKalkulator({
         </span>
         {clientName && (
           <span
-            style={{
-              fontFamily: "var(--font-sans)",
-              fontSize: 11,
-              color: "var(--text-tertiary)",
-            }}
+            style={{ fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--text-tertiary)" }}
           >
-            — {clientName}
+            {clientName}
           </span>
         )}
       </div>
 
       <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 12 }}>
-        {/* Presety ról jednym kliknięciem — zero wpisywania nazw ręcznie w trakcie rozmowy */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <span
-            style={{
-              fontFamily: "var(--font-sans)",
-              fontSize: 10,
-              fontWeight: 600,
-              color: "var(--text-tertiary)",
-              textTransform: "uppercase",
-              letterSpacing: "0.07em",
-            }}
-          >
-            Dodaj rolę
-          </span>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-            {ROLE_PRESETS.map((preset) => (
-              <button
-                key={preset.id}
-                onClick={() => addGroup(preset)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 4,
-                  padding: "5px 10px",
-                  borderRadius: 20,
-                  border: "1px solid var(--border)",
-                  background: "var(--bg)",
-                  color: "var(--text-secondary)",
-                  fontFamily: "var(--font-sans)",
-                  fontSize: 11,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                }}
-              >
-                <Plus size={11} />
-                {preset.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        <RolesEditor groups={groups} onChange={onGroupsChange} mode="full" />
 
-        {/* Grupy ról — każda ma własną liczbę osób, godzin i stawkę */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          {groups.map((g) => (
-            <GroupRow
-              key={g.id}
-              group={g}
-              onChange={(patch) => updateGroup(g.id, patch)}
-              onRemove={() => removeGroup(g.id)}
-              removable={groups.length > 1}
-            />
-          ))}
-          <button
-            onClick={() => addGroup()}
+        {brakGodzin && (
+          <div
             style={{
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
-              gap: 6,
-              padding: "7px 10px",
-              borderRadius: 8,
-              border: "1px dashed var(--text-tertiary)",
-              background: "transparent",
-              color: "var(--accent-text)",
+              gap: 8,
+              padding: "8px 10px",
+              borderRadius: 6,
+              background: "var(--warning-bg)",
+              border: "1px solid var(--warning)",
               fontFamily: "var(--font-sans)",
               fontSize: 12,
               fontWeight: 600,
-              cursor: "pointer",
+              color: "var(--warning)",
             }}
           >
-            <Plus size={13} />
-            Dodaj rolę niestandardową
-          </button>
-        </div>
-        <div
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: 10,
-            color: "var(--text-tertiary)",
-            fontStyle: "italic",
-          }}
-        >
-          Stawki w presetach to szacunek kosztu pracy z narzutami. Dostosuj godziny dziennie i
-          stawkę dla każdej roli, jeśli klient poda inną wartość.
-        </div>
+            <AlertTriangle size={14} strokeWidth={2.5} />
+            Uzupełnij godziny dziennie przy każdej roli. Bez tego wynik jest niepełny.
+          </div>
+        )}
 
-        {/* Typy pracy */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        {/* Rodzaj pracy do wdrożenia — tylko odczyt, wynika z potwierdzeń w 2d-2g */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <span
             style={{
               fontFamily: "var(--font-sans)",
               fontSize: 10,
-              fontWeight: 600,
+              fontWeight: 700,
               color: "var(--text-tertiary)",
               textTransform: "uppercase",
               letterSpacing: "0.07em",
             }}
           >
-            Rodzaj pracy (zaznacz co dotyczy)
+            Rodzaj pracy do wdrożenia
           </span>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-            {PRACA_TYPES.map((pt) => {
-              const on = selected.has(pt.id);
-              const locked = isLocked(pt.id);
-              return (
-                <button
-                  key={pt.id}
-                  onClick={() => toggle(pt.id)}
-                  disabled={locked}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 5,
-                    padding: "6px 12px",
-                    borderRadius: "var(--radius-xs)",
-                    border: `1px solid ${on ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.42)"}`,
-                    background: on ? "var(--accent)" : "var(--bg)",
-                    color: on ? "var(--text-on-accent)" : "var(--text-primary)",
-                    fontFamily: "var(--font-sans)",
-                    fontSize: 12,
-                    fontWeight: on ? 800 : 600,
-                    cursor: locked ? "default" : "pointer",
-                    transition: "all 120ms",
-                  }}
-                >
-                  {locked && <Lock size={10} />}
-                  {pt.label}
-                </button>
-              );
-            })}
-          </div>
-          {PRACA_TYPES.some((pt) => isLocked(pt.id)) && (
+          {modules.length === 0 ? (
             <div
               style={{
                 fontFamily: "var(--font-sans)",
-                fontSize: 10,
+                fontSize: 11,
                 color: "var(--text-tertiary)",
                 fontStyle: "italic",
               }}
             >
-              Zaznaczone automatycznie:{" "}
-              {PRACA_TYPES.filter((pt) => isLocked(pt.id))
-                .map((pt) => `${pt.label} (${FLAG_SOURCE[pt.id]?.nr ?? pt.id})`)
-                .join(", ")}
+              Pojawi się, gdy potwierdzisz ręczną robotę przyciskiem w krokach 2d do 2g.
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {modules.map((m) => (
+                <span
+                  key={m}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 5,
+                    padding: "5px 11px",
+                    borderRadius: "var(--radius-xs)",
+                    background: "var(--accent)",
+                    border: "1px solid rgba(255,255,255,0.42)",
+                    color: "var(--text-on-accent)",
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 12,
+                    fontWeight: 800,
+                  }}
+                >
+                  <Check size={12} strokeWidth={3} />
+                  {m}
+                </span>
+              ))}
             </div>
           )}
         </div>
 
-        {/* Wynik — jedna, jasna prezentacja, bez duplikowania tych samych liczb dwa razy */}
+        {/* Wynik */}
         <div
           style={{
             background: "rgba(67, 121, 177,0.05)",
@@ -779,7 +789,6 @@ function ScriptKalkulator({
             gap: 8,
           }}
         >
-          {/* Gotowe zdanie do wypowiedzenia — jedyne miejsce z liczbami miesięcznie/rocznie */}
           <div
             style={{
               padding: "8px 10px",
@@ -795,21 +804,22 @@ function ScriptKalkulator({
             {wynikZdanie}
           </div>
 
-          {/* Wstępny potencjał, nie wiążąca gwarancja na tym etapie */}
-          <div
-            style={{
-              padding: "8px 10px",
-              borderRadius: 6,
-              background: "rgba(47, 162, 98,0.08)",
-              border: "1px solid rgba(47, 162, 98,0.25)",
-              fontFamily: "var(--font-sans)",
-              fontSize: 12,
-              fontWeight: 600,
-              color: "var(--success-text)",
-            }}
-          >
-            Wstępny potencjał oszczędności: około {fmt(potencjalH)} h miesięcznie
-          </div>
+          {groups.length > 0 && !brakGodzin && (
+            <div
+              style={{
+                padding: "8px 10px",
+                borderRadius: 6,
+                background: "rgba(47, 162, 98,0.08)",
+                border: "1px solid rgba(47, 162, 98,0.25)",
+                fontFamily: "var(--font-sans)",
+                fontSize: 12,
+                fontWeight: 600,
+                color: "var(--success-text)",
+              }}
+            >
+              Wstępny potencjał oszczędności około {fmt(potencjalH)} h miesięcznie
+            </div>
+          )}
           <div
             style={{
               fontFamily: "var(--font-sans)",
@@ -824,64 +834,6 @@ function ScriptKalkulator({
         </div>
       </div>
     </div>
-  );
-}
-
-// ── Pole wpisywane na bieżąco podczas zbierania konkretnej informacji ──
-
-function InlineCaptureInput({
-  label,
-  value,
-  min,
-  onChange,
-}: {
-  label: string;
-  value: number;
-  min: number;
-  onChange: (n: number) => void;
-}) {
-  return (
-    <label
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        padding: "8px 12px",
-        borderRadius: 8,
-        background: "rgba(67, 121, 177,0.05)",
-        border: "1px solid rgba(67, 121, 177,0.18)",
-        width: "fit-content",
-      }}
-    >
-      <span
-        style={{
-          fontFamily: "var(--font-sans)",
-          fontSize: 12,
-          fontWeight: 600,
-          color: "var(--accent-text)",
-        }}
-      >
-        {label}
-      </span>
-      <NumberField
-        min={min}
-        value={value}
-        onCommit={onChange}
-        style={{
-          height: 36,
-          width: 70,
-          borderRadius: 8,
-          border: "1px solid var(--border)",
-          padding: "0 8px",
-          fontFamily: "var(--font-sans)",
-          fontSize: 14,
-          fontWeight: 700,
-          color: "var(--text-primary)",
-          background: "var(--bg-elevated)",
-          outline: "none",
-        }}
-      />
-    </label>
   );
 }
 
@@ -1226,52 +1178,116 @@ function ScriptStep({
 
           {step.expected && (
             <>
-              <SectionCap>Oczekiwana reakcja klienta i przejście</SectionCap>
+              <SectionCap>Oczekiwana reakcja klienta</SectionCap>
               <div
                 style={{
-                  border: "1px solid rgba(255,255,255,0.42)",
+                  border: "1px solid var(--success-border)",
                   borderRadius: 9,
-                  background: "var(--bg)",
-                  boxShadow: "var(--shadow-sm)",
-                  padding: 12,
+                  background: "var(--success-bg)",
+                  padding: "10px 12px",
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 9,
                 }}
               >
-                {answerParagraphs(fill(step.expected), `${step.id}-exp`)}
-                {step.calculatorFlag && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onToggleCalcFlag(step.calculatorFlag as string);
-                    }}
-                    style={{
-                      marginTop: 12,
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 7,
-                      height: 32,
-                      padding: "0 12px",
-                      borderRadius: "var(--radius-xs)",
-                      border: "1px solid rgba(255,255,255,0.42)",
-                      background: calcFlagActive ? "var(--accent)" : "var(--bg-elevated)",
-                      color: calcFlagActive ? "var(--text-on-accent)" : "var(--text-primary)",
-                      fontFamily: "var(--font-sans)",
-                      fontSize: 13,
-                      fontWeight: 700,
-                      cursor: "pointer",
-                    }}
-                  >
-                    {calcFlagActive ? (
-                      <CheckCircle2 size={15} strokeWidth={2.5} />
-                    ) : (
-                      <Plus size={15} strokeWidth={2.5} />
-                    )}
-                    {calcFlagActive
-                      ? "Moduł zaznaczony w kalkulatorze"
-                      : "Klient robi to ręcznie, zaznacz moduł"}
-                  </button>
-                )}
+                <Check
+                  size={16}
+                  strokeWidth={2.75}
+                  color="var(--success-text)"
+                  style={{ flexShrink: 0, marginTop: 2 }}
+                />
+                <span
+                  style={{
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 14.5,
+                    lineHeight: 1.55,
+                    color: "var(--success-text)",
+                    fontWeight: 600,
+                  }}
+                >
+                  {fill(step.expected)}
+                </span>
               </div>
             </>
+          )}
+
+          {step.transition && (
+            <>
+              <SectionCap>Przejście</SectionCap>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "stretch",
+                  gap: 0,
+                  padding: "8px 10px",
+                  borderRadius: 8,
+                }}
+              >
+                <span
+                  style={{
+                    flexShrink: 0,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: 30,
+                    height: 30,
+                    borderRadius: 9,
+                    border: "1px solid rgba(255,255,255,0.42)",
+                    background: "var(--accent)",
+                  }}
+                >
+                  <MessageSquare size={17} color="#ffffff" fill="currentColor" strokeWidth={2.5} />
+                </span>
+                <div
+                  style={{
+                    width: 2,
+                    alignSelf: "stretch",
+                    background: "rgba(255,255,255,0.42)",
+                    borderRadius: 1,
+                    margin: "0 11px",
+                    flexShrink: 0,
+                  }}
+                />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  {answerParagraphs(fill(step.transition), `${step.id}-tr`)}
+                </div>
+              </div>
+            </>
+          )}
+
+          {step.calculatorFlag && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleCalcFlag(step.calculatorFlag as string);
+              }}
+              style={{
+                marginTop: 4,
+                alignSelf: "flex-start",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 7,
+                height: 32,
+                padding: "0 12px",
+                borderRadius: "var(--radius-xs)",
+                border: "1px solid rgba(255,255,255,0.42)",
+                background: calcFlagActive ? "var(--accent)" : "var(--bg-elevated)",
+                color: calcFlagActive ? "var(--text-on-accent)" : "var(--text-primary)",
+                fontFamily: "var(--font-sans)",
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              {calcFlagActive ? (
+                <CheckCircle2 size={15} strokeWidth={2.5} />
+              ) : (
+                <Plus size={15} strokeWidth={2.5} />
+              )}
+              {calcFlagActive
+                ? "Ręczna robota potwierdzona, moduł w kalkulatorze"
+                : "Klient potwierdził ręczną robotę, dodaj moduł"}
+            </button>
           )}
 
           {stepObjections.length > 0 && (
@@ -1926,9 +1942,11 @@ function PrzypadkiSpecjalne() {
 // ── Frazy potwierdzające ─────────────────────────────────────────────
 
 function PhrasesPanel({
+  fill,
   onCopy,
   copiedId,
 }: {
+  fill: (t: string) => string;
   onCopy: (id: string, text: string) => void;
   copiedId: string | null;
 }) {
@@ -1988,7 +2006,7 @@ function PhrasesPanel({
                 color: "var(--text-primary)",
               }}
             >
-              {phrase.text}
+              {fill(phrase.text)}
             </span>
           </div>
           <button
@@ -2044,7 +2062,7 @@ function RightPanel({
       }}
     >
       <Card title="Frazy potwierdzające" collapsible defaultOpen={false}>
-        <PhrasesPanel onCopy={onCopy} copiedId={copiedId} />
+        <PhrasesPanel fill={fill} onCopy={onCopy} copiedId={copiedId} />
       </Card>
       <Card title="SMS / Wiadomości" collapsible defaultOpen={false} forceOpen={smsForceOpen}>
         <SmsPanel fill={fill} onCopy={onCopy} copiedId={copiedId} onSmsCopy={onSmsCopy} />
@@ -2073,9 +2091,10 @@ export default function KwalifikacjaPage() {
   const toggleCalcFlag = useCallback((flag: string) => {
     setCalculatorFlags((prev) => ({ ...prev, [flag]: !prev[flag] }));
   }, []);
-  const [calcGroups, setCalcGroups] = useState<CalculatorGroup[]>([
-    { id: "grp_default", label: "Biuro / spedycja", osoby: 2, godziny: 3, stawka: 50 },
-  ]);
+  // Role kalkulatora budowane od zera w kroku 2a (nazwa + liczba osób), stawki w
+  // 2h, godziny dziennie w 2i. Nic nie jest wstępnie wypełnione, żeby wynik nie
+  // był zgadywany.
+  const [calcGroups, setCalcGroups] = useState<CalculatorGroup[]>([]);
   const [sprzedawcaImie, setSprzedawcaImie] = useState("Michał");
   const [smsForceOpen, setSmsForceOpen] = useState(false);
   const identity = useIdentity();
@@ -2123,10 +2142,6 @@ export default function KwalifikacjaPage() {
 
   const totalGodzinyH = calcGroups.reduce((sum, g) => sum + g.osoby * g.godziny * 22, 0);
   const totalPln = calcGroups.reduce((sum, g) => sum + g.osoby * g.godziny * 22 * g.stawka, 0);
-
-  const updateFirstGroup = (patch: Partial<CalculatorGroup>) => {
-    setCalcGroups((prev) => prev.map((g, i) => (i === 0 ? { ...g, ...patch } : g)));
-  };
 
   const fetchClients = useCallback(async () => {
     setLoading(true);
@@ -2186,9 +2201,7 @@ export default function KwalifikacjaPage() {
 
   useEffect(() => {
     setCalculatorFlags({});
-    setCalcGroups([
-      { id: "grp_default", label: "Biuro / spedycja", osoby: 2, godziny: 3, stawka: 50 },
-    ]);
+    setCalcGroups([]);
     setSmsForceOpen(false);
   }, [selected?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -2226,6 +2239,24 @@ export default function KwalifikacjaPage() {
         .replace(/\bPanu\b/g, "Pani")
         .replace(/\bPana\b/g, "Pani")
         .replace(/\bPan\b/g, "Pani");
+
+      // Odmiana czasownika w 3. os. przy zwrocie grzecznościowym: "zdecydował się
+      // Pani" → "zdecydowała się Pani", "poczułby Pani" → "poczułaby Pani",
+      // "Pani z nimi zrobił" → "Pani z nimi zrobiła". Ograniczone do czasownika
+      // stykającego się ze zwrotem "Pani" (z krótką wstawką bez interpunkcji),
+      // żeby nie ruszać rzeczowników zakończonych na "ł".
+      const fem = (stem: string) => `${stem}a`;
+      // czasownik + [by] + [się/sobie] + Pani
+      out = out.replace(
+        /\b([a-ząćęłńóśźż]+ł)(by)?((?:\s+(?:się|sobie))?)\s+Pani\b/gi,
+        (_m, stem: string, by = "", refl = "") => `${fem(stem)}${by || ""}${refl} Pani`,
+      );
+      // Pani + [sam→sama] + krótka wstawka + czasownik + [by]
+      out = out.replace(
+        /\bPani(\s+sam)?([^.,;:?!]{0,32}?\s)([a-ząćęłńóśźż]+ł)(by)?\b/gi,
+        (_m, sam = "", mid: string, stem: string, by = "") =>
+          `Pani${sam ? " sama" : ""}${mid}${fem(stem)}${by || ""}`,
+      );
     }
     // Imię do zdania otwierającego: pierwsze imię przypisanego sprzedawcy
     // (z profilu Supabase), a jeśli brak przypisania — wartość z pola "Imię w skrypcie".
@@ -2674,21 +2705,11 @@ export default function KwalifikacjaPage() {
                 }
                 onToggleCalcFlag={toggleCalcFlag}
               >
-                {step.captureField === "osoby" && (
-                  <InlineCaptureInput
-                    label="Osoby w biurze (zasila kalkulator)"
-                    value={calcGroups[0].osoby}
-                    min={1}
-                    onChange={(n) => updateFirstGroup({ osoby: n })}
-                  />
+                {step.captureField === "role" && (
+                  <RolesEditor mode="count" groups={calcGroups} onChange={setCalcGroups} />
                 )}
                 {step.captureField === "stawka" && (
-                  <InlineCaptureInput
-                    label="Stawka godzinowa zł/h (zasila kalkulator)"
-                    value={calcGroups[0].stawka}
-                    min={20}
-                    onChange={(n) => updateFirstGroup({ stawka: n })}
-                  />
+                  <RolesEditor mode="rate" groups={calcGroups} onChange={setCalcGroups} />
                 )}
                 {step.hasCalculator && (
                   <ScriptKalkulator
