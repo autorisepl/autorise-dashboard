@@ -496,13 +496,18 @@ export default function AgencjaPage() {
       const res = await fetch("/api/notion/sheets-sync", { method: "POST" });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        setSyncResult({ created: 0, skipped: 0, errors: [body.error ?? "Błąd synchronizacji"] });
+        setSyncResult({
+          created: 0,
+          skipped: 0,
+          emailUpdated: 0,
+          errors: [body.error ?? "Błąd synchronizacji"],
+        });
         return;
       }
       const result: SheetsSyncResult = await res.json();
       setSyncResult(result);
     } catch {
-      setSyncResult({ created: 0, skipped: 0, errors: ["Błąd połączenia"] });
+      setSyncResult({ created: 0, skipped: 0, emailUpdated: 0, errors: ["Błąd połączenia"] });
     } finally {
       setSyncing(false);
     }
@@ -661,8 +666,8 @@ export default function AgencjaPage() {
               }}
             >
               {syncResult.errors.length > 0
-                ? `${syncResult.created} dodano, ${syncResult.errors.length} błędów`
-                : `Dodano ${syncResult.created} leadów`}
+                ? `${syncResult.created} dodano, ${syncResult.emailUpdated} email uzupełniono, ${syncResult.errors.length} błędów`
+                : `Dodano ${syncResult.created} leadów, uzupełniono ${syncResult.emailUpdated} email`}
             </span>
           )}
 

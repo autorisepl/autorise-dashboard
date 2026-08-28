@@ -15,6 +15,8 @@ function richText(text: string) {
 export interface SheetsSyncResult {
   created: number;
   skipped: number;
+  /** Istniejące leady, którym dograno brakujący email z arkusza. */
+  emailUpdated: number;
   errors: string[];
 }
 
@@ -81,7 +83,12 @@ export async function POST(req: NextRequest) {
 
     const allRows = data.values ?? [];
     if (allRows.length === 0) {
-      return NextResponse.json({ created: 0, skipped: 0, errors: [] } satisfies SheetsSyncResult);
+      return NextResponse.json({
+        created: 0,
+        skipped: 0,
+        emailUpdated: 0,
+        errors: [],
+      } satisfies SheetsSyncResult);
     }
 
     const headers = (allRows[0] ?? []).map(String);
@@ -139,7 +146,6 @@ export async function POST(req: NextRequest) {
       })
       .filter((r) => headers.some((h) => h !== "_row" && String(r[h]).trim() !== ""));
 
-    // Build dedup set from existing Notion pipeline leads (by normalized firm name)
     const normalizePhone = (p: string) => p.replace(/\D/g, "").slice(-9);
     const normalizeName = (n: string) => n.toLowerCase().replace(/\s+/g, " ").trim();
 
@@ -156,15 +162,32 @@ export async function POST(req: NextRequest) {
     }
 
     // Dashboard czyta z Supabase (public.pipeline), więc lead trafia też tam.
-    // Dedup zbierany również z Supabase, żeby ponowny sync nie zdublował rekordów.
+    // Indeks Supabase: po telefonie ORAZ po nazwie (firma albo kontakt), bo część
+    // leadów ma tylko kontakt bez firmy. Trzyma id + email, żeby dedup nie tworzył
+    // duplikatu, a przy braku emaila mógł go dograć z arkusza.
     const supabase = createAdminClient();
+    type SbRef = { id: string; email: string | null };
+    const sbByPhone = new Map<string, SbRef>();
+    const sbByName = new Map<string, SbRef>();
     try {
-      const { data: sbRows } = await supabase.from("pipeline").select("firma, telefon");
+      const { data: sbRows } = await supabase
+        .from("pipeline")
+        .select("id, firma, kontakt, telefon, email");
       for (const r of sbRows ?? []) {
-        if (r.firma) existingFirmas.add(normalizeName(String(r.firma)));
+        const ref: SbRef = { id: String(r.id), email: (r.email as string | null) ?? null };
         if (r.telefon) {
           const np = normalizePhone(String(r.telefon));
-          if (np.length >= 7) existingPhones.add(np);
+          if (np.length >= 7) {
+            sbByPhone.set(np, ref);
+            existingPhones.add(np);
+          }
+        }
+        for (const nm of [r.firma, r.kontakt]) {
+          if (nm) {
+            const key = normalizeName(String(nm));
+            sbByName.set(key, ref);
+            existingFirmas.add(key);
+          }
         }
       }
     } catch {
@@ -173,6 +196,7 @@ export async function POST(req: NextRequest) {
 
     let created = 0;
     let skipped = 0;
+    let emailUpdated = 0;
     const errors: string[] = [];
     const todayISO = new Date().toISOString().split("T")[0];
 
@@ -196,14 +220,34 @@ export async function POST(req: NextRequest) {
         continue;
       }
 
-      // Dedup: skip if phone or company name already exists in Notion
+      // Dedup: pomiń jeśli telefon albo nazwa (firma/kontakt) już istnieje. Ale
+      // jeśli istniejący lead nie ma emaila, a arkusz go ma — dograj email.
       const normPhone = normalizePhone(phoneVal);
       const normFirma = normalizeName(titleVal);
-      if (
-        (normPhone.length >= 7 && existingPhones.has(normPhone)) ||
-        existingFirmas.has(normFirma)
-      ) {
-        skipped++;
+      const normName = nameVal ? normalizeName(nameVal) : "";
+      const phoneHit = normPhone.length >= 7 && existingPhones.has(normPhone);
+      const nameHit = existingFirmas.has(normFirma) || (normName && existingFirmas.has(normName));
+      if (phoneHit || nameHit) {
+        const ref =
+          (normPhone.length >= 7 ? sbByPhone.get(normPhone) : undefined) ??
+          sbByName.get(normFirma) ??
+          (normName ? sbByName.get(normName) : undefined);
+        if (ref && emailVal && !ref.email) {
+          const { error: upErr } = await supabase
+            .from("pipeline")
+            .update({ email: emailVal, updated_at: new Date().toISOString() })
+            .eq("id", ref.id);
+          if (upErr) {
+            errors.push(
+              `Wiersz ${String(row._row)} (${titleVal}): Supabase update ${upErr.message}`,
+            );
+          } else {
+            ref.email = emailVal;
+            emailUpdated++;
+          }
+        } else {
+          skipped++;
+        }
         continue;
       }
 
@@ -263,7 +307,12 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ created, skipped, errors } satisfies SheetsSyncResult);
+    return NextResponse.json({
+      created,
+      skipped,
+      emailUpdated,
+      errors,
+    } satisfies SheetsSyncResult);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unknown error";
     if (message.includes("insufficient") || message.includes("scope")) {
