@@ -401,7 +401,10 @@ function NumberField({
   );
 }
 
-type RolesMode = "count" | "rate" | "full";
+// count = krok 2a (nazwa + liczba osób, presety, dodawanie/usuwanie).
+// rate  = krok 2h (tylko stawka per rola, bez dodawania).
+// hours = krok 2i (tylko godziny dziennie per rola, bez dodawania).
+type RolesMode = "count" | "rate" | "hours";
 
 const ROLE_FIELD_STYLE: React.CSSProperties = {
   height: 36,
@@ -436,9 +439,10 @@ function GroupRow({
   onChange: (patch: Partial<CalculatorGroup>) => void;
   onRemove: () => void;
 }) {
-  const showOsoby = mode === "count" || mode === "full";
-  const showGodziny = mode === "full";
-  const showStawka = mode === "rate" || mode === "full";
+  const showOsoby = mode === "count";
+  const showGodziny = mode === "hours";
+  const showStawka = mode === "rate";
+  const canRemove = mode === "count";
   return (
     <div
       style={{
@@ -504,31 +508,33 @@ function GroupRow({
           />
         </label>
       )}
-      <button
-        onClick={onRemove}
-        title="Usuń rolę"
-        style={{
-          height: 36,
-          width: 34,
-          borderRadius: 8,
-          border: "1px solid var(--border)",
-          background: "var(--bg-elevated)",
-          color: "var(--error-text)",
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexShrink: 0,
-        }}
-      >
-        <Trash2 size={13} />
-      </button>
+      {canRemove && (
+        <button
+          onClick={onRemove}
+          title="Usuń rolę"
+          style={{
+            height: 36,
+            width: 34,
+            borderRadius: 8,
+            border: "1px solid var(--border)",
+            background: "var(--bg-elevated)",
+            color: "var(--error-text)",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
+        >
+          <Trash2 size={13} />
+        </button>
+      )}
     </div>
   );
 }
 
-// Wspólny edytor ról kalkulatora — używany w kroku 2a (liczba osób), 2h (stawki)
-// i 2i (pełna tabela). Jedno źródło stanu (calcGroups), progresywnie uzupełniane.
+// Wspólny edytor ról — krok 2a buduje listę (nazwa + osoby), 2h dokłada stawki,
+// 2i dokłada godziny dziennie. Jedno źródło stanu (calcGroups).
 function RolesEditor({
   groups,
   onChange,
@@ -554,7 +560,7 @@ function RolesEditor({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-      {(mode === "count" || mode === "full") && (
+      {mode === "count" && (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
           {ROLE_PRESETS.map((p) => (
             <button
@@ -590,7 +596,7 @@ function RolesEditor({
           onRemove={() => remove(g.id)}
         />
       ))}
-      {(mode === "count" || mode === "full") && (
+      {mode === "count" && (
         <button
           onClick={addCustom}
           style={{
@@ -613,31 +619,15 @@ function RolesEditor({
           Dodaj rolę niestandardową
         </button>
       )}
-      {groups.length === 0 && (
-        <div
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: 11,
-            color: "var(--text-tertiary)",
-            fontStyle: "italic",
-          }}
-        >
-          {mode === "count"
-            ? "Dodaj role z rozkładu, który podał klient."
-            : "Najpierw dodaj role w kroku 2a."}
-        </div>
-      )}
     </div>
   );
 }
 
 function ScriptKalkulator({
-  clientName,
   autoFlags,
   groups,
   onGroupsChange,
 }: {
-  clientName: string;
   autoFlags: Record<string, boolean>;
   groups: CalculatorGroup[];
   onGroupsChange: (groups: CalculatorGroup[]) => void;
@@ -648,85 +638,27 @@ function ScriptKalkulator({
   const miesiecznieH = groups.reduce((sum, g) => sum + g.osoby * g.godziny * 22, 0);
   const miesieczniePLN = groups.reduce((sum, g) => sum + g.osoby * g.godziny * 22 * g.stawka, 0);
   const rocznie = miesieczniePLN * 12;
-  // 70% czasu bazowego, zgodne z domyślnym celem efektywności z
-  // context/PRODUKT_ZRODLO_PRAWDY.md. To WSTĘPNY szacunek, nie gwarancja —
-  // wiążąca liczba jest mierzona przed podpisaniem umowy (Załącznik 1).
   const potencjalH = Math.round(miesiecznieH * 0.7);
-
-  const brakGodzin = groups.length > 0 && groups.some((g) => !g.godziny);
+  const gotowe = miesiecznieH > 0;
   const modules = modulesFromFlags(autoFlags);
-
-  const wynikZdanie =
-    groups.length === 0
-      ? "Dodaj role w kroku 2a i uzupełnij godziny dziennie, wtedy pojawi się tu liczba."
-      : `Łącznie dla ${groups.length} ${groups.length === 1 ? "roli" : "ról"} w biurze to ${fmt(miesiecznieH)} godzin miesięcznie, czyli ${fmt(miesieczniePLN)} zł kosztu pracy. Rocznie ${fmt(rocznie)} zł.`;
 
   return (
     <div
       style={{
         border: "1px solid var(--border)",
         borderRadius: 10,
-        overflow: "hidden",
         background: "var(--bg-elevated)",
+        padding: "12px 14px",
+        display: "flex",
+        flexDirection: "column",
+        gap: 12,
       }}
     >
-      <div
-        style={{
-          padding: "10px 14px",
-          background: "rgba(67, 121, 177,0.04)",
-          borderBottom: "1px solid var(--border)",
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-        }}
-      >
-        <span
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: "0.07em",
-            textTransform: "uppercase",
-            color: "var(--accent-text)",
-          }}
-        >
-          Kalkulator ROI
-        </span>
-        {clientName && (
-          <span
-            style={{ fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--text-tertiary)" }}
-          >
-            {clientName}
-          </span>
-        )}
-      </div>
+      {/* Do uzupełnienia: tylko godziny dziennie per rola. Ról tu się nie dodaje. */}
+      <RolesEditor groups={groups} onChange={onGroupsChange} mode="hours" />
 
-      <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 12 }}>
-        <RolesEditor groups={groups} onChange={onGroupsChange} mode="full" />
-
-        {brakGodzin && (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "8px 10px",
-              borderRadius: 6,
-              background: "var(--warning-bg)",
-              border: "1px solid var(--warning)",
-              fontFamily: "var(--font-sans)",
-              fontSize: 12,
-              fontWeight: 600,
-              color: "var(--warning)",
-            }}
-          >
-            <AlertTriangle size={14} strokeWidth={2.5} />
-            Uzupełnij godziny dziennie przy każdej roli. Bez tego wynik jest niepełny.
-          </div>
-        )}
-
-        {/* Rodzaj pracy do wdrożenia — tylko odczyt, wynika z potwierdzeń w 2d-2g */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      {modules.length > 0 && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
           <span
             style={{
               fontFamily: "var(--font-sans)",
@@ -737,102 +669,50 @@ function ScriptKalkulator({
               letterSpacing: "0.07em",
             }}
           >
-            Rodzaj pracy do wdrożenia
+            Moduły do wdrożenia
           </span>
-          {modules.length === 0 ? (
-            <div
+          {modules.map((m) => (
+            <span
+              key={m}
               style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 5,
+                padding: "5px 11px",
+                borderRadius: "var(--radius-xs)",
+                background: "var(--accent)",
+                border: "1px solid rgba(255,255,255,0.42)",
+                color: "var(--text-on-accent)",
                 fontFamily: "var(--font-sans)",
-                fontSize: 11,
-                color: "var(--text-tertiary)",
-                fontStyle: "italic",
+                fontSize: 12,
+                fontWeight: 800,
               }}
             >
-              Pojawi się, gdy potwierdzisz ręczną robotę przyciskiem w krokach 2d do 2g.
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-              {modules.map((m) => (
-                <span
-                  key={m}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 5,
-                    padding: "5px 11px",
-                    borderRadius: "var(--radius-xs)",
-                    background: "var(--accent)",
-                    border: "1px solid rgba(255,255,255,0.42)",
-                    color: "var(--text-on-accent)",
-                    fontFamily: "var(--font-sans)",
-                    fontSize: 12,
-                    fontWeight: 800,
-                  }}
-                >
-                  <Check size={12} strokeWidth={3} />
-                  {m}
-                </span>
-              ))}
-            </div>
-          )}
+              <Check size={12} strokeWidth={3} />
+              {m}
+            </span>
+          ))}
         </div>
+      )}
 
-        {/* Wynik */}
+      {gotowe && (
         <div
           style={{
             background: "rgba(67, 121, 177,0.05)",
             border: "1px solid rgba(67, 121, 177,0.18)",
             borderRadius: 8,
             padding: "10px 14px",
-            display: "flex",
-            flexDirection: "column",
-            gap: 8,
+            fontFamily: "var(--font-sans)",
+            fontSize: 12.5,
+            lineHeight: 1.55,
+            color: "var(--text-primary)",
           }}
         >
-          <div
-            style={{
-              padding: "8px 10px",
-              borderRadius: 6,
-              background: "var(--bg-elevated)",
-              border: "1px solid var(--border)",
-              fontFamily: "var(--font-sans)",
-              fontSize: 12,
-              lineHeight: 1.55,
-              color: "var(--text-primary)",
-            }}
-          >
-            {wynikZdanie}
-          </div>
-
-          {groups.length > 0 && !brakGodzin && (
-            <div
-              style={{
-                padding: "8px 10px",
-                borderRadius: 6,
-                background: "rgba(47, 162, 98,0.08)",
-                border: "1px solid rgba(47, 162, 98,0.25)",
-                fontFamily: "var(--font-sans)",
-                fontSize: 12,
-                fontWeight: 600,
-                color: "var(--success-text)",
-              }}
-            >
-              Wstępny potencjał oszczędności około {fmt(potencjalH)} h miesięcznie
-            </div>
-          )}
-          <div
-            style={{
-              fontFamily: "var(--font-sans)",
-              fontSize: 10,
-              color: "var(--text-tertiary)",
-              fontStyle: "italic",
-            }}
-          >
-            To szacunek na etapie kwalifikacji, nie gwarancja. Wiążąca liczba jest mierzona ze
-            zmierzonych czasów przed podpisaniem umowy, na spotkaniu wdrożeniowym (Załącznik 1).
-          </div>
+          Około <strong>{fmt(miesiecznieH)} h</strong> miesięcznie, czyli{" "}
+          <strong>{fmt(miesieczniePLN)} zł</strong> kosztu pracy, rocznie {fmt(rocznie)} zł. Wstępny
+          potencjał odzysku około <strong>{fmt(potencjalH)} h</strong> miesięcznie.
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -2246,16 +2126,18 @@ export default function KwalifikacjaPage() {
       // stykającego się ze zwrotem "Pani" (z krótką wstawką bez interpunkcji),
       // żeby nie ruszać rzeczowników zakończonych na "ł".
       const fem = (stem: string) => `${stem}a`;
+      // "Pani sam" / "sam Pani" → "Pani sama" / "sama Pani" (niezależnie od czasownika)
+      out = out.replace(/\bPani sam\b/g, "Pani sama").replace(/\bsam Pani\b/g, "sama Pani");
       // czasownik + [by] + [się/sobie] + Pani
       out = out.replace(
         /\b([a-ząćęłńóśźż]+ł)(by)?((?:\s+(?:się|sobie))?)\s+Pani\b/gi,
         (_m, stem: string, by = "", refl = "") => `${fem(stem)}${by || ""}${refl} Pani`,
       );
-      // Pani + [sam→sama] + krótka wstawka + czasownik + [by]
+      // Pani + [sama] + krótka wstawka + czasownik + [by]
       out = out.replace(
-        /\bPani(\s+sam)?([^.,;:?!]{0,32}?\s)([a-ząćęłńóśźż]+ł)(by)?\b/gi,
-        (_m, sam = "", mid: string, stem: string, by = "") =>
-          `Pani${sam ? " sama" : ""}${mid}${fem(stem)}${by || ""}`,
+        /\bPani(\s+sama)?([^.,;:?!]{0,32}?\s)([a-ząćęłńóśźż]+ł)(by)?\b/gi,
+        (_m, sama = "", mid: string, stem: string, by = "") =>
+          `Pani${sama || ""}${mid}${fem(stem)}${by || ""}`,
       );
     }
     // Imię do zdania otwierającego: pierwsze imię przypisanego sprzedawcy
@@ -2713,7 +2595,6 @@ export default function KwalifikacjaPage() {
                 )}
                 {step.hasCalculator && (
                   <ScriptKalkulator
-                    clientName={selected?.kontakt || selected?.firma || ""}
                     autoFlags={calculatorFlags}
                     groups={calcGroups}
                     onGroupsChange={setCalcGroups}

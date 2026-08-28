@@ -3,6 +3,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { normalizePhonePL } from "@/lib/format/normalizePhonePL";
 import { getRefreshToken, getSheetsClient } from "@/lib/google/auth";
 import { getPipelineClients } from "@/lib/notion/client";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 const SHEET_ID = "18BjXDFAWDVQnQkrE_1Kmvj0-ZJIGXQejLY6IJOOXnH0";
 const PIPELINE_DB_ID = "75ac8bc6fd6d4c36934bedc1270217eb";
@@ -154,6 +155,22 @@ export async function POST(req: NextRequest) {
       /* non-fatal — proceed without dedup on fetch failure */
     }
 
+    // Dashboard czyta z Supabase (public.pipeline), więc lead trafia też tam.
+    // Dedup zbierany również z Supabase, żeby ponowny sync nie zdublował rekordów.
+    const supabase = createAdminClient();
+    try {
+      const { data: sbRows } = await supabase.from("pipeline").select("firma, telefon");
+      for (const r of sbRows ?? []) {
+        if (r.firma) existingFirmas.add(normalizeName(String(r.firma)));
+        if (r.telefon) {
+          const np = normalizePhone(String(r.telefon));
+          if (np.length >= 7) existingPhones.add(np);
+        }
+      }
+    } catch {
+      /* non-fatal */
+    }
+
     let created = 0;
     let skipped = 0;
     const errors: string[] = [];
@@ -214,10 +231,28 @@ export async function POST(req: NextRequest) {
         if (emailVal) props["Email"] = { email: emailVal };
         if (notesVal) props["Notatki"] = { rich_text: richText(notesVal) };
 
-        await notion.pages.create({
+        const notionPage = await notion.pages.create({
           parent: { database_id: PIPELINE_DB_ID },
           properties: props,
         });
+
+        // Mirror do Supabase (public.pipeline) — źródło danych dla dashboardu.
+        // Email trafia do dedykowanej kolumny `email`, nie do notatek.
+        const { error: sbErr } = await supabase.from("pipeline").insert({
+          notion_page_id: notionPage.id,
+          firma: titleVal,
+          kontakt: nameVal && nameVal !== titleVal ? nameVal : null,
+          telefon: phoneVal ? (normalizePhonePL(phoneVal) ?? phoneVal) : null,
+          email: emailVal || null,
+          notatki: notesVal || null,
+          status: notionStatus,
+          data_pierwszego_kontaktu: todayISO,
+          zrodlo: "Google Sheets",
+        });
+        if (sbErr) {
+          errors.push(`Wiersz ${String(row._row)} (${titleVal}): Supabase ${sbErr.message}`);
+        }
+
         created++;
         // Add to dedup sets so subsequent rows in same batch don't also create
         if (normPhone.length >= 7) existingPhones.add(normPhone);

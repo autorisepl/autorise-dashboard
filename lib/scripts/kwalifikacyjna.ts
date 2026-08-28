@@ -6,24 +6,24 @@
 // Kolejność kroków 2-2k: ICP (flota, biuro, decydent) sprawdzane ZARAZ PO pierwszym
 // pytaniu diagnostycznym, PRZED szczegółową diagnozą dokumentów (2c-2g). Powód:
 // jeśli klient nie spełnia twardych progów ICP (min. 2 osoby w biurze, obecność
-// decydenta), rozmowa kończy się od razu — bez inwestowania czasu w pięć pytań
+// decydenta), rozmowa kończy się od razu, bez inwestowania czasu w pięć pytań
 // dokumentowych które i tak nie zostaną wykorzystane.
 //
 // Zasada gwarancji: obietnica dotyczy zawsze konkretnych, wspólnie policzonych i przez
 // klienta potwierdzonych procesów manualnych, nigdy ogólnej wydajności zespołu czy
-// przychodu firmy. Każda wzmianka o gwarancji w skrypcie musi to jasno zaznaczać,
-// żeby uniknąć rozczarowania klienta przy odbiorze po 30 dniach.
+// przychodu firmy. Każda wzmianka o gwarancji w skrypcie musi to jasno zaznaczać.
 //
-// Zasada języka mówionego (przebudowa 2026-08-08): każda linia typu "say"/"script"/
-// "sayAfter"/"followup" to tekst który setter WYPOWIADA na głos. Zero myślników i
-// dwukropków wewnątrz takich zdań — to znaki pisane, nie mówione, rozbij na osobne
-// zdania. Zero słowa "Kickoff" w rozmowie z klientem, zawsze "spotkanie wdrożeniowe".
-// Zero pytań tłumaczących klientowi (właścicielowi firmy transportowej) branżowe
-// pojęcia jak CMR czy potwierdzenie dostawy — pytaj wprost, po partnersku. Zero
-// założeń o sytuacji klienta, których nie wypowiedział. Liczby w ustach settera
-// zaokrąglone, dokładne zostają wyłącznie w kalkulatorze. Notatki (`note`) i cele
-// (`cel`) są WYŁĄCZNIE dla settera, nie są czytane klientowi — mogą zawierać
-// dwukropki i pełne instrukcje.
+// Zasada języka mówionego: każda linia "say"/"script"/"followup"/"transition" to
+// tekst który setter WYPOWIADA na głos. Zero myślników i dwukropków wewnątrz zdań,
+// zero instrukcji procesowych ("zaznacz w Pipeline", "przejdź do kroku X"), zero
+// słowa "Kickoff", zero obiecywania klientowi konkretnej nazwy kolejnego etapu
+// (mów ogólnie "kolejny etap" albo "spotkanie"). Zero pytań tłumaczących klientowi
+// branżowe pojęcia jak CMR, pytaj wprost i po partnersku. Zero założeń o sytuacji
+// klienta, których nie wypowiedział. Liczby w ustach settera zaokrąglone.
+//
+// `cel` to jednozdaniowa notka WYŁĄCZNIE dla settera, nigdy czytana klientowi.
+// Reakcje niepozytywne klienta NIE są opisywane w skrypcie, są obiekcjami
+// (STEP_OBJECTIONS w kwalifikacja/page.tsx), z gotową odpowiedzią w miejscu.
 
 import type { IcpRule, Objection, Step } from "./types";
 
@@ -38,7 +38,7 @@ export const STEPS_K: Step[] = [
       { t: "client", text: "Tak, słucham." },
       {
         t: "say",
-        text: "Dzień dobry, z tej strony {IMIĘ_SPRZEDAWCY} z Autorise. Pomagamy firmom transportowym zdejmować z biura powtarzalną, ręczną robotę, i robimy to na tyle pewnie, że umówiony efekt zapisujemy w umowie. Jeśli go nie dowieziemy, zwracamy całą kwotę. Dzwonię, bo zostawił Pan u nas formularz o oszczędzaniu czasu w biurze i chcę sprawdzić, czy mamy jak Panu pomóc.",
+        text: "Dzień dobry, z tej strony {IMIĘ_SPRZEDAWCY} z Autorise. Pomagamy firmom transportowym zdejmować z biura powtarzalną, ręczną robotę, z gwarancją efektu wpisaną w umowę albo zwrotem pełnej kwoty. Dzwonię, bo zostawił Pan u nas formularz o oszczędzaniu czasu w biurze i chcę sprawdzić, czy mamy jak Panu pomóc.",
         cel: "Klient najpierw wie kto dzwoni i co robicie, potem po co ten telefon, i że nie ryzykuje.",
       },
     ],
@@ -52,14 +52,13 @@ export const STEPS_K: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Co spowodowało że akurat teraz zdecydował się Pan wypełnić ten formularz?",
+        text: "Co spowodowało, że akurat teraz zdecydował się Pan wypełnić ten formularz?",
         cel: "Znaleźć konkretny wyzwalacz i realny ból, zanim przejdziesz do reszty pytań.",
       },
       { t: "client", text: "[odpowiedź]" },
     ],
     expected: "Klient nazywa konkretny powód, wyzwalacz albo bolączkę, choćby ogólnie.",
-    transition:
-      "Rozumiem, dziękuję. To już mi coś mówi. Zadam teraz kilka pytań o liczby, żeby dobrać skalę.",
+    transition: "Rozumiem, dziękuję. Zanim wejdę głębiej, kilka pytań o skalę firmy.",
   },
   {
     id: "diagnoza_icp_flota",
@@ -70,33 +69,33 @@ export const STEPS_K: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Ile pojazdów ma Pan teraz aktywnie?",
+        text: "Ile pojazdów ma Pan teraz aktywnie w firmie?",
         cel: "Zweryfikować orientacyjną skalę floty pod kątem ICP (10-150 pojazdów).",
       },
       {
         t: "say",
-        text: "A tak z grubsza, roczne obroty firmy to bardziej okolice dwóch, trzech milionów, czy raczej powyżej pięciu? Pytam, żeby dobrać skalę tego co Panu pokażę. Jeśli woli Pan nie mówić, spokojnie idziemy dalej.",
+        text: "A tak z grubsza, roczne obroty firmy to bardziej okolice dwóch, trzech milionów, czy powyżej pięciu? Pytam, żeby dobrać skalę rozwiązania. Jeśli woli Pan tego nie podawać, bez problemu, idziemy dalej.",
         cel: "Orientacyjny drugi filtr ICP, widełki trzymaj nisko bo ICP zaczyna się od około miliona złotych rocznie na działania.",
       },
       {
         t: "note",
-        text: "Pytanie opcjonalne. Jeśli klient nie chce odpowiedzieć, to nie jest blokada. Przechodzisz dalej bez naciskania.",
+        text: "Pytanie opcjonalne. Jeśli klient nie chce podać, przechodzisz dalej bez naciskania.",
       },
       {
         t: "say",
-        text: "Ile osób pracuje w biurze przy zleceniach, dokumentach i fakturach?",
+        text: "Ile osób pracuje u Was w biurze przy zleceniach, dokumentach i fakturach?",
         cel: "Twardy próg ICP, poniżej dwóch osób w biurze ból zwykle za mały żeby wdrożenie się zwróciło.",
       },
       {
         t: "say",
-        text: "A jak to się rozkłada na role? Ilu jest spedytorów, ile osób od faktur i rozliczeń, czy jest ktoś od dyspozycji?",
-        cel: "Rozbić biuro na role. Wpisujesz je od razu w tabelę niżej, każda rola osobno, bo mają różne stawki i różny czas pracy ręcznej.",
+        text: "A jak to się rozkłada? Ilu jest spedytorów, ile osób siedzi w fakturach i rozliczeniach, jest ktoś osobno od dyspozycji?",
+        cel: "Rozbić biuro na role, wpisujesz je od razu w tabelę niżej, każda osobno bo mają różne stawki i czas pracy ręcznej.",
       },
       { t: "client", text: "[podział na role]" },
     ],
     expected:
-      "Klient podaje liczbę pojazdów i rozkład osób w biurze, co najmniej dwie osoby przy zleceniach i dokumentach.",
-    transition: "Jasne, notuję. Krótkie pytanie o to, kto u Was podejmuje decyzje.",
+      "Klient podaje liczbę pojazdów i rozkład osób w biurze, co najmniej dwie przy zleceniach i dokumentach.",
+    transition: "Jasne, zapisuję. Jeszcze jedno krótkie pytanie, o to kto u Was podejmuje decyzje.",
   },
   {
     id: "diagnoza_icp_decydent",
@@ -111,7 +110,8 @@ export const STEPS_K: Step[] = [
       },
     ],
     expected: "Klient jest właścicielem albo wspólnikiem firmy.",
-    transition: "Dobrze. Przejdźmy do tego, jak dziś u Was wygląda praca z systemem i dokumentami.",
+    transition:
+      "Dobrze. To przejdźmy do tego, jak dziś u Was wygląda praca z systemem i dokumentami.",
   },
   {
     id: "diagnoza_tms",
@@ -129,7 +129,7 @@ export const STEPS_K: Step[] = [
     expected:
       "Klient podaje nazwę systemu albo mówi, że pracuje na Excelu, WhatsAppie i telefonie.",
     transition:
-      "Rozumiem, zapisuję. Rozłożymy teraz na części to, co przechodzi przez biuro ręcznie.",
+      "Rozumiem. To rozłóżmy teraz krok po kroku to, co przechodzi przez biuro ręcznie. Zacznę od samych zleceń.",
   },
   {
     id: "diagnoza_dokumenty_zlecenie",
@@ -140,14 +140,15 @@ export const STEPS_K: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Zlecenia od Waszych klientów, te którymi zamawiają u Was przewóz, jak do Was trafiają? Ktoś przepisuje je ręcznie z maila albo PDF-a do systemu, czy wpadają tam same?",
+        text: "Zlecenia od Waszych zleceniodawców, jak do Was trafiają? Ktoś przepisuje je ręcznie z maila albo PDF-a do systemu, czy wpadają tam automatycznie?",
         cel: "Sprawdzić czy przyjęcie zlecenia od zleceniodawcy generuje pracę ręczną.",
       },
       { t: "client", text: "[opis]" },
     ],
     expected:
       "Klient potwierdza, że ktoś ręcznie przepisuje przychodzące zlecenia z maila albo PDF-a do systemu.",
-    transition: "Rozumiem, czyli ktoś musi to za każdym razem przeklikać do systemu. Idźmy dalej.",
+    transition:
+      "Rozumiem, czyli za każdym razem ktoś musi to przeklikać do systemu. Idę dalej, do dokumentów z trasy.",
   },
   {
     id: "diagnoza_dokumenty_cmr",
@@ -158,25 +159,18 @@ export const STEPS_K: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Jak to wygląda z CMR-ami? Po kursie, jak to do Was wraca?",
+        text: "A CMR-y i potwierdzenia dostawy, jak wracają do Was po kursie? Papierem, zdjęciem na WhatsApp, mailem? I czy ktoś potem ręcznie przepisuje z nich dane do rozliczeń albo do systemu?",
         cel: "Sprawdzić czy dokumenty po kursie wymagają ręcznego przepisywania.",
       },
       {
         t: "say",
-        text: "Potwierdzenia dostawy wchodzą u Pana razem z CMR, czy osobno?",
+        text: "Potwierdzenie dostawy to u Was osobny druk, czy to samo co CMR?",
         cel: "Sprawdzić czy u klienta potwierdzenie dostawy to osobny druk obok CMR.",
-      },
-      {
-        t: "note",
-        text: [
-          "Papier fizyczny lub zdjęcie na WhatsApp/mailem: moduł Dokumenty i pliki, zaznacz niżej.",
-          "Elektroniczne, np. eCMR: inny profil klienta, sprawdź czy dane i tak trzeba ręcznie przenieść do rozliczeń.",
-        ],
       },
     ],
     expected:
-      "Klient mówi, że CMR i potwierdzenia dostawy wracają papierem albo zdjęciem i ktoś przepisuje z nich dane.",
-    transition: "Czyli to kolejne miejsce, gdzie ktoś ręcznie przepisuje z papieru. Lecę dalej.",
+      "Klient mówi, że CMR i potwierdzenia wracają papierem albo zdjęciem i ktoś ręcznie przepisuje z nich dane.",
+    transition: "Jasne. Zostają jeszcze faktury i rozliczenia.",
   },
   {
     id: "diagnoza_dokumenty_faktura",
@@ -187,35 +181,32 @@ export const STEPS_K: Step[] = [
     lines: [
       {
         t: "say",
-        text: "A z fakturami jak to wygląda? Tymi które wystawiacie i tymi które dostajecie. Kto to ogarnia i wpisuje do księgowości?",
-        cel: "Sprawdzić skalę pracy ręcznej przy fakturach.",
+        text: "A faktury, te które wystawiacie i te które dostajecie? Kto je u Was ręcznie wprowadza do księgowości i ile mniej więcej tego przechodzi w miesiącu?",
+        cel: "Sprawdzić skalę pracy ręcznej przy fakturach i orientacyjny wolumen.",
       },
       { t: "client", text: "[odpowiedź]" },
-      {
-        t: "say",
-        text: "Ile mniej więcej faktur miesięcznie przez to przechodzi, licząc te wystawiane i te otrzymane?",
-        cel: "Zebrać wolumen faktur, przyda się przy szacowaniu czasu ręcznej pracy.",
-      },
     ],
-    expected: "Klient mówi, że ktoś w firmie ręcznie wpisuje faktury do księgowości.",
-    transition: "Dobrze, mam ten obszar. Jeszcze jedno pytanie z tej części.",
+    expected:
+      "Klient mówi, że ktoś w firmie ręcznie wprowadza faktury do księgowości, i podaje mniej więcej ile ich jest.",
+    transition: "Dobrze, mam ten obszar. Zostało mi jedno.",
   },
   {
     id: "diagnoza_dokumenty_status",
     nr: "2g",
-    label: "WIDOCZNOŚĆ STATUSU ZLECENIA",
+    label: "WGLĄD W FIRMĘ NA BIEŻĄCO",
     tag: "MÓWISZ",
     calculatorFlag: "komunikacja",
     lines: [
       {
         t: "say",
-        text: "I ostatnia rzecz. Jak Pan sam sprawdza dziś status jakiegoś zlecenia? Trzeba zadzwonić do spedytora, czy widać to od razu w systemie?",
-        cel: "Sprawdzić czy właściciel widzi status zlecenia bez dzwonienia do spedytora.",
+        text: "Jak wygląda Pana wgląd w to, co dzieje się w firmie na bieżąco? Widzi Pan status zleceń i pracę biura od razu w systemie, czy trzeba o to dopytywać i dzwonić do spedytorów?",
+        cel: "Sprawdzić czy właściciel ma bieżącą widoczność bez dzwonienia i dopytywania.",
       },
     ],
     expected:
-      "Klient mówi, że żeby poznać status zlecenia trzeba dzwonić do spedytora albo dopytywać.",
-    transition: "To osobny, ważny temat, niezależny od dokumentów. Przejdźmy do liczb.",
+      "Klient mówi, że żeby wiedzieć co się dzieje musi dopytywać albo dzwonić, nie ma tego od razu przed oczami.",
+    transition:
+      "Rozumiem. To zbierzmy teraz to wszystko w liczby. Potrzebuję od Pana jeszcze dwóch.",
   },
   {
     id: "diagnoza_stawka",
@@ -226,36 +217,32 @@ export const STEPS_K: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Ile mniej więcej kosztuje Was godzina pracy takiej osoby, razem z narzutami? Jeśli spedytor i księgowość mają inne stawki, powie mi Pan osobno.",
-        cel: "Zebrać stawkę godzinową osobno dla każdej roli, bo do kalkulatora idą różne.",
+        text: "Ile mniej więcej kosztuje Was godzina pracy osoby w biurze, z narzutami? Jeśli to się różni między rolami, weźmiemy każdą osobno.",
+        cel: "Zebrać stawkę godzinową osobno dla każdej roli, bo do szacunku idą różne.",
       },
       { t: "client", text: "[stawki per rola lub niechęć do podania]" },
     ],
     expected:
-      "Klient podaje orientacyjną stawkę godzinową, choćby w widełkach, dla każdej roli albo jedną wspólną.",
-    transition: "Dziękuję. Zbiorę to teraz w całość i podam Panu konkretną liczbę.",
+      "Klient podaje orientacyjną stawkę godzinową, choćby w widełkach, wspólną albo osobno dla ról.",
+    transition: "Dziękuję. I ostatnia liczba.",
   },
   {
     id: "diagnoza_kalkulator",
     nr: "2i",
-    label: "KALKULATOR ROI",
-    tag: "KALKULATOR",
+    label: "SZACUNEK CZASU I KOSZTU",
+    tag: "PYTASZ",
     hasCalculator: true,
     lines: [
       {
         t: "say",
-        text: "Ostatnia rzecz zanim policzę. Ile z dnia takiej osoby schodzi realnie na tę powtarzalną, ręczną robotę, o której mówiliśmy? Godzina, dwie, a może więcej?",
-        cel: "Bez godzin dziennie per rola cały wynik jest zgadywany, to jest liczba na której stoi reszta rozmowy.",
+        text: "Ile z dnia takiej osoby schodzi realnie na tę powtarzalną, ręczną robotę, o której mówiliśmy? Godzina, dwie, więcej?",
+        cel: "Bez godzin dziennie per rola cały wynik jest zgadywany, to liczba na której stoi reszta rozmowy.",
       },
       { t: "client", text: "[godziny dziennie per rola]" },
       {
         t: "say",
-        text: "Dokładny rozkład na poszczególne zadania zmierzymy razem na spotkaniu wdrożeniowym. Teraz liczę orientacyjną całość.",
-        cel: "Ustawić oczekiwanie że to pierwsze przybliżenie, dokładny pomiar jest dopiero na spotkaniu wdrożeniowym.",
-      },
-      {
-        t: "note",
-        text: "Uzupełnij godziny dziennie przy każdej roli w tabeli niżej. Bez tego wynik jest niepełny. Moduły do wdrożenia pojawiają się z przycisków w krokach 2d do 2g, nie zaznaczasz ich tutaj.",
+        text: "Dokładnie rozpiszemy to razem na kolejnym etapie. Teraz zależy mi na orientacyjnej całości.",
+        cel: "Ustawić oczekiwanie, że to pierwsze przybliżenie, dokładny pomiar jest później.",
       },
     ],
     nextStepId: "diagnoza_liczba",
@@ -268,24 +255,20 @@ export const STEPS_K: Step[] = [
     hasModuleRecommendation: true,
     lines: [
       {
-        t: "note",
-        text: "Odczytaj wynik z kalkulatora poniżej. W rozmowie mów liczbami zaokrąglonymi, dokładne wartości zostają w kalkulatorze dla Ciebie.",
-      },
-      {
         t: "say",
         text: [
-          "Jak tak na to patrzę, przy tej skali robi się z tego całkiem sporo.",
-          "Z moich wyliczeń na szybko wychodzi, że Wasz zespół traci miesięcznie około [WYNIK Z KALKULATORA] godzin. To koszt rzędu [WARTOŚĆ PLN] miesięcznie.",
+          "Dobrze, mam komplet.",
+          "Z tego co Pan opisał wychodzi, że biuro traci na tej ręcznej robocie około [WYNIK Z KALKULATORA] godzin miesięcznie. W przeliczeniu na koszt pracy to jakieś [WARTOŚĆ PLN] miesięcznie.",
         ],
       },
       {
         t: "say",
-        text: "Nie każdą z tych godzin da się zautomatyzować w stu procentach, bo część to rozmowy z klientami i decyzje. Realistycznie mówimy o około 70 procentach tego czasu, czyli w okolicach [POTENCJAL_H] godzin miesięcznie wracających do biura.",
+        text: "Nie wszystko da się zdjąć w stu procentach, część to rozmowy i decyzje. Realnie mówimy o jakichś 70 procentach tego czasu, czyli około [POTENCJAL_H] godzin miesięcznie wracających do biura.",
         cel: "Budować wiarygodność przez uczciwość, nie obiecywać więcej niż realnie możliwe.",
       },
       {
         t: "say",
-        text: "Ta liczba dotyczy konkretnie tych zadań które przed chwilą razem policzyliśmy. Nie ogólnej wydajności zespołu, tylko tej powtarzalnej pracy którą Pan sam opisał.",
+        text: "To dotyczy dokładnie tych zadań, które przed chwilą wspólnie policzyliśmy. Nie ogólnej wydajności zespołu, tylko tej powtarzalnej pracy, którą Pan opisał.",
         cel: "Zapobiec nieporozumieniu przy zwrocie na umowie, bo dotyczy on policzonych procesów, nie ogólnej wydajności firmy.",
       },
     ],
@@ -300,17 +283,13 @@ export const STEPS_K: Step[] = [
       {
         t: "say",
         text: "Gdyby te [POTENCJAL_H] godzin miesięcznie wróciły do biura, co by Pan z nimi zrobił?",
-        cel: "Sprawić żeby klient sam nazwał korzyść, bo to przekonuje mocniej niż gdy powiesz to Ty.",
+        cel: "Klient sam nazywa korzyść, zapamiętaj jego dokładne słowa na rozmowę sprzedażową.",
       },
       { t: "client", text: "[odpowiedź]" },
-      {
-        t: "note",
-        text: "Zapamiętaj dokładne słowa klienta z tej odpowiedzi, przydadzą się żeby zacytować mu je dosłownie na rozmowie sprzedażowej. To działa bardzo mocno.",
-      },
     ],
     expected: "Klient konkretnie nazywa, co zrobiłby z odzyskanym czasem.",
     transition:
-      "Zapiszę dokładnie to, co Pan powiedział. Przejdźmy do tego, jak sprawdzić to u Pana na spotkaniu.",
+      "Zapiszę to dokładnie tak, jak Pan mówi. Na tej podstawie mam propozycję kolejnego kroku.",
   },
   {
     id: "spotkanie",
@@ -319,29 +298,25 @@ export const STEPS_K: Step[] = [
     tag: "ZAMKNIĘCIE",
     lines: [
       {
-        t: "note",
-        text: "Jeśli rozmówca nie jest decydentem (pole „decydent: nie” w Pipeline), zamiast propozycji poniżej umów od razu 45 minut wspólnie z osobą decyzyjną. Jeśli sam jest decydentem, użyj propozycji poniżej.",
-      },
-      {
         t: "say",
         text: [
-          "Na podstawie tego co Pan powiedział, myślę że możemy Pana firmie realnie pomóc.",
-          "Mam propozycję. Spotkanie przez internet, 45 minut. Pokażę dokładnie jak wygląda nasz system dla firmy o tej skali, na Pana liczbach.",
+          "Myślę, że Waszej firmie realnie pomożemy.",
+          "Proponuję tak. Spotkanie przez internet, 45 minut. Pokażę dokładnie, jak nasz system wygląda dla firmy o Waszej skali, na Waszych liczbach.",
         ],
       },
       {
         t: "say",
-        text: "Czy bardziej pasowałby Panu termin w tym, czy w przyszłym tygodniu?",
+        text: "Bardziej pasuje Panu termin w tym tygodniu, czy w przyszłym?",
       },
       { t: "client", text: "[wybiera tydzień]" },
       {
         t: "say",
-        text: "A [WYBRANY TYDZIEŃ], bardziej rano czy po południu?",
+        text: "A [WYBRANY TYDZIEŃ] bardziej rano, czy po południu?",
       },
       { t: "client", text: "[proponuje porę albo nie chce ustalać teraz]" },
     ],
     expected: "Klient podaje konkretny dzień i porę spotkania.",
-    transition: "Dobrze, rezerwuję ten termin od razu, potwierdzi mi go Pan za chwilę.",
+    transition: "Dobrze, w takim razie rezerwuję ten termin od razu.",
   },
   {
     id: "spotkanie_rezerwacja",
@@ -351,34 +326,33 @@ export const STEPS_K: Step[] = [
     lines: [
       {
         t: "say",
-        text: "To ja od razu zarezerwuję nam ten termin. [DZIEŃ] o [GODZINA], pasuje?",
+        text: "[DZIEŃ] o [GODZINA], pasuje?",
       },
       { t: "client", text: "[potwierdza]" },
       {
         t: "action",
-        text: "Zarezerwuj termin bezpośrednio w Calendly na podany dzień i godzinę, teraz, w trakcie rozmowy. Klient tylko potwierdza, nie wysyłasz mu linku do samodzielnego wyboru. Link zostaje jako wariant zapasowy wyłącznie gdy klient nie chce ustalić terminu na żywo (patrz obiekcja poniżej).",
+        text: "Zarezerwuj slot w Calendly na ten dzień i godzinę teraz, w trakcie rozmowy. Link do samodzielnego wyboru wysyłasz tylko wtedy, gdy klient nie chce ustalać na żywo.",
       },
       {
         t: "say",
-        text: "Jeszcze jedno. Całe wdrożenie, od tego spotkania aż po uruchomienie systemu u Pana w firmie, prowadzę osobiście. Nie przekazuję tego nikomu innemu. Będzie Pan miał jeden kontakt przez cały proces, nie różnych ludzi na różnych etapach.",
+        text: "Jeszcze jedno. Całe wdrożenie, od tego spotkania aż po uruchomienie systemu u Was w firmie, prowadzę osobiście. Nie przekazuję tego nikomu. Będzie Pan miał jeden kontakt przez cały proces, a nie różnych ludzi na różnych etapach.",
         textSetter:
-          "Jeszcze jedno. Całe wdrożenie, od tego spotkania aż po uruchomienie systemu u Pana w firmie, prowadzi osobiście założyciel Autorise, Michał. Nie przekazuje tego nikomu innemu. Będzie Pan miał jeden kontakt przez cały proces, nie różnych ludzi na różnych etapach.",
-        cel: "Budować autorytet i ciągłość, klient ma jeden kontakt przez cały proces zamiast przekazywania między działami.",
+          "Jeszcze jedno. Całe wdrożenie, od tego spotkania aż po uruchomienie systemu u Was w firmie, prowadzi osobiście założyciel Autorise, Michał. Nie przekazuje tego nikomu. Będzie Pan miał jeden kontakt przez cały proces, a nie różnych ludzi na różnych etapach.",
+        cel: "Budować autorytet i ciągłość, klient ma jeden kontakt przez cały proces.",
       },
       {
         t: "say",
-        text: "Dostanie Pan potwierdzenie mailem, plus przypomnienie SMS dzień przed.",
+        text: "Potwierdzenie dostanie Pan mailem, a dzień przed przypomnienie SMS.",
       },
       {
         t: "action",
-        text: "Zmień status w Pipeline na 'Discovery umówione'. Data Discovery: data wybranego slotu.",
+        text: "Zmień status w Pipeline na 'Discovery umówione', data Discovery to data wybranego slotu.",
       },
     ],
   },
 ];
 
 export const OBJECTIONS_K: Objection[] = [
-  // Obiekcje otwierające — każda kończy się przejściem do kroku 2
   {
     id: "ok_nie_kojarzy",
     label: "Nie kojarzy, nie wie o co chodzi, co sprzedajecie, to nie ja wypełniałem",
@@ -386,7 +360,7 @@ export const OBJECTIONS_K: Objection[] = [
     script:
       "Już tłumaczę. Autorise buduje firmom transportowym rozwiązania, które zdejmują z biura powtarzalną, ręczną robotę, każdą taką gdzie ktoś przepisuje albo przekleja dane z jednego miejsca w drugie. Nie wiem jeszcze co u Pana zajmuje najwięcej czasu, więc zamiast zgadywać, chciałbym zadać kilka krótkich pytań o to jak wygląda u Pana zwykły dzień w biurze. Od razu będzie wiadomo, czy jest tu w ogóle co usprawniać. Możemy tak zrobić?",
     followup:
-      "Jeśli mówi, że formularz wypełnił ktoś inny, albo że musi to przemyśleć. Rozumiem, to bez znaczenia. I tak najlepiej sprawdzić to na Pana liczbach, więc zadam te kilka pytań i będzie Pan miał obraz sytuacji.",
+      "To bez znaczenia, kto dokładnie wypełnił formularz. Liczy się to, co dzieje się u Was w biurze na co dzień. Dosłownie kilka pytań i od razu Pan zobaczy, czy jest o czym rozmawiać.",
     nextStepId: "diagnoza_otwarcie",
   },
   {
@@ -405,39 +379,34 @@ export const OBJECTIONS_K: Objection[] = [
       "Mogę wysłać materiały, ale wolałbym zadać kilka krótkich pytań, to naprawdę chwila, żeby nie były to ogólne informacje tylko coś dopasowanego pod Pana firmę.",
     followup:
       "Rozumiem. W takim razie wyślę Panu ogólne informacje na maila, a gdyby po przeczytaniu chciał Pan wrócić do tematu, chętnie się odezwę.",
-    note: "Po followup status w Pipeline to follow-up, nie sprawa zamknięta.",
     nextStepId: "diagnoza_otwarcie",
   },
-  // Standardowe obiekcje
   {
     id: "ok_nie_czasu",
-    label: "Nie ma czasu / spieszy się / minęły już 2 minuty",
+    label: "Nie ma czasu, spieszy się, minęły już 2 minuty",
     stage: "opening",
     script:
       "Rozumiem. Zajmę Panu naprawdę chwilę, bo chodzi o czas i pieniądze które biuro traci co miesiąc na powtarzalnej, ręcznej robocie. Da rady teraz, czy woli Pan żebym oddzwonił o konkretnej porze?",
     followup:
       "Jasne, nie będę naciskać. Kiedy jest Panu wygodniej, jutro rano czy raczej po południu? Zapiszę konkretny termin i wtedy zadzwonię.",
-    note: "Zbijasz raz. Jeśli klient dalej nie chce, umawiasz konkretny termin, dzień i porę, zapisujesz w Pipeline jako follow-up i nie przekonujesz dalej. Szczery brak czasu szanujesz, wymówki nie forsujesz.",
     nextStepId: "diagnoza_otwarcie",
   },
   {
     id: "brak_konkretu",
-    label: "Nie potrafi nazwać powodu, „trudno powiedzieć”, „z ciekawości”",
+    label: "Nie potrafi nazwać powodu, trudno powiedzieć, z ciekawości",
     stage: "opening",
     script:
       "Rozumiem, czasem trudno to od razu ująć w słowa. Niech Pan opowie po prostu, jak wygląda u Pana zwykły dzień w biurze. Od momentu gdy wchodzi zlecenie, aż po to jak się z niego rozliczacie.",
     followup:
       "A gdy przychodzi dużo zleceń naraz albo spedytora nie ma przez chorobę czy urlop, to biuro wtedy przystaje, czy ktoś przejmuje to płynnie?",
-    note: "Najpierw otwarty opis dnia. Dopiero gdy to za mało, dopytujesz o konkretną sytuację pod obciążeniem. Jeśli po obu klient dalej mówi, że wszystko działa bez zarzutu, przejdź do obiekcji „W sumie nie mam żadnych problemów”. Jeśli pojawił się realny ból, wracasz do pytania o zespół i flotę.",
     nextStepId: "diagnoza_icp_flota",
   },
   {
     id: "brak_bolu",
-    label: "„W sumie nie mam żadnych problemów”, wszystko mamy ogarnięte",
+    label: "W sumie nie mam żadnych problemów, wszystko mamy ogarnięte",
     stage: "opening",
     script:
       "Zanim odpuszczę, jedno pytanie. Czy jest w biurze jakaś czynność, którą robicie w kółko ręcznie i która najbardziej Pana uwiera, nawet jeśli dziś jakoś się to spina? Jeśli nie, to spokojnie. Zapiszę Wasz kontakt i odezwę się za jakiś czas, bo firmy tej wielkości zwykle po kilku miesiącach dochodzą do punktu, w którym tej roboty robi się za dużo.",
-    note: "Używasz po dwóch nieudanych próbach pokazania bólu, nie sprzedajesz na siłę. Jeśli klient wskaże jakąś uciążliwość, wróć do diagnozy od pytania o zespół i flotę. Jeśli nie, status w Pipeline to Nieaktywny follow-up, data re-engagement za 3 miesiące.",
   },
   {
     id: "ok3",
@@ -449,15 +418,14 @@ export const OBJECTIONS_K: Objection[] = [
   },
   {
     id: "ok4",
-    label: "Jadę na urlop / wracam za X tygodni",
+    label: "Jadę na urlop, wracam za jakiś czas",
     stage: "wszedzie",
     script: "Rozumiem. Kiedy Pan wraca?",
     followup: "Zapisuję. Zadzwonię do Pana [data po powrocie]. Życzę udanego urlopu.",
-    note: "Status: Nieaktywny (follow up). Data re-engagement: dzień po powrocie.",
   },
   {
     id: "ok5",
-    label: "Muszę porozmawiać ze wspólnikiem / synem / żoną",
+    label: "Muszę porozmawiać ze wspólnikiem, synem, żoną",
     stage: "wszedzie",
     script:
       "A mogliby Państwo dołączyć we dwoje na spotkanie przez internet? Trwa 45 minut, mam przygotowane liczby konkretnie dla Pana firmy. Wtedy oboje macie pełen obraz i decydujecie razem.",
@@ -469,8 +437,7 @@ export const OBJECTIONS_K: Objection[] = [
     label: "Poniżej progu ICP, jedna osoba w biurze",
     stage: "icp",
     script:
-      "Dziękuję za szczerość. Przy tej wielkości biura pewnie nie poczułby Pan jeszcze realnej różnicy, więc szczerze, nie namawiam na coś co się nie zwróci. Mogę zapisać kontakt i wrócić za jakieś 3 miesiące, jak zespół się powiększy, dobrze?",
-    note: "Status: Niekwalifikowany. Jeśli zgoda: data re-engagement +90 dni w Pipeline. Koniec rozmowy, nie wracaj do diagnozy.",
+      "Dziękuję za szczerość. Przy tej wielkości biura pewnie nie poczułby Pan jeszcze realnej różnicy, więc szczerze, nie namawiam na coś co się nie zwróci. Mogę zapisać kontakt i wrócić za jakieś trzy miesiące, jak zespół się powiększy, dobrze?",
   },
   {
     id: "icp_nie_decydent",
@@ -479,17 +446,15 @@ export const OBJECTIONS_K: Objection[] = [
     script:
       "Rozumiem. Czym się Pan zajmuje w firmie, i zgłosił się Pan z własnej inicjatywy, czy na prośbę właściciela?",
     followup:
-      "Dobrze, to zbierzmy teraz wszystkie informacje, a na końcu ustalimy jak najlepiej zorganizować kolejny krok, tak żeby właściciel też miał pełen obraz.",
-    note: "Zaznacz w Pipeline (pole 'decydent: nie'), żeby w kroku 3 zaproponować 45 minut wspólnie z osobą decyzyjną zamiast standardowego terminu. Poczekaj na odpowiedź rozmówcy, potem followup. Kontynuujesz pełną diagnozę z tą osobą, nie skracasz rozmowy i nie umawiasz spotkania na tym etapie.",
+      "Dobrze, to zbierzmy teraz wszystkie informacje, a na końcu ustalimy jak najlepiej zorganizować kolejny krok, tak żeby właściciel też miał pełen obraz. Najlepiej od razu 45 minut we dwoje, żeby nie musiał Pan tego później tłumaczyć z drugiej ręki.",
     nextStepId: "diagnoza_tms",
   },
   {
     id: "zewnetrzne_biuro_ksiegowe",
-    label: "Faktury: zewnętrzne biuro rachunkowe",
+    label: "Faktury, zewnętrzne biuro rachunkowe",
     stage: "diagnoza",
     script:
       "Jasne, biuro rachunkowe zajmuje się rozliczeniami. A kto u Was przygotowuje i wysyła im dokumenty, faktury, potwierdzenia dostaw? To zwykle ta sama osoba co reszta administracji, zgadza się?",
-    note: "Nawet z zewnętrzną księgowością ktoś wewnątrz firmy zbiera i wysyła dokumenty ręcznie. To wciąż ból do zmapowania w kalkulatorze (moduł Dokumenty i pliki).",
   },
   {
     id: "tms_panel_zewnetrzny",
@@ -498,17 +463,15 @@ export const OBJECTIONS_K: Objection[] = [
     stage: "diagnoza",
     script:
       "Rozumiem, czyli większość obiegu macie w tym panelu. Powie mi Pan, co przy tym robicie jeszcze ręcznie obok samego panelu? Wystawianie faktur, zbieranie potwierdzeń, pilnowanie płatności?",
-    note: "Ten profil nie pasuje do pytań o CMR na giełdach transportowych. Zamiast lecieć krokami 2d do 2g po kolei, dopytaj ogólnie o ręczną robotę wokół panelu i wróć do kroku, który realnie pasuje do jego odpowiedzi.",
   },
   {
     id: "konkurencja_m365",
-    label: "Ma wszystko w Microsoft 365 / Power Automate",
+    label: "Ma wszystko w Microsoft 365, Power Automate",
     stage: "diagnoza",
     script:
       "To brzmi jak solidna konfiguracja. Sprawdzam zwykle jedną rzecz, czy to faktycznie odczytuje dane z dokumentu i wpisuje je samo, czy tylko przenosi plik do folderu, a ktoś i tak musi go otworzyć i przepisać ręcznie?",
     followup:
       "A co się dzieje, gdy dokument wygląda inaczej niż zwykle? System radzi sobie z tym sam, czy ktoś musi wtedy ręcznie poprawić? I kto to wszystko utrzymuje, gdy przestaje działać po aktualizacji?",
-    note: "Większość konfiguracji Power Automate przenosi pliki, nie wyciąga z nich danych, i utrzymuje ją jedna osoba która to kiedyś ustawiła. Jeśli klient ma naprawdę zaawansowaną integrację z prawdziwym odczytem dokumentów i utrzymaniem, przyznaj to uczciwie, nie naciskaj wbrew faktom.",
   },
   {
     id: "po_co_to_pytanie",
@@ -516,7 +479,6 @@ export const OBJECTIONS_K: Objection[] = [
     stage: "diagnoza",
     script:
       "Pytam, bo od tego zależy czy w ogóle mam dla Pana sensowną propozycję. Wolę sprawdzić to teraz, w kilku zdaniach, niż umawiać spotkanie które niczego by nie wniosło.",
-    note: "Krótkie, szczere uzasadnienie, bez tłumaczenia się i bez przedłużania wątku. Po odpowiedzi wracaj natychmiast do pytania diagnostycznego które przerwał.",
   },
   {
     id: "czas_milczy",
@@ -537,7 +499,6 @@ export const OBJECTIONS_K: Objection[] = [
     label: "Przeskakuje od razu do pytania o cenę",
     stage: "kalkulator",
     script: "Do ceny zaraz dojdziemy, chcę tylko dokończyć ten wątek.",
-    note: "Jeśli mimo to nalega: nie walcz, przejdź dalej normalnie, zanotuj w Pipeline że pytanie o korzyść czasu nie zostało w pełni odpowiedziane.",
   },
   {
     id: "stawka_niechec",
@@ -545,7 +506,6 @@ export const OBJECTIONS_K: Objection[] = [
     stage: "kalkulator",
     script:
       "Rozumiem, to szczegół księgowy. Wystarczy orientacyjnie, to bliżej 40, 55, czy 70 złotych za godzinę z narzutami?",
-    note: "Wpisz podaną wartość orientacyjną do kalkulatora, nie zostawiaj pustego pola.",
   },
   {
     id: "spedytorzy_dorazni",
@@ -553,7 +513,6 @@ export const OBJECTIONS_K: Objection[] = [
     stage: "diagnoza",
     script:
       "Rozumiem, czyli pracują doraźnie, na wezwanie. A gdy jest dużo zleceń naraz, ile osób realnie wtedy przy tym siedzi i ile godzin to zajmuje?",
-    note: "ICP i kalkulator liczą się tak samo. Pytaj o realną liczbę osób i godzin w szczycie, niezależnie od formy zatrudnienia. Forma zatrudnienia nie zmienia kwalifikacji, liczy się faktyczny czas pracy nad dokumentami.",
   },
   {
     id: "spotkanie_link_zapasowy",
@@ -561,7 +520,6 @@ export const OBJECTIONS_K: Objection[] = [
     stage: "closing",
     script:
       "Rozumiem, nie ma problemu. Wyślę Panu link do samodzielnej rezerwacji przez Calendly, wybierze Pan dogodny termin. Dostanie Pan też automatyczne przypomnienie SMS dzień przed.",
-    note: "Użyj wyłącznie gdy klient wyraźnie nie chce ustalić terminu na żywo. Domyślna ścieżka to rezerwacja terminu bezpośrednio na tej rozmowie (krok 3, opcja 'podaje dzień i porę'). Wyślij link Calendly natychmiast po rozmowie, nie 'zaraz', teraz. Zmień status w Pipeline na 'Discovery umówione' dopiero gdy klient faktycznie zarezerwuje termin w Calendly, nie w momencie wysłania linku.",
   },
 ];
 
@@ -571,7 +529,7 @@ export const ICP_RULES: IcpRule[] = [
   {
     ok: true,
     label: "Ból",
-    val: "Ręczna praca potwierdzona kalkulatorem, od 80 godzin miesięcznie.",
+    val: "Ręczna praca potwierdzona szacunkiem, od 80 godzin miesięcznie.",
   },
   { ok: true, label: "Flota", val: "Orientacyjnie 10 do 150 pojazdów." },
   {
@@ -588,9 +546,7 @@ export const ICP_RULES: IcpRule[] = [
 
 // Frazy potwierdzające, przypięte do etapu rozmowy. Każda jest tak zbudowana,
 // żeby pasowała niezależnie od tego co klient powie, także tuż po obiekcji:
-// najpierw krótkie potwierdzenie że słuchasz, potem naturalny mostek do tego co
-// dzieje się na tym etapie dalej. Setter czyta etykietę etapu i bierze frazę
-// z tej grupy.
+// najpierw krótkie potwierdzenie że słuchasz, potem naturalny mostek dalej.
 export interface AckPhrase {
   stage: string;
   text: string;
@@ -634,16 +590,16 @@ export const ACKNOWLEDGMENT_PHRASES: AckPhrase[] = [
     text: "Dobrze, to mam ten obszar. Została mi jeszcze jedna rzecz do sprawdzenia.",
   },
   {
-    stage: "Liczby i kalkulator",
+    stage: "Liczby",
     text: "Rozumiem. Żeby policzyć to rzetelnie, potrzebuję jeszcze jednej liczby od Pana.",
   },
   {
-    stage: "Liczby i kalkulator",
+    stage: "Liczby",
     text: "Dobrze, to mam komplet. Podam Panu teraz orientacyjnie ile z tego wychodzi.",
   },
   {
-    stage: "Liczby i kalkulator",
-    text: "Spokojnie, to na razie tylko przybliżenie. Dokładnie liczymy dopiero na spotkaniu.",
+    stage: "Liczby",
+    text: "Spokojnie, to na razie tylko przybliżenie. Dokładnie rozpiszemy to na kolejnym etapie.",
   },
   {
     stage: "Spotkanie",
