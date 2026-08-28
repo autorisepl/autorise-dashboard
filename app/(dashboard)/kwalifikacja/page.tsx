@@ -67,7 +67,7 @@ function toSentences(text: string): string[] {
 // OPENING: rozwijane wiersze z gotową odpowiedzią w miejscu.
 const STEP_OBJECTIONS: Record<string, string[]> = {
   opener: ["ok_nie_kojarzy", "ok_nie_czasu", "ok3", "ok_em", "ok_ms"],
-  diagnoza_otwarcie: ["po_co_to_pytanie", "ok_nie_kojarzy"],
+  diagnoza_otwarcie: ["brak_konkretu", "brak_bolu", "ok_nie_kojarzy", "po_co_to_pytanie"],
   diagnoza_icp_flota: ["icp_ponizej_progu", "spedytorzy_dorazni"],
   diagnoza_icp_decydent: ["icp_nie_decydent"],
   diagnoza_tms: ["konkurencja_m365"],
@@ -1143,7 +1143,20 @@ function ScriptStep({
                       </span>
                     )}
                     {line.t === "note" && (
-                      <AlertTriangle size={13} color="var(--warning)" strokeWidth={2} />
+                      <span
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          width: 30,
+                          height: 30,
+                          borderRadius: 9,
+                          border: "1px solid rgba(255,255,255,0.42)",
+                          background: "var(--warning)",
+                        }}
+                      >
+                        <AlertTriangle size={17} color="#ffffff" strokeWidth={2.75} />
+                      </span>
                     )}
                     {line.t === "action" && (
                       <Check size={13} color="var(--accent)" strokeWidth={2.5} />
@@ -1914,7 +1927,7 @@ function PhrasesPanel({
           key={i}
           style={{
             display: "flex",
-            alignItems: "center",
+            alignItems: "flex-start",
             gap: 8,
             padding: "10px 12px",
             borderRadius: "var(--radius-sm)",
@@ -1923,19 +1936,51 @@ function PhrasesPanel({
             boxShadow: "var(--shadow-sm)",
           }}
         >
-          <span
-            style={{
-              flex: 1,
-              fontFamily: "var(--font-sans)",
-              fontSize: 14,
-              lineHeight: 1.5,
-              color: "var(--text-primary)",
-            }}
-          >
-            {phrase}
-          </span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                marginBottom: 6,
+              }}
+            >
+              <span
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  background: "#ffffff",
+                  flexShrink: 0,
+                }}
+              />
+              <span
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 10.5,
+                  fontWeight: 800,
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                  color: "var(--text-primary)",
+                }}
+              >
+                {phrase.stage}
+              </span>
+            </div>
+            <span
+              style={{
+                display: "block",
+                fontFamily: "var(--font-sans)",
+                fontSize: 14,
+                lineHeight: 1.5,
+                color: "var(--text-primary)",
+              }}
+            >
+              {phrase.text}
+            </span>
+          </div>
           <button
-            onClick={() => onCopy(`phrase-${i}`, phrase)}
+            onClick={() => onCopy(`phrase-${i}`, phrase.text)}
             title="Kopiuj"
             style={{
               flexShrink: 0,
