@@ -449,6 +449,7 @@ function ScriptStep({
             <DecisionDiagram
               decision={step.decision}
               onSelect={(option) => onDecisionSelect(step.id, option)}
+              onJump={onJump}
               selectedTrigger={selectedTrigger}
             />
           )}
@@ -737,6 +738,7 @@ function renderObjectionD(
   copiedId: string | null,
   onDecisionSelect: (objectionId: string, option: DecisionOption) => void,
   selectedOptions: Record<string, string>,
+  onJump: (stepId: string) => void,
 ) {
   const oc = objectionColor(obj.label);
   const isOpen = openId === obj.id;
@@ -856,6 +858,7 @@ function renderObjectionD(
             <DecisionDiagram
               decision={obj.decision}
               onSelect={(option) => onDecisionSelect(obj.id, option)}
+              onJump={onJump}
               selectedTrigger={selectedOptions[obj.id]}
             />
           )}
@@ -922,6 +925,7 @@ function ObjectionsPanel({
   setOpenId,
   onDecisionSelect,
   selectedOptions,
+  onJump,
 }: {
   fill: (t: string) => string;
   onCopy: (id: string, text: string) => void;
@@ -930,6 +934,7 @@ function ObjectionsPanel({
   setOpenId: (id: string | null) => void;
   onDecisionSelect: (objectionId: string, option: DecisionOption) => void;
   selectedOptions: Record<string, string>;
+  onJump: (stepId: string) => void;
 }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -961,6 +966,7 @@ function ObjectionsPanel({
                   copiedId,
                   onDecisionSelect,
                   selectedOptions,
+                  onJump,
                 ),
               )}
             </div>
@@ -1508,6 +1514,7 @@ function RightPanel({
   setOpenObjectionId,
   onDecisionSelect,
   selectedOptions,
+  onJump,
 }: {
   client: PipelineClientDetailed | null;
   fill: (t: string) => string;
@@ -1517,6 +1524,7 @@ function RightPanel({
   setOpenObjectionId: (id: string | null) => void;
   onDecisionSelect: (objectionId: string, option: DecisionOption) => void;
   selectedOptions: Record<string, string>;
+  onJump: (stepId: string) => void;
 }) {
   return (
     <div
@@ -1539,6 +1547,7 @@ function RightPanel({
           setOpenId={setOpenObjectionId}
           onDecisionSelect={onDecisionSelect}
           selectedOptions={selectedOptions}
+          onJump={onJump}
         />
       </Card>
       <Card title="SMS / Wiadomości" collapsible defaultOpen={false}>
@@ -1784,11 +1793,12 @@ export default function SprzedazPage() {
       setSelectedOptions((prev) => ({ ...prev, [sourceId]: option.trigger }));
       if (option.openObjectionId) {
         jumpToObjection(option.openObjectionId);
-        return;
       }
-      if (option.goToStepId) jumpToStep(option.goToStepId);
+      // Przejście po `goToStepId` NIE jest automatyczne — setter klika osobny
+      // przycisk "Dalej" wewnątrz DecisionDiagram (onJump), dopiero gdy przeczytał
+      // klientowi `sayAfter`.
     },
-    [jumpToStep, jumpToObjection],
+    [jumpToObjection],
   );
 
   return (
@@ -2075,6 +2085,7 @@ export default function SprzedazPage() {
           setOpenObjectionId={setOpenObjectionId}
           onDecisionSelect={handleDecisionSelect}
           selectedOptions={selectedOptions}
+          onJump={jumpToStep}
         />
       </div>
     </div>

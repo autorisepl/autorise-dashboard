@@ -2,12 +2,18 @@
 
 import { Check } from "lucide-react";
 import type { CSSProperties } from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { Decision, DecisionOption } from "@/lib/scripts/types";
+import { NextStepArrow } from "./NextStepArrow";
 
 interface DecisionDiagramProps {
   decision: Decision;
   onSelect: (option: DecisionOption) => void;
+  // Wywoływane WYŁĄCZNIE przez przycisk "Dalej" wewnątrz wybranej opcji, nie
+  // automatycznie przy samym onSelect — setter ma sam zdecydować kiedy odczytał
+  // `sayAfter` klientowi i jest gotowy przejść dalej, zamiast strona przeskakiwała
+  // pod nim w trakcie żywej rozmowy (patrz komentarz w onSelect wywołania).
+  onJump: (stepId: string) => void;
   selectedTrigger?: string;
 }
 
@@ -46,18 +52,17 @@ function buildOptionStyle(isSelected: boolean, isHovered: boolean, tone: Tone): 
   };
 }
 
-export function DecisionDiagram({ decision, onSelect, selectedTrigger }: DecisionDiagramProps) {
+export function DecisionDiagram({
+  decision,
+  onSelect,
+  onJump,
+  selectedTrigger,
+}: DecisionDiagramProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
-  // Po wyborze opcji z tekstem do powiedzenia (`sayAfter`), tekst ma być od razu
-  // widoczny na samej górze widocznego obszaru, nie wymagać przewijania w trakcie
-  // żywej rozmowy — realny problem operacyjny zgłoszony przez Michała, nie kosmetyczny.
-  useEffect(() => {
-    if (!selectedTrigger) return;
-    const el = document.getElementById(`sayafter-${selectedTrigger}`);
-    if (!el) return;
-    el.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [selectedTrigger]);
+  // Zero auto-scrolla po wyborze opcji: odpowiedź (`sayAfter`) i tak pojawia się
+  // od razu pod klikniętą opcją, w miejscu gdzie wzrok settera już jest.
+  // Przewijanie strony w trakcie rozmowy na żywo gubiło settera.
 
   return (
     <div
@@ -91,10 +96,22 @@ export function DecisionDiagram({ decision, onSelect, selectedTrigger }: Decisio
           const isSelected = opt.trigger === selectedTrigger;
           const isHovered = hoveredIndex === i;
           return (
-            <button
+            // Runda redesignu przycisków decyzji: div z role="button" zamiast
+            // zagnieżdżonego <button>, bo teraz w środku żyje PRAWDZIWY, osobny
+            // przycisk "Dalej" — dwa zagnieżdżone <button> to nieprawidłowy HTML
+            // i realny bug (kliknięcie w "Dalej" odpalałoby oba onClicki).
+            // biome-ignore lint/a11y/useSemanticElements: <button> w środku wyklucza prawdziwy <button> na zewnątrz
+            <div
               key={opt.trigger}
-              type="button"
+              role="button"
+              tabIndex={0}
               onClick={() => onSelect(opt)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onSelect(opt);
+                }
+              }}
               onMouseEnter={() => setHoveredIndex(i)}
               onMouseLeave={() => setHoveredIndex(null)}
               style={buildOptionStyle(isSelected, isHovered, tone)}
@@ -121,19 +138,6 @@ export function DecisionDiagram({ decision, onSelect, selectedTrigger }: Decisio
                 </span>
                 {isSelected && <Check size={16} color={accent} strokeWidth={3} />}
               </div>
-              {opt.action && (
-                <div
-                  style={{
-                    fontFamily: "var(--font-sans)",
-                    fontSize: 13,
-                    lineHeight: 1.5,
-                    color: "var(--text-secondary)",
-                    fontWeight: 450,
-                  }}
-                >
-                  {opt.action}
-                </div>
-              )}
               {opt.calculatorFlag && (
                 <span
                   style={{
@@ -151,6 +155,22 @@ export function DecisionDiagram({ decision, onSelect, selectedTrigger }: Decisio
                 >
                   Kalkulator
                 </span>
+              )}
+              {/* `action` to instrukcja dla settera, nie potrzebna dopóki opcja nie
+                  jest wybrana — przed kliknięciem zaśmiecała widok każdej opcji. */}
+              {isSelected && opt.action && (
+                <div
+                  style={{
+                    marginTop: 4,
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 13,
+                    lineHeight: 1.5,
+                    color: "var(--text-secondary)",
+                    fontWeight: 450,
+                  }}
+                >
+                  {opt.action}
+                </div>
               )}
               {isSelected && opt.sayAfter && (
                 <div
@@ -171,7 +191,17 @@ export function DecisionDiagram({ decision, onSelect, selectedTrigger }: Decisio
                   {opt.sayAfter}
                 </div>
               )}
-            </button>
+              {/* Zamiast osobnego NextStepArrow renderowanego gdzie indziej na stronie
+                  (drugi klik, wzrok musi szukać) — ten sam komponent, ale TU, w tej
+                  samej karcie, dokładnie tam gdzie wzrok już patrzy po przeczytaniu
+                  action/sayAfter. stopPropagation, żeby klik w "Dalej" nie odpalił
+                  ponownie onSelect z rodzica. */}
+              {isSelected && opt.goToStepId && (
+                <div role="presentation" onClick={(e) => e.stopPropagation()}>
+                  <NextStepArrow label="Dalej" onJump={() => onJump(opt.goToStepId!)} />
+                </div>
+              )}
+            </div>
           );
         })}
       </div>

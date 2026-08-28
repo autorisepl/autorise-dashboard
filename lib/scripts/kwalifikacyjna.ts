@@ -38,49 +38,11 @@ export const STEPS_K: Step[] = [
       { t: "client", text: "Tak, słucham." },
       {
         t: "say",
-        text: [
-          "Dzień dobry, mówi {IMIĘ_SPRZEDAWCY} z Autorise.",
-          "Widziałem w systemie że wypełnił Pan nasz formularz o oszczędności czasu w biurze.",
-          "Chciałem zapytać, czy ten temat jest u Was jeszcze aktualny?",
-        ],
-        cel: "Uzasadnienie rozmowy wbudowane w samo zdanie, klient od razu wie po co dzwonisz, zanim zdąży pomyśleć że to nachalna sprzedaż",
+        text: "Dzień dobry, mówi {IMIĘ_SPRZEDAWCY} z Autorise. Widziałem że wypełnił Pan formularz o oszczędności czasu w biurze dla firm transportowych, z gwarancją efektu zapisaną w umowie.",
+        cel: "Klient od razu wie po co dzwonisz i co oferujemy, zanim uzna to za nachalną sprzedaż.",
       },
-      {
-        t: "say",
-        text: "Chciałbym zadać dwa, trzy pytania żeby sprawdzić czy to w ogóle ma sens dla Pana firmy. Zajęłoby mi to z dwie minuty, dobrze?",
-        cel: "Uzasadnienie prośby o czas wbudowane w samo zdanie, nie osobna adnotacja — klient wie po co te 2 minuty, zanim zdąży pomyśleć że to sprzedaż",
-      },
-      { t: "client", text: "[odpowiedź]" },
     ],
-    decision: {
-      question: "Co odpowiedział klient?",
-      options: [
-        {
-          trigger: "„Tak, mam te dwie minuty”",
-          action: "Przechodzisz do diagnozy.",
-          goToStepId: "diagnoza_otwarcie",
-          tone: "positive",
-        },
-        {
-          trigger: "„Nie mam czasu” i podaje konkretny powód",
-          action: "Szanujesz to i umawiasz konkretny termin oddzwonienia.",
-          openObjectionId: "ok1_szczere",
-          tone: "warning",
-        },
-        {
-          trigger: "„Nie mam czasu”, zbywa bez powodu",
-          action: "Dajesz jedno zdanie o konkretnej korzyści i pytasz ponownie.",
-          openObjectionId: "ok1_wymowka",
-          tone: "warning",
-        },
-        {
-          trigger: "„Niech Pan mi najpierw opowie czym się zajmujecie”",
-          action: "Prosisz o dwa pytania zanim opowiesz, potem wracasz do diagnozy.",
-          openObjectionId: "ok_najpierw_opowiedz",
-          tone: "neutral",
-        },
-      ],
-    },
+    nextStepId: "diagnoza_otwarcie",
   },
   {
     id: "diagnoza_otwarcie",
@@ -118,10 +80,11 @@ export const STEPS_K: Step[] = [
         },
         {
           trigger: "„W sumie nie mam żadnych problemów”",
-          action: "Odpowiadasz i dopytujesz raz jeszcze, zanim uznasz że nie ma bólu.",
+          action:
+            "Odpowiadasz i przechodzisz wprost do ICP. Jeśli klient mówi że kliknął z ciekawości, użyj tego przejścia zamiast standardowego pytania o liczbę pojazdów: „Jak najbardziej rozumiem że był Pan ciekawy naszej oferty. Żeby dobrze dopasować rozwiązanie, powie mi Pan ile osób teraz pracuje w biurze z Panem?”. Prosta kontynuacja wprost do pytania ICP, bez zbędnego pośredniego zdania.",
           sayAfter:
-            "Wielu ludzi z którymi rozmawiam mówi podobnie, a potem okazuje się że jest jedno konkretne miejsce gdzie coś nie gra tak jak by chcieli. Jak to u Pana wygląda?",
-          goToStepId: "diagnoza_doprecyzowanie_bolu",
+            "Rozumiem, aczkolwiek musiał być jakiś powód dla którego kliknął Pan akurat w tę reklamę. Co to było?",
+          goToStepId: "diagnoza_icp_flota",
           tone: "warning",
         },
         {
@@ -238,7 +201,7 @@ export const STEPS_K: Step[] = [
       },
       {
         t: "say",
-        text: "Orientacyjnie, w jakim przedziale rocznego przychodu firma się dziś mieści - to pytanie zadaję tylko po to, żeby dobrze dobrać skalę rozwiązania, nie z ciekawości.",
+        text: "Orientacyjnie, przychód roczny firmy to bliżej trzech do dziesięciu milionów, dziesięciu do trzydziestu, czy powyżej trzydziestu? To pytanie zadaję tylko po to, żeby dobrze dobrać skalę rozwiązania, nie z ciekawości.",
         cel: "Drugi, opcjonalny filtr ICP obok liczby pojazdów, do dopasowania skali rozwiązania",
       },
       {
@@ -621,6 +584,10 @@ export const STEPS_K: Step[] = [
         cel: "Sprawić żeby klient sam nazwał korzyść — silniej przekonuje niż gdybyś to Ty powiedział",
       },
       { t: "client", text: "[odpowiedź]" },
+      {
+        t: "note",
+        text: "Zapamiętaj dokładne słowa klienta z tej odpowiedzi, przydadzą się żeby zacytować mu je dosłownie na rozmowie sprzedażowej. To działa bardzo mocno.",
+      },
     ],
     decision: {
       question: "Jak zareagował klient?",
@@ -687,17 +654,26 @@ export const STEPS_K: Step[] = [
     tag: "ZAMKNIĘCIE",
     lines: [
       {
+        t: "note",
+        text: "Jeśli rozmówca NIE jest decydentem (patrz obiekcja 'Rozmówca nie jest decydentem', pole 'decydent: nie' w Pipeline), zamiast poniższej propozycji użyj: „Zaproponuję najprościej. Umówmy od razu 45 minut wspólnie z osobą decyzyjną, żeby nie musiał Pan tego później tłumaczyć z drugiej ręki.” Jeśli rozmówca sam jest decydentem, pomiń tę frazę i użyj standardowej propozycji poniżej.",
+      },
+      {
         t: "say",
         text: [
           "Na podstawie tego co Pan powiedział, myślę że możemy Pana firmie realnie pomóc.",
-          "Mam propozycję. Spotkanie przez internet, 45 minut. Pokażę dokładnie jak wygląda automatyzacja dla firmy o tej skali, na Pana liczbach.",
+          "Mam propozycję. Spotkanie przez internet, 45 minut. Pokażę dokładnie jak wygląda nasz system dla firmy o tej skali, na Pana liczbach.",
         ],
       },
       {
         t: "say",
-        text: "Kiedy pasowałby Panu taki termin, w tym czy w przyszłym tygodniu, rano czy po południu?",
+        text: "Czy bardziej pasowałby Panu termin w tym, czy w przyszłym tygodniu?",
       },
-      { t: "client", text: "[proponuje termin albo nie chce ustalać teraz]" },
+      { t: "client", text: "[wybiera tydzień]" },
+      {
+        t: "say",
+        text: "A [WYBRANY TYDZIEŃ], bardziej rano czy po południu?",
+      },
+      { t: "client", text: "[proponuje porę albo nie chce ustalać teraz]" },
     ],
     decision: {
       question: "Czy klient podał konkretny dzień i porę?",
@@ -758,15 +734,15 @@ export const OBJECTIONS_K: Objection[] = [
     label: "Nie pamiętam żadnego formularza",
     stage: "opening",
     script:
-      "Jasne, tych reklam jest sporo, rozumiem. Zajmujemy się automatyzacją dokumentów transportowych, na przykład zleceniami, CMR-ami i fakturami, tym co dziś ktoś u Pana przepisuje ręcznie. Tego dotyczył formularz który Pan zostawił na Facebooku. Mam dwa pytania zanim opowiem więcej, ma Pan chwilę?",
+      "Jasne, tych reklam jest sporo. Mamy sprawdzony system, który przyspiesza pracę przy zleceniach, CMR-ach i fakturach, tym co dziś ktoś u Pana przepisuje ręcznie. Mam dwa pytania zanim opowiem więcej, ma Pan chwilę?",
     nextStepId: "diagnoza_otwarcie",
   },
   {
     id: "ok_cc",
-    label: "Co Pan sprzedaje? O co chodzi?",
+    label: "Co Pan sprzedaje? O co chodzi? / Od razu pyta o cenę",
     stage: "opening",
     script:
-      "Automatyzujemy pracę biura spedycji, na przykład zlecenia, CMR i faktury. Zanim cokolwiek zaproponuję, chcę wiedzieć jak to u Pana wygląda. Zajmie dosłownie dwie minuty. Dobrze?",
+      "Mamy sprawdzony system, który przyspiesza pracę w firmach transportowych, na przykład przy zleceniach, CMR-ach i fakturach. Zanim powiem więcej, chcę wiedzieć jak to u Pana wygląda dziś. Mam dwa pytania, dobrze?",
     nextStepId: "diagnoza_otwarcie",
   },
   {
@@ -778,19 +754,11 @@ export const OBJECTIONS_K: Objection[] = [
     nextStepId: "diagnoza_otwarcie",
   },
   {
-    id: "ok_cp",
-    label: "Od razu pyta o cenę",
-    stage: "opening",
-    script:
-      "Cena zależy od skali i konfiguracji, dlatego najpierw sprawdzam czy to w ogóle ma sens dla Pana firmy. Jeśli tak, podam ją wprost na spotkaniu, bez owijania w bawełnę. Mam dwa pytania, dobrze?",
-    nextStepId: "diagnoza_otwarcie",
-  },
-  {
     id: "ok_najpierw_opowiedz",
     label: "Niech Pan mi najpierw opowie czym się zajmujecie",
     stage: "opening",
     script:
-      "Jasne, powiem w dwóch zdaniach - ale żeby to miało sens, chciałbym najpierw zrozumieć z czym Pan dziś pracuje. Mogę zadać dwa pytania?",
+      "Jasne, powiem w dwóch zdaniach, ale żeby to miało sens, chciałbym najpierw zrozumieć z czym Pan dziś pracuje. Mogę zadać dwa pytania?",
     followup:
       "Pomagamy firmom transportowym ograniczyć ręczne wpisywanie zleceń i dokumentów, z gwarancją efektu zapisaną w umowie.",
     note: "Followup wyłącznie jeśli klient nadal nalega przed odpowiedzią na pytania. To jedno zdanie z wynikiem, nie opis usługi.",
@@ -805,13 +773,22 @@ export const OBJECTIONS_K: Objection[] = [
     note: "Jeśli klient nadal odmawia rozmowy: 'Rozumiem, wyślę ogólne informacje na [email z Pipeline], a jeśli po przeczytaniu będzie Pan chciał pogłębić temat, zapraszam do kontaktu.' Status: follow-up, nie zamknięta sprawa.",
     nextStepId: "diagnoza_otwarcie",
   },
+  {
+    id: "ok_nie_ja",
+    label: "To nie ja wypełniałem / zgłosiła żona / muszę to przemyśleć",
+    stage: "opening",
+    script:
+      "Rozumiem, formularz mógł wypełnić ktoś z rodziny albo z biura. To nic nie zmienia, bo i tak najlepiej sprawdzić to na Pana liczbach. Zadam dwa krótkie pytania o firmę i od razu będzie Pan wiedział czy temat jest dla Pana, czy nie. Dobrze?",
+    note: "Jedna odpowiedź na wszystkie warianty 'to nie ja / ktoś inny / muszę przemyśleć' na starcie. Nie wchodź w to kto i dlaczego wypełnił, przenieś rozmowę na konkret firmy. Jeśli po dwóch pytaniach klient dalej chce się namyślić, ustaw follow-up w Pipeline z konkretną datą.",
+    nextStepId: "diagnoza_otwarcie",
+  },
   // Standardowe obiekcje
   {
     id: "ok1",
     label: "Nie mam teraz czasu (pierwsze NIE)",
     stage: "opening",
     script:
-      "Rozumiem. Biura spedycji z którymi pracuję tracą miesięcznie kilkadziesiąt godzin na ręczne przepisywanie dokumentów, to zwykle kilka tysięcy złotych. Te dwie minuty mogą to zmienić. Ma Pan je?",
+      "Rozumiem, ale biura spedycji z którymi pracuję tracą miesięcznie kilkadziesiąt godzin na ręczne przepisywanie dokumentów, to realnie kilka tysięcy złotych. Ma Pan te dwie minuty?",
   },
   {
     id: "ok2",
@@ -856,7 +833,7 @@ export const OBJECTIONS_K: Objection[] = [
     label: "Nie mam czasu, brzmi jak wymówka",
     stage: "opening",
     script:
-      "Jasne, rozumiem. Powiem krótko o co chodzi, a Pan sam oceni czy warto dać mi te dwie minuty. Sprawdzam czy Pana biuro traci więcej niż kilkadziesiąt godzin miesięcznie na ręczne wpisywanie zleceń i dokumentów. Jeśli tak, to są realne pieniądze. Ma Pan te dwie minuty?",
+      "Jasne, rozumiem. Sprawdzam tylko, czy Pana biuro traci więcej niż kilkadziesiąt godzin miesięcznie na ręczne wpisywanie zleceń i dokumentów, bo to realne pieniądze. Ma Pan te dwie minuty?",
     note: "Rozpoznajesz wymówkę po tonie: szybkie 'nie mam czasu' zaraz po przedstawieniu się, bez pytania o co chodzi, zanim jeszcze wiedział czego dotyczy telefon. Jeśli nadal odmawia mimo tej odpowiedzi: przejdź do obiekcji 'Nadal nie mam czasu' (drugie NIE).",
     nextStepId: "diagnoza_otwarcie",
   },
@@ -881,11 +858,9 @@ export const OBJECTIONS_K: Objection[] = [
     label: "Rozmówca nie jest decydentem",
     stage: "icp",
     script:
-      "Rozumiem. Zaproponuję najprościej. Umówmy od razu 45 minut wspólnie z osobą decyzyjną, żeby nie musiał Pan tego później tłumaczyć z drugiej ręki. Kiedy mogliby Państwo razem, w tym czy w przyszłym tygodniu?",
-    followup:
-      "Świetnie, rezerwuję ten termin już teraz. Wyślę zaproszenie na Państwa oboje maile, dobrze?",
-    note: "Jeśli klient od razu poda wspólny termin: zarezerwuj slot Calendly na obie osoby, zapisz obie osoby w Pipeline, nie kończ rozmowy bez konkretnej daty i godziny. Po potwierdzeniu terminu: podziękuj, potwierdź że wysyłasz zaproszenie od razu, i zapytaj czy jest jeszcze coś co chciałby wiedzieć przed spotkaniem, zanim zakończysz rozmowę. Jeśli druga osoba mimo to nie może dołączyć na Discovery: umów spotkanie z rozmówcą, zaznacz w Pipeline 'decydent nieobecny, do potwierdzenia przed ceną', Agent 2 musi to uwzględnić w brief.",
-    nextStepId: "spotkanie",
+      "Rozumiem. Czym się Pan zajmuje w firmie? [odpowiedź] A z własnej inicjatywy się Pan zgłosił, czy na prośbę właściciela? [odpowiedź] Dobrze, to zbierzmy wszystkie informacje, a potem zobaczymy jak najlepiej zorganizować kolejny krok.",
+    note: "Rozmówca nie jest decydentem — zaznacz to od razu w Pipeline (pole 'decydent: nie'), żeby w kroku 3 'Spotkanie jako rozwiązanie' zaproponować 45 minut wspólnie z osobą decyzyjną zamiast standardowego terminu. Kontynuujesz pełną diagnozę z tą osobą, nie skracasz rozmowy i nie umawiasz spotkania na tym etapie.",
+    nextStepId: "diagnoza_tms",
   },
   {
     id: "zewnetrzne_biuro_ksiegowe",
@@ -900,7 +875,7 @@ export const OBJECTIONS_K: Objection[] = [
     label: "Ma wszystko w Microsoft 365 / Power Automate",
     stage: "diagnoza",
     script:
-      "To brzmi jak solidna konfiguracja. Sprawdzam zwykle jedną rzecz: czy to faktycznie odczytuje dane z dokumentu i wypełnia je automatycznie, czy tylko przenosi plik do folderu, a ktoś nadal musi go otworzyć i przepisać ręcznie?",
+      "To brzmi jak solidna konfiguracja. Sprawdzam zwykle jedną rzecz, czy to faktycznie odczytuje dane z dokumentu i wypełnia je automatycznie, czy tylko przenosi plik do folderu, a ktoś nadal musi go otworzyć i przepisać ręcznie?",
     followup:
       "A co się dzieje gdy dokument wygląda inaczej niż zwykle? Flow ogarnia to sam, czy ktoś wtedy ręcznie interweniuje? I kto to utrzymuje, jak coś się zepsuje po aktualizacji?",
     note: "Większość konfiguracji Power Automate przenosi pliki, nie wyciąga z nich danych, i utrzymuje ją jedna osoba która to kiedyś skonfigurowała. Jeśli klient ma faktycznie zaawansowaną integrację z realnym OCR i utrzymaniem, przyznaj to uczciwie, nie naciskaj wbrew faktom.",
@@ -939,7 +914,7 @@ export const OBJECTIONS_K: Objection[] = [
     label: "Nie chce podać dokładnej stawki godzinowej",
     stage: "kalkulator",
     script:
-      "Rozumiem, to szczegół księgowy. Wystarczy orientacyjnie: to bliżej 40, 55, czy 70 złotych za godzinę z narzutami?",
+      "Rozumiem, to szczegół księgowy. Wystarczy orientacyjnie, to bliżej 40, 55, czy 70 złotych za godzinę z narzutami?",
     note: "Wpisz podaną wartość orientacyjną do kalkulatora, nie zostawiaj pustego pola.",
   },
   {
