@@ -212,12 +212,13 @@ export function ClientSidebar({
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "space-between",
+                  gap: 6,
                   marginBottom: 8,
                 }}
               >
                 {/* Plakietka statusu — ten sam wygląd co "Nowy lead" w /pipeline:
-                    kolor akcentu z alfą, biała kropka, białe wersaliki. */}
+                    kolor akcentu z alfą, biała kropka, białe wersaliki.
+                    Sortowanie i odświeżanie dosunięte tuż za plakietkę. */}
                 <span
                   style={{
                     display: "inline-flex",

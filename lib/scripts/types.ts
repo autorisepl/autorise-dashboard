@@ -45,6 +45,13 @@ export interface Step {
   // zamiast osobnego, oderwanego kalkulatora dalej w skrypcie (punkt 9).
   captureField?: "osoby" | "stawka";
   decision?: Decision;
+  // Jedno pole zamiast rozbitej listy "reakcji klienta": oczekiwana pozytywna
+  // reakcja + przejście dalej, napisane tak żeby pasowało do wielu wariantów
+  // pozytywnych. Każda reakcja niepozytywna jest obiekcją (STEP_OBJECTIONS).
+  expected?: string;
+  // Krok steruje jednym modułem kalkulatora: setter zaznacza go jednym
+  // kliknięciem w bloku "oczekiwana reakcja", gdy klient potwierdzi ręczną robotę.
+  calculatorFlag?: string;
   nextStepId?: string;
 }
 

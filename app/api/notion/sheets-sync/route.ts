@@ -190,11 +190,6 @@ export async function POST(req: NextRequest) {
         continue;
       }
 
-      // Include email in notes if no dedicated Email property in Notion
-      const notesWithEmail = [notesVal, emailVal ? `Email: ${emailVal}` : ""]
-        .filter(Boolean)
-        .join(" | ");
-
       try {
         const notionStatus = deriveNotionStatus(row, headers);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -215,7 +210,9 @@ export async function POST(req: NextRequest) {
             console.warn(`normalizePhonePL: nie udało się znormalizować "${phoneVal}"`);
           props["Telefon"] = { phone_number: normalized ?? phoneVal };
         }
-        if (notesWithEmail) props["Notatki"] = { rich_text: richText(notesWithEmail) };
+        // Email do dedykowanego pola "Email" (typ email), nie do Notatek.
+        if (emailVal) props["Email"] = { email: emailVal };
+        if (notesVal) props["Notatki"] = { rich_text: richText(notesVal) };
 
         await notion.pages.create({
           parent: { database_id: PIPELINE_DB_ID },

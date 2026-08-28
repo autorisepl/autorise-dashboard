@@ -33,7 +33,7 @@ import {
 } from "@/lib/scripts/kwalifikacyjna";
 import { MESSAGES_DATA } from "@/lib/scripts/messages";
 import { getRecommendedModules } from "@/lib/scripts/moduleRecommendation";
-import type { CalculatorGroup, DecisionOption, ScriptLine } from "@/lib/scripts/types";
+import type { CalculatorGroup, ScriptLine } from "@/lib/scripts/types";
 
 // ── Helpers ──────────────────────────────────────────────────────────
 
@@ -70,7 +70,7 @@ const STEP_OBJECTIONS: Record<string, string[]> = {
   diagnoza_otwarcie: ["brak_konkretu", "brak_bolu", "ok_nie_kojarzy", "po_co_to_pytanie"],
   diagnoza_icp_flota: ["icp_ponizej_progu", "spedytorzy_dorazni"],
   diagnoza_icp_decydent: ["icp_nie_decydent"],
-  diagnoza_tms: ["konkurencja_m365"],
+  diagnoza_tms: ["konkurencja_m365", "tms_panel_zewnetrzny"],
   diagnoza_dokumenty_faktura: ["zewnetrzne_biuro_ksiegowe"],
   diagnoza_stawka: ["stawka_niechec"],
   diagnoza_czas: ["czas_milczy", "czas_obronny", "czas_przeskakuje"],
@@ -994,14 +994,16 @@ function answerParagraphs(text: string, keyPrefix: string) {
 function ScriptStep({
   step,
   fill,
-  onDecisionSelect,
   role,
+  calcFlagActive,
+  onToggleCalcFlag,
   children,
 }: {
   step: (typeof STEPS_K)[0];
   fill: (t: string) => string;
-  onDecisionSelect: (stepId: string, option: DecisionOption) => void;
   role: "admin" | "setter" | "closer" | null;
+  calcFlagActive: boolean;
+  onToggleCalcFlag: (flag: string) => void;
   children?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(true);
@@ -1222,42 +1224,52 @@ function ScriptStep({
             );
           })}
 
-          {step.decision && (
+          {step.expected && (
             <>
-              <SectionCap>Reakcja klienta</SectionCap>
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                {step.decision.options.map((opt, oi) => {
-                  const rowKey = `dec-${oi}`;
-                  return (
-                    <CollapsibleAnswer
-                      key={rowKey}
-                      label={opt.trigger}
-                      open={openRow === rowKey}
-                      onToggle={() => {
-                        const next = openRow === rowKey ? null : rowKey;
-                        setOpenRow(next);
-                        if (next) onDecisionSelect(step.id, opt);
-                      }}
-                    >
-                      {opt.action && answerParagraphs(fill(opt.action), `${rowKey}-a`)}
-                      {opt.sayAfter && (
-                        <div style={{ marginTop: opt.action ? 10 : 0 }}>
-                          <span
-                            style={{
-                              fontFamily: "var(--font-sans)",
-                              fontSize: 13,
-                              fontWeight: 700,
-                              color: "var(--accent)",
-                            }}
-                          >
-                            Powiedz:
-                          </span>
-                          {answerParagraphs(fill(opt.sayAfter), `${rowKey}-s`)}
-                        </div>
-                      )}
-                    </CollapsibleAnswer>
-                  );
-                })}
+              <SectionCap>Oczekiwana reakcja klienta i przejście</SectionCap>
+              <div
+                style={{
+                  border: "1px solid rgba(255,255,255,0.42)",
+                  borderRadius: 9,
+                  background: "var(--bg)",
+                  boxShadow: "var(--shadow-sm)",
+                  padding: 12,
+                }}
+              >
+                {answerParagraphs(fill(step.expected), `${step.id}-exp`)}
+                {step.calculatorFlag && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleCalcFlag(step.calculatorFlag as string);
+                    }}
+                    style={{
+                      marginTop: 12,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 7,
+                      height: 32,
+                      padding: "0 12px",
+                      borderRadius: "var(--radius-xs)",
+                      border: "1px solid rgba(255,255,255,0.42)",
+                      background: calcFlagActive ? "var(--accent)" : "var(--bg-elevated)",
+                      color: calcFlagActive ? "var(--text-on-accent)" : "var(--text-primary)",
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 13,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {calcFlagActive ? (
+                      <CheckCircle2 size={15} strokeWidth={2.5} />
+                    ) : (
+                      <Plus size={15} strokeWidth={2.5} />
+                    )}
+                    {calcFlagActive
+                      ? "Moduł zaznaczony w kalkulatorze"
+                      : "Klient robi to ręcznie, zaznacz moduł"}
+                  </button>
+                )}
               </div>
             </>
           )}
@@ -2054,7 +2066,13 @@ export default function KwalifikacjaPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [note, setNote] = useState("");
   const [calculatorFlags, setCalculatorFlags] = useState<Record<string, boolean>>({});
-  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
+  // Moduły kalkulatora zaznaczane teraz ręcznie w bloku "oczekiwana reakcja",
+  // nie ze skryptowej listy reakcji. selectedOptions zostaje puste, rekomendacja
+  // modułów opiera się na samych calculatorFlags.
+  const selectedOptions: Record<string, string> = {};
+  const toggleCalcFlag = useCallback((flag: string) => {
+    setCalculatorFlags((prev) => ({ ...prev, [flag]: !prev[flag] }));
+  }, []);
   const [calcGroups, setCalcGroups] = useState<CalculatorGroup[]>([
     { id: "grp_default", label: "Biuro / spedycja", osoby: 2, godziny: 3, stawka: 50 },
   ]);
@@ -2168,7 +2186,6 @@ export default function KwalifikacjaPage() {
 
   useEffect(() => {
     setCalculatorFlags({});
-    setSelectedOptions({});
     setCalcGroups([
       { id: "grp_default", label: "Biuro / spedycja", osoby: 2, godziny: 3, stawka: 50 },
     ]);
@@ -2253,16 +2270,6 @@ export default function KwalifikacjaPage() {
 
   const undoTally = useCallback((type: "dial" | "rozmowa_kwalifikacja" | "sms") => {
     void postTally(type, -1);
-  }, []);
-
-  // Wybór opcji reakcji klienta w kroku: rejestruje trigger (podświetlenie) i,
-  // jeśli opcja steruje kalkulatorem, ustawia flagę. Bez skoków po `goToStepId` —
-  // nawigacja po skrypcie to zwykłe przewinięcie, nie osobny przycisk.
-  const handleDecisionSelect = useCallback((stepId: string, option: DecisionOption) => {
-    setSelectedOptions((prev) => ({ ...prev, [stepId]: option.trigger }));
-    if (option.calculatorFlag) {
-      setCalculatorFlags((prev) => ({ ...prev, [option.calculatorFlag!]: true }));
-    }
   }, []);
 
   const jumpToSmsTemplate = useCallback((smsId: string) => {
@@ -2661,8 +2668,11 @@ export default function KwalifikacjaPage() {
                 key={step.id}
                 step={step}
                 fill={fill}
-                onDecisionSelect={handleDecisionSelect}
                 role={role}
+                calcFlagActive={
+                  step.calculatorFlag ? Boolean(calculatorFlags[step.calculatorFlag]) : false
+                }
+                onToggleCalcFlag={toggleCalcFlag}
               >
                 {step.captureField === "osoby" && (
                   <InlineCaptureInput

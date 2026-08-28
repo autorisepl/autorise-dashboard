@@ -39,7 +39,7 @@ export const STEPS_K: Step[] = [
       {
         t: "say",
         text: "Dzień dobry, z tej strony {IMIĘ_SPRZEDAWCY} z Autorise. Zostawił Pan u nas formularz w sprawie oszczędzania czasu w biurze, więc się odzywam. Krótko mówiąc, pomagamy firmom transportowym zdejmować z biura powtarzalną, ręczną robotę. Bierzemy to na siebie na tyle mocno, że umówiony efekt zapisujemy w umowie, a jeśli go nie dowieziemy, zwracamy całą kwotę.",
-        cel: "Klient od razu wie po co dzwonisz i co oferujecie, zanim uzna to za nachalną sprzedaż. Zdanie o gwarancji wynika wprost z tego co robicie, nie jest doklejone z boku, i od razu zdejmuje z klienta ryzyko.",
+        cel: "Klient od razu wie po co dzwonisz i że nie ryzykuje, zanim uzna to za nachalną sprzedaż.",
       },
     ],
     nextStepId: "diagnoza_otwarcie",
@@ -53,38 +53,12 @@ export const STEPS_K: Step[] = [
       {
         t: "say",
         text: "Co spowodowało że akurat teraz zdecydował się Pan wypełnić ten formularz?",
-        cel: "Znaleźć konkretny wyzwalacz i realny ból, zanim przejdziesz do reszty pytań",
+        cel: "Znaleźć konkretny wyzwalacz i realny ból, zanim przejdziesz do reszty pytań.",
       },
       { t: "client", text: "[odpowiedź]" },
     ],
-    decision: {
-      question: "Czy klient podał konkretny powód?",
-      options: [
-        {
-          trigger: "Podaje konkretny ból albo wyzwalacz",
-          action: "Masz czego szukałeś. Krótko potwierdź i przejdź do pytania o zespół i flotę.",
-          tone: "positive",
-        },
-        {
-          trigger: "Nie potrafi nazwać, „trudno powiedzieć”, „z ciekawości”",
-          action:
-            "Rozwiń obiekcję „Nie potrafi nazwać powodu” poniżej i przeprowadź klienta przez opis zwykłego dnia w biurze.",
-          tone: "warning",
-        },
-        {
-          trigger: "„W sumie nie mam żadnych problemów”",
-          action:
-            "Rozwiń obiekcję „W sumie nie mam żadnych problemów” poniżej. Jedna próba pokazania bólu, bez naciskania.",
-          tone: "warning",
-        },
-        {
-          trigger: "„Niech Pan najpierw opowie, czym się zajmujecie”",
-          action:
-            "Rozwiń obiekcję „Nie kojarzy, nie wie o co chodzi” poniżej. Otwierasz temat szeroko i wracasz do pytań.",
-          tone: "neutral",
-        },
-      ],
-    },
+    expected:
+      "Klient nazywa jakikolwiek konkretny powód, wyzwalacz albo bolączkę, choćby ogólnie. Krótko to potwierdzasz i przechodzisz do pytania o zespół i flotę. Każda inna reakcja, czyli nie wie, z ciekawości, nie ma problemu, albo każe najpierw opowiedzieć czym się zajmujecie, jest obiekcją poniżej.",
   },
   {
     id: "diagnoza_icp_flota",
@@ -96,12 +70,12 @@ export const STEPS_K: Step[] = [
       {
         t: "say",
         text: "Ile pojazdów ma Pan teraz aktywnie?",
-        cel: "Zweryfikować orientacyjną skalę floty pod kątem ICP (10-150 pojazdów)",
+        cel: "Zweryfikować orientacyjną skalę floty pod kątem ICP (10-150 pojazdów).",
       },
       {
         t: "say",
         text: "A tak z grubsza, roczne obroty firmy to bardziej okolice dwóch, trzech milionów, czy raczej powyżej pięciu? Pytam, żeby dobrać skalę tego co Panu pokażę. Jeśli woli Pan nie mówić, spokojnie idziemy dalej.",
-        cel: "Orientacyjny drugi filtr ICP obok floty. Nasze ICP zaczyna się od około miliona złotych rocznie na działania, więc widełki trzymaj nisko. Nie blokuje rozmowy jeśli klient nie odpowie.",
+        cel: "Orientacyjny drugi filtr ICP, widełki trzymaj nisko bo ICP zaczyna się od około miliona złotych rocznie na działania.",
       },
       {
         t: "note",
@@ -110,30 +84,16 @@ export const STEPS_K: Step[] = [
       {
         t: "say",
         text: "Ile osób pracuje w biurze? Chodzi mi o zlecenia, dokumenty, faktury.",
-        cel: "Twardy próg ICP. Poniżej dwóch osób ból zwykle za mały, żeby wdrożenie się zwróciło.",
+        cel: "Twardy próg ICP, poniżej dwóch osób w biurze ból zwykle za mały żeby wdrożenie się zwróciło.",
       },
       {
         t: "say",
         text: "A kto się czym zajmuje? Spedytorzy, ktoś od faktur, ktoś od dyspozycji?",
-        cel: "Zebrać realny podział ról. Każdą z tych ról przeniesiesz do kalkulatora niżej jako osobny wiersz, z własną liczbą osób, godzinami i stawką, bo spedytor i księgowość liczą się inaczej.",
+        cel: "Zebrać podział ról, bo każdą przeniesiesz do kalkulatora jako osobny wiersz z własną stawką.",
       },
     ],
-    decision: {
-      question: "Czy biuro spełnia próg ICP?",
-      options: [
-        {
-          trigger: "Dwie osoby w biurze albo więcej",
-          action: "Próg spełniony. Przejdź do pytania o decydenta.",
-          tone: "positive",
-        },
-        {
-          trigger: "Jedna osoba, brak realnego planu zatrudnienia w kilka miesięcy",
-          action:
-            "Poniżej progu. Rozwiń obiekcję „Poniżej progu ICP” poniżej i zakończ rozmowę bez naciskania.",
-          tone: "warning",
-        },
-      ],
-    },
+    expected:
+      "Klient podaje liczby i w biurze pracują co najmniej dwie osoby. Przechodzisz do pytania o decydenta. Jedna osoba bez realnego planu zatrudnienia w kilka miesięcy to obiekcja „Poniżej progu ICP” poniżej.",
   },
   {
     id: "diagnoza_icp_decydent",
@@ -144,26 +104,11 @@ export const STEPS_K: Step[] = [
       {
         t: "say",
         text: "Jest Pan właścicielem firmy?",
-        cel: "Ustalić czy rozmawiasz z osobą decyzyjną, żeby nie umówić spotkania bez sensu",
+        cel: "Ustalić czy rozmawiasz z osobą decyzyjną, żeby nie umówić spotkania bez sensu.",
       },
     ],
-    decision: {
-      question: "Czy jest właścicielem?",
-      options: [
-        {
-          trigger: "Tak, jest właścicielem",
-          action: "Decydent obecny, kontynuujesz do systemu i pracy manualnej.",
-          goToStepId: "diagnoza_tms",
-          tone: "positive",
-        },
-        {
-          trigger: "Nie, decyduje ktoś inny",
-          action: "Proponujesz wspólne spotkanie z decydentem.",
-          openObjectionId: "icp_nie_decydent",
-          tone: "warning",
-        },
-      ],
-    },
+    expected:
+      "Klient jest właścicielem albo wspólnikiem. Przechodzisz do pytania o system i pracę ręczną. Jeśli decyduje ktoś inny, rozwiń obiekcję „Rozmówca nie jest decydentem” poniżej.",
   },
   {
     id: "diagnoza_tms",
@@ -174,7 +119,7 @@ export const STEPS_K: Step[] = [
       {
         t: "say",
         text: "Jakiego systemu używacie do zarządzania zleceniami i flotą? Trans.eu, Timocom, coś własnego?",
-        cel: "Ustalić punkt odniesienia — co już mają, żeby wiedzieć czego NIE trzeba zastępować",
+        cel: "Ustalić co klient już ma, żeby wiedzieć czego nie trzeba zastępować.",
       },
       { t: "client", text: "[odpowiedź]" },
       {
@@ -183,60 +128,20 @@ export const STEPS_K: Step[] = [
         linkObjectionId: "konkurencja_m365",
       },
     ],
-    decision: {
-      question: "Co odpowiedział klient?",
-      options: [
-        {
-          trigger: "Ma TMS, podaje nazwę",
-          action: "Zapisujesz nazwę dosłownie w Pipeline.",
-          goToStepId: "diagnoza_dokumenty_zlecenie",
-          tone: "positive",
-        },
-        {
-          trigger: "Brak programu, Excel, WhatsApp, telefon",
-          action: "Zapisujesz jako brak TMS, to też ważna informacja.",
-          goToStepId: "diagnoza_dokumenty_zlecenie",
-          tone: "neutral",
-        },
-        {
-          trigger:
-            "Działa przez panel/platformę zewnętrzną (np. Amazon Relay, panel kurierski InPost/DPD, giełda z własnym systemem rozliczeń)",
-          action: "Dopytujesz ogólnie o obieg dokumentów w tym systemie.",
-          goToStepId: "diagnoza_profil_inny",
-          tone: "neutral",
-        },
-      ],
-    },
-  },
-  {
-    id: "diagnoza_profil_inny",
-    nr: "2c2",
-    label: "PROFIL INNY NIŻ KLASYCZNA SPEDYCJA",
-    tag: "PYTASZ",
-    lines: [
-      {
-        t: "say",
-        text: "Jak wygląda u Was obieg dokumentów w tym systemie? Co jeszcze robicie ręcznie obok tego panelu?",
-        cel: "Ogólne rozeznanie zamiast pytań pod klasyczną spedycję, które przy tym profilu klienta mogą nie pasować",
-      },
-      { t: "client", text: "[odpowiedź]" },
-      {
-        t: "note",
-        text: "Pytania 2d do 2g są zbudowane pod klasycznego spedytora z CMR na giełdach transportowych. Przy tym kliencie oceń na słuch które z nich mają sens, pomijaj te które oczywiście nie pasują (np. pytanie o CMR przy kliencie kurierskim bez międzynarodowego frachtu), i wróć do standardowej ścieżki od kroku który faktycznie pasuje do jego odpowiedzi.",
-      },
-    ],
-    nextStepId: "diagnoza_dokumenty_zlecenie",
+    expected:
+      "Klient podaje nazwę systemu albo mówi że pracuje na Excelu, WhatsAppie i telefonie. Zapisujesz to dosłownie w Pipeline i przechodzisz do pytania o zlecenia. Praca wyłącznie przez cudzy panel, czyli Amazon Relay, panel kurierski albo giełdę z własnym rozliczeniem, to obiekcja „Pracuje tylko przez zewnętrzny panel” poniżej.",
   },
   {
     id: "diagnoza_dokumenty_zlecenie",
     nr: "2d",
     label: "ZLECENIE TRANSPORTOWE",
     tag: "MÓWISZ",
+    calculatorFlag: "zlecenia",
     lines: [
       {
         t: "say",
         text: "Powie mi Pan, jak te zlecenia do Was trafiają? Ktoś to musi ręcznie przepisywać z maili czy PDF-ów do systemu?",
-        cel: "Sprawdzić czy pierwszy etap (przyjęcie zlecenia) generuje pracę ręczną",
+        cel: "Sprawdzić czy przyjęcie zlecenia generuje pracę ręczną.",
       },
       { t: "client", text: "[opis]" },
       {
@@ -244,138 +149,69 @@ export const STEPS_K: Step[] = [
         text: "Jeśli klient nie rozumie pytania lub miesza je ze zleceniem dla kierowcy: „Chodzi mi o dokument od klienta który zamawia u Was transport, nie polecenie wyjazdu dla kierowcy.”",
       },
     ],
-    decision: {
-      question: "Jak zlecenie trafia do Was i co się z nim dzieje dalej?",
-      options: [
-        {
-          trigger: "Ktoś ręcznie przepisuje z maila, PDF-a albo zdjęcia",
-          action: "Zaznaczasz w kalkulatorze moduł Automatyzacja TMS.",
-          sayAfter: "Rozumiem, czyli ktoś musi to za każdym razem ręcznie przepisać do systemu.",
-          goToStepId: "diagnoza_dokumenty_cmr",
-          tone: "positive",
-          calculatorFlag: "zlecenia",
-        },
-        {
-          trigger: "To już wpada do systemu automatycznie",
-          action: "Nie zaznaczasz, ten etap mają ogarnięty.",
-          sayAfter: "To dobrze, ten etap już macie ogarnięty.",
-          goToStepId: "diagnoza_dokumenty_cmr",
-          tone: "neutral",
-        },
-      ],
-    },
+    expected:
+      "Klient potwierdza, że ktoś ręcznie przepisuje zlecenia z maila, PDF-a albo zdjęcia. Mówisz „Rozumiem, czyli ktoś musi to za każdym razem ręcznie przepisać do systemu”, zaznaczasz moduł niżej i przechodzisz dalej. Jeśli zlecenia wpadają do systemu same, ten etap mają ogarnięty, zostaw moduł niezaznaczony.",
   },
   {
     id: "diagnoza_dokumenty_cmr",
     nr: "2e",
     label: "LIST PRZEWOZOWY I POTWIERDZENIE DOSTAWY",
     tag: "MÓWISZ",
+    calculatorFlag: "cmr",
     lines: [
       {
         t: "say",
         text: "Jak to wygląda z CMR-ami? Po kursie, jak to do Was wraca?",
-        cel: "Sprawdzić czy dokumenty po kursie wymagają ręcznego przepisywania, automatyczne odczytywanie dokumentów wchodzi w moduł Dokumenty i pliki",
+        cel: "Sprawdzić czy dokumenty po kursie wymagają ręcznego przepisywania.",
       },
       {
         t: "say",
         text: "Potwierdzenia dostawy wchodzą u Pana razem z CMR, czy osobno?",
-        cel: "Sprawdzić czy klient rozróżnia CMR i osobne potwierdzenie dostawy — u większości nie, ale trafiają się wyjątki, np. druk z sieci handlowej",
+        cel: "Sprawdzić czy u klienta potwierdzenie dostawy to osobny druk obok CMR.",
       },
       {
         t: "note",
         text: [
-          "Papier fizyczny lub zdjęcie na WhatsApp/mailem: moduł Dokumenty i pliki, zaznacz w kalkulatorze.",
+          "Papier fizyczny lub zdjęcie na WhatsApp/mailem: moduł Dokumenty i pliki, zaznacz niżej.",
           "Elektroniczne, np. eCMR: inny profil klienta, sprawdź czy dane i tak trzeba ręcznie przenieść do rozliczeń.",
         ],
       },
     ],
-    decision: {
-      question: "Jak CMR i potwierdzenie dostawy wracają do biura?",
-      options: [
-        {
-          trigger: "Papier albo zdjęcie, ktoś ręcznie przepisuje",
-          action: "Zaznaczasz w kalkulatorze moduł Dokumenty i pliki.",
-          sayAfter: "Czyli to kolejny etap gdzie ktoś ręcznie przepisuje dane z papieru.",
-          goToStepId: "diagnoza_dokumenty_faktura",
-          tone: "positive",
-          calculatorFlag: "cmr",
-        },
-        {
-          trigger: "Elektronicznie, już zautomatyzowane",
-          action: "Nie zaznaczasz, to mają już rozwiązane.",
-          sayAfter: "Dobrze, to macie już rozwiązane.",
-          goToStepId: "diagnoza_dokumenty_faktura",
-          tone: "neutral",
-        },
-      ],
-    },
+    expected:
+      "Klient mówi, że CMR i potwierdzenia wracają papierem albo zdjęciem i ktoś przepisuje z nich dane. Mówisz „Czyli to kolejny etap gdzie ktoś ręcznie przepisuje dane z papieru”, zaznaczasz moduł niżej i przechodzisz dalej. Jeśli mają to elektronicznie i zautomatyzowane, zostaw moduł niezaznaczony.",
   },
   {
     id: "diagnoza_dokumenty_faktura",
     nr: "2f",
     label: "FAKTURY I ROZLICZENIA",
     tag: "MÓWISZ",
+    calculatorFlag: "faktury_recznie",
     lines: [
       {
         t: "say",
         text: "A z fakturami jak to wygląda? Tymi które wystawiacie i tymi które dostajecie. Kto to ogarnia i wpisuje do księgowości?",
-        cel: "Sprawdzić skalę pracy manualnej przy fakturach",
+        cel: "Sprawdzić skalę pracy ręcznej przy fakturach.",
       },
       { t: "client", text: "[odpowiedź]" },
     ],
-    decision: {
-      question: "Kto sprawdza i wpisuje faktury do księgowości?",
-      options: [
-        {
-          trigger: "Jedna osoba ręcznie wpisuje",
-          action: "Dopytujesz o liczbę faktur miesięcznie, zaznaczasz moduł Dokumenty i pliki.",
-          sayAfter:
-            "Ile mniej więcej faktur miesięcznie to jest, licząc te które wystawiacie i te które dostajecie?",
-          goToStepId: "diagnoza_dokumenty_status",
-          tone: "positive",
-          calculatorFlag: "faktury_recznie",
-        },
-        {
-          trigger: "Zewnętrzne biuro rachunkowe",
-          action: "Pogłębiasz wątek kto u nich przygotowuje dokumenty.",
-          openObjectionId: "zewnetrzne_biuro_ksiegowe",
-          tone: "neutral",
-        },
-      ],
-    },
+    expected:
+      "Klient mówi, że jedna osoba ręcznie wpisuje faktury. Dopytujesz „Ile mniej więcej faktur miesięcznie to jest, licząc te które wystawiacie i te które dostajecie”, zaznaczasz moduł niżej i przechodzisz dalej. Zewnętrzne biuro rachunkowe to obiekcja poniżej.",
   },
   {
     id: "diagnoza_dokumenty_status",
     nr: "2g",
     label: "WIDOCZNOŚĆ STATUSU ZLECENIA",
     tag: "MÓWISZ",
+    calculatorFlag: "komunikacja",
     lines: [
       {
         t: "say",
         text: "I ostatnia rzecz. Jak Pan sam sprawdza dziś status jakiegoś zlecenia? Trzeba zadzwonić do spedytora, czy widać to od razu w systemie?",
-        cel: "Sprawdzić czy właściciel ma widoczność operacyjną bez dzwonienia, kandydat na moduł Powiadomienia automatyczne",
+        cel: "Sprawdzić czy właściciel widzi status zlecenia bez dzwonienia do spedytora.",
       },
     ],
-    decision: {
-      question: "Czy właściciel widzi status zlecenia bez dzwonienia do spedytora?",
-      options: [
-        {
-          trigger: "Nie, musi dzwonić albo pytać",
-          action: "Zaznaczasz w kalkulatorze moduł Powiadomienia automatyczne.",
-          sayAfter: "To osobny, ważny problem, niezależny od dokumentów.",
-          goToStepId: "diagnoza_stawka",
-          tone: "positive",
-          calculatorFlag: "komunikacja",
-        },
-        {
-          trigger: "Tak, widzi na bieżąco w systemie",
-          action: "Nie zaznaczasz, ten obszar mają ogarnięty.",
-          sayAfter: "Dobrze, ten obszar macie ogarnięty.",
-          goToStepId: "diagnoza_stawka",
-          tone: "neutral",
-        },
-      ],
-    },
+    expected:
+      "Klient mówi, że musi dzwonić do spedytora albo dopytywać o status. Mówisz „To osobny, ważny problem, niezależny od dokumentów”, zaznaczasz moduł niżej i przechodzisz do pytania o stawkę. Jeśli widzi status na bieżąco w systemie, ten obszar mają ogarnięty.",
   },
   {
     id: "diagnoza_stawka",
@@ -387,27 +223,12 @@ export const STEPS_K: Step[] = [
       {
         t: "say",
         text: "Orientacyjnie, ile kosztuje Pana godzina pracy osoby w biurze, razem ze wszystkimi narzutami?",
-        cel: "Zebrać realną stawkę zamiast domyślnego szacunku — dokładniejsza liczba dla klienta",
+        cel: "Zebrać realną stawkę godzinową zamiast domyślnego szacunku.",
       },
       { t: "client", text: "[odpowiedź lub niechęć do podania]" },
     ],
-    decision: {
-      question: "Czy klient podał stawkę?",
-      options: [
-        {
-          trigger: "Podaje konkretną kwotę",
-          action: "Wpisujesz do kalkulatora, przechodzisz dalej.",
-          goToStepId: "diagnoza_kalkulator",
-          tone: "positive",
-        },
-        {
-          trigger: "Nie chce podawać dokładnej kwoty",
-          action: "Proponujesz szacunek widełkami.",
-          openObjectionId: "stawka_niechec",
-          tone: "warning",
-        },
-      ],
-    },
+    expected:
+      "Klient podaje orientacyjną stawkę godzinową. Wpisujesz ją do kalkulatora i przechodzisz dalej. Jeśli nie chce podać kwoty, rozwiń obiekcję „Nie chce podać stawki” poniżej.",
   },
   {
     id: "diagnoza_kalkulator",
@@ -419,11 +240,11 @@ export const STEPS_K: Step[] = [
       {
         t: "say",
         text: "Dokładny podział na poszczególne zadania zmierzymy razem na spotkaniu wdrożeniowym. Teraz potrzebuję orientacyjnej całości.",
-        cel: "Ustawić oczekiwanie że to pierwsze przybliżenie, nie finalna liczba — dokładny pomiar per moduł następuje dopiero na spotkaniu wdrożeniowym (Załącznik 1 umowy). Zero słowa 'Kickoff' w rozmowie z klientem.",
+        cel: "Ustawić oczekiwanie że to pierwsze przybliżenie, dokładny pomiar jest dopiero na spotkaniu wdrożeniowym.",
       },
       {
         t: "note",
-        text: "Kalkulator poniżej wypełnia się sam z tego co klient już powiedział: role z pytania o zespół (2a), moduły z checkboxów zaznaczonych automatycznie w krokach 2d do 2g. Dopytaj tylko o godziny dziennie per rola, jeśli jeszcze nie padły w rozmowie.",
+        text: "Kalkulator poniżej ma już role z pytania o zespół. Moduły zaznaczasz sam w krokach 2d do 2g, gdy klient potwierdzi ręczną robotę. Dopytaj tylko o godziny dziennie per rola, jeśli jeszcze nie padły.",
       },
     ],
     nextStepId: "diagnoza_liczba",
@@ -449,12 +270,12 @@ export const STEPS_K: Step[] = [
       {
         t: "say",
         text: "Nie każdą z tych godzin da się zautomatyzować w stu procentach, bo część to rozmowy z klientami i decyzje. Realistycznie mówimy o około 70 procentach tego czasu, czyli w okolicach [POTENCJAL_H] godzin miesięcznie wracających do biura.",
-        cel: "Budować wiarygodność przez uczciwość, nie obiecywać więcej niż realnie możliwe. 70 procent to ten sam wskaźnik co potencjał pokazany w kalkulatorze poniżej, nie osobna liczba",
+        cel: "Budować wiarygodność przez uczciwość, nie obiecywać więcej niż realnie możliwe.",
       },
       {
         t: "say",
         text: "Ta liczba dotyczy konkretnie tych zadań które przed chwilą razem policzyliśmy. Nie ogólnej wydajności zespołu, tylko tej powtarzalnej pracy którą Pan sam opisał.",
-        cel: "Zapobiec późniejszemu nieporozumieniu przy zobowiązaniu zwrotu na umowie — ono dotyczy konkretnych, potwierdzonych procesów, nie ogólnej produktywności czy zarobków firmy",
+        cel: "Zapobiec nieporozumieniu przy zwrocie na umowie, bo dotyczy on policzonych procesów, nie ogólnej wydajności firmy.",
       },
     ],
     nextStepId: "diagnoza_czas",
@@ -468,7 +289,7 @@ export const STEPS_K: Step[] = [
       {
         t: "say",
         text: "Gdyby te [POTENCJAL_H] godzin miesięcznie wróciły do biura, co by Pan z nimi zrobił?",
-        cel: "Sprawić żeby klient sam nazwał korzyść — silniej przekonuje niż gdybyś to Ty powiedział",
+        cel: "Sprawić żeby klient sam nazwał korzyść, bo to przekonuje mocniej niż gdy powiesz to Ty.",
       },
       { t: "client", text: "[odpowiedź]" },
       {
@@ -476,35 +297,8 @@ export const STEPS_K: Step[] = [
         text: "Zapamiętaj dokładne słowa klienta z tej odpowiedzi, przydadzą się żeby zacytować mu je dosłownie na rozmowie sprzedażowej. To działa bardzo mocno.",
       },
     ],
-    decision: {
-      question: "Jak zareagował klient?",
-      options: [
-        {
-          trigger: "Odpowiada konkretnie",
-          action: "Potwierdzasz i przechodzisz dalej, to gotowy materiał do kroku 3.",
-          goToStepId: "spotkanie",
-          tone: "positive",
-        },
-        {
-          trigger: "Milczy, „nie wiem, nie myślałem”",
-          action: "Podsuwasz kilka kierunków do wyboru.",
-          openObjectionId: "czas_milczy",
-          tone: "warning",
-        },
-        {
-          trigger: "Reaguje obronnie, boi się zwolnień",
-          action: "Uspokajasz, chodzi o ludzi, nie o cięcia.",
-          openObjectionId: "czas_obronny",
-          tone: "warning",
-        },
-        {
-          trigger: "Przeskakuje od razu do pytania o cenę",
-          action: "Kończysz wątek jednym zdaniem i wracasz do niego.",
-          openObjectionId: "czas_przeskakuje",
-          tone: "neutral",
-        },
-      ],
-    },
+    expected:
+      "Klient nazywa konkretnie, co zrobiłby z odzyskanym czasem. Potwierdzasz, zapisujesz jego słowa i przechodzisz do propozycji spotkania. Milczenie, obawa o zwolnienia albo przeskok do ceny to obiekcje poniżej.",
   },
   {
     id: "spotkanie",
@@ -514,7 +308,7 @@ export const STEPS_K: Step[] = [
     lines: [
       {
         t: "note",
-        text: "Jeśli rozmówca NIE jest decydentem (patrz obiekcja 'Rozmówca nie jest decydentem', pole 'decydent: nie' w Pipeline), zamiast poniższej propozycji użyj: „Zaproponuję najprościej. Umówmy od razu 45 minut wspólnie z osobą decyzyjną, żeby nie musiał Pan tego później tłumaczyć z drugiej ręki.” Jeśli rozmówca sam jest decydentem, pomiń tę frazę i użyj standardowej propozycji poniżej.",
+        text: "Jeśli rozmówca nie jest decydentem (pole „decydent: nie” w Pipeline), zamiast propozycji poniżej umów od razu 45 minut wspólnie z osobą decyzyjną. Jeśli sam jest decydentem, użyj propozycji poniżej.",
       },
       {
         t: "say",
@@ -534,23 +328,8 @@ export const STEPS_K: Step[] = [
       },
       { t: "client", text: "[proponuje porę albo nie chce ustalać teraz]" },
     ],
-    decision: {
-      question: "Czy klient podał konkretny dzień i porę?",
-      options: [
-        {
-          trigger: "Tak, podaje dzień i porę",
-          action: "Rezerwujesz termin od razu na tej rozmowie, klient tylko potwierdza.",
-          goToStepId: "spotkanie_rezerwacja",
-          tone: "positive",
-        },
-        {
-          trigger: "Nie chce ustalać terminu teraz",
-          action: "Wysyłasz link do samodzielnej rezerwacji jako wariant zapasowy.",
-          openObjectionId: "spotkanie_link_zapasowy",
-          tone: "neutral",
-        },
-      ],
-    },
+    expected:
+      "Klient podaje konkretny dzień i porę. Rezerwujesz termin od razu na tej rozmowie, klient tylko potwierdza. Jeśli nie chce ustalać teraz, rozwiń obiekcję „Nie chce ustalać terminu teraz” poniżej.",
   },
   {
     id: "spotkanie_rezerwacja",
@@ -572,7 +351,7 @@ export const STEPS_K: Step[] = [
         text: "Jeszcze jedno. Całe wdrożenie, od tego spotkania aż po uruchomienie systemu u Pana w firmie, prowadzę osobiście. Nie przekazuję tego nikomu innemu. Będzie Pan miał jeden kontakt przez cały proces, nie różnych ludzi na różnych etapach.",
         textSetter:
           "Jeszcze jedno. Całe wdrożenie, od tego spotkania aż po uruchomienie systemu u Pana w firmie, prowadzi osobiście założyciel Autorise, Michał. Nie przekazuje tego nikomu innemu. Będzie Pan miał jeden kontakt przez cały proces, nie różnych ludzi na różnych etapach.",
-        cel: "Budować autorytet i ciągłość — klient rozmawia z decydentem i wykonawcą w jednej osobie, nie trafia do korporacyjnego przekazywania sprawy między działami",
+        cel: "Budować autorytet i ciągłość, klient ma jeden kontakt przez cały proces zamiast przekazywania między działami.",
       },
       {
         t: "say",
@@ -701,14 +480,23 @@ export const OBJECTIONS_K: Objection[] = [
     note: "Nawet z zewnętrzną księgowością ktoś wewnątrz firmy zbiera i wysyła dokumenty ręcznie. To wciąż ból do zmapowania w kalkulatorze (moduł Dokumenty i pliki).",
   },
   {
+    id: "tms_panel_zewnetrzny",
+    label:
+      "Pracuje tylko przez zewnętrzny panel (Amazon Relay, panel kurierski, giełda z własnym rozliczeniem)",
+    stage: "diagnoza",
+    script:
+      "Rozumiem, czyli większość obiegu macie w tym panelu. Powie mi Pan, co przy tym robicie jeszcze ręcznie obok samego panelu? Wystawianie faktur, zbieranie potwierdzeń, pilnowanie płatności?",
+    note: "Ten profil nie pasuje do pytań o CMR na giełdach transportowych. Zamiast lecieć krokami 2d do 2g po kolei, dopytaj ogólnie o ręczną robotę wokół panelu i wróć do kroku, który realnie pasuje do jego odpowiedzi.",
+  },
+  {
     id: "konkurencja_m365",
     label: "Ma wszystko w Microsoft 365 / Power Automate",
     stage: "diagnoza",
     script:
-      "To brzmi jak solidna konfiguracja. Sprawdzam zwykle jedną rzecz, czy to faktycznie odczytuje dane z dokumentu i wypełnia je automatycznie, czy tylko przenosi plik do folderu, a ktoś nadal musi go otworzyć i przepisać ręcznie?",
+      "To brzmi jak solidna konfiguracja. Sprawdzam zwykle jedną rzecz, czy to faktycznie odczytuje dane z dokumentu i wpisuje je samo, czy tylko przenosi plik do folderu, a ktoś i tak musi go otworzyć i przepisać ręcznie?",
     followup:
-      "A co się dzieje gdy dokument wygląda inaczej niż zwykle? Flow ogarnia to sam, czy ktoś wtedy ręcznie interweniuje? I kto to utrzymuje, jak coś się zepsuje po aktualizacji?",
-    note: "Większość konfiguracji Power Automate przenosi pliki, nie wyciąga z nich danych, i utrzymuje ją jedna osoba która to kiedyś skonfigurowała. Jeśli klient ma faktycznie zaawansowaną integrację z realnym OCR i utrzymaniem, przyznaj to uczciwie, nie naciskaj wbrew faktom.",
+      "A co się dzieje, gdy dokument wygląda inaczej niż zwykle? System radzi sobie z tym sam, czy ktoś musi wtedy ręcznie poprawić? I kto to wszystko utrzymuje, gdy przestaje działać po aktualizacji?",
+    note: "Większość konfiguracji Power Automate przenosi pliki, nie wyciąga z nich danych, i utrzymuje ją jedna osoba która to kiedyś ustawiła. Jeśli klient ma naprawdę zaawansowaną integrację z prawdziwym odczytem dokumentów i utrzymaniem, przyznaj to uczciwie, nie naciskaj wbrew faktom.",
   },
   {
     id: "po_co_to_pytanie",

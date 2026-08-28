@@ -1514,58 +1514,64 @@ function ClientPanel({
           )}
         </div>
 
-        <div style={{ marginTop: 20, display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <a
-            href={`/prezentacja.html?id=${encodeURIComponent(client.id)}`}
-            target="_blank"
-            rel="noreferrer"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 5,
-              fontSize: 12,
-              color: "var(--accent)",
-              textDecoration: "none",
-              padding: "6px 10px",
-              border: "1px solid var(--accent-border)",
-              background: "var(--accent-muted)",
-              borderRadius: "var(--radius-xs)",
-              fontFamily: "var(--font-sans)",
-            }}
-          >
-            <ExternalLink size={14} strokeWidth={2.5} />
-            Otwórz prezentację
-          </a>
-          <button
-            type="button"
-            onClick={() => {
-              const url = `${window.location.origin}/prezentacja.html?id=${encodeURIComponent(client.id)}`;
-              void navigator.clipboard.writeText(url);
-              setLinkCopied(true);
-              setTimeout(() => setLinkCopied(false), 2000);
-            }}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 5,
-              fontSize: 12,
-              color: linkCopied ? "var(--success-text)" : "var(--text-primary)",
-              background: "transparent",
-              padding: "6px 10px",
-              border: "1px solid var(--border)",
-              borderRadius: "var(--radius-xs)",
-              fontFamily: "var(--font-sans)",
-              cursor: "pointer",
-            }}
-          >
-            {linkCopied ? (
-              <CheckCircle2 size={14} strokeWidth={2.5} />
-            ) : (
-              <Copy size={14} strokeWidth={2.5} />
-            )}
-            {linkCopied ? "Skopiowano" : "Kopiuj link do prezentacji"}
-          </button>
-        </div>
+        {/* Prezentacja powstaje dopiero po Discovery (personalizacja Agent 3). Na
+            statusach sprzed Discovery nie ma czego otwierać — nie pokazuj linków. */}
+        {!["Nowy lead", "Kwalifikacja", "Niekwalifikowany", "Nieaktywny (follow up)"].includes(
+          client.status,
+        ) && (
+          <div style={{ marginTop: 20, display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <a
+              href={`/prezentacja.html?id=${encodeURIComponent(client.id)}`}
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 5,
+                fontSize: 12,
+                color: "var(--accent)",
+                textDecoration: "none",
+                padding: "6px 10px",
+                border: "1px solid var(--accent-border)",
+                background: "var(--accent-muted)",
+                borderRadius: "var(--radius-xs)",
+                fontFamily: "var(--font-sans)",
+              }}
+            >
+              <ExternalLink size={14} strokeWidth={2.5} />
+              Otwórz prezentację
+            </a>
+            <button
+              type="button"
+              onClick={() => {
+                const url = `${window.location.origin}/prezentacja.html?id=${encodeURIComponent(client.id)}`;
+                void navigator.clipboard.writeText(url);
+                setLinkCopied(true);
+                setTimeout(() => setLinkCopied(false), 2000);
+              }}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 5,
+                fontSize: 12,
+                color: linkCopied ? "var(--success-text)" : "var(--text-primary)",
+                background: "transparent",
+                padding: "6px 10px",
+                border: "1px solid var(--border)",
+                borderRadius: "var(--radius-xs)",
+                fontFamily: "var(--font-sans)",
+                cursor: "pointer",
+              }}
+            >
+              {linkCopied ? (
+                <CheckCircle2 size={14} strokeWidth={2.5} />
+              ) : (
+                <Copy size={14} strokeWidth={2.5} />
+              )}
+              {linkCopied ? "Skopiowano" : "Kopiuj link do prezentacji"}
+            </button>
+          </div>
+        )}
 
         {/* Reset klienta — jednym kliknięciem z powrotem na "Nowy lead". */}
         <button

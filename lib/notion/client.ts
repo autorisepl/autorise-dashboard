@@ -547,8 +547,8 @@ export async function upsertLeadIntake(data: LeadIntakeData): Promise<string> {
 
   if (data.email) props["Email"] = { email: data.email };
 
+  // Email trafia wyłącznie do dedykowanego pola "Email" powyżej, nie do Notatek.
   const notesLines: string[] = [];
-  if (data.email) notesLines.push(`Email: ${data.email}`);
   if (data.nip) notesLines.push(`NIP: ${data.nip}`);
   if (notesLines.length > 0) notesLines.push("");
   notesLines.push(data.notatka_krs);
