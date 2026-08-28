@@ -112,10 +112,10 @@ export const STEPS_K: Step[] = [
       {
         t: "say",
         text: [
-          "Zapytam o dwie konkretne sytuacje, bo to właśnie w takich momentach większość firm traci klientów albo popełnia kosztowne pomyłki.",
+          "Zapytam o dwie konkretne sytuacje, bo to właśnie w takich momentach zwykle widać, czy proces jest naprawdę odporny.",
           "Jak to wygląda gdy nagle przychodzi dużo zleceń naraz, na przykład w szczycie sezonu?",
         ],
-        cel: "Sprawdzić czy pod presją proces się sypie, bez zakładania z góry że u klienta jest dobrze, bo tego jeszcze nie powiedział — dodane zdanie o skali konsekwencji zwiększa szansę że klient szczerze opowie, widzi że pytanie ma realny sens biznesowy",
+        cel: "Sprawdzić czy pod presją proces się sypie, bez zakładania z góry że u klienta jest źle. Zdanie ramujące pokazuje że pytanie ma sens biznesowy, nie sugerując że klient ma problem.",
       },
       { t: "client", text: "[odpowiedź]" },
       {
@@ -759,18 +759,15 @@ export const OBJECTIONS_K: Objection[] = [
   },
   // Standardowe obiekcje
   {
-    id: "ok1",
-    label: "Nie mam teraz czasu (pierwsze NIE)",
+    id: "ok_nie_czasu",
+    label: "Nie ma czasu / spieszy się / minęły już 2 minuty",
     stage: "opening",
     script:
-      "Rozumiem. Zajmę Panu naprawdę chwilę, a chodzi o czas i pieniądze które biuro traci co miesiąc na powtarzalnej, ręcznej robocie. Da rady teraz, czy woli Pan żebym oddzwonił o konkretnej porze?",
-  },
-  {
-    id: "ok2",
-    label: "Nadal nie mam czasu (drugie NIE)",
-    stage: "opening",
-    script: "Jasne. Kiedy jest Pan bardziej dostępny, jutro rano czy po południu?",
-    note: "Zapisz dzień i godzinę. Ustaw follow-up w Pipeline.",
+      "Rozumiem. Zajmę Panu naprawdę chwilę, bo chodzi o czas i pieniądze które biuro traci co miesiąc na powtarzalnej, ręcznej robocie. Da rady teraz, czy woli Pan żebym oddzwonił o konkretnej porze?",
+    followup:
+      "Jasne, nie będę naciskać. Kiedy jest Panu wygodniej, jutro rano czy raczej po południu? Zapiszę konkretny termin i wtedy zadzwonię.",
+    note: "Pierwsze „nie mam czasu” zbijasz raz (script). Jeśli klient dalej nie chce, NIE przekonuj więcej, przejdź do followup: umawiasz KONKRETNY termin (dzień + pora) i zapisujesz w Pipeline jako follow-up. To samo gdy klient mówi że „minęły już 2 minuty” w trakcie diagnozy, przyznaj wprost „Ma Pan rację” i daj wybór: dokończyć w skrócie teraz czy oddzwonić i zrobić to porządnie. Szczery brak czasu szanujesz, wymówki nie warto forsować.",
+    nextStepId: "diagnoza_otwarcie",
   },
   {
     id: "ok3",
@@ -797,30 +794,6 @@ export const OBJECTIONS_K: Objection[] = [
     note: "Jeśli nie może dołączyć: 'Rozumiem. Co musiałoby się wydarzyć na spotkaniu żeby [osoba] powiedziała tak?'",
   },
   {
-    id: "ok1_szczere",
-    label: "Nie mam czasu, naprawdę zajęty",
-    stage: "opening",
-    script: "Jasne, rozumiem. Kiedy byłoby Panu wygodniej, jutro rano czy po południu?",
-    note: "Nie przekonuj, nie próbuj wcisnąć rozmowy na siłę. Szczery brak czasu szanujesz i umawiasz konkretny termin, nie 'kiedyś'.",
-  },
-  {
-    id: "ok1_wymowka",
-    label: "Nie mam czasu, brzmi jak wymówka",
-    stage: "opening",
-    script:
-      "Jasne, rozumiem. Sprawdzam tylko, czy Pana biuro traci więcej niż kilkadziesiąt godzin miesięcznie na ręczne wpisywanie zleceń i dokumentów, bo to realne pieniądze. Ma Pan te dwie minuty?",
-    note: "Rozpoznajesz wymówkę po tonie: szybkie 'nie mam czasu' zaraz po przedstawieniu się, bez pytania o co chodzi, zanim jeszcze wiedział czego dotyczy telefon. Jeśli nadal odmawia mimo tej odpowiedzi: przejdź do obiekcji 'Nadal nie mam czasu' (drugie NIE).",
-    nextStepId: "diagnoza_otwarcie",
-  },
-  {
-    id: "ok_czas_minal",
-    label: "Klient mówi że minęły już 2 minuty",
-    stage: "opening",
-    script:
-      "Ma Pan rację, przepraszam. Zapytam wprost, dokończyć w skrócie teraz, czy woli Pan żebym oddzwonił i zrobił to porządnie?",
-    note: "To się zdarza gdy diagnoza faktycznie trwa dłużej niż deklarowane 2 minuty. Nie ignoruj tego, przyznaj wprost i daj klientowi wybór. Większość zostaje jeśli dasz im kontrolę nad decyzją.",
-  },
-  {
     id: "icp_ponizej_progu",
     label: "Poniżej progu ICP — 1 osoba w biurze, brak planu zatrudnienia",
     stage: "icp",
@@ -833,8 +806,10 @@ export const OBJECTIONS_K: Objection[] = [
     label: "Rozmówca nie jest decydentem",
     stage: "icp",
     script:
-      "Rozumiem. Czym się Pan zajmuje w firmie? [odpowiedź] A z własnej inicjatywy się Pan zgłosił, czy na prośbę właściciela? [odpowiedź] Dobrze, to zbierzmy wszystkie informacje, a potem zobaczymy jak najlepiej zorganizować kolejny krok.",
-    note: "Rozmówca nie jest decydentem — zaznacz to od razu w Pipeline (pole 'decydent: nie'), żeby w kroku 3 'Spotkanie jako rozwiązanie' zaproponować 45 minut wspólnie z osobą decyzyjną zamiast standardowego terminu. Kontynuujesz pełną diagnozę z tą osobą, nie skracasz rozmowy i nie umawiasz spotkania na tym etapie.",
+      "Rozumiem. Czym się Pan zajmuje w firmie, i zgłosił się Pan z własnej inicjatywy, czy na prośbę właściciela?",
+    followup:
+      "Dobrze, to zbierzmy teraz wszystkie informacje, a na końcu ustalimy jak najlepiej zorganizować kolejny krok, tak żeby właściciel też miał pełen obraz.",
+    note: "Zaznacz w Pipeline (pole 'decydent: nie'), żeby w kroku 3 zaproponować 45 minut wspólnie z osobą decyzyjną zamiast standardowego terminu. Poczekaj na odpowiedź rozmówcy, potem followup. Kontynuujesz pełną diagnozę z tą osobą, nie skracasz rozmowy i nie umawiasz spotkania na tym etapie.",
     nextStepId: "diagnoza_tms",
   },
   {
@@ -911,16 +886,24 @@ export const OBJECTIONS_K: Objection[] = [
 ];
 
 export const ICP_RULES: IcpRule[] = [
-  { ok: true, label: "Biuro", val: "Min. 2 osoby przy zleceniach (twardy disqualifier)" },
-  { ok: true, label: "Decydent", val: "Właściciel lub wspólnik — weryfikuj na kwalifikacji" },
-  { ok: true, label: "Ból", val: "Ręczna praca potwierdzona kalkulatorem ROI ≥ 80h/mc" },
-  { ok: true, label: "Flota", val: "Orientacyjnie 10–150 pojazdów — sprawdź kalkulator" },
+  { ok: true, label: "Biuro", val: "Minimum 2 osoby przy zleceniach. To twardy próg." },
+  { ok: true, label: "Decydent", val: "Właściciel lub wspólnik, weryfikowany na kwalifikacji." },
+  {
+    ok: true,
+    label: "Ból",
+    val: "Ręczna praca potwierdzona kalkulatorem, od 80 godzin miesięcznie.",
+  },
+  { ok: true, label: "Flota", val: "Orientacyjnie 10 do 150 pojazdów." },
   {
     ok: true,
     label: "Przychód roczny",
-    val: "Drugi, opcjonalny filtr ICP obok floty — nie blokuje rozmowy jeśli klient nie odpowie",
+    val: "Opcjonalny filtr obok floty. Nie blokuje rozmowy jeśli klient nie odpowie.",
   },
-  { ok: false, label: "Odrzuć", val: "< 2 osoby w biurze LUB potencjał ROI < 80h/mc łącznie" },
+  {
+    ok: false,
+    label: "Odrzuć",
+    val: "Mniej niż 2 osoby w biurze albo łączny potencjał poniżej 80 godzin miesięcznie.",
+  },
 ];
 
 // Krótkie potwierdzenia + mostki do kolejnego pytania. Potwierdzenie utrzymuje

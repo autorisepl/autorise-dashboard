@@ -31,7 +31,7 @@ import {
   OBJECTIONS_K,
   STEPS_K,
 } from "@/lib/scripts/kwalifikacyjna";
-import { GROUP_COLORS, MESSAGES_DATA } from "@/lib/scripts/messages";
+import { MESSAGES_DATA } from "@/lib/scripts/messages";
 import { getRecommendedModules } from "@/lib/scripts/moduleRecommendation";
 import type { CalculatorGroup, DecisionOption, ScriptLine } from "@/lib/scripts/types";
 
@@ -66,7 +66,7 @@ function toSentences(text: string): string[] {
 // szukał podczas rozmowy na żywo. Każdy krok renderuje je tak samo jak krok
 // OPENING: rozwijane wiersze z gotową odpowiedzią w miejscu.
 const STEP_OBJECTIONS: Record<string, string[]> = {
-  opener: ["ok_nie_kojarzy", "ok1", "ok_em", "ok_ms"],
+  opener: ["ok_nie_kojarzy", "ok_nie_czasu", "ok3", "ok_em", "ok_ms"],
   diagnoza_otwarcie: ["po_co_to_pytanie", "ok_nie_kojarzy"],
   diagnoza_icp_flota: ["icp_ponizej_progu", "spedytorzy_dorazni"],
   diagnoza_icp_decydent: ["icp_nie_decydent"],
@@ -1326,132 +1326,93 @@ function SmsPanel({
   const kwalItems = MESSAGES_DATA.sms.filter((m) => m.group === "Kwalifikacja");
   const fbItems = MESSAGES_DATA.fb;
 
+  const cap: React.CSSProperties = {
+    fontFamily: "var(--font-sans)",
+    fontSize: 11,
+    fontWeight: 800,
+    letterSpacing: "0.08em",
+    textTransform: "uppercase",
+    color: "var(--text-primary)",
+    marginBottom: 2,
+  };
+
+  const card = (
+    idPrefix: "sms" | "fb",
+    item: { id: string; label: string; text: string; group: string },
+    withSmsCopy: boolean,
+  ) => {
+    const key = `${idPrefix}-${item.id}`;
+    const done = copiedId === key;
+    return (
+      <div
+        key={item.id}
+        id={idPrefix === "sms" ? `sms-${item.id}` : undefined}
+        style={{
+          background: "var(--bg)",
+          border: "1px solid rgba(255,255,255,0.42)",
+          borderRadius: "var(--radius-sm)",
+          boxShadow: "var(--shadow-sm)",
+          padding: "12px",
+        }}
+      >
+        <div
+          style={{
+            fontFamily: "var(--font-sans)",
+            fontSize: 11,
+            fontWeight: 800,
+            letterSpacing: "0.03em",
+            textTransform: "uppercase",
+            color: "var(--text-primary)",
+            marginBottom: 6,
+          }}
+        >
+          {item.label}
+        </div>
+        <p
+          style={{
+            margin: "0 0 10px",
+            fontSize: 14,
+            lineHeight: 1.55,
+            color: "var(--text-primary)",
+            fontFamily: "var(--font-sans)",
+          }}
+        >
+          {fill(item.text)}
+        </p>
+        <button
+          onClick={() => {
+            onCopy(key, item.text);
+            if (withSmsCopy) onSmsCopy();
+          }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 5,
+            height: 30,
+            padding: "0 12px",
+            borderRadius: "var(--radius-xs)",
+            border: "1px solid rgba(255,255,255,0.42)",
+            background: done ? "var(--success-bg)" : "var(--bg-elevated)",
+            cursor: "pointer",
+            fontSize: 12,
+            fontWeight: 700,
+            color: done ? "var(--success-text)" : "var(--text-primary)",
+            fontFamily: "var(--font-sans)",
+          }}
+        >
+          {done ? <CheckCircle2 size={13} /> : <Copy size={13} />}
+          {done ? "Skopiowano" : "Kopiuj"}
+        </button>
+      </div>
+    );
+  };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-      <div
-        style={{
-          fontSize: 10,
-          fontWeight: 700,
-          letterSpacing: "0.08em",
-          textTransform: "uppercase",
-          color: "var(--text-tertiary)",
-          marginBottom: 2,
-        }}
-      >
-        SMS / WhatsApp
-      </div>
-      {kwalItems.map((item) => (
-        <div
-          key={item.id}
-          id={`sms-${item.id}`}
-          style={{ background: "var(--bg)", borderRadius: 8, padding: "10px 12px" }}
-        >
-          <div
-            style={{
-              fontSize: 11,
-              fontWeight: 600,
-              color: GROUP_COLORS[item.group] ?? "var(--accent)",
-              marginBottom: 4,
-            }}
-          >
-            {item.label}
-          </div>
-          <p
-            style={{
-              margin: "0 0 8px",
-              fontSize: 12,
-              lineHeight: 1.55,
-              color: "var(--text-primary)",
-              fontFamily: "var(--font-sans)",
-            }}
-          >
-            {fill(item.text)}
-          </p>
-          <button
-            onClick={() => {
-              onCopy(`sms-${item.id}`, item.text);
-              onSmsCopy();
-            }}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 4,
-              padding: "4px 10px",
-              borderRadius: 6,
-              border: "1px solid var(--border)",
-              background: "var(--bg-elevated)",
-              cursor: "pointer",
-              fontSize: 11,
-              color:
-                copiedId === `sms-${item.id}` ? "var(--success-text)" : "var(--text-secondary)",
-              fontFamily: "var(--font-sans)",
-            }}
-          >
-            {copiedId === `sms-${item.id}` ? <CheckCircle2 size={11} /> : <Copy size={11} />}
-            {copiedId === `sms-${item.id}` ? "Skopiowano" : "Kopiuj"}
-          </button>
-        </div>
-      ))}
-      <div
-        style={{
-          fontSize: 10,
-          fontWeight: 700,
-          letterSpacing: "0.08em",
-          textTransform: "uppercase",
-          color: "var(--text-tertiary)",
-          marginTop: 8,
-          marginBottom: 2,
-        }}
-      >
-        Facebook
-      </div>
-      {fbItems.map((item) => (
-        <div
-          key={item.id}
-          style={{ background: "var(--bg)", borderRadius: 8, padding: "10px 12px" }}
-        >
-          <div
-            style={{
-              fontSize: 11,
-              fontWeight: 600,
-              color: GROUP_COLORS[item.group] ?? "var(--accent)",
-              marginBottom: 4,
-            }}
-          >
-            {item.label}
-          </div>
-          <p
-            style={{
-              margin: "0 0 8px",
-              fontSize: 12,
-              lineHeight: 1.55,
-              color: "var(--text-primary)",
-              fontFamily: "var(--font-sans)",
-            }}
-          >
-            {fill(item.text)}
-          </p>
-          <button
-            onClick={() => onCopy(`fb-${item.id}`, item.text)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 4,
-              padding: "4px 10px",
-              borderRadius: 6,
-              border: "1px solid var(--border)",
-              background: "var(--bg-elevated)",
-              cursor: "pointer",
-              fontSize: 11,
-              color: copiedId === `fb-${item.id}` ? "var(--success-text)" : "var(--text-secondary)",
-              fontFamily: "var(--font-sans)",
-            }}
-          >
-            {copiedId === `fb-${item.id}` ? <CheckCircle2 size={11} /> : <Copy size={11} />}
-            {copiedId === `fb-${item.id}` ? "Skopiowano" : "Kopiuj"}
-          </button>
-        </div>
-      ))}
+      <div style={cap}>SMS / WhatsApp</div>
+      {kwalItems.map((item) => card("sms", item, true))}
+      <div style={{ ...cap, marginTop: 8 }}>Facebook</div>
+      {fbItems.map((item) => card("fb", item, false))}
     </div>
   );
 }
@@ -1460,43 +1421,57 @@ function SmsPanel({
 
 function IcpPanel() {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
       {ICP_RULES.map((rule, i) => (
         <div
           key={i}
           style={{
             display: "flex",
             alignItems: "flex-start",
-            gap: 8,
-            padding: "8px 10px",
-            borderRadius: 8,
-            background: rule.ok ? "var(--success-bg)" : "var(--error-bg)",
-            border: `1px solid ${rule.ok ? "var(--success-border)" : "var(--error-border)"}`,
+            gap: 10,
+            padding: "12px",
+            borderRadius: "var(--radius-sm)",
+            background: "var(--bg)",
+            border: "1px solid rgba(255,255,255,0.42)",
+            boxShadow: "var(--shadow-sm)",
           }}
         >
-          <div style={{ flexShrink: 0, marginTop: 1 }}>
+          <span
+            style={{
+              flexShrink: 0,
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 22,
+              height: 22,
+              borderRadius: "50%",
+              background: rule.ok ? "var(--success-bg)" : "var(--error-bg)",
+              border: `1px solid ${rule.ok ? "var(--success-border)" : "var(--error-border)"}`,
+            }}
+          >
             {rule.ok ? (
-              <Check size={12} color="var(--success-text)" strokeWidth={2.5} />
+              <Check size={13} color="var(--success-text)" strokeWidth={2.75} />
             ) : (
-              <X size={12} color="var(--error)" strokeWidth={2.5} />
+              <X size={13} color="var(--error-text)" strokeWidth={2.75} />
             )}
-          </div>
+          </span>
           <div>
             <div
               style={{
-                fontSize: 11,
-                fontWeight: 700,
-                color: rule.ok ? "var(--success-text)" : "var(--error-text)",
-                marginBottom: 1,
+                fontFamily: "var(--font-sans)",
+                fontSize: 13,
+                fontWeight: 800,
+                color: "var(--text-primary)",
+                marginBottom: 2,
               }}
             >
               {rule.label}
             </div>
             <div
               style={{
-                fontSize: 11,
+                fontSize: 13,
                 color: "var(--text-secondary)",
-                lineHeight: 1.45,
+                lineHeight: 1.5,
                 fontFamily: "var(--font-sans)",
               }}
             >
