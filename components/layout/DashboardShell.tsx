@@ -80,9 +80,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         title={collapsed ? "Rozwiń panel" : "Zwiń panel"}
       >
         {collapsed ? (
-          <PanelLeft size={14} strokeWidth={1.8} />
+          <PanelLeft size={15} strokeWidth={2.5} />
         ) : (
-          <PanelLeftClose size={14} strokeWidth={1.8} />
+          <PanelLeftClose size={15} strokeWidth={2.5} />
         )}
       </button>
 

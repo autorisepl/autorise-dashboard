@@ -23,6 +23,10 @@ const SETTER_ALLOWED_PREFIXES = [
   "/agencja",
   "/prezentacja",
   "/agenci",
+  // Narzędzie transkrypcji rozmów telefonicznych — odblokowane dla settera/closera
+  // (2026-08-28). Praca nad tą zakładką dopiero przed nami, ale dostęp jest już teraz.
+  "/narzedzia",
+  "/api/tools/transcribe",
   // Nie jest już prowizorką pod sam przycisk wylogowania (ten żyje teraz w karcie
   // użytkownika w sidebarze, dostępny z każdej strony) — zostaje z innego powodu: ikona
   // ustawień w tej samej karcie linkuje do /profil dla KAŻDEJ roli, więc setter musi mieć

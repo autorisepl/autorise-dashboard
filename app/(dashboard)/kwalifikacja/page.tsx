@@ -9,11 +9,11 @@ import {
   FileText,
   Lock,
   MessageSquare,
+  Minus,
   PhoneCall,
-  PhoneMissed,
   Plus,
   Trash2,
-  Undo2,
+  User,
   Users,
   X,
 } from "lucide-react";
@@ -64,6 +64,10 @@ function toSentences(text: string): string[] {
 // Najczęstsze reakcje klienta na starcie rozmowy — jeden przycisk na sytuację,
 // prowadzi wprost do gotowej, konkretnej odpowiedzi w panelu obiekcji (bez
 // przewijania strony). Zamiast długiej listy wariantów mówiących to samo.
+// Founder przypisuje klienta do siebie lub do settera/closera. Dla roli setter/closer
+// przypisanie robi się samo przy rejestracji odbytej rozmowy.
+const SELLER_OPTIONS = ["Michał Roth", "Setter", "Closer"] as const;
+
 const OPENER_REACTIONS: { label: string; objId: string }[] = [
   { label: "Nie pamięta reklamy", objId: "ok_nb" },
   { label: "To nie ja / żona / przemyślę", objId: "ok_nie_ja" },
@@ -118,6 +122,10 @@ function Card({
     if (forceOpen) setOpen(true);
   }, [forceOpen]);
 
+  // Pusty tytuł bez zwijania = brak nagłówka karty w ogóle (skrypt kwalifikacyjny
+  // nie potrzebuje etykiety "SKRYPT KWALIFIKACYJNY", jest jedyną treścią kolumny).
+  const showHeader = collapsible || title.length > 0;
+
   return (
     <div
       style={{
@@ -128,41 +136,43 @@ function Card({
         marginBottom: 12,
       }}
     >
-      <div
-        onClick={collapsible ? () => setOpen((p) => !p) : undefined}
-        style={{
-          padding: "12px 16px",
-          borderBottom: open ? "1px solid var(--border)" : "none",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          cursor: collapsible ? "pointer" : "default",
-          userSelect: "none",
-        }}
-      >
-        <span
+      {showHeader && (
+        <div
+          onClick={collapsible ? () => setOpen((p) => !p) : undefined}
           style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-            color: "var(--text-tertiary)",
+            padding: "12px 16px",
+            borderBottom: open ? "1px solid var(--border)" : "none",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            cursor: collapsible ? "pointer" : "default",
+            userSelect: "none",
           }}
         >
-          {title}
-        </span>
-        {collapsible && (
-          <ChevronDown
-            size={14}
-            color="var(--text-tertiary)"
+          <span
             style={{
-              transform: open ? "rotate(180deg)" : "none",
-              transition: "transform 150ms",
+              fontFamily: "var(--font-sans)",
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              color: "var(--text-tertiary)",
             }}
-          />
-        )}
-      </div>
+          >
+            {title}
+          </span>
+          {collapsible && (
+            <ChevronDown
+              size={14}
+              color="var(--text-tertiary)"
+              style={{
+                transform: open ? "rotate(180deg)" : "none",
+                transition: "transform 150ms",
+              }}
+            />
+          )}
+        </div>
+      )}
       {open && <div style={{ padding: 16 }}>{children}</div>}
     </div>
   );
@@ -816,62 +826,6 @@ function ScriptKalkulator({
   );
 }
 
-// ── Banner: brak odbioru — widoczny zanim setter zacznie opener ───────
-
-function BrakOdbioruBanner({ onOpenSms }: { onOpenSms: () => void }) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        padding: "10px 14px",
-        marginBottom: 12,
-        borderRadius: 10,
-        background: "var(--warning-bg)",
-        border: "1px solid var(--warning)",
-      }}
-    >
-      <PhoneMissed size={16} color="var(--warning)" strokeWidth={2} />
-      <div style={{ flex: 1 }}>
-        <span
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: 12,
-            fontWeight: 700,
-            color: "var(--text-primary)",
-          }}
-        >
-          Brak odbioru?
-        </span>{" "}
-        <span
-          style={{ fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--text-secondary)" }}
-        >
-          Po 3 próbach wyślij SMS z gotowego szablonu.
-        </span>
-      </div>
-      <button
-        onClick={onOpenSms}
-        style={{
-          height: 28,
-          padding: "0 12px",
-          borderRadius: 7,
-          border: "1px solid var(--warning)",
-          background: "var(--bg-elevated)",
-          color: "var(--warning-text)",
-          fontFamily: "var(--font-sans)",
-          fontSize: 11,
-          fontWeight: 700,
-          cursor: "pointer",
-          flexShrink: 0,
-        }}
-      >
-        Otwórz SMS
-      </button>
-    </div>
-  );
-}
-
 // ── Pole wpisywane na bieżąco podczas zbierania konkretnej informacji ──
 
 function InlineCaptureInput({
@@ -935,8 +889,6 @@ function InlineCaptureInput({
 function ScriptStep({
   step,
   fill,
-  onCopy,
-  copiedId,
   onJump,
   onDecisionSelect,
   onJumpToObjection,
@@ -946,8 +898,6 @@ function ScriptStep({
 }: {
   step: (typeof STEPS_K)[0];
   fill: (t: string) => string;
-  onCopy: (id: string, text: string) => void;
-  copiedId: string | null;
   onJump: (stepId: string) => void;
   onDecisionSelect: (stepId: string, option: DecisionOption) => void;
   onJumpToObjection: (objectionId: string) => void;
@@ -956,6 +906,9 @@ function ScriptStep({
   children?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(true);
+  // Która obiekcja startowa jest rozwinięta (odpowiedź pokazuje się w miejscu,
+  // pod przyciskiem, bez panelu bocznego).
+  const [openObj, setOpenObj] = useState<string | null>(null);
 
   // Etap "opener" dostaje plakietkę statusu w języku Pipeline ("NOWY LEAD"),
   // reszta kroków neutralną plakietkę akcentową z własną nazwą etapu. Bez
@@ -973,9 +926,10 @@ function ScriptStep({
       id={`step-${step.id}`}
       style={{
         marginBottom: 10,
-        border: "1px solid var(--border)",
+        border: "1px solid rgba(255,255,255,0.22)",
         borderRadius: "var(--radius-md)",
         background: "var(--bg-elevated)",
+        boxShadow: "var(--shadow-sm)",
         overflow: "hidden",
       }}
     >
@@ -1048,170 +1002,267 @@ function ScriptStep({
       </div>
       {open && (
         <div style={{ padding: "8px 14px 12px", display: "flex", flexDirection: "column", gap: 6 }}>
-          {step.lines.map((line, li) => (
-            <div
-              key={li}
-              style={{
-                display: "flex",
-                alignItems: "flex-start",
-                gap: 8,
-                padding: "7px 10px",
-                borderRadius: 8,
-                background: LINE_BG[line.t],
-              }}
-            >
-              <div style={{ flexShrink: 0, marginTop: 1 }}>
-                {line.t === "say" && (
-                  <MessageSquare size={13} color="var(--accent)" strokeWidth={1.6} />
-                )}
-                {line.t === "client" && (
-                  <Users size={13} color="var(--text-secondary)" strokeWidth={1.8} />
-                )}
-                {line.t === "note" && (
-                  <AlertTriangle size={12} color="var(--warning)" strokeWidth={1.6} />
-                )}
-                {line.t === "action" && <Check size={12} color="var(--accent)" strokeWidth={2} />}
-                {(line.t === "branch" || line.t === "branch-bad") && (
-                  <Check size={12} color={LINE_COLOR[line.t]} strokeWidth={2} />
-                )}
-              </div>
-              <div style={{ flex: 1 }}>
-                {(() => {
-                  const displayText =
-                    role === "setter" && line.textSetter ? line.textSetter : line.text;
-                  const blocks = Array.isArray(displayText) ? displayText : [displayText];
-                  // Wypowiedzi settera ("say") łamiemy dodatkowo na zdania —
-                  // jeden akapit na zdanie. Reszta linii zostaje jak w danych.
-                  const paragraphs =
-                    line.t === "say" ? blocks.flatMap((b) => toSentences(b)) : blocks;
-                  return paragraphs.map((paragraph, pi) => (
-                    <p
-                      key={pi}
+          {step.lines.map((line, li) => {
+            const isSpeaker = line.t === "say" || line.t === "client";
+            return (
+              <div
+                key={li}
+                style={{
+                  display: "flex",
+                  alignItems: "stretch",
+                  gap: 0,
+                  padding: "8px 10px",
+                  borderRadius: 8,
+                  background: LINE_BG[line.t],
+                }}
+              >
+                <div style={{ flexShrink: 0, display: "flex", alignItems: "flex-start" }}>
+                  <div style={{ display: "flex", alignItems: "center", minHeight: 26 }}>
+                    {isSpeaker && (
+                      <span
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          width: 30,
+                          height: 30,
+                          borderRadius: 9,
+                          border: "1px solid rgba(255,255,255,0.28)",
+                          background: line.t === "say" ? "var(--accent)" : "var(--bg-hover)",
+                        }}
+                      >
+                        {line.t === "say" ? (
+                          <MessageSquare
+                            size={17}
+                            color="#ffffff"
+                            fill="currentColor"
+                            strokeWidth={2.5}
+                          />
+                        ) : (
+                          <Users size={17} color="#ffffff" fill="currentColor" strokeWidth={2.5} />
+                        )}
+                      </span>
+                    )}
+                    {line.t === "note" && (
+                      <AlertTriangle size={13} color="var(--warning)" strokeWidth={2} />
+                    )}
+                    {line.t === "action" && (
+                      <Check size={13} color="var(--accent)" strokeWidth={2.5} />
+                    )}
+                    {(line.t === "branch" || line.t === "branch-bad") && (
+                      <Check size={13} color={LINE_COLOR[line.t]} strokeWidth={2.5} />
+                    )}
+                  </div>
+                </div>
+                {/* Pionowa biała linia między ikoną a treścią, od góry ikony do końca treści. */}
+                <div
+                  style={{
+                    width: 2,
+                    alignSelf: "stretch",
+                    background: "rgba(255,255,255,0.22)",
+                    borderRadius: 1,
+                    margin: "0 11px",
+                    flexShrink: 0,
+                  }}
+                />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  {(() => {
+                    const displayText =
+                      role === "setter" && line.textSetter ? line.textSetter : line.text;
+                    const blocks = Array.isArray(displayText) ? displayText : [displayText];
+                    // Wypowiedzi settera ("say") łamiemy na zdania — jeden akapit na zdanie.
+                    const paragraphs =
+                      line.t === "say" ? blocks.flatMap((b) => toSentences(b)) : blocks;
+                    return paragraphs.map((paragraph, pi) => (
+                      <p
+                        key={pi}
+                        style={{
+                          margin: pi === 0 ? 0 : "8px 0 0 0",
+                          fontFamily: "var(--font-sans)",
+                          fontSize: 15.5,
+                          lineHeight: 1.6,
+                          color: LINE_COLOR[line.t],
+                          textWrap: "pretty" as React.CSSProperties["textWrap"],
+                        }}
+                      >
+                        {fill(paragraph)}
+                      </p>
+                    ));
+                  })()}
+                  {line.t === "say" && line.cel && (
+                    <div
                       style={{
-                        margin: pi === 0 ? 0 : "7px 0 0 0",
                         fontFamily: "var(--font-sans)",
-                        fontSize: 14.5,
-                        lineHeight: 1.6,
-                        color: LINE_COLOR[line.t],
-                        textWrap: "pretty" as React.CSSProperties["textWrap"],
+                        fontSize: 13.5,
+                        lineHeight: 1.5,
+                        color: "var(--text-secondary)",
+                        marginTop: 8,
+                        paddingLeft: 10,
+                        borderLeft: "2px solid var(--accent)",
                       }}
                     >
-                      {fill(paragraph)}
-                    </p>
-                  ));
-                })()}
-                {line.t === "say" && line.cel && (
-                  <div
-                    style={{
-                      fontFamily: "var(--font-sans)",
-                      fontSize: 13,
-                      lineHeight: 1.5,
-                      color: "var(--text-secondary)",
-                      marginTop: 7,
-                      paddingLeft: 9,
-                      borderLeft: "2px solid var(--accent)",
-                    }}
-                  >
-                    <span style={{ fontWeight: 700, color: "var(--accent)" }}>Cel: </span>
-                    {line.cel}
-                  </div>
-                )}
-                {line.t === "note" && line.linkObjectionId && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onJumpToObjection(line.linkObjectionId!);
-                    }}
-                    style={{
-                      marginTop: 6,
-                      padding: "5px 10px",
-                      borderRadius: 6,
-                      border: "1px solid var(--warning)",
-                      background: "var(--bg-elevated)",
-                      color: "var(--warning-text)",
-                      fontFamily: "var(--font-sans)",
-                      fontSize: 11,
-                      fontWeight: 700,
-                      cursor: "pointer",
-                    }}
-                  >
-                    Otwórz obiekcję
-                  </button>
-                )}
-              </div>
-              {line.t === "say" && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onCopy(
-                      `${step.id}-${li}`,
-                      Array.isArray(line.text) ? line.text.join(" ") : line.text,
-                    );
-                  }}
-                  style={{
-                    flexShrink: 0,
-                    padding: "3px 7px",
-                    borderRadius: 5,
-                    border: "1px solid var(--border)",
-                    background: "transparent",
-                    cursor: "pointer",
-                    color:
-                      copiedId === `${step.id}-${li}`
-                        ? "var(--success-text)"
-                        : "var(--text-tertiary)",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 3,
-                    fontSize: 10,
-                  }}
-                >
-                  {copiedId === `${step.id}-${li}` ? (
-                    <CheckCircle2 size={10} />
-                  ) : (
-                    <Copy size={10} />
+                      <span style={{ fontWeight: 700, color: "var(--accent)" }}>Cel: </span>
+                      {line.cel}
+                    </div>
                   )}
-                </button>
-              )}
-            </div>
-          ))}
+                  {line.t === "note" && line.linkObjectionId && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onJumpToObjection(line.linkObjectionId!);
+                      }}
+                      style={{
+                        marginTop: 6,
+                        padding: "5px 10px",
+                        borderRadius: 6,
+                        border: "1px solid var(--warning)",
+                        background: "var(--bg-elevated)",
+                        color: "var(--warning-text)",
+                        fontFamily: "var(--font-sans)",
+                        fontSize: 11,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                      }}
+                    >
+                      Otwórz obiekcję
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
           {step.id === "opener" && (
-            <div style={{ marginTop: 2 }}>
+            <div style={{ marginTop: 6 }}>
+              <div style={{ borderTop: "1px solid rgba(255,255,255,0.22)", marginBottom: 10 }} />
               <div
                 style={{
                   fontFamily: "var(--font-sans)",
-                  fontSize: 10,
-                  fontWeight: 600,
-                  letterSpacing: "0.06em",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: "0.08em",
                   textTransform: "uppercase",
-                  color: "var(--text-tertiary)",
-                  marginBottom: 6,
+                  color: "var(--text-primary)",
+                  marginBottom: 8,
                 }}
               >
-                Jeśli klient odbija na starcie
+                Możliwe obiekcje
               </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                {OPENER_REACTIONS.map((r) => (
-                  <button
-                    key={r.objId}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onJumpToObjection(r.objId);
-                    }}
-                    style={{
-                      height: 28,
-                      padding: "0 10px",
-                      borderRadius: 8,
-                      border: "1px solid var(--border)",
-                      background: "transparent",
-                      color: "var(--text-secondary)",
-                      fontFamily: "var(--font-sans)",
-                      fontSize: 12,
-                      cursor: "pointer",
-                    }}
-                  >
-                    {r.label}
-                  </button>
-                ))}
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {OPENER_REACTIONS.map((r) => {
+                  const obj = OBJECTIONS_K.find((o) => o.id === r.objId);
+                  const isObjOpen = openObj === r.objId;
+                  return (
+                    <div
+                      key={r.objId}
+                      style={{
+                        border: "1px solid rgba(255,255,255,0.22)",
+                        borderRadius: 9,
+                        overflow: "hidden",
+                        background: "var(--bg)",
+                        boxShadow: "var(--shadow-sm)",
+                      }}
+                    >
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenObj(isObjOpen ? null : r.objId);
+                        }}
+                        style={{
+                          width: "100%",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          gap: 10,
+                          padding: "10px 12px",
+                          border: "none",
+                          background: isObjOpen ? "var(--bg-hover)" : "transparent",
+                          color: "var(--text-primary)",
+                          fontFamily: "var(--font-sans)",
+                          fontSize: 14,
+                          fontWeight: 600,
+                          textAlign: "left",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <span>{r.label}</span>
+                        <ChevronDown
+                          size={15}
+                          color="var(--text-tertiary)"
+                          style={{
+                            flexShrink: 0,
+                            transform: isObjOpen ? "rotate(180deg)" : "none",
+                            transition: "transform 150ms",
+                          }}
+                        />
+                      </button>
+                      {isObjOpen && obj && (
+                        <div
+                          style={{
+                            padding: "12px",
+                            borderTop: "1px solid rgba(255,255,255,0.22)",
+                          }}
+                        >
+                          {toSentences(fill(obj.script ?? "")).map((s, si) => (
+                            <p
+                              key={si}
+                              style={{
+                                margin: si === 0 ? 0 : "8px 0 0",
+                                fontFamily: "var(--font-sans)",
+                                fontSize: 15.5,
+                                lineHeight: 1.6,
+                                color: "var(--text-primary)",
+                                textWrap: "pretty" as React.CSSProperties["textWrap"],
+                              }}
+                            >
+                              {s}
+                            </p>
+                          ))}
+                          {obj.followup && (
+                            <div style={{ marginTop: 10 }}>
+                              <span
+                                style={{
+                                  fontFamily: "var(--font-sans)",
+                                  fontSize: 13,
+                                  fontWeight: 700,
+                                  color: "var(--accent)",
+                                }}
+                              >
+                                Jeśli nadal naciska:
+                              </span>
+                              {toSentences(fill(obj.followup)).map((s, si) => (
+                                <p
+                                  key={si}
+                                  style={{
+                                    margin: "4px 0 0",
+                                    fontFamily: "var(--font-sans)",
+                                    fontSize: 15,
+                                    lineHeight: 1.55,
+                                    color: "var(--text-secondary)",
+                                  }}
+                                >
+                                  {s}
+                                </p>
+                              ))}
+                            </div>
+                          )}
+                          {obj.note && (
+                            <p
+                              style={{
+                                margin: "10px 0 0",
+                                fontFamily: "var(--font-sans)",
+                                fontSize: 12.5,
+                                lineHeight: 1.5,
+                                color: "var(--text-tertiary)",
+                              }}
+                            >
+                              {obj.note}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -2273,11 +2324,49 @@ export default function KwalifikacjaPage() {
   ]);
   const [sprzedawcaImie, setSprzedawcaImie] = useState("Michał");
   const [smsForceOpen, setSmsForceOpen] = useState(false);
-  const [tallyFlash, setTallyFlash] = useState<"dial" | "rozmowa_kwalifikacja" | "sms" | null>(
-    null,
-  );
-  const [tallyUndo, setTallyUndo] = useState<"dial" | "rozmowa_kwalifikacja" | "sms" | null>(null);
   const role = useRole();
+
+  // Przypisanie sprzedawcy do klienta + rejestr odbytych rozmów kwalifikacyjnych.
+  // Na razie trzymane lokalnie (localStorage) — docelowo pole w Pipeline (wymaga
+  // migracji schematu Supabase/Notion). Kształt danych i handlery są tak zrobione,
+  // żeby podmiana warstwy zapisu na PATCH /api/notion/pipeline-update była jednym
+  // miejscem, bez zmian w UI.
+  const [callDoneByClient, setCallDoneByClient] = useState<Record<string, boolean>>({});
+  const [sellerByClient, setSellerByClient] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    try {
+      setCallDoneByClient(JSON.parse(localStorage.getItem("kwal_call_done") ?? "{}"));
+      setSellerByClient(JSON.parse(localStorage.getItem("kwal_seller_by_client") ?? "{}"));
+    } catch {
+      /* uszkodzony wpis w localStorage — startujemy z pustego stanu */
+    }
+  }, []);
+
+  const ownSellerLabel =
+    role === "setter" ? "Setter" : role === "closer" ? "Closer" : "Michał Roth";
+
+  const assignSeller = useCallback((clientId: string, seller: string) => {
+    setSellerByClient((prev) => {
+      const next = { ...prev, [clientId]: seller };
+      localStorage.setItem("kwal_seller_by_client", JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
+  const callDoneIds = Object.keys(callDoneByClient).filter((k) => callDoneByClient[k]);
+  const selectedSeller = selected ? (sellerByClient[selected.id] ?? null) : null;
+  const selectedCallDone = selected ? Boolean(callDoneByClient[selected.id]) : false;
+
+  // Wspólny styl etykiety w pasku narzędzi headera — białe wersaliki.
+  const TOOLBAR_LABEL: React.CSSProperties = {
+    fontFamily: "var(--font-sans)",
+    fontSize: 11,
+    fontWeight: 700,
+    letterSpacing: "0.08em",
+    textTransform: "uppercase",
+    color: "var(--text-primary)",
+  };
 
   const totalGodzinyH = calcGroups.reduce((sum, g) => sum + g.osoby * g.godziny * 22, 0);
   const totalPln = calcGroups.reduce((sum, g) => sum + g.osoby * g.godziny * 22 * g.stawka, 0);
@@ -2350,7 +2439,14 @@ export default function KwalifikacjaPage() {
       out = out.replace(/Pani \{IMIĘ\}/g, `${forma} ${nominative}`);
     }
     if (vocative.trim()) out = out.replace(/\{IMIĘ\}/g, vocative.trim());
-    if (sprzedawcaImie.trim()) out = out.replace(/\{IMIĘ_SPRZEDAWCY\}/g, sprzedawcaImie.trim());
+    // Imię do zdania otwierającego: jeśli przypisany sprzedawca ma realne imię
+    // (np. "Michał Roth"), bierzemy je; dla ról "Setter"/"Closer" i braku
+    // przypisania — wartość z pola "Imię w skrypcie".
+    const sellerFirst =
+      selectedSeller && selectedSeller !== "Setter" && selectedSeller !== "Closer"
+        ? selectedSeller.trim().split(/\s+/)[0]
+        : sprzedawcaImie.trim();
+    if (sellerFirst) out = out.replace(/\{IMIĘ_SPRZEDAWCY\}/g, sellerFirst);
 
     // Liczby w ustach settera zaokrąglone (zasada języka mówionego 2026-08-08) —
     // dokładne wartości zostają wyłącznie w kalkulatorze, klient słyszy "około X".
@@ -2380,17 +2476,13 @@ export default function KwalifikacjaPage() {
       /* licznik jest pomocniczy — brak sieci nie blokuje pracy */
     });
 
+  // Stan "odbyto/nie odbyto" i liczba prób są teraz trwale widoczne (zielona
+  // plakietka, licznik +/-), więc `tally` tylko dogrywa statystykę dzienną.
   const tally = useCallback((type: "dial" | "rozmowa_kwalifikacja" | "sms") => {
-    setTallyFlash(type);
-    setTallyUndo(type);
-    setTimeout(() => setTallyFlash((prev) => (prev === type ? null : prev)), 1800);
-    setTimeout(() => setTallyUndo((prev) => (prev === type ? null : prev)), 5000);
     void postTally(type, 1);
   }, []);
 
   const undoTally = useCallback((type: "dial" | "rozmowa_kwalifikacja" | "sms") => {
-    setTallyUndo(null);
-    setTallyFlash(null);
     void postTally(type, -1);
   }, []);
 
@@ -2469,14 +2561,49 @@ export default function KwalifikacjaPage() {
     setSelected((prev) => (prev ? { ...prev, liczbaProb: newCount } : prev));
     void fetchClients();
     void postTally("dial", 1);
-    setTallyFlash("dial");
-    setTallyUndo("dial");
-    setTimeout(() => setTallyFlash((prev) => (prev === "dial" ? null : prev)), 1800);
-    setTimeout(() => setTallyUndo((prev) => (prev === "dial" ? null : prev)), 5000);
     if (newCount >= 3) {
       jumpToSmsTemplate("m1");
     }
   }, [selected, fetchClients, jumpToSmsTemplate]);
+
+  const decrementCallAttempt = useCallback(async () => {
+    if (!selected || (selected.liczbaProb ?? 0) <= 0) return;
+    const newCount = (selected.liczbaProb ?? 0) - 1;
+    await fetch("/api/notion/pipeline-update", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pageId: selected.id, liczbaProb: newCount }),
+    });
+    setSelected((prev) => (prev ? { ...prev, liczbaProb: newCount } : prev));
+    void fetchClients();
+    void postTally("dial", -1);
+  }, [selected, fetchClients]);
+
+  const markCallDone = useCallback(() => {
+    if (!selected) return;
+    setCallDoneByClient((prev) => {
+      const next = { ...prev, [selected.id]: true };
+      localStorage.setItem("kwal_call_done", JSON.stringify(next));
+      return next;
+    });
+    // Setter/closer: odbyta rozmowa przypina się do jego profilu, jeśli klient
+    // nie ma jeszcze przypisanego sprzedawcy. Founder zarządza przypisaniem ręcznie.
+    if ((role === "setter" || role === "closer") && !sellerByClient[selected.id]) {
+      assignSeller(selected.id, ownSellerLabel);
+    }
+    tally("rozmowa_kwalifikacja");
+  }, [selected, role, sellerByClient, assignSeller, ownSellerLabel, tally]);
+
+  const undoCallDone = useCallback(() => {
+    if (!selected) return;
+    setCallDoneByClient((prev) => {
+      const next = { ...prev };
+      delete next[selected.id];
+      localStorage.setItem("kwal_call_done", JSON.stringify(next));
+      return next;
+    });
+    undoTally("rozmowa_kwalifikacja");
+  }, [selected, undoTally]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
@@ -2518,79 +2645,107 @@ export default function KwalifikacjaPage() {
         </div>
 
         <div
-          style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12, flexWrap: "wrap" }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            marginTop: 14,
+            flexWrap: "wrap",
+          }}
         >
-          {/* Dawne osobne "Wykręcono" scalone w przycisk "Nie odebrał" niżej, przy
-              wybranym kliencie — to ten sam moment (wykręcasz numer, brak odbioru),
-              nie dwa osobne kliknięcia. Ten przycisk zostaje wyłącznie dla realnie
-              nawiązanej rozmowy. */}
+          {/* ── Rejestracja odbytej rozmowy kwalifikacyjnej (toggle) ── */}
           <button
-            onClick={() => selected && tally("rozmowa_kwalifikacja")}
+            onClick={selected ? (selectedCallDone ? undoCallDone : markCallDone) : undefined}
             disabled={!selected}
+            title={
+              selected
+                ? selectedCallDone
+                  ? "Cofnij rejestrację odbytej rozmowy"
+                  : "Zarejestruj odbytą rozmowę kwalifikacyjną z tym klientem"
+                : "Wybierz klienta z listy"
+            }
             style={{
               display: "flex",
               alignItems: "center",
-              gap: 5,
-              padding: "6px 10px",
+              gap: 6,
+              height: 34,
+              padding: "0 14px",
               borderRadius: "var(--radius-xs)",
-              border: "1px solid var(--border)",
-              background: tallyFlash === "rozmowa_kwalifikacja" ? "var(--success-bg)" : "var(--bg)",
-              color:
-                tallyFlash === "rozmowa_kwalifikacja"
-                  ? "var(--success-text)"
-                  : "var(--text-primary)",
-              fontSize: 12,
-              fontWeight: 600,
+              border: "1px solid rgba(255,255,255,0.3)",
+              background: selectedCallDone ? "var(--success-bg)" : "var(--bg)",
+              color: selectedCallDone ? "var(--success-text)" : "var(--text-primary)",
               fontFamily: "var(--font-sans)",
+              fontSize: 12.5,
+              fontWeight: 800,
+              letterSpacing: "0.04em",
+              textTransform: "uppercase",
               cursor: selected ? "pointer" : "not-allowed",
-              opacity: selected ? 1 : 0.5,
+              opacity: selected ? 1 : 0.45,
               transition: "background 150ms, color 150ms",
             }}
-            title={
-              selected
-                ? "Zlicz nawiązaną rozmowę z wybranym klientem"
-                : "Wybierz klienta z listy, żeby zarejestrować rozmowę"
-            }
           >
-            {tallyFlash === "rozmowa_kwalifikacja" ? <Check size={14} /> : <PhoneCall size={14} />}
-            Rejestruj odbycie rozmowy
+            {selectedCallDone ? <Check size={15} /> : <PhoneCall size={15} />}
+            {selectedCallDone ? "Rozmowa odbyta" : "Zarejestruj rozmowę"}
           </button>
-          {tallyUndo && (
-            <button
-              onClick={() => undoTally(tallyUndo)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 5,
-                padding: "6px 10px",
-                borderRadius: "var(--radius-xs)",
-                border: "1px solid var(--warning)",
-                background: "var(--warning-bg)",
-                color: "var(--warning-text)",
-                fontSize: 12,
-                fontWeight: 700,
-                fontFamily: "var(--font-sans)",
-                cursor: "pointer",
-              }}
-              title="Cofnij ostatnie zliczenie (5 sekund)"
-            >
-              <Undo2 size={14} />
-              Cofnij
-            </button>
-          )}
 
-          <div style={{ height: 22, width: 1, background: "var(--border)" }} />
+          <div style={{ height: 24, width: 1, background: "rgba(255,255,255,0.28)" }} />
 
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          {/* ── Przypisany sprzedawca ── */}
+          <span style={TOOLBAR_LABEL}>Sprzedawca</span>
+          {role === "admin" ? (
+            SELLER_OPTIONS.map((opt) => {
+              const active = selectedSeller === opt;
+              return (
+                <button
+                  key={opt}
+                  onClick={() => selected && assignSeller(selected.id, opt)}
+                  disabled={!selected}
+                  style={{
+                    height: 30,
+                    padding: "0 12px",
+                    borderRadius: "var(--radius-xs)",
+                    border: `1px solid ${active ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.28)"}`,
+                    background: active ? "var(--accent)" : "var(--bg-elevated)",
+                    color: active ? "var(--text-on-accent)" : "var(--text-primary)",
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 12,
+                    fontWeight: active ? 800 : 600,
+                    letterSpacing: "0.03em",
+                    textTransform: "uppercase",
+                    cursor: selected ? "pointer" : "not-allowed",
+                    opacity: selected ? 1 : 0.45,
+                  }}
+                >
+                  {opt}
+                </button>
+              );
+            })
+          ) : (
             <span
               style={{
-                fontSize: 12,
-                color: "var(--text-secondary)",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                height: 30,
+                padding: "0 12px",
+                borderRadius: "var(--radius-xs)",
+                background: "var(--accent)",
+                border: "1px solid rgba(255,255,255,0.3)",
+                color: "var(--text-on-accent)",
                 fontFamily: "var(--font-sans)",
+                fontSize: 12,
+                fontWeight: 800,
+                letterSpacing: "0.03em",
+                textTransform: "uppercase",
               }}
             >
-              Imię sprzedawcy:
+              <User size={13} strokeWidth={2.5} />
+              {selectedSeller ?? ownSellerLabel}
             </span>
+          )}
+
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={TOOLBAR_LABEL}>Imię w skrypcie</span>
             <input
               value={sprzedawcaImie}
               onChange={(e) => updateSprzedawcaImie(e.target.value)}
@@ -2599,131 +2754,179 @@ export default function KwalifikacjaPage() {
                 height: 30,
                 padding: "0 10px",
                 borderRadius: "var(--radius-xs)",
-                border: "1px solid var(--border)",
+                border: "1px solid rgba(255,255,255,0.28)",
                 fontFamily: "var(--font-sans)",
                 fontSize: 13,
                 color: "var(--text-primary)",
                 background: "var(--bg)",
                 outline: "none",
-                width: 110,
+                width: 96,
               }}
             />
           </div>
 
           {selected && (
             <>
-              <button
-                onClick={incrementCallAttempt}
-                title="Wykręciłeś numer i nikt nie odebrał — liczy się do statystyk dziennych i do licznika prób kontaktu tego klienta"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  padding: "6px 10px",
-                  borderRadius: "var(--radius-xs)",
-                  border: "1px solid var(--border)",
-                  background: tallyFlash === "dial" ? "var(--success-bg)" : "var(--bg)",
-                  fontSize: 12,
-                  fontWeight: 600,
-                  fontFamily: "var(--font-sans)",
-                  color: tallyFlash === "dial" ? "var(--success-text)" : "var(--text-primary)",
-                  cursor: "pointer",
-                  transition: "background 150ms, color 150ms",
-                }}
-              >
-                {tallyFlash === "dial" ? <Check size={14} /> : <PhoneMissed size={14} />}
-                Brak odbioru ({(selected.liczbaProb ?? 0) + 1})
-              </button>
+              <div style={{ height: 24, width: 1, background: "rgba(255,255,255,0.28)" }} />
+
+              {/* ── Próby kontaktu +/- ── */}
+              <span style={TOOLBAR_LABEL}>Próby kontaktu</span>
               <div
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: 10,
-                  padding: "3px 10px 3px 4px",
+                  border: "1px solid rgba(255,255,255,0.28)",
                   borderRadius: "var(--radius-xs)",
-                  border: "1px solid var(--border)",
-                  background: "var(--bg)",
+                  overflow: "hidden",
                 }}
-                title="Jak setter ma zwracać się do klienta w tej rozmowie"
               >
-                <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                  <span
+                <button
+                  onClick={decrementCallAttempt}
+                  disabled={(selected.liczbaProb ?? 0) <= 0}
+                  title="Cofnij próbę kontaktu"
+                  style={{
+                    width: 32,
+                    height: 34,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    border: "none",
+                    borderRight: "1px solid rgba(255,255,255,0.28)",
+                    background: "var(--bg-elevated)",
+                    color: "var(--text-primary)",
+                    cursor: (selected.liczbaProb ?? 0) <= 0 ? "not-allowed" : "pointer",
+                    opacity: (selected.liczbaProb ?? 0) <= 0 ? 0.4 : 1,
+                  }}
+                >
+                  <Minus size={15} strokeWidth={2.5} />
+                </button>
+                <span
+                  style={{
+                    minWidth: 40,
+                    height: 34,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: "0 10px",
+                    background: (selected.liczbaProb ?? 0) >= 3 ? "var(--error-bg)" : "var(--bg)",
+                    color:
+                      (selected.liczbaProb ?? 0) >= 3 ? "var(--error-text)" : "var(--text-primary)",
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 13,
+                    fontWeight: 800,
+                  }}
+                >
+                  {selected.liczbaProb ?? 0}
+                </span>
+                <button
+                  onClick={incrementCallAttempt}
+                  title="Zarejestruj brak odbioru (kolejna próba kontaktu)"
+                  style={{
+                    width: 32,
+                    height: 34,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    border: "none",
+                    borderLeft: "1px solid rgba(255,255,255,0.28)",
+                    background: "var(--bg-elevated)",
+                    color: "var(--text-primary)",
+                    cursor: "pointer",
+                  }}
+                >
+                  <Plus size={15} strokeWidth={2.5} />
+                </button>
+              </div>
+
+              <div style={{ height: 24, width: 1, background: "rgba(255,255,255,0.28)" }} />
+
+              {/* ── Forma grzecznościowa ── */}
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  height: 30,
+                  padding: "0 10px",
+                  borderRadius: "var(--radius-xs)",
+                  background: "var(--accent)",
+                  border: "1px solid rgba(255,255,255,0.3)",
+                  color: "var(--text-on-accent)",
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 11,
+                  fontWeight: 800,
+                  letterSpacing: "0.04em",
+                  textTransform: "uppercase",
+                }}
+              >
+                Zwrot do klienta
+              </span>
+              {(["Pan", "Pani"] as const).map((f) => {
+                const active = forma === f;
+                return (
+                  <button
+                    key={f}
+                    onClick={() => setFormaOverride(f)}
                     style={{
-                      fontSize: 12,
-                      color: "var(--text-secondary)",
-                      fontFamily: "var(--font-sans)",
-                    }}
-                  >
-                    Zwrot do klienta:
-                  </span>
-                  {(["Pan", "Pani"] as const).map((f) => (
-                    <button
-                      key={f}
-                      onClick={() => setFormaOverride(f)}
-                      style={{
-                        height: 26,
-                        padding: "0 10px",
-                        borderRadius: "var(--radius-xs)",
-                        border: `1px solid ${forma === f ? "var(--accent)" : "var(--border)"}`,
-                        background: forma === f ? "rgba(67, 121, 177, 0.08)" : "var(--bg-elevated)",
-                        color: forma === f ? "var(--accent)" : "var(--text-secondary)",
-                        fontSize: 12,
-                        fontWeight: forma === f ? 600 : 400,
-                        cursor: "pointer",
-                        fontFamily: "var(--font-sans)",
-                      }}
-                    >
-                      {f}
-                    </button>
-                  ))}
-                  {formaOverride !== "auto" && (
-                    <button
-                      onClick={() => setFormaOverride("auto")}
-                      title="Wróć do automatycznego wykrywania"
-                      style={{
-                        height: 26,
-                        padding: "0 8px",
-                        borderRadius: "var(--radius-xs)",
-                        border: "1px solid var(--border)",
-                        background: "transparent",
-                        color: "var(--text-tertiary)",
-                        fontSize: 11,
-                        cursor: "pointer",
-                      }}
-                    >
-                      auto
-                    </button>
-                  )}
-                </div>
-                <div style={{ height: 20, width: 1, background: "var(--border)" }} />
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <span
-                    style={{
-                      fontSize: 12,
-                      color: "var(--text-secondary)",
-                      fontFamily: "var(--font-sans)",
-                    }}
-                  >
-                    Jak się zwracać:
-                  </span>
-                  <input
-                    value={vocative}
-                    onChange={(e) => setVocative(e.target.value)}
-                    placeholder="wołacz imienia"
-                    style={{
-                      height: 26,
-                      padding: "0 10px",
+                      height: 30,
+                      padding: "0 14px",
                       borderRadius: "var(--radius-xs)",
-                      border: "1px solid var(--border)",
+                      border: `1px solid ${active ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.28)"}`,
+                      background: active ? "var(--accent)" : "var(--bg-elevated)",
+                      color: active ? "var(--text-on-accent)" : "var(--text-primary)",
                       fontFamily: "var(--font-sans)",
-                      fontSize: 13,
-                      color: "var(--text-primary)",
-                      background: "var(--bg-elevated)",
-                      outline: "none",
-                      width: 140,
+                      fontSize: 12,
+                      fontWeight: active ? 800 : 600,
+                      letterSpacing: "0.04em",
+                      textTransform: "uppercase",
+                      cursor: "pointer",
                     }}
-                  />
-                </div>
+                  >
+                    {f}
+                  </button>
+                );
+              })}
+              {formaOverride !== "auto" && (
+                <button
+                  onClick={() => setFormaOverride("auto")}
+                  title="Wróć do automatycznego wykrywania"
+                  style={{
+                    height: 30,
+                    padding: "0 10px",
+                    borderRadius: "var(--radius-xs)",
+                    border: "1px solid rgba(255,255,255,0.28)",
+                    background: "transparent",
+                    color: "var(--text-secondary)",
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    letterSpacing: "0.04em",
+                    textTransform: "uppercase",
+                    cursor: "pointer",
+                  }}
+                >
+                  Auto
+                </button>
+              )}
+
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={TOOLBAR_LABEL}>Jak się zwracać</span>
+                <input
+                  value={vocative}
+                  onChange={(e) => setVocative(e.target.value)}
+                  placeholder="np. Panie Marku"
+                  style={{
+                    height: 30,
+                    padding: "0 10px",
+                    borderRadius: "var(--radius-xs)",
+                    border: "1px solid rgba(255,255,255,0.28)",
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 13,
+                    color: "var(--text-primary)",
+                    background: "var(--bg-elevated)",
+                    outline: "none",
+                    width: 140,
+                  }}
+                />
               </div>
             </>
           )}
@@ -2742,20 +2945,19 @@ export default function KwalifikacjaPage() {
           filterStatuses={["Nowy lead"]}
           headerLabel="Nowy lead"
           emptyLabel='Brak klientów "Nowy lead"'
+          callDoneClientIds={callDoneIds}
+          sellerLabel={selectedSeller}
         />
 
         {/* Main: script + roi + dalsze kroki */}
         <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px", background: "var(--bg)" }}>
-          <Card title="Skrypt kwalifikacyjny">
-            <BrakOdbioruBanner onOpenSms={() => jumpToSmsTemplate("m1")} />
+          <Card title="">
             <CalculatorFlagsBar flags={calculatorFlags} />
             {STEPS_K.map((step) => (
               <ScriptStep
                 key={step.id}
                 step={step}
                 fill={fill}
-                onCopy={onCopy}
-                copiedId={copiedId}
                 onJump={jumpToStep}
                 onDecisionSelect={handleDecisionSelect}
                 onJumpToObjection={jumpToObjection}

@@ -142,6 +142,9 @@ const SETTER_VISIBLE_HREFS = [
   "/agencja",
   "/prezentacja.html",
   "/agenci",
+  // Transkrypcja rozmów telefonicznych — odblokowana dla settera/closera (2026-08-28),
+  // zakładka jeszcze w budowie ale dostęp jest już teraz.
+  "/narzedzia",
 ];
 
 // ── Nav structure ───────────────────────────────────────────────────

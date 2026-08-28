@@ -1,7 +1,7 @@
 "use client";
 
 import { FileText, Mail, Phone } from "lucide-react";
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { formatPhone } from "@/lib/format/phone";
 
 export interface ClientContactFields {
@@ -26,50 +26,114 @@ export function ClientContactDetails({
   client: ClientContactFields;
   size?: "sm" | "xs";
 }) {
-  const fontSize = size === "xs" ? 10 : 11;
-  const iconSize = size === "xs" ? 9 : 10;
   if (!client.telefon && !client.email && !client.nip) return null;
 
+  // Wariant "xs" (kompaktowe selektory /agenci, GlobalClientSelector) zostaje płaski.
+  // Wariant "sm" (ClientSidebar) dostaje ten sam język ikon co karta w /pipeline:
+  // ikona w obwódkowym kółku, wypełniona, w kolorze --text-primary.
+  if (size === "xs") {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 2, marginTop: 2 }}>
+        {client.telefon && (
+          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+            <Phone size={9} color="var(--text-tertiary)" />
+            <span
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 10,
+                color: "var(--text-secondary)",
+              }}
+            >
+              {formatPhone(client.telefon)}
+            </span>
+          </div>
+        )}
+        {client.email && (
+          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+            <Mail size={9} color="var(--text-tertiary)" />
+            <span
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 10,
+                color: "var(--text-secondary)",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                maxWidth: 200,
+              }}
+            >
+              {client.email}
+            </span>
+          </div>
+        )}
+        {client.nip && (
+          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+            <FileText size={9} color="var(--text-tertiary)" />
+            <span
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 10,
+                color: "var(--text-secondary)",
+              }}
+            >
+              NIP {client.nip}
+            </span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  const row = (icon: ReactNode, text: string, ellipsis = false) => (
+    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      <span
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: 22,
+          height: 22,
+          borderRadius: "50%",
+          background: "var(--bg-elevated)",
+          border: "1px solid rgba(255,255,255,0.28)",
+          flexShrink: 0,
+        }}
+      >
+        {icon}
+      </span>
+      <span
+        style={{
+          fontFamily: "var(--font-sans)",
+          fontSize: 13,
+          fontWeight: 600,
+          color: "var(--text-primary)",
+          ...(ellipsis
+            ? {
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap" as const,
+                minWidth: 0,
+              }
+            : {}),
+        }}
+      >
+        {text}
+      </span>
+    </div>
+  );
+
+  // Wariant "sm" celowo minimalny: tylko telefon i e-mail (firma renderowana osobno
+  // przez wywołującego). NIP pomijamy tutaj — nie jest potrzebny w panelu wyboru klienta.
+  if (!client.telefon && !client.email) return null;
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 2, marginTop: 2 }}>
-      {client.telefon && (
-        <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-          <Phone size={iconSize} color="var(--text-tertiary)" />
-          <span
-            style={{ fontFamily: "var(--font-sans)", fontSize, color: "var(--text-secondary)" }}
-          >
-            {formatPhone(client.telefon)}
-          </span>
-        </div>
-      )}
-      {client.email && (
-        <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-          <Mail size={iconSize} color="var(--text-tertiary)" />
-          <span
-            style={{
-              fontFamily: "var(--font-sans)",
-              fontSize,
-              color: "var(--text-secondary)",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-              maxWidth: 200,
-            }}
-          >
-            {client.email}
-          </span>
-        </div>
-      )}
-      {client.nip && (
-        <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-          <FileText size={iconSize} color="var(--text-tertiary)" />
-          <span
-            style={{ fontFamily: "var(--font-sans)", fontSize, color: "var(--text-secondary)" }}
-          >
-            NIP {client.nip}
-          </span>
-        </div>
-      )}
+    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      {client.telefon &&
+        row(
+          <Phone size={12} strokeWidth={2.5} color="var(--text-primary)" fill="currentColor" />,
+          formatPhone(client.telefon),
+        )}
+      {client.email &&
+        row(<Mail size={12} strokeWidth={2.5} color="var(--text-primary)" />, client.email, true)}
     </div>
   );
 }

@@ -1,9 +1,19 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, ExternalLink, RefreshCw, Search, Users, X } from "lucide-react";
+import {
+  Building2,
+  ExternalLink,
+  PanelLeft,
+  PanelLeftClose,
+  RefreshCw,
+  Search,
+  User,
+  Users,
+  X,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import type { PipelineClientDetailed } from "@/app/api/notion/pipeline/route";
-import { ClientCompanyLine, ClientContactDetails } from "@/components/clients/ClientContactDetails";
+import { ClientContactDetails } from "@/components/clients/ClientContactDetails";
 
 // Wydzielone 2026-07-18 z /kwalifikacja i /sprzedaz, gdzie ten sam panel żył jako dwie
 // osobne, ręcznie zsynchronizowane kopie (świadoma decyzja z sesji 2026-07-15/16, "osobny
@@ -33,6 +43,11 @@ interface ClientSidebarProps {
   headerLabel?: string;
   /** Tekst pustej listy. */
   emptyLabel?: string;
+  /** Id klientów, dla których zarejestrowano odbytą rozmowę kwalifikacyjną — zielona
+   * plakietka na karcie klienta. */
+  callDoneClientIds?: string[];
+  /** Nazwa sprzedawcy przypisanego do zaznaczonego klienta — profil na dole panelu. */
+  sellerLabel?: string | null;
 }
 
 export function ClientSidebar({
@@ -46,7 +61,10 @@ export function ClientSidebar({
   statusColors = {},
   headerLabel = "Klienci",
   emptyLabel = "Brak klientów",
+  callDoneClientIds,
+  sellerLabel,
 }: ClientSidebarProps) {
+  const callDoneSet = new Set(callDoneClientIds ?? []);
   const [search, setSearch] = useState("");
   const [collapsed, setCollapsed] = useState(false);
 
@@ -106,14 +124,14 @@ export function ClientSidebar({
           width: 30,
           height: 30,
           borderRadius: "50%",
-          border: "1px solid var(--border)",
+          border: "1px solid rgba(255,255,255,0.28)",
           background: "var(--bg-elevated)",
           boxShadow: "var(--shadow-card)",
           cursor: "pointer",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          color: "var(--text-secondary)",
+          color: "var(--text-primary)",
           zIndex: 1,
           transition:
             "right 240ms cubic-bezier(0.4, 0, 0.2, 1), background 120ms, color 120ms, border-color 120ms, box-shadow 120ms",
@@ -124,15 +142,15 @@ export function ClientSidebar({
           e.currentTarget.style.boxShadow = "var(--shadow-elevated)";
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.color = "var(--text-secondary)";
-          e.currentTarget.style.borderColor = "var(--border)";
+          e.currentTarget.style.color = "var(--text-primary)";
+          e.currentTarget.style.borderColor = "rgba(255,255,255,0.28)";
           e.currentTarget.style.boxShadow = "var(--shadow-card)";
         }}
       >
         {collapsed ? (
-          <ChevronRight size={13} strokeWidth={1.8} />
+          <PanelLeft size={15} strokeWidth={2.5} />
         ) : (
-          <ChevronLeft size={13} strokeWidth={1.8} />
+          <PanelLeftClose size={15} strokeWidth={2.5} />
         )}
       </button>
 
@@ -188,15 +206,23 @@ export function ClientSidebar({
               >
                 <span
                   style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    padding: "5px 10px",
+                    borderRadius: "var(--radius-xs)",
+                    background: "var(--accent)",
+                    border: "1px solid rgba(255,255,255,0.28)",
+                    color: "var(--text-on-accent)",
                     fontFamily: "var(--font-sans)",
-                    fontSize: 11,
-                    fontWeight: 700,
-                    letterSpacing: "0.08em",
+                    fontSize: 12,
+                    fontWeight: 800,
+                    letterSpacing: "0.04em",
                     textTransform: "uppercase",
-                    color: "var(--text-tertiary)",
                   }}
                 >
-                  {groupByStatus ? "Klienci" : `${headerLabel} (${filtered.length})`}
+                  {groupByStatus ? "Klienci" : headerLabel}
+                  <span style={{ fontWeight: 700, opacity: 0.85 }}>{filtered.length}</span>
                 </span>
                 <button
                   onClick={onRefresh}
@@ -272,13 +298,20 @@ export function ClientSidebar({
                             client={c}
                             selected={selected}
                             onSelect={onSelect}
+                            callDone={callDoneSet.has(c.id)}
                           />
                         ))}
                       </div>
                     );
                   })
                 : filtered.map((c) => (
-                    <ClientRow key={c.id} client={c} selected={selected} onSelect={onSelect} />
+                    <ClientRow
+                      key={c.id}
+                      client={c}
+                      selected={selected}
+                      onSelect={onSelect}
+                      callDone={callDoneSet.has(c.id)}
+                    />
                   ))}
               {filtered.length === 0 && (
                 <div
@@ -330,6 +363,61 @@ export function ClientSidebar({
                   <ExternalLink size={11} />
                   Otwórz prezentację
                 </a>
+                {sellerLabel && (
+                  <div
+                    style={{
+                      marginTop: 2,
+                      paddingTop: 8,
+                      borderTop: "1px solid rgba(255,255,255,0.22)",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                    }}
+                  >
+                    <span
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: 26,
+                        height: 26,
+                        borderRadius: "50%",
+                        background: "var(--accent)",
+                        border: "1px solid rgba(255,255,255,0.28)",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <User size={13} strokeWidth={2.5} color="var(--text-on-accent)" />
+                    </span>
+                    <div style={{ minWidth: 0 }}>
+                      <div
+                        style={{
+                          fontFamily: "var(--font-sans)",
+                          fontSize: 9,
+                          fontWeight: 700,
+                          letterSpacing: "0.08em",
+                          textTransform: "uppercase",
+                          color: "var(--text-tertiary)",
+                        }}
+                      >
+                        Sprzedawca
+                      </div>
+                      <div
+                        style={{
+                          fontFamily: "var(--font-sans)",
+                          fontSize: 13,
+                          fontWeight: 700,
+                          color: "var(--text-primary)",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {sellerLabel}
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <button
                   onClick={() => onSelect(null)}
                   style={{
@@ -356,70 +444,204 @@ export function ClientSidebar({
   );
 }
 
+function ContactAttemptsMeter({ proby }: { proby: number }) {
+  const maxed = proby >= 3;
+  return (
+    <div
+      style={{
+        marginTop: 10,
+        paddingTop: 10,
+        borderTop: "1px solid rgba(255,255,255,0.22)",
+        display: "flex",
+        flexDirection: "column",
+        gap: 6,
+      }}
+    >
+      <span
+        style={{
+          fontFamily: "var(--font-sans)",
+          fontSize: 10,
+          fontWeight: 700,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          color: "var(--text-primary)",
+        }}
+      >
+        Próby kontaktu
+      </span>
+      <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+        {[1, 2, 3].map((n) => {
+          const done = n <= proby;
+          return (
+            <span
+              key={n}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 24,
+                height: 24,
+                borderRadius: "50%",
+                border: `1.5px solid ${done ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.25)"}`,
+                background: done ? "var(--accent)" : "transparent",
+                color: done ? "var(--text-on-accent)" : "var(--text-tertiary)",
+                fontFamily: "var(--font-sans)",
+                fontSize: 11,
+                fontWeight: 800,
+              }}
+            >
+              {n}
+            </span>
+          );
+        })}
+        {maxed && (
+          <span
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 11,
+              fontWeight: 800,
+              letterSpacing: "0.04em",
+              textTransform: "uppercase",
+              color: "var(--error-text)",
+              marginLeft: 2,
+            }}
+          >
+            Wyślij SMS
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function ClientRow({
   client,
   selected,
   onSelect,
+  callDone,
 }: {
   client: PipelineClientDetailed;
   selected: PipelineClientDetailed | null;
   onSelect: (c: PipelineClientDetailed | null) => void;
+  callDone?: boolean;
 }) {
   const isSelected = selected?.id === client.id;
+  const [hovered, setHovered] = useState(false);
+  const showCompany =
+    client.firma && client.kontakt && client.firma !== client.kontakt ? client.firma : null;
   return (
     <div
       onClick={() => onSelect(isSelected ? null : client)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       style={{
-        padding: "9px 10px",
-        borderRadius: 8,
-        marginBottom: 2,
+        padding: "11px 12px",
+        borderRadius: "var(--radius-sm)",
+        marginBottom: 6,
         cursor: "pointer",
-        background: isSelected ? "var(--accent-muted)" : "transparent",
-        border: isSelected ? "1px solid var(--accent-border)" : "1px solid transparent",
+        background: isSelected ? "var(--accent-muted)" : "var(--bg)",
+        border: `1px solid ${
+          isSelected
+            ? "var(--accent-border)"
+            : hovered
+              ? "rgba(255,255,255,0.4)"
+              : "rgba(255,255,255,0.22)"
+        }`,
+        boxShadow: hovered || isSelected ? "var(--shadow-card)" : "var(--shadow-sm)",
+        transition: "border-color 120ms, box-shadow 120ms",
       }}
     >
       <div
         style={{
           fontFamily: "var(--font-sans)",
-          fontSize: 13,
-          fontWeight: 600,
-          color: isSelected ? "var(--accent)" : "var(--text-primary)",
-          marginBottom: 2,
+          fontSize: 15,
+          fontWeight: 700,
+          letterSpacing: "-0.01em",
+          color: "var(--text-primary)",
         }}
       >
         {client.kontakt || client.firma || "—"}
       </div>
-      <ClientCompanyLine client={client} />
-      <ClientContactDetails client={client} />
-      {typeof client.liczbaProb === "number" && client.liczbaProb > 0 && (
-        <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 3 }}>
-          {[1, 2, 3].map((n) => (
-            <div
-              key={n}
-              style={{
-                width: 14,
-                height: 14,
-                borderRadius: "50%",
-                border: `1.5px solid ${n <= client.liczbaProb ? "var(--warning)" : "var(--text-tertiary)"}`,
-                background: n <= client.liczbaProb ? "var(--warning)" : "transparent",
-              }}
-            />
-          ))}
-          {client.liczbaProb >= 3 && (
-            <span
-              style={{
-                fontSize: 9,
-                fontWeight: 700,
-                color: "var(--error-text)",
-                textTransform: "uppercase",
-                letterSpacing: "0.04em",
-                marginLeft: 2,
-              }}
-            >
-              Wyślij SMS
-            </span>
-          )}
+
+      {callDone && (
+        <div
+          style={{
+            marginTop: 8,
+            paddingTop: 8,
+            borderTop: "1px solid rgba(255,255,255,0.22)",
+          }}
+        >
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 5,
+              padding: "3px 9px",
+              borderRadius: "var(--radius-xs)",
+              background: "var(--success-bg)",
+              border: "1px solid rgba(255,255,255,0.3)",
+              color: "var(--success-text)",
+              fontFamily: "var(--font-sans)",
+              fontSize: 11,
+              fontWeight: 800,
+              letterSpacing: "0.03em",
+              textTransform: "uppercase",
+            }}
+          >
+            Rozmowa odbyta
+          </span>
         </div>
+      )}
+
+      {(showCompany || client.telefon || client.email) && (
+        <div
+          style={{
+            marginTop: 8,
+            paddingTop: 8,
+            borderTop: "1px solid rgba(255,255,255,0.22)",
+            display: "flex",
+            flexDirection: "column",
+            gap: 6,
+          }}
+        >
+          {showCompany && (
+            <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 20,
+                  height: 20,
+                  borderRadius: "50%",
+                  background: "var(--bg-elevated)",
+                  border: "1px solid rgba(255,255,255,0.22)",
+                  flexShrink: 0,
+                }}
+              >
+                <Building2 size={11} strokeWidth={2.5} color="var(--text-primary)" />
+              </span>
+              <span
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: "var(--text-primary)",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  minWidth: 0,
+                }}
+              >
+                {showCompany}
+              </span>
+            </div>
+          )}
+          <ClientContactDetails client={client} />
+        </div>
+      )}
+      {typeof client.liczbaProb === "number" && client.liczbaProb > 0 && (
+        <ContactAttemptsMeter proby={client.liczbaProb} />
       )}
     </div>
   );

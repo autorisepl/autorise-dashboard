@@ -328,7 +328,7 @@ function ClientCard({
               flexShrink: 0,
             }}
           >
-            <Building2 size={12} strokeWidth={2.5} color="var(--text-primary)" />
+            <Building2 size={13} strokeWidth={2.75} color="#ffffff" />
           </div>
           <span
             style={{
@@ -379,7 +379,7 @@ function ClientCard({
               fontFamily: "var(--font-sans)",
             }}
           >
-            <Clock size={12} strokeWidth={2.5} color="var(--text-primary)" />
+            <Clock size={13} strokeWidth={2.75} color="#ffffff" />
             {daysAgoLabel(days)}
           </span>
         )}
@@ -411,12 +411,7 @@ function ClientCard({
                   flexShrink: 0,
                 }}
               >
-                <Phone
-                  size={12}
-                  strokeWidth={2.5}
-                  color="var(--text-primary)"
-                  fill="currentColor"
-                />
+                <Phone size={13} strokeWidth={2.75} color="#ffffff" fill="currentColor" />
               </div>
               <span
                 style={{
@@ -449,7 +444,7 @@ function ClientCard({
                   flexShrink: 0,
                 }}
               >
-                <Mail size={12} strokeWidth={2.5} color="var(--text-primary)" />
+                <Mail size={13} strokeWidth={2.75} color="#ffffff" />
               </div>
               <span
                 style={{
