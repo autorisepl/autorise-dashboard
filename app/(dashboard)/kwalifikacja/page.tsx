@@ -1193,13 +1193,13 @@ function ScriptStep({
                         fontFamily: "var(--font-sans)",
                         fontSize: 13.5,
                         lineHeight: 1.5,
-                        color: "var(--text-secondary)",
+                        color: "#4379b1",
                         marginTop: 8,
                         paddingLeft: 10,
-                        borderLeft: "2px solid var(--accent)",
+                        borderLeft: "2px solid #4379b1",
                       }}
                     >
-                      <span style={{ fontWeight: 700, color: "var(--accent)" }}>Cel: </span>
+                      <span style={{ fontWeight: 700 }}>Cel: </span>
                       {line.cel}
                     </div>
                   )}
@@ -2067,22 +2067,18 @@ export default function KwalifikacjaPage() {
       });
   }, []);
 
-  const memberName = useCallback(
-    (id: string | null) => teamMembers.find((m) => m.id === id)?.displayName ?? null,
-    [teamMembers],
-  );
-
-  const assignSeller = useCallback((clientId: string, memberId: string) => {
+  // Przechowujemy WPROST nazwę sprzedawcy (nie id) — dzięki temu wyświetlanie w panelu
+  // po lewej i w headerze nie zależy od tego czy /api/team zdążyło się załadować.
+  const assignSeller = useCallback((clientId: string, sellerName: string) => {
     setSellerByClient((prev) => {
-      const next = { ...prev, [clientId]: memberId };
+      const next = { ...prev, [clientId]: sellerName };
       localStorage.setItem("kwal_seller_by_client", JSON.stringify(next));
       return next;
     });
   }, []);
 
   const callDoneIds = Object.keys(callDoneByClient).filter((k) => callDoneByClient[k]);
-  const selectedSellerId = selected ? (sellerByClient[selected.id] ?? null) : null;
-  const selectedSellerName = memberName(selectedSellerId);
+  const selectedSellerName = selected ? (sellerByClient[selected.id] ?? null) : null;
   const selectedCallDone = selected ? Boolean(callDoneByClient[selected.id]) : false;
 
   // Wspólny styl etykiety w pasku narzędzi headera — białe wersaliki.
@@ -2278,10 +2274,10 @@ export default function KwalifikacjaPage() {
     // ręcznie z pickera.
     if (
       (role === "setter" || role === "closer") &&
-      identity?.teamMemberId &&
+      identity?.displayName &&
       !sellerByClient[selected.id]
     ) {
-      assignSeller(selected.id, identity.teamMemberId);
+      assignSeller(selected.id, identity.displayName);
     }
     tally("rozmowa_kwalifikacja");
   }, [selected, role, identity, sellerByClient, assignSeller, tally]);
@@ -2397,11 +2393,11 @@ export default function KwalifikacjaPage() {
               </span>
             ) : (
               teamMembers.map((m) => {
-                const active = selectedSellerId === m.id;
+                const active = selectedSellerName === m.displayName;
                 return (
                   <button
                     key={m.id}
-                    onClick={() => selected && assignSeller(selected.id, m.id)}
+                    onClick={() => selected && assignSeller(selected.id, m.displayName)}
                     disabled={!selected}
                     title={`Przypisz ${m.displayName} (${m.role})`}
                     style={{
@@ -2630,6 +2626,7 @@ export default function KwalifikacjaPage() {
           emptyLabel='Brak klientów "Nowy lead"'
           callDoneClientIds={callDoneIds}
           sellerLabel={selectedSellerName}
+          showPresentation={false}
         />
 
         {/* Main: script + roi + dalsze kroki */}

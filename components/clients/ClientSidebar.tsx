@@ -1,6 +1,8 @@
 "use client";
 
 import {
+  ArrowDownAZ,
+  ArrowUpAZ,
   Building2,
   ExternalLink,
   PanelLeft,
@@ -48,6 +50,9 @@ interface ClientSidebarProps {
   callDoneClientIds?: string[];
   /** Nazwa sprzedawcy przypisanego do zaznaczonego klienta — profil na dole panelu. */
   sellerLabel?: string | null;
+  /** Pokaż link "Otwórz prezentację" na dole panelu (domyślnie tak). W /kwalifikacja
+   * wyłączone — prezentacja jest dopiero na etapie sprzedaży. */
+  showPresentation?: boolean;
 }
 
 export function ClientSidebar({
@@ -63,9 +68,11 @@ export function ClientSidebar({
   emptyLabel = "Brak klientów",
   callDoneClientIds,
   sellerLabel,
+  showPresentation = true,
 }: ClientSidebarProps) {
   const callDoneSet = new Set(callDoneClientIds ?? []);
   const [search, setSearch] = useState("");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
@@ -84,7 +91,11 @@ export function ClientSidebar({
     .filter((c) => (filterStatuses ? filterStatuses.includes(c.status ?? "") : true))
     .filter((c) =>
       search.trim() ? `${c.kontakt} ${c.firma}`.toLowerCase().includes(search.toLowerCase()) : true,
-    );
+    )
+    .sort((a, b) => {
+      const cmp = (a.kontakt || a.firma || "").localeCompare(b.kontakt || b.firma || "", "pl");
+      return sortDir === "asc" ? cmp : -cmp;
+    });
 
   const grouped = groupByStatus
     ? (filterStatuses ?? []).reduce<Record<string, PipelineClientDetailed[]>>((acc, s) => {
@@ -224,24 +235,56 @@ export function ClientSidebar({
                   {groupByStatus ? "Klienci" : headerLabel}
                   <span style={{ fontWeight: 700, opacity: 0.85 }}>{filtered.length}</span>
                 </span>
-                <button
-                  onClick={onRefresh}
-                  disabled={loading}
-                  style={{
-                    background: "transparent",
-                    border: "none",
-                    cursor: loading ? "not-allowed" : "pointer",
-                    color: "var(--text-tertiary)",
-                    padding: 4,
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                >
-                  <RefreshCw
-                    size={12}
-                    style={{ animation: loading ? "spin 1s linear infinite" : "none" }}
-                  />
-                </button>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <button
+                    onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}
+                    title={sortDir === "asc" ? "Sortowanie A-Z" : "Sortowanie Z-A"}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 4,
+                      height: 28,
+                      padding: "0 8px",
+                      background: "var(--bg)",
+                      border: "1px solid rgba(255,255,255,0.28)",
+                      borderRadius: "var(--radius-xs)",
+                      cursor: "pointer",
+                      color: "var(--text-primary)",
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 11,
+                      fontWeight: 700,
+                    }}
+                  >
+                    {sortDir === "asc" ? (
+                      <ArrowDownAZ size={14} strokeWidth={2.5} />
+                    ) : (
+                      <ArrowUpAZ size={14} strokeWidth={2.5} />
+                    )}
+                  </button>
+                  <button
+                    onClick={onRefresh}
+                    disabled={loading}
+                    title="Odśwież listę"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: 28,
+                      height: 28,
+                      background: "var(--bg)",
+                      border: "1px solid rgba(255,255,255,0.28)",
+                      borderRadius: "var(--radius-xs)",
+                      cursor: loading ? "not-allowed" : "pointer",
+                      color: "var(--text-primary)",
+                    }}
+                  >
+                    <RefreshCw
+                      size={13}
+                      strokeWidth={2.5}
+                      style={{ animation: loading ? "spin 1s linear infinite" : "none" }}
+                    />
+                  </button>
+                </div>
               </div>
               <div
                 style={{
@@ -249,12 +292,13 @@ export function ClientSidebar({
                   alignItems: "center",
                   gap: 6,
                   height: 32,
-                  background: "var(--bg-hover)",
-                  borderRadius: 8,
+                  background: "var(--bg)",
+                  border: "1px solid rgba(255,255,255,0.28)",
+                  borderRadius: "var(--radius-xs)",
                   padding: "0 10px",
                 }}
               >
-                <Search size={12} color="var(--text-tertiary)" />
+                <Search size={13} strokeWidth={2.5} color="var(--text-primary)" />
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -340,29 +384,31 @@ export function ClientSidebar({
                   gap: 6,
                 }}
               >
-                <a
-                  href={`/prezentacja.html?id=${encodeURIComponent(selected.id)}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 5,
-                    background: "var(--accent-muted)",
-                    border: "1px solid var(--accent-border)",
-                    borderRadius: 8,
-                    padding: "6px 8px",
-                    cursor: "pointer",
-                    color: "var(--accent)",
-                    fontSize: 11,
-                    fontWeight: 600,
-                    fontFamily: "var(--font-sans)",
-                    textDecoration: "none",
-                  }}
-                >
-                  <ExternalLink size={11} />
-                  Otwórz prezentację
-                </a>
+                {showPresentation && (
+                  <a
+                    href={`/prezentacja.html?id=${encodeURIComponent(selected.id)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 5,
+                      background: "var(--accent-muted)",
+                      border: "1px solid var(--accent-border)",
+                      borderRadius: 8,
+                      padding: "6px 8px",
+                      cursor: "pointer",
+                      color: "var(--accent)",
+                      fontSize: 11,
+                      fontWeight: 600,
+                      fontFamily: "var(--font-sans)",
+                      textDecoration: "none",
+                    }}
+                  >
+                    <ExternalLink size={11} />
+                    Otwórz prezentację
+                  </a>
+                )}
                 {sellerLabel && (
                   <div
                     style={{
@@ -539,10 +585,10 @@ function ClientRow({
         borderRadius: "var(--radius-sm)",
         marginBottom: 6,
         cursor: "pointer",
-        background: isSelected ? "var(--accent-muted)" : "var(--bg)",
+        background: isSelected ? "rgba(67, 121, 177, 0.12)" : "var(--bg)",
         border: `1px solid ${
           isSelected
-            ? "var(--accent-border)"
+            ? "rgba(67, 121, 177, 0.55)"
             : hovered
               ? "rgba(255,255,255,0.4)"
               : "rgba(255,255,255,0.22)"

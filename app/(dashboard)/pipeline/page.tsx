@@ -21,9 +21,10 @@ import {
   Loader2,
   Mail,
   Phone,
-  Radio,
   RefreshCw,
+  RotateCcw,
   Search,
+  User,
   UserX,
   X,
 } from "lucide-react";
@@ -63,21 +64,26 @@ function pluralKarty(n: number): string {
 // MODULE_CATALOG samo wydzielone do lib/scripts/moduleCatalog.ts (2026-07-26), bo /wdrozenie
 // potrzebuje tych samych etykiet dla tabeli czasu bazowego per moduł.
 
-const STATUS_COLORS: Record<string, string> = {
-  "Nowy lead": "#3b82f6",
-  Kwalifikacja: "#c026d3",
-  "Discovery umówione": "#06b6d4",
-  Niekwalifikowany: "#6b7280",
-  "Nieaktywny (follow up)": "#eab308",
-  Finalizacja: "#f97316",
-  Kickoff: "#22c55e",
-  Wdrożenie: "#14b8a6",
-  Retainer: "#e879f9",
-  Upsell: "#0ea5e9",
-  "Zakończona współpraca": "#7c8a9c",
-};
-
 const LOCKED_DRAG_MESSAGE = "Ten etap ustawia rozmowa w /kwalifikacja lub /sprzedaz";
+
+// Jeden, spójny kolor plakietek statusu w całym Kanbanie — niebieski marki + biały
+// tekst (feedback: statusy w jednym kolorze dla estetyki). Zostawiony jako funkcja,
+// nie usunięta stała, żeby ewentualny powrót do kolorów-per-status był jedną zmianą.
+const STATUS_BADGE_COLOR = "#4379b1";
+
+// Przypisany sprzedawca jest dziś zapisywany lokalnie w /kwalifikacja
+// (localStorage "kwal_seller_by_client", klucz = pipeline id). Ten sam origin, więc
+// Kanban może to odczytać do wyświetlenia. Docelowo: kolumna w pipeline.
+function readAssignedSeller(clientId: string): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const map = JSON.parse(localStorage.getItem("kwal_seller_by_client") ?? "{}");
+    const v = map?.[clientId];
+    return typeof v === "string" && v.trim() ? v : null;
+  } catch {
+    return null;
+  }
+}
 
 // ── Helpers ──────────────────────────────────────────────────────────
 
@@ -199,8 +205,8 @@ function ClientCard({
 }) {
   const [hovered, setHovered] = useState(false);
   const name = client.kontakt || client.firma;
-  const color = STATUS_COLORS[client.status] ?? "var(--text-tertiary)";
   const days = daysInStage(client);
+  const seller = readAssignedSeller(client.id);
 
   return (
     <div
@@ -224,32 +230,14 @@ function ClientCard({
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-        {/* Kropka koloru statusu zamiast inicjałów — czysto dekoracyjna, bez tekstu (feedback
-            2026-08-24: inicjały nie dodawały informacji, obwódka+tint były za słabo widoczne). */}
-        <div
-          style={{
-            width: 10,
-            height: 10,
-            borderRadius: "50%",
-            background: color,
-            flexShrink: 0,
-          }}
-        />
-        {/* Ikona przekreślonego użytkownika dla utraconych leadów — feedback 2026-08-24.
-            Świadomie NIE przenosimy karty do osobnej grupy/kolumny: lead może zostać utracony
-            na dowolnym etapie (Nowy lead równie dobrze jak Finalizacja), a status realnie
-            pokazuje GDZIE odpadł — to cenna informacja, którą zbiorcza "grupa utraconych"
-            by zgubiła. Filtr "Utracone (N)" w headerze już realizuje "oddzielną listę"
-            (domyślnie ukryte, jeden przełącznik pokazuje wszystkie) — ta ikona to dodatkowy,
-            natychmiastowy sygnał wizualny, gdy filtr jest włączony. */}
         {client.utracony && (
-          <UserX size={14} strokeWidth={2.5} color="var(--error-text)" style={{ flexShrink: 0 }} />
+          <UserX size={16} strokeWidth={2.5} color="var(--error-text)" style={{ flexShrink: 0 }} />
         )}
         <div
           style={{
             fontFamily: "var(--font-sans)",
-            fontSize: 13,
-            fontWeight: 600,
+            fontSize: 15,
+            fontWeight: 700,
             color: "var(--text-primary)",
             letterSpacing: "-0.01em",
             flex: 1,
@@ -261,10 +249,46 @@ function ClientCard({
         >
           {name}
         </div>
+      </div>
+
+      {/* Próby kontaktu + przypisany sprzedawca — oddzielone dividerem od tożsamości. */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 8,
+          padding: "8px 0",
+          margin: "0 0 6px",
+          borderTop: "1px solid rgba(255,255,255,0.22)",
+          borderBottom: "1px solid rgba(255,255,255,0.22)",
+        }}
+      >
         <ContactAttemptsBadge
           proby={client.liczbaProb ?? 0}
           onIncrement={() => onIncrement(client)}
         />
+        {seller && (
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 5,
+              padding: "3px 9px",
+              borderRadius: "var(--radius-xs)",
+              background: "var(--accent)",
+              border: "1px solid rgba(255,255,255,0.3)",
+              color: "var(--text-on-accent)",
+              fontFamily: "var(--font-sans)",
+              fontSize: 11,
+              fontWeight: 800,
+              letterSpacing: "0.02em",
+            }}
+          >
+            <User size={12} strokeWidth={2.5} />
+            {seller}
+          </span>
+        )}
       </div>
 
       <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
@@ -534,7 +558,7 @@ function KanbanColumn({
   onIncrement: (client: PipelineClientDetailed) => void;
   onDragAttempt: () => void;
 }) {
-  const color = STATUS_COLORS[status] ?? "var(--text-tertiary)";
+  const color = STATUS_BADGE_COLOR;
   const { setNodeRef, isOver } = useDroppable({ id: status, disabled: !draggable });
   // Karta testowa (jest_testowy) wykluczona z licznika i sumy — demo, nie realny biznes.
   const realClients = clients.filter((c) => !c.jestTestowy);
@@ -792,7 +816,7 @@ function ClientPanel({
   onUpdated: () => void;
   onMarkedUtracony: () => void;
 }) {
-  const color = STATUS_COLORS[client.status] ?? "var(--text-tertiary)";
+  const color = STATUS_BADGE_COLOR;
   const [powodDraft, setPowodDraft] = useState(client.powodUtraty);
   const [reEngagementDraft, setReEngagementDraft] = useState(client.dataReengagement);
   const [notatkiDraft, setNotatkiDraft] = useState(client.notatki);
@@ -801,6 +825,28 @@ function ClientPanel({
   const isOldScript = Boolean(
     client.dataPierwszegoKontaktu && client.dataPierwszegoKontaktu < SKRYPT_V4_DATA,
   );
+
+  const resetToNewLead = async () => {
+    setSaving(true);
+    try {
+      await fetch("/api/notion/pipeline-update", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pageId: client.id,
+          status: "Nowy lead",
+          utracony: false,
+          powodUtraty: null,
+          dataReengagement: null,
+          wynikDiscovery: null,
+        }),
+      });
+      onUpdated();
+      onClose();
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const toggleUtracony = async (next: boolean) => {
     setSaving(true);
@@ -1479,6 +1525,37 @@ function ClientPanel({
             {linkCopied ? "Skopiowano" : "Kopiuj link do prezentacji"}
           </button>
         </div>
+
+        {/* Reset klienta — jednym kliknięciem z powrotem na "Nowy lead". */}
+        <button
+          type="button"
+          onClick={() => void resetToNewLead()}
+          disabled={saving}
+          title="Cofnij klienta na status Nowy lead (czyści też: utracony, powód utraty, wynik Discovery)"
+          style={{
+            marginTop: 20,
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 7,
+            height: 40,
+            borderRadius: "var(--radius-xs)",
+            border: "1px solid rgba(255,255,255,0.35)",
+            background: "var(--accent)",
+            color: "var(--text-on-accent)",
+            fontFamily: "var(--font-sans)",
+            fontSize: 13,
+            fontWeight: 800,
+            letterSpacing: "0.05em",
+            textTransform: "uppercase",
+            cursor: saving ? "not-allowed" : "pointer",
+            opacity: saving ? 0.6 : 1,
+          }}
+        >
+          <RotateCcw size={15} strokeWidth={2.5} />
+          Resetuj klienta do „Nowy lead"
+        </button>
       </div>
     </div>
   );
@@ -1764,24 +1841,6 @@ export default function PipelinePage() {
         <div
           style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12, flexWrap: "wrap" }}
         >
-          <div
-            title="Kanban aktualizuje się na żywo dla wszystkich (Supabase Realtime)"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 5,
-              padding: "5px 10px",
-              border: "1px solid var(--success-border)",
-              background: "var(--success-bg)",
-              borderRadius: "var(--radius-xs)",
-              color: "var(--success-text)",
-              fontSize: 12,
-              fontFamily: "var(--font-sans)",
-            }}
-          >
-            <Radio size={14} strokeWidth={2.5} fill="currentColor" />
-            Live
-          </div>
           <button
             onClick={toggleSortDirection}
             title={
@@ -1795,7 +1854,7 @@ export default function PipelinePage() {
               gap: 5,
               padding: "5px 10px",
               background: "var(--bg)",
-              border: "1px solid var(--border)",
+              border: "1px solid rgba(255,255,255,0.28)",
               borderRadius: "var(--radius-xs)",
               cursor: "pointer",
               color: "var(--text-primary)",
@@ -1817,7 +1876,7 @@ export default function PipelinePage() {
             <Search
               size={14}
               strokeWidth={2.5}
-              color="var(--text-tertiary)"
+              color="var(--text-primary)"
               style={{ position: "absolute", left: 9, top: "50%", transform: "translateY(-50%)" }}
             />
             <input
@@ -1829,7 +1888,7 @@ export default function PipelinePage() {
                 width: 200,
                 padding: "5px 10px 5px 30px",
                 background: "var(--bg)",
-                border: "1px solid var(--border)",
+                border: "1px solid rgba(255,255,255,0.28)",
                 borderRadius: "var(--radius-xs)",
                 color: "var(--text-primary)",
                 fontSize: 12,
@@ -1847,7 +1906,7 @@ export default function PipelinePage() {
               gap: 5,
               padding: "5px 10px",
               background: "var(--bg)",
-              border: "1px solid var(--border)",
+              border: "1px solid rgba(255,255,255,0.28)",
               borderRadius: "var(--radius-xs)",
               cursor: loading ? "default" : "pointer",
               color: "var(--text-primary)",
