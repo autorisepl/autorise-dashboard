@@ -47,6 +47,8 @@ const bodySchema = z.object({
   tabelaModulowWeryfikacja: z.string().nullable().optional(),
   celEfektywnosciProcent: z.number().nullable().optional(),
   tabelaModulowPrzedkontraktowa: z.string().nullable().optional(),
+  assignedSellerId: z.string().nullable().optional(),
+  qualificationCallDone: z.boolean().optional(),
 });
 
 export async function PATCH(req: Request) {
@@ -116,6 +118,9 @@ export async function PATCH(req: Request) {
       columns.cel_efektywnosci_procent = d.celEfektywnosciProcent;
     if (d.tabelaModulowPrzedkontraktowa !== undefined)
       columns.tabela_modulow_przedkontraktowa = d.tabelaModulowPrzedkontraktowa;
+    if (d.assignedSellerId !== undefined) columns.assigned_seller_id = d.assignedSellerId || null;
+    if (d.qualificationCallDone !== undefined)
+      columns.qualification_call_done = d.qualificationCallDone;
 
     if (Object.keys(columns).length === 0) {
       return NextResponse.json(

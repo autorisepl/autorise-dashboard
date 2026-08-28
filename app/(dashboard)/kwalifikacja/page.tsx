@@ -127,8 +127,9 @@ function Card({
     <div
       style={{
         background: "var(--bg-elevated)",
-        border: "1px solid var(--border)",
-        borderRadius: 12,
+        border: "1px solid rgba(255,255,255,0.22)",
+        borderRadius: "var(--radius-md)",
+        boxShadow: "var(--shadow-sm)",
         overflow: "hidden",
         marginBottom: 12,
       }}
@@ -1193,10 +1194,10 @@ function ScriptStep({
                         fontFamily: "var(--font-sans)",
                         fontSize: 13.5,
                         lineHeight: 1.5,
-                        color: "#4379b1",
+                        color: "var(--text-primary)",
                         marginTop: 8,
                         paddingLeft: 10,
-                        borderLeft: "2px solid #4379b1",
+                        borderLeft: "2px solid rgba(255,255,255,0.35)",
                       }}
                     >
                       <span style={{ fontWeight: 700 }}>Cel: </span>
@@ -2037,24 +2038,10 @@ export default function KwalifikacjaPage() {
   const identity = useIdentity();
   const role = identity?.role ?? null;
 
-  // Przypisanie sprzedawcy do klienta + rejestr odbytych rozmów kwalifikacyjnych.
-  // Picker sprzedawcy bierze REALNE profile z Supabase (team_members). Samo
-  // przypisanie i znacznik "rozmowa odbyta" trzymamy jeszcze lokalnie (localStorage,
-  // klucz = team_members.id), bo tabela pipeline nie ma na to jeszcze kolumn —
-  // migracja schematu do zrobienia przez przycisk w /kontrola. Handlery napisane tak,
-  // żeby podmiana warstwy zapisu na PATCH /api/notion/pipeline-update była jednym miejscem.
+  // Przypisany sprzedawca (team_members.id) i znacznik odbytej rozmowy kwalifikacyjnej
+  // są trzymane w Supabase (pipeline.assigned_seller_id / pipeline.qualification_call_done)
+  // i wracają jako pola PipelineClientDetailed. Picker bierze realne profile z team_members.
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-  const [callDoneByClient, setCallDoneByClient] = useState<Record<string, boolean>>({});
-  const [sellerByClient, setSellerByClient] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    try {
-      setCallDoneByClient(JSON.parse(localStorage.getItem("kwal_call_done") ?? "{}"));
-      setSellerByClient(JSON.parse(localStorage.getItem("kwal_seller_by_client") ?? "{}"));
-    } catch {
-      /* uszkodzony wpis w localStorage — startujemy z pustego stanu */
-    }
-  }, []);
 
   useEffect(() => {
     fetch("/api/team")
@@ -2067,21 +2054,12 @@ export default function KwalifikacjaPage() {
       });
   }, []);
 
-  // Przechowujemy WPROST nazwę sprzedawcy (nie id) — dzięki temu wyświetlanie w panelu
-  // po lewej i w headerze nie zależy od tego czy /api/team zdążyło się załadować.
-  const assignSeller = useCallback((clientId: string, sellerName: string) => {
-    setSellerByClient((prev) => {
-      const next = { ...prev, [clientId]: sellerName };
-      localStorage.setItem("kwal_seller_by_client", JSON.stringify(next));
-      return next;
-    });
-  }, []);
+  const selectedSellerId = selected?.assignedSellerId || null;
+  const selectedSellerName =
+    teamMembers.find((m) => m.id === selectedSellerId)?.displayName ?? null;
+  const selectedCallDone = Boolean(selected?.qualificationCallDone);
+  const callDoneIds = clients.filter((c) => c.qualificationCallDone).map((c) => c.id);
 
-  const callDoneIds = Object.keys(callDoneByClient).filter((k) => callDoneByClient[k]);
-  const selectedSellerName = selected ? (sellerByClient[selected.id] ?? null) : null;
-  const selectedCallDone = selected ? Boolean(callDoneByClient[selected.id]) : false;
-
-  // Wspólny styl etykiety w pasku narzędzi headera — białe wersaliki.
   // Wspólny styl etykiety w pasku narzędzi headera — białe wersaliki.
   const TOOLBAR_LABEL: React.CSSProperties = {
     fontFamily: "var(--font-sans)",
@@ -2109,6 +2087,30 @@ export default function KwalifikacjaPage() {
       setLoading(false);
     }
   }, []);
+
+  // Jedno miejsce zapisu do Pipeline: optymistyczna aktualizacja + PATCH + refetch.
+  const patchSelected = useCallback(
+    async (patch: Partial<PipelineClientDetailed>) => {
+      if (!selected) return;
+      const id = selected.id;
+      setSelected((prev) => (prev && prev.id === id ? { ...prev, ...patch } : prev));
+      setClients((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+      await fetch("/api/notion/pipeline-update", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pageId: id, ...patch }),
+      }).catch(() => {
+        /* przy błędzie i tak zrobimy refetch — stan wróci do prawdy z serwera */
+      });
+      void fetchClients();
+    },
+    [selected, fetchClients],
+  );
+
+  const assignSeller = useCallback(
+    (memberId: string) => void patchSelected({ assignedSellerId: memberId }),
+    [patchSelected],
+  );
 
   useEffect(() => {
     void fetchClients();
@@ -2264,34 +2266,24 @@ export default function KwalifikacjaPage() {
 
   const markCallDone = useCallback(() => {
     if (!selected) return;
-    setCallDoneByClient((prev) => {
-      const next = { ...prev, [selected.id]: true };
-      localStorage.setItem("kwal_call_done", JSON.stringify(next));
-      return next;
-    });
     // Setter/closer: odbyta rozmowa przypina klienta do jego profilu (team_members.id
     // z sesji), jeśli klient nie ma jeszcze przypisanego sprzedawcy. Founder przypisuje
     // ręcznie z pickera.
-    if (
+    const alsoAssign =
       (role === "setter" || role === "closer") &&
-      identity?.displayName &&
-      !sellerByClient[selected.id]
-    ) {
-      assignSeller(selected.id, identity.displayName);
-    }
+      identity?.teamMemberId &&
+      !selected.assignedSellerId
+        ? { assignedSellerId: identity.teamMemberId }
+        : {};
+    void patchSelected({ qualificationCallDone: true, ...alsoAssign });
     tally("rozmowa_kwalifikacja");
-  }, [selected, role, identity, sellerByClient, assignSeller, tally]);
+  }, [selected, role, identity, patchSelected, tally]);
 
   const undoCallDone = useCallback(() => {
     if (!selected) return;
-    setCallDoneByClient((prev) => {
-      const next = { ...prev };
-      delete next[selected.id];
-      localStorage.setItem("kwal_call_done", JSON.stringify(next));
-      return next;
-    });
+    void patchSelected({ qualificationCallDone: false });
     undoTally("rozmowa_kwalifikacja");
-  }, [selected, undoTally]);
+  }, [selected, patchSelected, undoTally]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
@@ -2393,11 +2385,11 @@ export default function KwalifikacjaPage() {
               </span>
             ) : (
               teamMembers.map((m) => {
-                const active = selectedSellerName === m.displayName;
+                const active = selectedSellerId === m.id;
                 return (
                   <button
                     key={m.id}
-                    onClick={() => selected && assignSeller(selected.id, m.displayName)}
+                    onClick={() => selected && assignSeller(m.id)}
                     disabled={!selected}
                     title={`Przypisz ${m.displayName} (${m.role})`}
                     style={{
@@ -2542,25 +2534,7 @@ export default function KwalifikacjaPage() {
               <div style={{ height: 24, width: 1, background: "rgba(255,255,255,0.28)" }} />
 
               {/* ── Forma grzecznościowa ── */}
-              <span
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  height: 30,
-                  padding: "0 10px",
-                  borderRadius: "var(--radius-xs)",
-                  background: "var(--accent)",
-                  border: "1px solid rgba(255,255,255,0.3)",
-                  color: "var(--text-on-accent)",
-                  fontFamily: "var(--font-sans)",
-                  fontSize: 11,
-                  fontWeight: 800,
-                  letterSpacing: "0.04em",
-                  textTransform: "uppercase",
-                }}
-              >
-                Zwrot do klienta
-              </span>
+              <span style={TOOLBAR_LABEL}>Zwrot do klienta</span>
               {(["Pan", "Pani"] as const).map((f) => {
                 const active = forma === f;
                 return (

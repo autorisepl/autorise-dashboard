@@ -372,18 +372,64 @@ export function ClientSidebar({
               )}
             </div>
 
-            {selected && (
+            {selected && (showPresentation || sellerLabel) && (
               <div
                 style={{
-                  padding: "10px 12px",
+                  padding: "12px",
                   borderTop: "1px solid var(--border)",
                   flexShrink: 0,
                   background: "var(--bg-hover)",
                   display: "flex",
                   flexDirection: "column",
-                  gap: 6,
+                  gap: 10,
                 }}
               >
+                {sellerLabel && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: 34,
+                        height: 34,
+                        borderRadius: "50%",
+                        background: "var(--accent)",
+                        border: "1px solid rgba(255,255,255,0.35)",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <User size={17} strokeWidth={2.5} color="var(--text-on-accent)" />
+                    </span>
+                    <div style={{ minWidth: 0 }}>
+                      <div
+                        style={{
+                          fontFamily: "var(--font-sans)",
+                          fontSize: 10,
+                          fontWeight: 800,
+                          letterSpacing: "0.08em",
+                          textTransform: "uppercase",
+                          color: "var(--text-tertiary)",
+                        }}
+                      >
+                        Sprzedawca
+                      </div>
+                      <div
+                        style={{
+                          fontFamily: "var(--font-sans)",
+                          fontSize: 15,
+                          fontWeight: 800,
+                          color: "var(--text-primary)",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {sellerLabel}
+                      </div>
+                    </div>
+                  </div>
+                )}
                 {showPresentation && (
                   <a
                     href={`/prezentacja.html?id=${encodeURIComponent(selected.id)}`}
@@ -409,78 +455,25 @@ export function ClientSidebar({
                     Otwórz prezentację
                   </a>
                 )}
-                {sellerLabel && (
-                  <div
+                {showPresentation && (
+                  <button
+                    onClick={() => onSelect(null)}
                     style={{
-                      marginTop: 2,
-                      paddingTop: 8,
-                      borderTop: "1px solid rgba(255,255,255,0.22)",
                       display: "flex",
                       alignItems: "center",
-                      gap: 8,
+                      gap: 5,
+                      background: "transparent",
+                      border: "none",
+                      cursor: "pointer",
+                      color: "var(--text-tertiary)",
+                      fontSize: 11,
+                      fontFamily: "var(--font-sans)",
                     }}
                   >
-                    <span
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        width: 26,
-                        height: 26,
-                        borderRadius: "50%",
-                        background: "var(--accent)",
-                        border: "1px solid rgba(255,255,255,0.28)",
-                        flexShrink: 0,
-                      }}
-                    >
-                      <User size={13} strokeWidth={2.5} color="var(--text-on-accent)" />
-                    </span>
-                    <div style={{ minWidth: 0 }}>
-                      <div
-                        style={{
-                          fontFamily: "var(--font-sans)",
-                          fontSize: 9,
-                          fontWeight: 700,
-                          letterSpacing: "0.08em",
-                          textTransform: "uppercase",
-                          color: "var(--text-tertiary)",
-                        }}
-                      >
-                        Sprzedawca
-                      </div>
-                      <div
-                        style={{
-                          fontFamily: "var(--font-sans)",
-                          fontSize: 13,
-                          fontWeight: 700,
-                          color: "var(--text-primary)",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {sellerLabel}
-                      </div>
-                    </div>
-                  </div>
+                    <X size={11} />
+                    Odznacz klienta
+                  </button>
                 )}
-                <button
-                  onClick={() => onSelect(null)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 5,
-                    background: "transparent",
-                    border: "none",
-                    cursor: "pointer",
-                    color: "var(--text-tertiary)",
-                    fontSize: 11,
-                    fontFamily: "var(--font-sans)",
-                  }}
-                >
-                  <X size={11} />
-                  Odznacz klienta
-                </button>
               </div>
             )}
           </>

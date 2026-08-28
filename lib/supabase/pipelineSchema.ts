@@ -56,6 +56,8 @@ const pipelineFieldsSchema = z.object({
   protokol_odbioru_podpisany: z.boolean().optional(),
   typ_follow_up: z.string().nullable().optional(),
   kickoff_odbyty: z.boolean().optional(),
+  assigned_seller_id: z.string().uuid().nullable().optional(),
+  qualification_call_done: z.boolean().optional(),
   liczba_prob_kontaktu: z.number().nullable().optional(),
   kontakt: z.string().nullable().optional(),
   nip: z.string().nullable().optional(),

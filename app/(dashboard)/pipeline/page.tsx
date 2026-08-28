@@ -71,18 +71,15 @@ const LOCKED_DRAG_MESSAGE = "Ten etap ustawia rozmowa w /kwalifikacja lub /sprze
 // nie usunięta stała, żeby ewentualny powrót do kolorów-per-status był jedną zmianą.
 const STATUS_BADGE_COLOR = "#4379b1";
 
-// Przypisany sprzedawca jest dziś zapisywany lokalnie w /kwalifikacja
-// (localStorage "kwal_seller_by_client", klucz = pipeline id). Ten sam origin, więc
-// Kanban może to odczytać do wyświetlenia. Docelowo: kolumna w pipeline.
-function readAssignedSeller(clientId: string): string | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const map = JSON.parse(localStorage.getItem("kwal_seller_by_client") ?? "{}");
-    const v = map?.[clientId];
-    return typeof v === "string" && v.trim() ? v : null;
-  } catch {
-    return null;
-  }
+// Mapa team_members.id → nazwa, wypełniana raz z /api/team przy montowaniu strony.
+// Moduł-scope celowo: karty (ClientCard) czytają z niej bez przekazywania propa
+// przez KanbanColumn/DraggableCard. `bumpTeamVersion` w komponencie głównym
+// wymusza re-render po załadowaniu listy.
+const teamNameById: Record<string, string> = {};
+
+function sellerNameFor(client: PipelineClientDetailed): string | null {
+  const id = client.assignedSellerId;
+  return id ? (teamNameById[id] ?? null) : null;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────
@@ -206,7 +203,7 @@ function ClientCard({
   const [hovered, setHovered] = useState(false);
   const name = client.kontakt || client.firma;
   const days = daysInStage(client);
-  const seller = readAssignedSeller(client.id);
+  const seller = sellerNameFor(client);
 
   return (
     <div
@@ -249,46 +246,6 @@ function ClientCard({
         >
           {name}
         </div>
-      </div>
-
-      {/* Próby kontaktu + przypisany sprzedawca — oddzielone dividerem od tożsamości. */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          flexWrap: "wrap",
-          gap: 8,
-          padding: "8px 0",
-          margin: "0 0 6px",
-          borderTop: "1px solid rgba(255,255,255,0.22)",
-          borderBottom: "1px solid rgba(255,255,255,0.22)",
-        }}
-      >
-        <ContactAttemptsBadge
-          proby={client.liczbaProb ?? 0}
-          onIncrement={() => onIncrement(client)}
-        />
-        {seller && (
-          <span
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 5,
-              padding: "3px 9px",
-              borderRadius: "var(--radius-xs)",
-              background: "var(--accent)",
-              border: "1px solid rgba(255,255,255,0.3)",
-              color: "var(--text-on-accent)",
-              fontFamily: "var(--font-sans)",
-              fontSize: 11,
-              fontWeight: 800,
-              letterSpacing: "0.02em",
-            }}
-          >
-            <User size={12} strokeWidth={2.5} />
-            {seller}
-          </span>
-        )}
       </div>
 
       <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
@@ -489,6 +446,46 @@ function ClientCard({
           )}
         </div>
       )}
+
+      {/* Stopka karty: próby kontaktu + przypisany sprzedawca, oddzielone dividerem
+          od danych kontaktowych powyżej. */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 8,
+          marginTop: 8,
+          paddingTop: 8,
+          borderTop: "1px solid rgba(255,255,255,0.22)",
+        }}
+      >
+        <ContactAttemptsBadge
+          proby={client.liczbaProb ?? 0}
+          onIncrement={() => onIncrement(client)}
+        />
+        {seller && (
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "4px 10px",
+              borderRadius: "var(--radius-xs)",
+              background: "var(--accent)",
+              border: "1px solid rgba(255,255,255,0.35)",
+              color: "var(--text-on-accent)",
+              fontFamily: "var(--font-sans)",
+              fontSize: 12,
+              fontWeight: 800,
+              letterSpacing: "0.02em",
+            }}
+          >
+            <User size={13} strokeWidth={2.5} />
+            {seller}
+          </span>
+        )}
+      </div>
     </div>
   );
 }
@@ -604,7 +601,13 @@ function KanbanColumn({
           }}
         >
           <div
-            style={{ width: 7, height: 7, borderRadius: "50%", background: color, flexShrink: 0 }}
+            style={{
+              width: 7,
+              height: 7,
+              borderRadius: "50%",
+              background: "#ffffff",
+              flexShrink: 0,
+            }}
           />
           <span
             style={{
@@ -1035,8 +1038,17 @@ function ClientPanel({
               border: `1px solid ${color}40`,
             }}
           >
-            <div style={{ width: 6, height: 6, borderRadius: "50%", background: color }} />
-            <span style={{ fontSize: 12, fontWeight: 600, color, fontFamily: "var(--font-sans)" }}>
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#ffffff" }} />
+            <span
+              style={{
+                fontSize: 12,
+                fontWeight: 700,
+                color: "var(--text-primary)",
+                textTransform: "uppercase",
+                letterSpacing: "0.03em",
+                fontFamily: "var(--font-sans)",
+              }}
+            >
               {client.status}
             </span>
           </div>
@@ -1570,8 +1582,26 @@ export default function PipelinePage() {
   const [selected, setSelected] = useState<PipelineClientDetailed | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [activeDragClient, setActiveDragClient] = useState<PipelineClientDetailed | null>(null);
+  const [, setTeamVersion] = useState(0);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const realtimeDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Lista team_members (nazwy sprzedawców) — do wyświetlenia przypisanego sprzedawcy
+  // na kartach. Wypełnia moduł-scope mapę, potem wymusza re-render licznikiem.
+  useEffect(() => {
+    fetch("/api/team")
+      .then((r) => r.json())
+      .then((d) => {
+        if (!d.success) return;
+        for (const m of d.members as { id: string; displayName: string }[]) {
+          teamNameById[m.id] = m.displayName;
+        }
+        setTeamVersion((v) => v + 1);
+      })
+      .catch(() => {
+        /* brak listy zespołu — karty po prostu nie pokażą sprzedawcy */
+      });
+  }, []);
 
   // Blok 1, punkt 1.4 (2026-07-14) — domyślnie A-Z po nazwie firmy, z opcją odwrócenia
   // kierunku. Zapamiętane w localStorage, żeby wybór przetrwał odświeżenie strony.
