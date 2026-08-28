@@ -20,11 +20,10 @@ import {
 import { useCallback, useEffect, useState } from "react";
 import type { GoogleTaskList } from "@/app/api/google/tasks/route";
 import type { PipelineClientDetailed } from "@/app/api/notion/pipeline/route";
+import type { TeamMember } from "@/app/api/team/route";
 import { ClientSidebar } from "@/components/clients/ClientSidebar";
 import { ProgressBar, SectionLabelSmall, StepCard } from "@/components/dalsze-kroki/DalszeKrokiUI";
-import { DecisionDiagram } from "@/components/scripts/DecisionDiagram";
-import { NextStepArrow } from "@/components/scripts/NextStepArrow";
-import { useRole } from "@/lib/auth/RoleContext";
+import { useIdentity } from "@/lib/auth/RoleContext";
 import { useFormaGrzecznosciowa } from "@/lib/scripts/formaGrzecznosciowa";
 import {
   ACKNOWLEDGMENT_PHRASES,
@@ -34,7 +33,7 @@ import {
 } from "@/lib/scripts/kwalifikacyjna";
 import { GROUP_COLORS, MESSAGES_DATA } from "@/lib/scripts/messages";
 import { getRecommendedModules } from "@/lib/scripts/moduleRecommendation";
-import type { CalculatorGroup, DecisionOption, Objection, ScriptLine } from "@/lib/scripts/types";
+import type { CalculatorGroup, DecisionOption, ScriptLine } from "@/lib/scripts/types";
 
 // ── Helpers ──────────────────────────────────────────────────────────
 
@@ -61,25 +60,23 @@ function toSentences(text: string): string[] {
   return parts.length > 0 ? parts : [text];
 }
 
-// Najczęstsze reakcje klienta na starcie rozmowy — jeden przycisk na sytuację,
-// prowadzi wprost do gotowej, konkretnej odpowiedzi w panelu obiekcji (bez
-// przewijania strony). Zamiast długiej listy wariantów mówiących to samo.
-// Founder przypisuje klienta do siebie lub do settera/closera. Dla roli setter/closer
-// przypisanie robi się samo przy rejestracji odbytej rozmowy.
-const SELLER_OPTIONS = ["Michał Roth", "Setter", "Closer"] as const;
-
-const OPENER_REACTIONS: { label: string; objId: string }[] = [
-  { label: "Nie pamięta reklamy", objId: "ok_nb" },
-  { label: "To nie ja / żona / przemyślę", objId: "ok_nie_ja" },
-  { label: "O co chodzi / cena", objId: "ok_cc" },
-  { label: "Nie mam czasu", objId: "ok1" },
-  { label: "Wyślij na maila", objId: "ok_em" },
-];
-
-function findStepLabel(stepId: string): string {
-  const step = STEPS_K.find((s) => s.id === stepId);
-  return step ? `${step.nr} ${step.label}` : stepId;
-}
+// Minimalny, wyselekcjonowany zestaw obiekcji przypięty do KONKRETNEGO kroku —
+// dokładnie te, które realnie padają na tym etapie rozmowy, nic więcej. Reszta
+// obiekcji z OBJECTIONS_K celowo nie jest nigdzie pokazywana, żeby setter nie
+// szukał podczas rozmowy na żywo. Każdy krok renderuje je tak samo jak krok
+// OPENING: rozwijane wiersze z gotową odpowiedzią w miejscu.
+const STEP_OBJECTIONS: Record<string, string[]> = {
+  opener: ["ok_nb", "ok_nie_ja", "ok_cc", "ok1", "ok_em"],
+  diagnoza_otwarcie: ["po_co_to_pytanie", "ok_nie_ja"],
+  diagnoza_icp_flota: ["icp_ponizej_progu", "spedytorzy_dorazni"],
+  diagnoza_icp_decydent: ["icp_nie_decydent"],
+  diagnoza_tms: ["konkurencja_m365"],
+  diagnoza_dokumenty_faktura: ["zewnetrzne_biuro_ksiegowe"],
+  diagnoza_stawka: ["stawka_niechec"],
+  diagnoza_czas: ["czas_milczy", "czas_obronny", "czas_przeskakuje"],
+  spotkanie: ["ok4", "ok5", "spotkanie_link_zapasowy"],
+  spotkanie_rezerwacja: ["spotkanie_link_zapasowy"],
+};
 
 // ── Line colors ───────────────────────────────────────────────────────
 
@@ -227,15 +224,18 @@ function CalculatorFlagsBar({ flags }: { flags: Record<string, boolean> }) {
             style={{
               fontFamily: "var(--font-sans)",
               fontSize: 11,
-              color: "var(--text-primary)",
-              padding: "3px 8px",
-              borderRadius: 20,
-              background: "var(--bg-elevated)",
-              border: "1px solid var(--border)",
+              fontWeight: 800,
+              letterSpacing: "0.03em",
+              textTransform: "uppercase",
+              color: "var(--text-on-accent)",
+              padding: "3px 9px",
+              borderRadius: "var(--radius-xs)",
+              background: "var(--accent)",
+              border: "1px solid rgba(255,255,255,0.3)",
             }}
           >
             {src?.label ?? k}
-            {src ? ` (${src.nr})` : ""}
+            {src ? ` ${src.nr}` : ""}
           </span>
         );
       })}
@@ -409,8 +409,8 @@ function GroupRow({
 }) {
   const fieldStyle: React.CSSProperties = {
     height: 36,
-    borderRadius: 8,
-    border: "1px solid var(--border)",
+    borderRadius: "var(--radius-xs)",
+    border: "1px solid rgba(255,255,255,0.28)",
     padding: "0 10px",
     fontFamily: "var(--font-sans)",
     fontSize: 13,
@@ -423,8 +423,8 @@ function GroupRow({
   const labelStyle: React.CSSProperties = {
     fontFamily: "var(--font-sans)",
     fontSize: 10,
-    fontWeight: 600,
-    color: "var(--text-tertiary)",
+    fontWeight: 700,
+    color: "var(--text-primary)",
     textTransform: "uppercase",
     letterSpacing: "0.07em",
   };
@@ -730,20 +730,20 @@ function ScriptKalkulator({
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: 4,
-                    padding: "5px 10px",
-                    borderRadius: 20,
-                    border: on ? "1px solid var(--accent)" : "1px solid var(--border)",
-                    background: on ? "rgba(67, 121, 177, 0.08)" : "var(--bg)",
-                    color: on ? "var(--accent)" : "var(--text-secondary)",
+                    gap: 5,
+                    padding: "6px 12px",
+                    borderRadius: "var(--radius-xs)",
+                    border: `1px solid ${on ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.28)"}`,
+                    background: on ? "var(--accent)" : "var(--bg)",
+                    color: on ? "var(--text-on-accent)" : "var(--text-primary)",
                     fontFamily: "var(--font-sans)",
-                    fontSize: 11,
-                    fontWeight: on ? 600 : 400,
+                    fontSize: 12,
+                    fontWeight: on ? 800 : 600,
                     cursor: locked ? "default" : "pointer",
                     transition: "all 120ms",
                   }}
                 >
-                  {locked && <Lock size={9} />}
+                  {locked && <Lock size={10} />}
                   {pt.label}
                 </button>
               );
@@ -886,29 +886,127 @@ function InlineCaptureInput({
 
 // ── Script step ───────────────────────────────────────────────────────
 
+// Nagłówek sekcji wewnątrz karty kroku (biały, wersaliki), poprzedzony dividerem.
+function SectionCap({ children }: { children: React.ReactNode }) {
+  return (
+    <>
+      <div style={{ borderTop: "1px solid rgba(255,255,255,0.22)", margin: "8px 0 10px" }} />
+      <div
+        style={{
+          fontFamily: "var(--font-sans)",
+          fontSize: 11,
+          fontWeight: 800,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          color: "var(--text-primary)",
+          marginBottom: 8,
+        }}
+      >
+        {children}
+      </div>
+    </>
+  );
+}
+
+// Rozwijany wiersz (obiekcja albo reakcja klienta) — jeden mechanizm dla całego
+// skryptu, wzór z kroku OPENING. Etykieta + rozwijana odpowiedź w miejscu.
+function CollapsibleAnswer({
+  label,
+  open,
+  onToggle,
+  children,
+}: {
+  label: string;
+  open: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      style={{
+        border: "1px solid rgba(255,255,255,0.22)",
+        borderRadius: 9,
+        overflow: "hidden",
+        background: "var(--bg)",
+        boxShadow: "var(--shadow-sm)",
+      }}
+    >
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggle();
+        }}
+        style={{
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 10,
+          padding: "10px 12px",
+          border: "none",
+          background: open ? "var(--bg-hover)" : "transparent",
+          color: "var(--text-primary)",
+          fontFamily: "var(--font-sans)",
+          fontSize: 14,
+          fontWeight: 600,
+          textAlign: "left",
+          cursor: "pointer",
+        }}
+      >
+        <span>{label}</span>
+        <ChevronDown
+          size={15}
+          color="var(--text-tertiary)"
+          style={{
+            flexShrink: 0,
+            transform: open ? "rotate(180deg)" : "none",
+            transition: "transform 150ms",
+          }}
+        />
+      </button>
+      {open && (
+        <div style={{ padding: 12, borderTop: "1px solid rgba(255,255,255,0.22)" }}>{children}</div>
+      )}
+    </div>
+  );
+}
+
+// Akapit odpowiedzi w rozwiniętym wierszu — 15.5px, biały.
+function answerParagraphs(text: string, keyPrefix: string) {
+  return toSentences(text).map((s, i) => (
+    <p
+      key={`${keyPrefix}-${i}`}
+      style={{
+        margin: i === 0 ? 0 : "8px 0 0",
+        fontFamily: "var(--font-sans)",
+        fontSize: 15.5,
+        lineHeight: 1.6,
+        color: "var(--text-primary)",
+        textWrap: "pretty" as React.CSSProperties["textWrap"],
+      }}
+    >
+      {s}
+    </p>
+  ));
+}
+
 function ScriptStep({
   step,
   fill,
-  onJump,
   onDecisionSelect,
-  onJumpToObjection,
-  selectedTrigger,
   role,
   children,
 }: {
   step: (typeof STEPS_K)[0];
   fill: (t: string) => string;
-  onJump: (stepId: string) => void;
   onDecisionSelect: (stepId: string, option: DecisionOption) => void;
-  onJumpToObjection: (objectionId: string) => void;
-  selectedTrigger?: string;
   role: "admin" | "setter" | "closer" | null;
   children?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(true);
-  // Która obiekcja startowa jest rozwinięta (odpowiedź pokazuje się w miejscu,
-  // pod przyciskiem, bez panelu bocznego).
-  const [openObj, setOpenObj] = useState<string | null>(null);
+  // Który rozwijany wiersz (reakcja klienta albo obiekcja) jest otwarty.
+  const [openRow, setOpenRow] = useState<string | null>(null);
+  const stepObjections = STEP_OBJECTIONS[step.id] ?? [];
 
   // Etap "opener" dostaje plakietkę statusu w języku Pipeline ("NOWY LEAD"),
   // reszta kroków neutralną plakietkę akcentową z własną nazwą etapu. Bez
@@ -1105,177 +1203,100 @@ function ScriptStep({
                       {line.cel}
                     </div>
                   )}
-                  {line.t === "note" && line.linkObjectionId && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onJumpToObjection(line.linkObjectionId!);
-                      }}
-                      style={{
-                        marginTop: 6,
-                        padding: "5px 10px",
-                        borderRadius: 6,
-                        border: "1px solid var(--warning)",
-                        background: "var(--bg-elevated)",
-                        color: "var(--warning-text)",
-                        fontFamily: "var(--font-sans)",
-                        fontSize: 11,
-                        fontWeight: 700,
-                        cursor: "pointer",
-                      }}
-                    >
-                      Otwórz obiekcję
-                    </button>
-                  )}
                 </div>
               </div>
             );
           })}
-          {step.id === "opener" && (
-            <div style={{ marginTop: 6 }}>
-              <div style={{ borderTop: "1px solid rgba(255,255,255,0.22)", marginBottom: 10 }} />
-              <div
-                style={{
-                  fontFamily: "var(--font-sans)",
-                  fontSize: 11,
-                  fontWeight: 700,
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
-                  color: "var(--text-primary)",
-                  marginBottom: 8,
-                }}
-              >
-                Możliwe obiekcje
-              </div>
+
+          {step.decision && (
+            <>
+              <SectionCap>Reakcja klienta</SectionCap>
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                {OPENER_REACTIONS.map((r) => {
-                  const obj = OBJECTIONS_K.find((o) => o.id === r.objId);
-                  const isObjOpen = openObj === r.objId;
+                {step.decision.options.map((opt, oi) => {
+                  const rowKey = `dec-${oi}`;
                   return (
-                    <div
-                      key={r.objId}
-                      style={{
-                        border: "1px solid rgba(255,255,255,0.22)",
-                        borderRadius: 9,
-                        overflow: "hidden",
-                        background: "var(--bg)",
-                        boxShadow: "var(--shadow-sm)",
+                    <CollapsibleAnswer
+                      key={rowKey}
+                      label={opt.trigger}
+                      open={openRow === rowKey}
+                      onToggle={() => {
+                        const next = openRow === rowKey ? null : rowKey;
+                        setOpenRow(next);
+                        if (next) onDecisionSelect(step.id, opt);
                       }}
                     >
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setOpenObj(isObjOpen ? null : r.objId);
-                        }}
-                        style={{
-                          width: "100%",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          gap: 10,
-                          padding: "10px 12px",
-                          border: "none",
-                          background: isObjOpen ? "var(--bg-hover)" : "transparent",
-                          color: "var(--text-primary)",
-                          fontFamily: "var(--font-sans)",
-                          fontSize: 14,
-                          fontWeight: 600,
-                          textAlign: "left",
-                          cursor: "pointer",
-                        }}
-                      >
-                        <span>{r.label}</span>
-                        <ChevronDown
-                          size={15}
-                          color="var(--text-tertiary)"
-                          style={{
-                            flexShrink: 0,
-                            transform: isObjOpen ? "rotate(180deg)" : "none",
-                            transition: "transform 150ms",
-                          }}
-                        />
-                      </button>
-                      {isObjOpen && obj && (
-                        <div
-                          style={{
-                            padding: "12px",
-                            borderTop: "1px solid rgba(255,255,255,0.22)",
-                          }}
-                        >
-                          {toSentences(fill(obj.script ?? "")).map((s, si) => (
-                            <p
-                              key={si}
-                              style={{
-                                margin: si === 0 ? 0 : "8px 0 0",
-                                fontFamily: "var(--font-sans)",
-                                fontSize: 15.5,
-                                lineHeight: 1.6,
-                                color: "var(--text-primary)",
-                                textWrap: "pretty" as React.CSSProperties["textWrap"],
-                              }}
-                            >
-                              {s}
-                            </p>
-                          ))}
-                          {obj.followup && (
-                            <div style={{ marginTop: 10 }}>
-                              <span
-                                style={{
-                                  fontFamily: "var(--font-sans)",
-                                  fontSize: 13,
-                                  fontWeight: 700,
-                                  color: "var(--accent)",
-                                }}
-                              >
-                                Jeśli nadal naciska:
-                              </span>
-                              {toSentences(fill(obj.followup)).map((s, si) => (
-                                <p
-                                  key={si}
-                                  style={{
-                                    margin: "4px 0 0",
-                                    fontFamily: "var(--font-sans)",
-                                    fontSize: 15,
-                                    lineHeight: 1.55,
-                                    color: "var(--text-secondary)",
-                                  }}
-                                >
-                                  {s}
-                                </p>
-                              ))}
-                            </div>
-                          )}
-                          {obj.note && (
-                            <p
-                              style={{
-                                margin: "10px 0 0",
-                                fontFamily: "var(--font-sans)",
-                                fontSize: 12.5,
-                                lineHeight: 1.5,
-                                color: "var(--text-tertiary)",
-                              }}
-                            >
-                              {obj.note}
-                            </p>
-                          )}
+                      {opt.action && answerParagraphs(fill(opt.action), `${rowKey}-a`)}
+                      {opt.sayAfter && (
+                        <div style={{ marginTop: opt.action ? 10 : 0 }}>
+                          <span
+                            style={{
+                              fontFamily: "var(--font-sans)",
+                              fontSize: 13,
+                              fontWeight: 700,
+                              color: "var(--accent)",
+                            }}
+                          >
+                            Powiedz:
+                          </span>
+                          {answerParagraphs(fill(opt.sayAfter), `${rowKey}-s`)}
                         </div>
                       )}
-                    </div>
+                    </CollapsibleAnswer>
                   );
                 })}
               </div>
-            </div>
+            </>
           )}
-          {step.decision && (
-            <DecisionDiagram
-              decision={step.decision}
-              onSelect={(option) => onDecisionSelect(step.id, option)}
-              onJump={onJump}
-              selectedTrigger={selectedTrigger}
-            />
-          )}
-          {!step.decision && step.nextStepId && (
-            <NextStepArrow label="Dalej" onJump={() => onJump(step.nextStepId!)} />
+
+          {stepObjections.length > 0 && (
+            <>
+              <SectionCap>Możliwe obiekcje</SectionCap>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {stepObjections.map((objId) => {
+                  const obj = OBJECTIONS_K.find((o) => o.id === objId);
+                  if (!obj) return null;
+                  const rowKey = `obj-${objId}`;
+                  return (
+                    <CollapsibleAnswer
+                      key={rowKey}
+                      label={obj.label}
+                      open={openRow === rowKey}
+                      onToggle={() => setOpenRow(openRow === rowKey ? null : rowKey)}
+                    >
+                      {answerParagraphs(fill(obj.script ?? ""), `${rowKey}-s`)}
+                      {obj.followup && (
+                        <div style={{ marginTop: 10 }}>
+                          <span
+                            style={{
+                              fontFamily: "var(--font-sans)",
+                              fontSize: 13,
+                              fontWeight: 700,
+                              color: "var(--accent)",
+                            }}
+                          >
+                            Jeśli nadal naciska:
+                          </span>
+                          {answerParagraphs(fill(obj.followup), `${rowKey}-f`)}
+                        </div>
+                      )}
+                      {obj.note && (
+                        <p
+                          style={{
+                            margin: "10px 0 0",
+                            fontFamily: "var(--font-sans)",
+                            fontSize: 12.5,
+                            lineHeight: 1.5,
+                            color: "var(--text-tertiary)",
+                          }}
+                        >
+                          {obj.note}
+                        </p>
+                      )}
+                    </CollapsibleAnswer>
+                  );
+                })}
+              </div>
+            </>
           )}
           {children && (
             <div style={{ borderTop: "1px solid var(--border)", marginTop: 4, paddingTop: 10 }}>
@@ -1284,300 +1305,6 @@ function ScriptStep({
           )}
         </div>
       )}
-    </div>
-  );
-}
-
-// ── Objections accordion ──────────────────────────────────────────────
-
-const STAGE_LABELS: Partial<Record<Objection["stage"], string>> = {
-  opening: "Otwarcie rozmowy",
-  icp: "Weryfikacja ICP",
-  diagnoza: "Diagnoza dokumentów",
-  kalkulator: "Kalkulator ROI",
-  closing: "Umówienie spotkania",
-  wszedzie: "Obiekcje ogólne (mogą wystąpić wszędzie)",
-};
-
-const STAGE_ORDER: Objection["stage"][] = [
-  "opening",
-  "icp",
-  "diagnoza",
-  "kalkulator",
-  "closing",
-  "wszedzie",
-];
-
-// Kategoria obiekcji = etap rozmowy w której pada (zamiast zgadywania kategorii
-// z treści etykiety) — pole `stage` jest obowiązkowe i ma pełne pokrycie dla
-// każdej obiekcji, w przeciwieństwie do dopasowania po słowach kluczowych w
-// `objectionColor()` (lib/scripts/types.ts), które dla tego skryptu zostawiało
-// większość obiekcji w nieopisującym niczego kolorze "Inne". Sześć odrębnych,
-// nasyconych barw, żadna nie powtarza odcienia używanego gdzie indziej w UI
-// (np. --text-tertiary) — kategoria ma się wizualnie wyróżniać, nie zlewać.
-const STAGE_BADGE: Record<Objection["stage"], { accent: string; short: string }> = {
-  opening: { accent: "#3b82f6", short: "Otwarcie" },
-  icp: { accent: "#8b5cf6", short: "ICP" },
-  diagnoza: { accent: "#14b8a6", short: "Diagnoza" },
-  kalkulator: { accent: "#f59e0b", short: "Kalkulator" },
-  pitch: { accent: "#f59e0b", short: "Kalkulator" },
-  cena: { accent: "#ef4444", short: "Cena" },
-  closing: { accent: "#34d399", short: "Umówienie" },
-  wszedzie: { accent: "#f43f5e", short: "Ogólne" },
-  kickoff: { accent: "#34d399", short: "Kickoff" },
-  przedkontraktowa: { accent: "#f59e0b", short: "Przedkontraktowa" },
-};
-
-function renderObjection(
-  obj: Objection,
-  openId: string | null,
-  setOpenId: (id: string | null) => void,
-  fill: (t: string) => string,
-  onCopy: (id: string, text: string) => void,
-  copiedId: string | null,
-  onJumpStep: (stepId: string) => void,
-) {
-  const badge = STAGE_BADGE[obj.stage];
-  const isOpen = openId === obj.id;
-  return (
-    <div
-      key={obj.id}
-      id={`objection-${obj.id}`}
-      style={{
-        border: "1px solid var(--border)",
-        borderLeft: `3px solid ${badge.accent}`,
-        borderRadius: 8,
-        overflow: "hidden",
-        background: "var(--bg-elevated)",
-        transition: "background-color 200ms, box-shadow 250ms",
-      }}
-    >
-      <div
-        onClick={() => setOpenId(isOpen ? null : obj.id)}
-        style={{
-          padding: "8px 12px",
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          cursor: "pointer",
-          userSelect: "none",
-        }}
-      >
-        <div style={{ flex: 1 }}>
-          <div
-            style={{
-              fontSize: 8,
-              fontWeight: 600,
-              letterSpacing: "0.06em",
-              textTransform: "uppercase",
-              color: "var(--text-tertiary)",
-              marginBottom: 1,
-            }}
-          >
-            {badge.short}
-          </div>
-          <div
-            style={{
-              fontFamily: "var(--font-sans)",
-              fontSize: 12,
-              fontWeight: 500,
-              color: "var(--text-primary)",
-            }}
-          >
-            {obj.label}
-          </div>
-        </div>
-        <ChevronDown
-          size={12}
-          color="var(--text-tertiary)"
-          style={{
-            transform: isOpen ? "rotate(180deg)" : "none",
-            transition: "transform 150ms",
-            flexShrink: 0,
-          }}
-        />
-      </div>
-      {isOpen && (
-        <div style={{ padding: "0 12px 12px", display: "flex", flexDirection: "column", gap: 8 }}>
-          {obj.script && (
-            <div style={{ display: "flex", alignItems: "flex-start", gap: 6 }}>
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: 13,
-                  lineHeight: 1.55,
-                  color: "var(--text-primary)",
-                  fontFamily: "var(--font-sans)",
-                  flex: 1,
-                }}
-              >
-                {fill(obj.script)}
-              </p>
-              <button
-                onClick={() => onCopy(`obj-${obj.id}-script`, obj.script!)}
-                style={{
-                  flexShrink: 0,
-                  padding: "3px 7px",
-                  borderRadius: 5,
-                  border: "1px solid var(--border)",
-                  background: "transparent",
-                  cursor: "pointer",
-                  color:
-                    copiedId === `obj-${obj.id}-script`
-                      ? "var(--success-text)"
-                      : "var(--text-tertiary)",
-                  display: "flex",
-                  alignItems: "center",
-                }}
-              >
-                {copiedId === `obj-${obj.id}-script` ? (
-                  <CheckCircle2 size={10} />
-                ) : (
-                  <Copy size={10} />
-                )}
-              </button>
-            </div>
-          )}
-          {obj.followup && (
-            <p
-              style={{
-                margin: 0,
-                fontSize: 13,
-                lineHeight: 1.55,
-                color: "var(--text-primary)",
-                fontFamily: "var(--font-sans)",
-              }}
-            >
-              {fill(obj.followup)}
-            </p>
-          )}
-          {obj.note && (
-            <p
-              style={{
-                margin: 0,
-                fontSize: 11,
-                lineHeight: 1.5,
-                color: "var(--text-secondary)",
-                fontFamily: "var(--font-sans)",
-              }}
-            >
-              {obj.note}
-            </p>
-          )}
-          {obj.nextStepId && (
-            <NextStepArrow
-              label={`Dalej: ${findStepLabel(obj.nextStepId)}`}
-              onJump={() => onJumpStep(obj.nextStepId!)}
-            />
-          )}
-          {obj.sms && (
-            <div
-              style={{
-                background: "var(--accent-muted)",
-                padding: "8px 10px",
-                borderRadius: 6,
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 9,
-                  fontWeight: 700,
-                  color: "var(--accent-text)",
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
-                  marginBottom: 4,
-                }}
-              >
-                SMS
-              </div>
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: 12,
-                  color: "var(--text-primary)",
-                  lineHeight: 1.55,
-                  fontFamily: "var(--font-sans)",
-                }}
-              >
-                {fill(obj.sms)}
-              </p>
-            </div>
-          )}
-          {obj.extra && (
-            <div style={{ background: "var(--bg-hover)", padding: "8px 10px", borderRadius: 6 }}>
-              <div
-                style={{
-                  fontSize: 9,
-                  fontWeight: 700,
-                  color: "var(--text-secondary)",
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
-                  marginBottom: 4,
-                }}
-              >
-                Wiadomość prywatna
-              </div>
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: 12,
-                  color: "var(--text-primary)",
-                  lineHeight: 1.55,
-                  fontFamily: "var(--font-sans)",
-                }}
-              >
-                {fill(obj.extra)}
-              </p>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function ObjectionsPanel({
-  fill,
-  onCopy,
-  copiedId,
-  openId,
-  setOpenId,
-  onJumpStep,
-}: {
-  fill: (t: string) => string;
-  onCopy: (id: string, text: string) => void;
-  copiedId: string | null;
-  openId: string | null;
-  setOpenId: (id: string | null) => void;
-  onJumpStep: (stepId: string) => void;
-}) {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      {STAGE_ORDER.map((stage) => {
-        const items = OBJECTIONS_K.filter((o) => o.stage === stage);
-        if (items.length === 0) return null;
-        return (
-          <div key={stage} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <div
-              style={{
-                fontFamily: "var(--font-sans)",
-                fontSize: 10,
-                fontWeight: 700,
-                color: "var(--text-tertiary)",
-                letterSpacing: "0.05em",
-                textTransform: "uppercase",
-              }}
-            >
-              {STAGE_LABELS[stage]}
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              {items.map((obj) =>
-                renderObjection(obj, openId, setOpenId, fill, onCopy, copiedId, onJumpStep),
-              )}
-            </div>
-          </div>
-        );
-      })}
     </div>
   );
 }
@@ -2257,26 +1984,20 @@ function RightPanel({
   fill,
   onCopy,
   copiedId,
-  openObjectionId,
-  setOpenObjectionId,
   smsForceOpen,
   onSmsCopy,
-  onJumpStep,
 }: {
   fill: (t: string) => string;
   onCopy: (id: string, text: string) => void;
   copiedId: string | null;
-  openObjectionId: string | null;
-  setOpenObjectionId: (id: string | null) => void;
   smsForceOpen: boolean;
   onSmsCopy: () => void;
-  onJumpStep: (stepId: string) => void;
 }) {
   return (
     <div
       style={{
-        width: 320,
-        minWidth: 320,
+        width: 300,
+        minWidth: 300,
         height: "100%",
         borderLeft: "1px solid var(--border)",
         overflowY: "auto",
@@ -2284,16 +2005,6 @@ function RightPanel({
         background: "var(--bg-elevated)",
       }}
     >
-      <Card title="Obiekcje w kwalifikacji">
-        <ObjectionsPanel
-          fill={fill}
-          onCopy={onCopy}
-          copiedId={copiedId}
-          openId={openObjectionId}
-          setOpenId={setOpenObjectionId}
-          onJumpStep={onJumpStep}
-        />
-      </Card>
       <Card title="Frazy potwierdzające" collapsible defaultOpen={false}>
         <PhrasesPanel onCopy={onCopy} copiedId={copiedId} />
       </Card>
@@ -2318,19 +2029,21 @@ export default function KwalifikacjaPage() {
   const [note, setNote] = useState("");
   const [calculatorFlags, setCalculatorFlags] = useState<Record<string, boolean>>({});
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
-  const [openObjectionId, setOpenObjectionId] = useState<string | null>(null);
   const [calcGroups, setCalcGroups] = useState<CalculatorGroup[]>([
     { id: "grp_default", label: "Biuro / spedycja", osoby: 2, godziny: 3, stawka: 50 },
   ]);
   const [sprzedawcaImie, setSprzedawcaImie] = useState("Michał");
   const [smsForceOpen, setSmsForceOpen] = useState(false);
-  const role = useRole();
+  const identity = useIdentity();
+  const role = identity?.role ?? null;
 
   // Przypisanie sprzedawcy do klienta + rejestr odbytych rozmów kwalifikacyjnych.
-  // Na razie trzymane lokalnie (localStorage) — docelowo pole w Pipeline (wymaga
-  // migracji schematu Supabase/Notion). Kształt danych i handlery są tak zrobione,
-  // żeby podmiana warstwy zapisu na PATCH /api/notion/pipeline-update była jednym
-  // miejscem, bez zmian w UI.
+  // Picker sprzedawcy bierze REALNE profile z Supabase (team_members). Samo
+  // przypisanie i znacznik "rozmowa odbyta" trzymamy jeszcze lokalnie (localStorage,
+  // klucz = team_members.id), bo tabela pipeline nie ma na to jeszcze kolumn —
+  // migracja schematu do zrobienia przez przycisk w /kontrola. Handlery napisane tak,
+  // żeby podmiana warstwy zapisu na PATCH /api/notion/pipeline-update była jednym miejscem.
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [callDoneByClient, setCallDoneByClient] = useState<Record<string, boolean>>({});
   const [sellerByClient, setSellerByClient] = useState<Record<string, string>>({});
 
@@ -2343,21 +2056,36 @@ export default function KwalifikacjaPage() {
     }
   }, []);
 
-  const ownSellerLabel =
-    role === "setter" ? "Setter" : role === "closer" ? "Closer" : "Michał Roth";
+  useEffect(() => {
+    fetch("/api/team")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success) setTeamMembers(d.members as TeamMember[]);
+      })
+      .catch(() => {
+        /* brak listy zespołu nie blokuje pracy ze skryptem */
+      });
+  }, []);
 
-  const assignSeller = useCallback((clientId: string, seller: string) => {
+  const memberName = useCallback(
+    (id: string | null) => teamMembers.find((m) => m.id === id)?.displayName ?? null,
+    [teamMembers],
+  );
+
+  const assignSeller = useCallback((clientId: string, memberId: string) => {
     setSellerByClient((prev) => {
-      const next = { ...prev, [clientId]: seller };
+      const next = { ...prev, [clientId]: memberId };
       localStorage.setItem("kwal_seller_by_client", JSON.stringify(next));
       return next;
     });
   }, []);
 
   const callDoneIds = Object.keys(callDoneByClient).filter((k) => callDoneByClient[k]);
-  const selectedSeller = selected ? (sellerByClient[selected.id] ?? null) : null;
+  const selectedSellerId = selected ? (sellerByClient[selected.id] ?? null) : null;
+  const selectedSellerName = memberName(selectedSellerId);
   const selectedCallDone = selected ? Boolean(callDoneByClient[selected.id]) : false;
 
+  // Wspólny styl etykiety w pasku narzędzi headera — białe wersaliki.
   // Wspólny styl etykiety w pasku narzędzi headera — białe wersaliki.
   const TOOLBAR_LABEL: React.CSSProperties = {
     fontFamily: "var(--font-sans)",
@@ -2413,7 +2141,6 @@ export default function KwalifikacjaPage() {
     setCalcGroups([
       { id: "grp_default", label: "Biuro / spedycja", osoby: 2, godziny: 3, stawka: 50 },
     ]);
-    setOpenObjectionId(null);
     setSmsForceOpen(false);
   }, [selected?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -2426,10 +2153,7 @@ export default function KwalifikacjaPage() {
     n.toLocaleString("pl-PL", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
   const firstName = (selected?.kontakt || selected?.firma || "").trim().split(/\s+/)[0] ?? "";
-  const { forma, formaOverride, setFormaOverride } = useFormaGrzecznosciowa(
-    firstName,
-    selected?.id,
-  );
+  const { forma, setFormaOverride } = useFormaGrzecznosciowa(firstName, selected?.id);
 
   const fill = (text: string): string => {
     let out = text;
@@ -2439,13 +2163,11 @@ export default function KwalifikacjaPage() {
       out = out.replace(/Pani \{IMIĘ\}/g, `${forma} ${nominative}`);
     }
     if (vocative.trim()) out = out.replace(/\{IMIĘ\}/g, vocative.trim());
-    // Imię do zdania otwierającego: jeśli przypisany sprzedawca ma realne imię
-    // (np. "Michał Roth"), bierzemy je; dla ról "Setter"/"Closer" i braku
-    // przypisania — wartość z pola "Imię w skrypcie".
-    const sellerFirst =
-      selectedSeller && selectedSeller !== "Setter" && selectedSeller !== "Closer"
-        ? selectedSeller.trim().split(/\s+/)[0]
-        : sprzedawcaImie.trim();
+    // Imię do zdania otwierającego: pierwsze imię przypisanego sprzedawcy
+    // (z profilu Supabase), a jeśli brak przypisania — wartość z pola "Imię w skrypcie".
+    const sellerFirst = selectedSellerName
+      ? selectedSellerName.trim().split(/\s+/)[0]
+      : sprzedawcaImie.trim();
     if (sellerFirst) out = out.replace(/\{IMIĘ_SPRZEDAWCY\}/g, sellerFirst);
 
     // Liczby w ustach settera zaokrąglone (zasada języka mówionego 2026-08-08) —
@@ -2486,50 +2208,15 @@ export default function KwalifikacjaPage() {
     void postTally(type, -1);
   }, []);
 
-  // Bez auto-scrolla: podczas rozmowy na żywo przewinięcie strony spod settera
-  // gubi go w skrypcie. Po kliknięciu tylko podświetlamy docelowy element w
-  // miejscu, setter sam decyduje kiedy tam spojrzeć.
-  const jumpToStep = useCallback((stepId: string) => {
-    const el = document.getElementById(`step-${stepId}`);
-    if (!el) return;
-    el.style.transition = "box-shadow 250ms, background-color 250ms";
-    el.style.boxShadow = "0 0 0 2px var(--accent)";
-    el.style.backgroundColor = "rgba(67, 121, 177, 0.08)";
-    setTimeout(() => {
-      el.style.boxShadow = "";
-      el.style.backgroundColor = "";
-    }, 2000);
+  // Wybór opcji reakcji klienta w kroku: rejestruje trigger (podświetlenie) i,
+  // jeśli opcja steruje kalkulatorem, ustawia flagę. Bez skoków po `goToStepId` —
+  // nawigacja po skrypcie to zwykłe przewinięcie, nie osobny przycisk.
+  const handleDecisionSelect = useCallback((stepId: string, option: DecisionOption) => {
+    setSelectedOptions((prev) => ({ ...prev, [stepId]: option.trigger }));
+    if (option.calculatorFlag) {
+      setCalculatorFlags((prev) => ({ ...prev, [option.calculatorFlag!]: true }));
+    }
   }, []);
-
-  const jumpToObjection = useCallback((objectionId: string) => {
-    setOpenObjectionId(objectionId);
-    requestAnimationFrame(() => {
-      const el = document.getElementById(`objection-${objectionId}`);
-      if (!el) return;
-      el.style.transition = "box-shadow 250ms, background-color 250ms";
-      el.style.boxShadow = "0 0 0 2px var(--warning)";
-      setTimeout(() => {
-        el.style.boxShadow = "";
-      }, 2000);
-    });
-  }, []);
-
-  const handleDecisionSelect = useCallback(
-    (stepId: string, option: DecisionOption) => {
-      setSelectedOptions((prev) => ({ ...prev, [stepId]: option.trigger }));
-      if (option.calculatorFlag) {
-        setCalculatorFlags((prev) => ({ ...prev, [option.calculatorFlag!]: true }));
-      }
-      if (option.openObjectionId) {
-        jumpToObjection(option.openObjectionId);
-      }
-      // Przejście po `goToStepId` NIE jest automatyczne — setter klika osobny
-      // przycisk "Dalej" wewnątrz DecisionDiagram (onJump), dopiero gdy przeczytał
-      // klientowi `sayAfter`. Automatyczny skok tutaj wyrywał stronę spod setterowi
-      // zanim zdążył odczytać tekst na głos.
-    },
-    [jumpToObjection],
-  );
 
   const jumpToSmsTemplate = useCallback((smsId: string) => {
     setSmsForceOpen(true);
@@ -2586,13 +2273,18 @@ export default function KwalifikacjaPage() {
       localStorage.setItem("kwal_call_done", JSON.stringify(next));
       return next;
     });
-    // Setter/closer: odbyta rozmowa przypina się do jego profilu, jeśli klient
-    // nie ma jeszcze przypisanego sprzedawcy. Founder zarządza przypisaniem ręcznie.
-    if ((role === "setter" || role === "closer") && !sellerByClient[selected.id]) {
-      assignSeller(selected.id, ownSellerLabel);
+    // Setter/closer: odbyta rozmowa przypina klienta do jego profilu (team_members.id
+    // z sesji), jeśli klient nie ma jeszcze przypisanego sprzedawcy. Founder przypisuje
+    // ręcznie z pickera.
+    if (
+      (role === "setter" || role === "closer") &&
+      identity?.teamMemberId &&
+      !sellerByClient[selected.id]
+    ) {
+      assignSeller(selected.id, identity.teamMemberId);
     }
     tally("rozmowa_kwalifikacja");
-  }, [selected, role, sellerByClient, assignSeller, ownSellerLabel, tally]);
+  }, [selected, role, identity, sellerByClient, assignSeller, tally]);
 
   const undoCallDone = useCallback(() => {
     if (!selected) return;
@@ -2690,36 +2382,49 @@ export default function KwalifikacjaPage() {
 
           <div style={{ height: 24, width: 1, background: "rgba(255,255,255,0.28)" }} />
 
-          {/* ── Przypisany sprzedawca ── */}
+          {/* ── Przypisany sprzedawca (profile z Supabase / team_members) ── */}
           <span style={TOOLBAR_LABEL}>Sprzedawca</span>
           {role === "admin" ? (
-            SELLER_OPTIONS.map((opt) => {
-              const active = selectedSeller === opt;
-              return (
-                <button
-                  key={opt}
-                  onClick={() => selected && assignSeller(selected.id, opt)}
-                  disabled={!selected}
-                  style={{
-                    height: 30,
-                    padding: "0 12px",
-                    borderRadius: "var(--radius-xs)",
-                    border: `1px solid ${active ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.28)"}`,
-                    background: active ? "var(--accent)" : "var(--bg-elevated)",
-                    color: active ? "var(--text-on-accent)" : "var(--text-primary)",
-                    fontFamily: "var(--font-sans)",
-                    fontSize: 12,
-                    fontWeight: active ? 800 : 600,
-                    letterSpacing: "0.03em",
-                    textTransform: "uppercase",
-                    cursor: selected ? "pointer" : "not-allowed",
-                    opacity: selected ? 1 : 0.45,
-                  }}
-                >
-                  {opt}
-                </button>
-              );
-            })
+            teamMembers.length === 0 ? (
+              <span
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 12,
+                  color: "var(--text-tertiary)",
+                }}
+              >
+                Brak profili
+              </span>
+            ) : (
+              teamMembers.map((m) => {
+                const active = selectedSellerId === m.id;
+                return (
+                  <button
+                    key={m.id}
+                    onClick={() => selected && assignSeller(selected.id, m.id)}
+                    disabled={!selected}
+                    title={`Przypisz ${m.displayName} (${m.role})`}
+                    style={{
+                      height: 30,
+                      padding: "0 12px",
+                      borderRadius: "var(--radius-xs)",
+                      border: `1px solid ${active ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.28)"}`,
+                      background: active ? "var(--accent)" : "var(--bg-elevated)",
+                      color: active ? "var(--text-on-accent)" : "var(--text-primary)",
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 12,
+                      fontWeight: active ? 800 : 600,
+                      letterSpacing: "0.03em",
+                      textTransform: "uppercase",
+                      cursor: selected ? "pointer" : "not-allowed",
+                      opacity: selected ? 1 : 0.45,
+                    }}
+                  >
+                    {m.displayName}
+                  </button>
+                );
+              })
+            )
           ) : (
             <span
               style={{
@@ -2740,7 +2445,7 @@ export default function KwalifikacjaPage() {
               }}
             >
               <User size={13} strokeWidth={2.5} />
-              {selectedSeller ?? ownSellerLabel}
+              {selectedSellerName ?? identity?.displayName ?? "—"}
             </span>
           )}
 
@@ -2885,28 +2590,6 @@ export default function KwalifikacjaPage() {
                   </button>
                 );
               })}
-              {formaOverride !== "auto" && (
-                <button
-                  onClick={() => setFormaOverride("auto")}
-                  title="Wróć do automatycznego wykrywania"
-                  style={{
-                    height: 30,
-                    padding: "0 10px",
-                    borderRadius: "var(--radius-xs)",
-                    border: "1px solid rgba(255,255,255,0.28)",
-                    background: "transparent",
-                    color: "var(--text-secondary)",
-                    fontFamily: "var(--font-sans)",
-                    fontSize: 11,
-                    fontWeight: 700,
-                    letterSpacing: "0.04em",
-                    textTransform: "uppercase",
-                    cursor: "pointer",
-                  }}
-                >
-                  Auto
-                </button>
-              )}
 
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <span style={TOOLBAR_LABEL}>Jak się zwracać</span>
@@ -2946,7 +2629,7 @@ export default function KwalifikacjaPage() {
           headerLabel="Nowy lead"
           emptyLabel='Brak klientów "Nowy lead"'
           callDoneClientIds={callDoneIds}
-          sellerLabel={selectedSeller}
+          sellerLabel={selectedSellerName}
         />
 
         {/* Main: script + roi + dalsze kroki */}
@@ -2958,10 +2641,7 @@ export default function KwalifikacjaPage() {
                 key={step.id}
                 step={step}
                 fill={fill}
-                onJump={jumpToStep}
                 onDecisionSelect={handleDecisionSelect}
-                onJumpToObjection={jumpToObjection}
-                selectedTrigger={selectedOptions[step.id]}
                 role={role}
               >
                 {step.captureField === "osoby" && (
@@ -3045,16 +2725,13 @@ export default function KwalifikacjaPage() {
           </Card>
         </div>
 
-        {/* Right: objections + SMS + ICP */}
+        {/* Right: frazy + SMS + ICP (obiekcje przeniesione do kroków skryptu) */}
         <RightPanel
           fill={fill}
           onCopy={onCopy}
           copiedId={copiedId}
-          openObjectionId={openObjectionId}
-          setOpenObjectionId={setOpenObjectionId}
           smsForceOpen={smsForceOpen}
           onSmsCopy={() => tally("sms")}
-          onJumpStep={jumpToStep}
         />
       </div>
     </div>

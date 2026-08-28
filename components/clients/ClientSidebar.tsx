@@ -96,8 +96,8 @@ export function ClientSidebar({
   return (
     <div
       style={{
-        width: collapsed ? 44 : 240,
-        minWidth: collapsed ? 44 : 240,
+        width: collapsed ? 44 : 276,
+        minWidth: collapsed ? 44 : 276,
         height: "100%",
         borderRight: "1px solid var(--border)",
         display: "flex",
@@ -460,16 +460,16 @@ function ContactAttemptsMeter({ proby }: { proby: number }) {
       <span
         style={{
           fontFamily: "var(--font-sans)",
-          fontSize: 10,
-          fontWeight: 700,
-          letterSpacing: "0.08em",
+          fontSize: 12.5,
+          fontWeight: 800,
+          letterSpacing: "0.06em",
           textTransform: "uppercase",
           color: "var(--text-primary)",
         }}
       >
         Próby kontaktu
       </span>
-      <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         {[1, 2, 3].map((n) => {
           const done = n <= proby;
           return (
@@ -479,14 +479,14 @@ function ContactAttemptsMeter({ proby }: { proby: number }) {
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
-                width: 24,
-                height: 24,
+                width: 28,
+                height: 28,
                 borderRadius: "50%",
-                border: `1.5px solid ${done ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.25)"}`,
+                border: `1.5px solid ${done ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.28)"}`,
                 background: done ? "var(--accent)" : "transparent",
                 color: done ? "var(--text-on-accent)" : "var(--text-tertiary)",
                 fontFamily: "var(--font-sans)",
-                fontSize: 11,
+                fontSize: 14,
                 fontWeight: 800,
               }}
             >
@@ -498,7 +498,7 @@ function ContactAttemptsMeter({ proby }: { proby: number }) {
           <span
             style={{
               fontFamily: "var(--font-sans)",
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: 800,
               letterSpacing: "0.04em",
               textTransform: "uppercase",
@@ -575,16 +575,16 @@ function ClientRow({
             style={{
               display: "inline-flex",
               alignItems: "center",
-              gap: 5,
-              padding: "3px 9px",
+              gap: 6,
+              padding: "5px 12px",
               borderRadius: "var(--radius-xs)",
               background: "var(--success-bg)",
-              border: "1px solid rgba(255,255,255,0.3)",
+              border: "1px solid rgba(255,255,255,0.35)",
               color: "var(--success-text)",
               fontFamily: "var(--font-sans)",
-              fontSize: 11,
+              fontSize: 13,
               fontWeight: 800,
-              letterSpacing: "0.03em",
+              letterSpacing: "0.04em",
               textTransform: "uppercase",
             }}
           >
