@@ -252,7 +252,6 @@ export const STEPS_K: Step[] = [
     nr: "2j",
     label: "PODANIE LICZBY KLIENTOWI",
     tag: "MÓWISZ",
-    hasModuleRecommendation: true,
     lines: [
       {
         t: "say",

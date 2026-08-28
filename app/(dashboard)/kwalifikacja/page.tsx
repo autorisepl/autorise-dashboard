@@ -311,19 +311,6 @@ function RecommendedModulesPanel({
 
 // ── Inline kalkulator wbudowany w skrypt ─────────────────────────────
 
-// Moduły wdrożeniowe (rodzaj pracy) wyprowadzane z potwierdzonych flag kalkulatora
-// (przyciski w krokach 2d-2g). Nazwy zgodne z context/PRODUKT_ZRODLO_PRAWDY.md.
-// "cmr" i "faktury_recznie" to ten sam moduł produktowy "Dokumenty i pliki".
-const MODULE_FROM_FLAG: { flags: string[]; label: string }[] = [
-  { flags: ["zlecenia"], label: "Automatyzacja TMS" },
-  { flags: ["cmr", "faktury_recznie"], label: "Dokumenty i pliki" },
-  { flags: ["komunikacja"], label: "Powiadomienia automatyczne" },
-];
-
-function modulesFromFlags(flags: Record<string, boolean>): string[] {
-  return MODULE_FROM_FLAG.filter((m) => m.flags.some((f) => flags[f])).map((m) => m.label);
-}
-
 // Presety ról jednym kliknięciem. Godziny startują od 0 — pytanie o godziny
 // dziennie na powtarzalną robotę jest osobnym krokiem (2i) i bez niego wynik
 // jest zerowy, celowo, żeby setter nie pominął tej liczby. Stawka to szacunek
@@ -640,7 +627,6 @@ function ScriptKalkulator({
   const rocznie = miesieczniePLN * 12;
   const potencjalH = Math.round(miesiecznieH * 0.7);
   const gotowe = miesiecznieH > 0;
-  const modules = modulesFromFlags(autoFlags);
 
   return (
     <div
@@ -657,43 +643,8 @@ function ScriptKalkulator({
       {/* Do uzupełnienia: tylko godziny dziennie per rola. Ról tu się nie dodaje. */}
       <RolesEditor groups={groups} onChange={onGroupsChange} mode="hours" />
 
-      {modules.length > 0 && (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
-          <span
-            style={{
-              fontFamily: "var(--font-sans)",
-              fontSize: 10,
-              fontWeight: 700,
-              color: "var(--text-tertiary)",
-              textTransform: "uppercase",
-              letterSpacing: "0.07em",
-            }}
-          >
-            Moduły do wdrożenia
-          </span>
-          {modules.map((m) => (
-            <span
-              key={m}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 5,
-                padding: "5px 11px",
-                borderRadius: "var(--radius-xs)",
-                background: "var(--accent)",
-                border: "1px solid rgba(255,255,255,0.42)",
-                color: "var(--text-on-accent)",
-                fontFamily: "var(--font-sans)",
-                fontSize: 12,
-                fontWeight: 800,
-              }}
-            >
-              <Check size={12} strokeWidth={3} />
-              {m}
-            </span>
-          ))}
-        </div>
-      )}
+      {/* Moduły do wdrożenia na podstawie rozmowy (potwierdzenia w 2d-2g). */}
+      <RecommendedModulesPanel calculatorFlags={autoFlags} selectedOptions={{}} />
 
       {gotowe && (
         <div
@@ -1964,10 +1915,8 @@ export default function KwalifikacjaPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [note, setNote] = useState("");
   const [calculatorFlags, setCalculatorFlags] = useState<Record<string, boolean>>({});
-  // Moduły kalkulatora zaznaczane teraz ręcznie w bloku "oczekiwana reakcja",
-  // nie ze skryptowej listy reakcji. selectedOptions zostaje puste, rekomendacja
-  // modułów opiera się na samych calculatorFlags.
-  const selectedOptions: Record<string, string> = {};
+  // Moduły kalkulatora zaznaczane ręcznie przyciskiem w bloku "oczekiwana reakcja"
+  // (kroki 2d-2g). Rekomendacja modułów opiera się na samych calculatorFlags.
   const toggleCalcFlag = useCallback((flag: string) => {
     setCalculatorFlags((prev) => ({ ...prev, [flag]: !prev[flag] }));
   }, []);
@@ -2598,12 +2547,6 @@ export default function KwalifikacjaPage() {
                     autoFlags={calculatorFlags}
                     groups={calcGroups}
                     onGroupsChange={setCalcGroups}
-                  />
-                )}
-                {step.hasModuleRecommendation && (
-                  <RecommendedModulesPanel
-                    calculatorFlags={calculatorFlags}
-                    selectedOptions={selectedOptions}
                   />
                 )}
               </ScriptStep>
