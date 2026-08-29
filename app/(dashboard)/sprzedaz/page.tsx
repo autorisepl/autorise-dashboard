@@ -1644,6 +1644,31 @@ export default function SprzedazPage() {
     }
     out = out.replace(/\{FORMA\}/g, forma);
     if (vocative.trim()) out = out.replace(/\{IMIĘ\}/g, vocative.trim());
+
+    // Cały skrypt reaguje na przełącznik Pan/Pani, tak jak w /kwalifikacja (patrz fill() w
+    // app/(dashboard)/kwalifikacja/page.tsx) — bez tego niemal cała treść STEPS_D/OBJECTIONS_D
+    // zostaje twardo w formie męskiej ("Pana", "Panu", "Panem"), bo tekst skryptu jest pisany
+    // z myślą o kliencie-mężczyźnie i tylko nieliczne linie używają placeholdera {FORMA}.
+    if (forma === "Pani") {
+      out = out
+        .replace(/\bPanem\b/g, "Panią")
+        .replace(/\bPanie\b/g, "Pani")
+        .replace(/\bPanu\b/g, "Pani")
+        .replace(/\bPana\b/g, "Pani")
+        .replace(/\bPan\b/g, "Pani");
+
+      const fem = (stem: string) => `${stem}a`;
+      out = out.replace(/\bPani sam\b/g, "Pani sama").replace(/\bsam Pani\b/g, "sama Pani");
+      out = out.replace(
+        /\b([a-ząćęłńóśźż]+ł)(by)?((?:\s+(?:się|sobie))?)\s+Pani\b/gi,
+        (_m, stem: string, by = "", refl = "") => `${fem(stem)}${by || ""}${refl} Pani`,
+      );
+      out = out.replace(
+        /\bPani(\s+sama)?([^.,;:?!]{0,32}?\s)([a-ząćęłńóśźż]+ł)(by)?\b/gi,
+        (_m, sama = "", mid: string, stem: string, by = "") =>
+          `Pani${sama || ""}${mid}${fem(stem)}${by || ""}`,
+      );
+    }
     if (selected) {
       const bolGlowny = selected.bolGlowny?.trim() ?? "";
       const kwalNote = selected.nastepnyKrok?.trim() ?? "";

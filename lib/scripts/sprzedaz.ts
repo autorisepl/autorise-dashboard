@@ -157,6 +157,8 @@ export const STEPS_D: Step[] = [
         text: 'Jeśli klient nie potrafi podać dokładnej liczby, zachęć do przybliżenia ("na oko, w przybliżeniu, żeby mieć punkt odniesienia") zamiast zostawiać pole puste albo traktować brak precyzji jako brak odpowiedzi. Szacunek przybliżony zawsze lepszy niż żaden — kalkulator ROI pokazuje rząd wielkości problemu, nie księgowość co do złotówki.',
       },
     ],
+    expected: "Klient potwierdza liczby z kwalifikacji albo podaje skorygowane wartości.",
+    transition: "Dobrze, mam punkt odniesienia. Sprawdźmy jeszcze, co dotychczas próbowano z tym zrobić.",
     nextStepId: "proby",
   },
   {
@@ -178,6 +180,8 @@ export const STEPS_D: Step[] = [
       },
       { t: "client", text: "[odpowiedź]" },
     ],
+    expected: "Klient opisuje konkretną próbę (narzędzie, proces, osobę) i miejsce gdzie to nie zadziałało.",
+    transition: "Rozumiem. Sprawdźmy jeszcze, dlaczego nie da się tego rozwiązać wewnętrznie.",
   },
   {
     id: "samodzielnie",
@@ -196,6 +200,8 @@ export const STEPS_D: Step[] = [
         text: "To pytanie pokazuje głębię problemu i eliminuje 'zrobimy to sami' jako późniejszą obiekcję.",
       },
     ],
+    expected: "Klient wskazuje realną przeszkodę (czas, kompetencje, priorytety), nie tylko 'nie było okazji'.",
+    transition: "Dobrze, to policzmy razem ile to dziś realnie kosztuje firmę.",
   },
   {
     id: "koszt",
@@ -214,6 +220,8 @@ export const STEPS_D: Step[] = [
         text: "Pomóż klientowi policzyć: godziny × stawka + błędy + opóźnienia w fakturach.",
       },
     ],
+    expected: "Klient podaje orientacyjny koszt w godzinach, błędach albo złotówkach, choćby przybliżony.",
+    transition: "Rozumiem. Zanim przejdę dalej, jeszcze jedno pytanie o budżet.",
     nextStepId: "finanse_zasoby",
   },
   {
@@ -229,6 +237,8 @@ export const STEPS_D: Step[] = [
       },
       { t: "client", text: "[odpowiedź]" },
     ],
+    expected: "Klient mówi wprost czy budżet jest zarezerwowany, czy to nowa decyzja inwestycyjna.",
+    transition: "Dziękuję za szczerość. Teraz spójrzmy w przód.",
     nextStepId: "cel",
   },
   {
@@ -247,6 +257,8 @@ export const STEPS_D: Step[] = [
       },
       { t: "client", text: "[odpowiedź]" },
     ],
+    expected: "Klient nazywa konkretny, pożądany stan firmy po rozwiązaniu problemu.",
+    transition: "Rozumiem. Jeszcze jedno pytanie, zanim podsumuję całość.",
   },
   {
     id: "pilnosc",
@@ -321,6 +333,8 @@ export const STEPS_D: Step[] = [
         text: "Parafraza obowiązkowa przed pitchem. Klient który potwierdza własny ból kupuje ideę, nie produkt.",
       },
     ],
+    expected: "Klient potwierdza parafrazę bez większych poprawek.",
+    transition: "Dziękuję za potwierdzenie. Teraz pokażę, jak możemy to rozwiązać.",
   },
   {
     id: "przejscie",
@@ -603,7 +617,10 @@ export const STEPS_D: Step[] = [
           "Czy to ma sens dla tej firmy?",
         ],
       },
+      { t: "client", text: "[odpowiedź]" },
     ],
+    expected: "Klient potwierdza że przy takim zwrocie decyzja ma sens.",
+    transition: "Świetnie, to zamknijmy teraz temat.",
   },
   {
     id: "closing",
