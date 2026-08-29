@@ -165,7 +165,7 @@ export const STEPS_D: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Z naszej rozmowy telefonicznej wynika że to około [godziny z Pipeline] godzin dziennie na spedytora przy ręcznym wpisywaniu. Czy to się nadal zgadza, i ilu w sumie osób jest teraz zaangażowanych w ten proces?",
+        text: "Z naszej rozmowy telefonicznej wynika że to około [godziny z Pipeline] dziennie na spedytora przy ręcznym wpisywaniu. Czy to się nadal zgadza, i ilu w sumie osób jest teraz zaangażowanych w ten proces?",
         cel: "Potwierdzić dane z kalkulatora kwalifikacji zamiast pytać od zera, zgodnie z zasadą że Discovery nie powtarza pytań z kwalifikacji. Godziny na spedytora to realne pole zapisane w Pipeline; liczba osób nie jest jeszcze zapisywana do Notion (kalkulator liczy ją tylko lokalnie w UI kwalifikacji), więc to jedyna część pytana od nowa",
       },
       { t: "client", text: "[potwierdza lub koryguje]" },
@@ -454,9 +454,8 @@ export const STEPS_D: Step[] = [
       },
       {
         t: "say",
-        text: [
-          "Pomożemy Panu osiągnąć [WYNIK]. Jeśli po weryfikacji i ewentualnej korekcie nadal tego nie osiągniemy, ma Pan prawo do zwrotu wpłaconej kwoty. Robimy to dzięki [MECHANIZM], czyli automatyzacji panelu, odczytowi dokumentów i jednoklikowym potwierdzeniom spedytora. Mamy to opisane w umowie, nie na słowo.",
-        ],
+        text: "To jest zapisane w umowie, nie na słowo. Jeśli po weryfikacji i ewentualnej korekcie nadal nie osiągniemy progu, ma Pan prawo do zwrotu wpłaconej kwoty.",
+        cel: "Zamknięcie SLAJDU 7 jednym zdaniem, bez powtarzania mechanizmu (automatyzacja panelu, odczyt dokumentów, potwierdzenia spedytora) już opisanego przy SLAJDZIE 3 — poprzednia wersja tej linii dublowała treść i zostawiała niewypełnione [WYNIK]/[MECHANIZM] czytane dosłownie klientowi",
       },
       {
         t: "say",
@@ -508,7 +507,7 @@ export const STEPS_D: Step[] = [
       {
         t: "say",
         text: [
-          "Podsumowując, moduły które Panu pokazałem przekładają się na [X godzin/zł miesięcznie].",
+          "Podsumowując, moduły które Panu pokazałem przekładają się na [gwarancja godzin] miesięcznie.",
           "Pytanie do Pana, jeżeli inwestycja którą zaraz pokażę będzie do przełknięcia, czy ten model współpracy z Panem rezonuje?",
         ],
         cel: "Sprawdzić temperaturę bez sztywnej skali liczbowej, naturalniej niż 'gdzie jesteśmy 1-10'",
@@ -547,7 +546,7 @@ export const STEPS_D: Step[] = [
   {
     id: "commitment",
     nr: "5",
-    label: "COMMITMENT — DECYDENT",
+    label: "USTALENIE DECYDENTA",
     tag: "PYTASZ",
     lines: [
       {
@@ -588,12 +587,12 @@ export const STEPS_D: Step[] = [
     lines: [
       {
         t: "note",
-        text: "PRZED wypowiedzeniem ceny, ustal na żywo (nie zakładaj uniwersalnej liczby) konkretny termin zebrania dostępów w dniach — wpisz go w mini-formularzu obok kalkulatora, trafi do Notion i Załącznika nr 1.",
+        text: "PRZED wypowiedzeniem ceny, ustal na żywo (nie zakładaj uniwersalnej liczby) konkretny termin zebrania dostępów w dniach — wpisz go w formularzu 'Warunki umowy' niżej na stronie, trafi do Notion i Załącznika nr 1.",
       },
       {
         t: "say",
         text: [
-          "Za tę inwestycję odzyskuje {FORMA} minimum [gwarancja godzin] godzin miesięcznie, które dziś firma traci na ręcznej pracy.",
+          "Za tę inwestycję odzyskuje {FORMA} minimum [gwarancja godzin] miesięcznie, które dziś firma traci na ręcznej pracy.",
           "Gwarancja to minimum 70% obliczonego czasu bazowego Pana firmy, czyli [gwarancja godzin] miesięcznie, sprawdzane po 30 dniach. Jeśli nie osiągniemy progu, poprawiamy i weryfikujemy jeszcze raz, a jeśli i to się nie uda, ma Pan prawo do zwrotu wpłaconej kwoty.",
         ],
         cel: "Clear value proposition (Kacper Wierszewski) — jedno jasne zdanie łączące liczbę z wynikiem PRZED samą kwotą, żeby klient słyszał najpierw efekt, potem cenę. Gwarancja opisana zgodnie z UMOWA_SYSTEM_AUTORISE.pdf §5 (dwie rundy weryfikacji, potem prawo do odstąpienia i zwrotu), nie jako jednorazowy zwrot",
@@ -711,7 +710,7 @@ export const STEPS_D: Step[] = [
       {
         t: "say",
         text: "[poza zakresem]",
-        cel: "Poza zakresem — wstawiane na żywo z mini-formularza 'Warunki umowy' (Kalkulator ROI / Warunki umowy w panelu obok). Jeśli puste, dopytaj teraz i zapisz zanim wyślesz umowę",
+        cel: "Poza zakresem — wstawiane na żywo z formularza 'Warunki umowy' niżej na stronie. Jeśli puste, dopytaj teraz i zapisz zanim wyślesz umowę",
       },
       {
         t: "say",
@@ -765,20 +764,22 @@ export const OBJECTIONS_D: Objection[] = [
     stage: "cena",
     label: "Zastanowienie: wątpliwość co do produktu",
     // Scalone 2026-08-29 z byłego od22 ("Obiekcja ogólna") — ten sam cel (dowiedzieć się co
-    // konkretnie przeszkadza), dwie różne techniki zamiast dwóch osobnych wierszy w akordeonie:
-    // wprost pytasz co budzi wątpliwość, a jeśli klient się waha, izolujesz problem (finanse na
-    // bok) zanim zaczniesz odpowiadać na coś czego może wcale nie powiedział.
+    // konkretnie przeszkadza), dwie różne techniki zamiast dwóch osobnych wierszy w akordeonie.
+    // Rozbite na script/followup zamiast jednego zdania z dwoma pytaniami pod rząd (poprzednia
+    // wersja pytała o wątpliwość i o "finanse na bok" w jednym oddechu, bez miejsca na
+    // odpowiedź klienta między nimi) — druga technika to izolacja problemu, używana dopiero
+    // jeśli pierwsza odpowiedź klienta nie była konkretna.
     script:
-      "Jasne. Co konkretnie budzi wątpliwość, chętnie wyjaśnię teraz zamiast żeby to chodziło Panu po głowie. Finanse na bok, czy to co pokazałem mogłoby być odpowiedzią na to czego Pan szuka?",
-    followup: "Czemu Pan tak uważa?",
-    note: "Jeśli klient potwierdza że rozwiązanie odpowiada na jego potrzebę, poczekaj na jego własne uzasadnienie zamiast podpowiadać.",
+      "Jasne. Co konkretnie budzi wątpliwość, chętnie wyjaśnię teraz zamiast żeby to chodziło Panu po głowie.",
+    followup: "Finanse na bok, czy to co pokazałem mogłoby być odpowiedzią na to czego Pan szuka?",
+    note: "Followup zadawaj tylko jeśli pierwsza odpowiedź klienta była ogólnikowa. Jeśli klient potwierdza że rozwiązanie odpowiada na jego potrzebę, poczekaj na jego własne uzasadnienie zamiast podpowiadać.",
   },
   {
     id: "od1_partner",
     stage: "closing",
     label: "Zastanowienie: chce skonsultować z kimś",
     script:
-      "Jak najbardziej rozumiem. Żeby wiedzieć jak najlepiej Panu pomóc, czy to jest wspólna decyzja pięćdziesiąt na pięćdziesiąt, czy bardziej Pan decyduje, a [osoba] jest informowana?",
+      "Jak najbardziej rozumiem. Żeby wiedzieć jak najlepiej Panu pomóc, czy to jest wspólna decyzja pięćdziesiąt na pięćdziesiąt, czy bardziej Pan decyduje, a druga osoba jest tylko informowana?",
     followup:
       "Czy pomogłoby, gdybyśmy to wspólnie omówili na krótkim spotkaniu, żeby nie robić głuchego telefonu?",
     note: "Followup, czyli propozycja krótkiego wspólnego spotkania, zadawaj po odpowiedzi klienta, zamiast przekazywania informacji z drugiej ręki.",
@@ -827,7 +828,7 @@ export const OBJECTIONS_D: Objection[] = [
     stage: "closing",
     label: "Mam teraz inne priorytety",
     script:
-      "Rozumiem. Ile czasu zajmą te priorytety? A czy w tym czasie biuro nadal traci te [X] godzin tygodniowo?",
+      "Rozumiem. Ile czasu zajmą te priorytety? A czy w tym czasie biuro nadal traci te same godziny co tydzień na ręczną pracę?",
     note: "Cel: pokazać koszt zwlekania. Nie naciskaj — zaproponuj konkretną datę powrotu.",
   },
   {
@@ -881,8 +882,8 @@ export const OBJECTIONS_D: Objection[] = [
     stage: "cena",
     label: "Muszę to przespać",
     script: "Jasne, oczywiście. Co musiałoby się stać żeby jutro rano powiedział Pan 'tak'?",
-    followup: "Zadzwonię jutro o [godzina]. Pasuje Panu?",
-    note: "Anchor konkretnego czasu. Jeśli nie chce jutro — zapisz w pipeline jako follow-up z datą.",
+    followup: "Zadzwonię jutro rano o konkretnej godzinie. Pasuje Panu?",
+    note: "Podaj na głos realną godzinę z własnego kalendarza, nie zostawiaj tego ogólnikowo jako 'rano'. Jeśli nie chce jutro — zapisz w pipeline jako follow-up z datą.",
   },
   {
     id: "od11",

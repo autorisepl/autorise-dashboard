@@ -38,6 +38,18 @@ import { objectionColor } from "@/lib/scripts/types";
 
 // ── Helpers ───────────────────────────────────────────────────────────
 
+// Polska odmiana liczebnikowa rzeczownika "godzina" — bez tego fill() zawsze wypisywał sztywne
+// "godzin" niezależnie od liczby (audyt 2026-08-29): "42 godzin miesięcznie" zamiast "42 godziny
+// miesięcznie", czytane na głos klientowi. Reguła: 1 -> godzina, końcówka 2-4 poza 12-14 ->
+// godziny, reszta -> godzin.
+function godzinyOdmiana(n: number): string {
+  if (n === 1) return "godzina";
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)) return "godziny";
+  return "godzin";
+}
+
 function toVocative(name: string): string {
   const first = name.trim().split(" ")[0];
   if (!first) return name;
@@ -1165,10 +1177,7 @@ export default function SprzedazPage() {
   }, [selected?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const firstName = (selected?.kontakt || selected?.firma || "").trim().split(/\s+/)[0] ?? "";
-  const { forma, formaOverride, setFormaOverride } = useFormaGrzecznosciowa(
-    firstName,
-    selected?.id,
-  );
+  const { forma, setFormaOverride } = useFormaGrzecznosciowa(firstName, selected?.id);
 
   const fill = (text: string): string => {
     let out = text;
@@ -1180,30 +1189,6 @@ export default function SprzedazPage() {
     out = out.replace(/\{FORMA\}/g, forma);
     if (vocative.trim()) out = out.replace(/\{IMIĘ\}/g, vocative.trim());
 
-    // Cały skrypt reaguje na przełącznik Pan/Pani, tak jak w /kwalifikacja (patrz fill() w
-    // app/(dashboard)/kwalifikacja/page.tsx) — bez tego niemal cała treść STEPS_D/OBJECTIONS_D
-    // zostaje twardo w formie męskiej ("Pana", "Panu", "Panem"), bo tekst skryptu jest pisany
-    // z myślą o kliencie-mężczyźnie i tylko nieliczne linie używają placeholdera {FORMA}.
-    if (forma === "Pani") {
-      out = out
-        .replace(/\bPanem\b/g, "Panią")
-        .replace(/\bPanie\b/g, "Pani")
-        .replace(/\bPanu\b/g, "Pani")
-        .replace(/\bPana\b/g, "Pani")
-        .replace(/\bPan\b/g, "Pani");
-
-      const fem = (stem: string) => `${stem}a`;
-      out = out.replace(/\bPani sam\b/g, "Pani sama").replace(/\bsam Pani\b/g, "sama Pani");
-      out = out.replace(
-        /\b([a-ząćęłńóśźż]+ł)(by)?((?:\s+(?:się|sobie))?)\s+Pani\b/gi,
-        (_m, stem: string, by = "", refl = "") => `${fem(stem)}${by || ""}${refl} Pani`,
-      );
-      out = out.replace(
-        /\bPani(\s+sama)?([^.,;:?!]{0,32}?\s)([a-ząćęłńóśźż]+ł)(by)?\b/gi,
-        (_m, sama = "", mid: string, stem: string, by = "") =>
-          `Pani${sama || ""}${mid}${fem(stem)}${by || ""}`,
-      );
-    }
     if (selected) {
       const bolGlowny = selected.bolGlowny?.trim() ?? "";
       const kwalNote = selected.nastepnyKrok?.trim() ?? "";
@@ -1225,6 +1210,26 @@ export default function SprzedazPage() {
           ? `„${bolGlownyDisplay}"`
           : "— odwołaj się do tego co klient powiedział w parafrazie —",
       );
+      // Krótsza wersja tego samego placeholdera, używana wewnątrz zdania parafrazy
+      // ("Problem to [ból główny]."), nie jako samodzielna klauzula z cudzysłowem — bez tego
+      // fill() jej nie łapał i setter czytał nawias dosłownie (ten sam bug class co "Blok Arek
+      // pkt 1" wyżej, znaleziony w audycie 2026-08-29).
+      out = out.replace(
+        /\[ból główny\]/g,
+        bolGlownyDisplay || "— nazwij ból, którym klient podzielił się w tej rozmowie —",
+      );
+      // [opis pracy] i [cel] to odpowiedzi zbierane NA ŻYWO w tej samej rozmowie (kroki
+      // DIAGNOZA i CEL — WIZJA PRZYSZŁOŚCI), nie ma dla nich pola w Pipeline do podstawienia —
+      // uczciwy fallback z przypomnieniem zamiast fabrykowania treści albo zostawiania gołego
+      // nawiasu.
+      out = out.replace(
+        /\[opis pracy\]/g,
+        "— opisz własnymi słowami proces, który klient przed chwilą opisał —",
+      );
+      out = out.replace(
+        /\[cel\]/g,
+        "— przywołaj to co klient odpowiedział w kroku CEL — WIZJA PRZYSZŁOŚCI —",
+      );
       const poprzednieProby = selected.poprzednieProby?.trim() ?? "";
       out = out.replace(
         /\[poprzednia próba z rozmowy\]/g,
@@ -1234,7 +1239,20 @@ export default function SprzedazPage() {
       );
       out = out.replace(
         /\[godziny z Pipeline\]/g,
-        selected.godzinyWpisywania ? `${selected.godzinyWpisywania}` : "[X]",
+        // Fallback był kiedyś literalnym "[X]" — kolejny nawias zamiast realnej wartości, ten
+        // sam czytany-dosłownie bug znaleziony w audycie 2026-08-29 w kilku innych miejscach.
+        // Placeholder niesie teraz też słowo "godzin(y)" odmienione przez liczbę — źródłowe
+        // zdanie miało to słowo dopisane na sztywno obok, więc np. "3 godzin dziennie" zamiast
+        // poprawnego "3 godziny dziennie".
+        selected.godzinyWpisywania
+          ? `${selected.godzinyWpisywania} ${godzinyOdmiana(selected.godzinyWpisywania)}`
+          : "— brak godzin w Pipeline, dopytaj na żywo —",
+      );
+      out = out.replace(
+        /\[X\] godzinami dziennie/g,
+        selected.godzinyWpisywania
+          ? `${selected.godzinyWpisywania} godzinami dziennie`
+          : "— podaj godziny które klient wskazał w diagnozie —",
       );
       // Blok 6.8 (2026-07-15) — ustalenia "poza zakresem" wpisane w mini-formularzu Warunki
       // umowy (patrz WarunkiUmowyForm.tsx), wstawione na żywo w kroku "Warunki umowy —
@@ -1250,6 +1268,8 @@ export default function SprzedazPage() {
       // czytał je dosłownie klientowi. Wypełnione danymi klienta (nazwa/flota/TMS) i nowymi
       // polami agenta (system_transformacji/roznicowanie_zdanie/roi_dopowiedzenie) zamiast
       // zostawiać hardcodowany tekst instrukcyjny w treści skryptu.
+      const email = selected.email?.trim() ?? "";
+      out = out.replace(/\[email\]/g, email || "— brak adresu e-mail w Pipeline, dopytaj teraz —");
       const firma = selected.firma?.trim() ?? "";
       out = out.replace(/\[nazwa firmy\]/g, firma || "— brak nazwy firmy w Pipeline —");
       out = out.replace(/\[nazwa\]/g, firma || "Państwa firma");
@@ -1299,6 +1319,14 @@ export default function SprzedazPage() {
         /30 000 zł zwraca się w \[X\] miesięcy/g,
         `30 000 zł zwraca się w ${roiMiesiace ?? "— policz —"} miesięcy`,
       );
+      // Ten sam "[X] miesięcy" pojawia się jeszcze raz w kroku CLOSING, inną frazą niż powyższe
+      // dwa wzorce ("zwraca się w [X] miesięcy" bez "30 000 zł" ani "Przy [kwota
+      // oszczędności]" przed nim) — bez tego regexu setter czytał gołe "[X]" w zdaniu
+      // podsumowującym tuż przed pytaniem o decyzję (audyt 2026-08-29).
+      out = out.replace(
+        /zwraca się w \[X\] miesięcy/g,
+        `zwraca się w ${roiMiesiace ?? "— policz —"} miesięcy`,
+      );
       // Gwarancja procentowa (nowa umowa, §4): 70% czasu bazowego klienta z Notion
       // ("Czas bazowy potwierdzony h/mc", pole dotąd zarezerwowane, niewykorzystane w UI).
       // Honest fallback gdy pole puste, zamiast fabrykować liczbę godzin.
@@ -1307,8 +1335,41 @@ export default function SprzedazPage() {
       out = out.replace(
         /\[gwarancja godzin\]/g,
         gwarancjaH != null
-          ? `${gwarancjaH} godzin`
+          ? `${gwarancjaH} ${godzinyOdmiana(gwarancjaH)}`
           : "— brak czasu bazowego w Pipeline, policz z kalkulatorem ROI —",
+      );
+      // Siatka bezpieczeństwa (audyt 2026-08-29): jeśli mimo wszystkich powyższych wzorców
+      // gdzieś zostanie gołe "[X]" (literówka w nowej treści, regex przestał pasować po edycji
+      // sąsiedniego zdania), setter dostaje czytelne przypomnienie zamiast nawiasu czytanego
+      // dosłownie klientowi — dokładnie ten bug class co "Blok Arek pkt 1" wyżej w pliku.
+      out = out.replace(/\[X\]/g, "— podaj konkretną liczbę na żywo —");
+    }
+
+    // Konwersja Pan -> Pani przeniesiona 2026-08-29 na SAM KONIEC fill(), po wszystkich
+    // podstawieniach nawiasów wyżej — wcześniej działała PRZED nimi, więc tekst wstawiany z
+    // Pipeline/Agenta (poprzednie próby, zdanie różnicujące, system transformacji, dopowiedzenie
+    // ROI) omijał tę konwersję całkowicie. Efekt: klientce (Pani) setter czytałby wstawiony
+    // tekst wciąż w formie męskiej, mimo że cały reszta skryptu poprawnie mówiła "Pani". Ten sam
+    // wzór co w /kwalifikacja (patrz fill() w app/(dashboard)/kwalifikacja/page.tsx), tam
+    // problem nie występuje bo kwalifikacja nie wstawia wolnego tekstu z agenta w tym miejscu.
+    if (forma === "Pani") {
+      out = out
+        .replace(/\bPanem\b/g, "Panią")
+        .replace(/\bPanie\b/g, "Pani")
+        .replace(/\bPanu\b/g, "Pani")
+        .replace(/\bPana\b/g, "Pani")
+        .replace(/\bPan\b/g, "Pani");
+
+      const fem = (stem: string) => `${stem}a`;
+      out = out.replace(/\bPani sam\b/g, "Pani sama").replace(/\bsam Pani\b/g, "sama Pani");
+      out = out.replace(
+        /\b([a-ząćęłńóśźż]+ł)(by)?((?:\s+(?:się|sobie))?)\s+Pani\b/gi,
+        (_m, stem: string, by = "", refl = "") => `${fem(stem)}${by || ""}${refl} Pani`,
+      );
+      out = out.replace(
+        /\bPani(\s+sama)?([^.,;:?!]{0,32}?\s)([a-ząćęłńóśźż]+ł)(by)?\b/gi,
+        (_m, sama = "", mid: string, stem: string, by = "") =>
+          `Pani${sama || ""}${mid}${fem(stem)}${by || ""}`,
       );
     }
     return out;
@@ -1485,25 +1546,6 @@ export default function SprzedazPage() {
                   </button>
                 );
               })}
-              {formaOverride !== "auto" && (
-                <button
-                  onClick={() => setFormaOverride("auto")}
-                  title="Wróć do automatycznego wykrywania"
-                  style={{
-                    height: 30,
-                    padding: "0 10px",
-                    borderRadius: "var(--radius-xs)",
-                    border: "1px solid rgba(255,255,255,0.42)",
-                    background: "transparent",
-                    color: "var(--text-tertiary)",
-                    fontFamily: "var(--font-sans)",
-                    fontSize: 11,
-                    cursor: "pointer",
-                  }}
-                >
-                  auto
-                </button>
-              )}
 
               <div style={{ height: 24, width: 1, background: "rgba(255,255,255,0.42)" }} />
 
