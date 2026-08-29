@@ -168,9 +168,9 @@ const NAV: {
     label: "Klienci",
     items: [
       { href: "/pipeline", label: "Pipeline", icon: Kanban },
-      // Nowa zakładka między Pipeline a Wdrożeniem (2026-08-29, Michał) — na razie pusta,
-      // treść (skrypt analizy przedkontraktowej przeniesiony ze /sprzedaz, gdzie stoi bez
-      // sensu w trakcie samej rozmowy Discovery) dochodzi w kolejnej sesji.
+      // Nowa zakładka między Pipeline a Wdrożeniem (2026-08-29, Michał) — przejęła skrypt
+      // analizy przedkontraktowej ze /sprzedaz, gdzie stał bez sensu w trakcie samej rozmowy
+      // Discovery (patrz komentarz w AnalizaPrzedkontraktowaPanel.tsx).
       { href: "/finalizacja", label: "Finalizacja i analiza", icon: FileCheck2, exact: true },
       { href: "/wdrozenie", label: "Wdrożenie", icon: Rocket, exact: true },
       { href: "/utrzymanie", label: "Utrzymanie", icon: LifeBuoy, exact: true },

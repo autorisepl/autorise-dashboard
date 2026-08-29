@@ -13,20 +13,19 @@ import {
 import type { ScriptLine } from "@/lib/scripts/types";
 
 // Panel skryptu Analiza przedkontraktowa — spotkanie PO Discovery Call, PRZED wysłaniem umowy
-// (potwierdzone z prawniczką 2026-07-28). Świadomie w /sprzedaz, nie jako nowa zakładka: to jest
-// naturalna kontynuacja tej samej strony (Discovery Call już tu żyje), a wzorzec liniowego
-// akordeonu + tabela modułów jest już sprawdzony w KickoffScriptPanel dla identycznego kształtu
-// problemu (krótki, nierozgałęziony skrypt + zbierana od razu liczba). Zapisuje do NOWEGO pola
-// Notion "Tabela modułów Analiza przedkontraktowa" (Batch 10), nie do "Tabela modułów Kickoff" —
-// to dwa różne momenty prawne: przed podpisem (wiążące dla treści umowy) i po podpisie
-// (potwierdzenie tego co już podpisano, kickoff.ts krok 4).
+// (potwierdzone z prawniczką 2026-07-28). Wzorzec liniowego akordeonu + tabela modułów jest
+// sprawdzony w KickoffScriptPanel dla identycznego kształtu problemu (krótki, nierozgałęziony
+// skrypt + zbierana od razu liczba). Zapisuje do pola Notion "Tabela modułów Analiza
+// przedkontraktowa" (Batch 10), nie do "Tabela modułów Kickoff" — to dwa różne momenty prawne:
+// przed podpisem (wiążące dla treści umowy) i po podpisie (potwierdzenie tego co już podpisano,
+// kickoff.ts krok 4).
 //
-// ZMIANA DECYZJI (2026-08-29, Michał): to uzasadnienie już nieaktualne — po przeglądzie
-// /sprzedaz Michał ocenił że ten panel jednak nie ma sensu na stronie samej rozmowy
-// Discovery. Docelowo przenosi się do nowej zakładki /finalizacja ("Finalizacja i analiza",
-// dodana między Pipeline a Wdrożeniem). Zostaje tu na razie nietknięty, żeby nie zgubić
-// kontekstu treści przed właściwą migracją w kolejnej sesji — nie duplikować pracy budując
-// migrację na pół gotowo w tej samej rundzie co redesign reszty /sprzedaz.
+// PRZENIESIONE 2026-08-29 (Michał, po przeglądzie /sprzedaz): pierwotnie panel żył w
+// /sprzedaz jako "naturalna kontynuacja tej samej strony", ale to jednak dwa różne spotkania z
+// klientem (Discovery Call vs. spotkanie analizy przedkontraktowej), więc mieszały się w jednej
+// zakładce bez logicznego uzasadnienia. Renderowany teraz z app/(dashboard)/finalizacja/page.tsx
+// ("Finalizacja i analiza", status Pipeline "Finalizacja") — sam komponent bez zmian, zmienił
+// się tylko host.
 
 const MODULE_LABELS: Record<string, string> = Object.fromEntries(
   MODULE_CATALOG.map((m) => [m.code, m.label]),

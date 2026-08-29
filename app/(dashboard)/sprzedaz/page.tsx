@@ -21,12 +21,13 @@ import {
   answerParagraphs,
   CollapsibleAnswer,
   ExpectedBlock,
+  MessageCard,
+  messageGroupCapStyle,
   ScriptLineRow,
   SectionCap,
   StepHeaderPill,
   TransitionBlock,
 } from "@/components/scripts/ScriptStepShared";
-import { AnalizaPrzedkontraktowaPanel } from "@/components/sprzedaz/AnalizaPrzedkontraktowaPanel";
 import { WarunkiUmowyForm } from "@/components/sprzedaz/WarunkiUmowyForm";
 import { fillBrief, parseCytatyKlienta } from "@/lib/scripts/fillBrief";
 import { useFormaGrzecznosciowa } from "@/lib/scripts/formaGrzecznosciowa";
@@ -40,19 +41,24 @@ import { objectionColor } from "@/lib/scripts/types";
 function toVocative(name: string): string {
   const first = name.trim().split(" ")[0];
   if (!first) return name;
-  if (first.endsWith("ał")) return first.slice(0, -2) + "ale";
-  if (first.endsWith("eł")) return first.slice(0, -2) + "le";
-  if (first.endsWith("ek") && first.length > 3) return first.slice(0, -2) + "ku";
-  if (first.endsWith("a") && first.length > 2) return first.slice(0, -1) + "o";
+  if (first.endsWith("ał")) return `${first.slice(0, -2)}ale`;
+  if (first.endsWith("eł")) return `${first.slice(0, -2)}le`;
+  if (first.endsWith("ek") && first.length > 3) return `${first.slice(0, -2)}ku`;
+  if (first.endsWith("a") && first.length > 2) return `${first.slice(0, -1)}o`;
   return first;
 }
 
 // Minimalny, wyselekcjonowany zestaw obiekcji przypięty do KONKRETNEGO kroku — ten sam wzór
 // co STEP_OBJECTIONS w /kwalifikacja (przeniesienie z osobnego, zawsze-widocznego prawego
 // panelu do kroków w których realnie padają, 2026-08-29). Sub-obiekcje otwierane przez
-// decision.openObjectionId nadrzędnej obiekcji (np. od1 → od1_finanse) muszą siedzieć w TYM
-// SAMYM kroku co rodzic, inaczej jumpToObjection nie znajdzie elementu DOM do przewinięcia —
-// stąd close_c ma cały klaster cenowy razem, nie tylko obiekcje najwyższego poziomu.
+// decision.openObjectionId nadrzędnej obiekcji (np. od1 → od11) muszą siedzieć w TYM SAMYM
+// kroku co rodzic, inaczej jumpToObjection nie znajdzie elementu DOM do przewinięcia — stąd
+// close_c ma cały klaster cenowy razem, nie tylko obiekcje najwyższego poziomu.
+//
+// Konsolidacja 2026-08-29 (Michał: "rozbrajanie obiekcji na multum zamiast na jedne konkretne
+// i porządne") — usunięte trzy prawie identyczne warianty "nie ma rat" (od1_finanse,
+// od3_logistyka, dawny standalone od11) scalone w jeden kanoniczny "od11", i były catch-all
+// "od22" scalony w od1_watpliwosc. 14 obiekcji w close_c spadło do 11.
 const STEP_OBJECTIONS_D: Record<string, string[]> = {
   podsumowanie_kwal: ["juz_mowilem"],
   info: ["od8"],
@@ -61,17 +67,14 @@ const STEP_OBJECTIONS_D: Record<string, string[]> = {
   close_c: [
     "od1",
     "od1_watpliwosc",
-    "od1_finanse",
     "od1_partner",
     "od3",
-    "od3_logistyka",
     "od3_wartosc",
     "od3_konkurencja",
     "od10",
     "od11",
     "od14",
     "od17",
-    "od22",
     "od24",
   ],
   closing: ["od4", "od5", "od19", "od20", "od21", "od1_pozniej"],
@@ -532,7 +535,7 @@ function BriefSection({ client }: { client: PipelineClientDetailed | null }) {
 
 // Jeden wiersz obiekcji — wzór 1:1 z CollapsibleAnswer w /kwalifikacja (patrz
 // ScriptStepShared.tsx), rozszerzony o to czego kwalifikacja nie potrzebuje: decyzję
-// rozgałęziającą do sub-obiekcji (od1 -> od1_finanse) i opcjonalny SMS. `id` na elemencie
+// rozgałęziającą do sub-obiekcji (od1 -> od11) i opcjonalny SMS. `id` na elemencie
 // DOM zostaje, bo jumpToObjection() w tej stronie przewija do niego po id, niezależnie od
 // tego w którym kroku dana obiekcja fizycznie siedzi.
 function ObjectionRow({
@@ -652,143 +655,33 @@ function SmsPanel({
         const items = discoveryItems.filter((m) => m.group === group);
         if (!items.length) return null;
         return (
-          <div key={group}>
-            <div
-              style={{
-                fontSize: 10,
-                fontWeight: 700,
-                letterSpacing: "0.08em",
-                textTransform: "uppercase",
-                color: GROUP_COLORS[group] ?? "var(--text-tertiary)",
-                marginBottom: 6,
-              }}
-            >
+          <div key={group} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={messageGroupCapStyle(GROUP_COLORS[group] ?? "var(--text-primary)")}>
               {group}
             </div>
             {items.map((item) => (
-              <div
+              <MessageCard
                 key={item.id}
-                style={{
-                  background: "var(--bg)",
-                  borderRadius: 8,
-                  padding: "10px 12px",
-                  marginBottom: 6,
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 600,
-                    color: "var(--text-secondary)",
-                    marginBottom: 4,
-                  }}
-                >
-                  {item.label}
-                </div>
-                <p
-                  style={{
-                    margin: "0 0 8px",
-                    fontSize: 12,
-                    lineHeight: 1.55,
-                    color: "var(--text-primary)",
-                    fontFamily: "var(--font-sans)",
-                  }}
-                >
-                  {fill(item.text)}
-                </p>
-                <button
-                  onClick={() => onCopy(`sms-${item.id}`, item.text)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 4,
-                    padding: "4px 10px",
-                    borderRadius: 6,
-                    border: "1px solid var(--border)",
-                    background: "var(--bg-elevated)",
-                    cursor: "pointer",
-                    fontSize: 11,
-                    color:
-                      copiedId === `sms-${item.id}`
-                        ? "var(--success-text)"
-                        : "var(--text-secondary)",
-                    fontFamily: "var(--font-sans)",
-                  }}
-                >
-                  {copiedId === `sms-${item.id}` ? <CheckCircle2 size={11} /> : <Copy size={11} />}
-                  {copiedId === `sms-${item.id}` ? "Skopiowano" : "Kopiuj"}
-                </button>
-              </div>
+                label={item.label}
+                text={fill(item.text)}
+                copied={copiedId === `sms-${item.id}`}
+                onCopyClick={() => onCopy(`sms-${item.id}`, item.text)}
+              />
             ))}
           </div>
         );
       })}
       {telefonItems.length > 0 && (
-        <div>
-          <div
-            style={{
-              fontSize: 10,
-              fontWeight: 700,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              color: "var(--text-tertiary)",
-              marginBottom: 6,
-            }}
-          >
-            Skrypty telefoniczne
-          </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ ...messageGroupCapStyle(), marginTop: 8 }}>Skrypty telefoniczne</div>
           {telefonItems.map((item) => (
-            <div
+            <MessageCard
               key={item.id}
-              style={{
-                background: "var(--bg)",
-                borderRadius: 8,
-                padding: "10px 12px",
-                marginBottom: 6,
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  color: "var(--text-secondary)",
-                  marginBottom: 4,
-                }}
-              >
-                {item.label}
-              </div>
-              <p
-                style={{
-                  margin: "0 0 8px",
-                  fontSize: 12,
-                  lineHeight: 1.55,
-                  color: "var(--text-primary)",
-                  fontFamily: "var(--font-sans)",
-                }}
-              >
-                {fill(item.text)}
-              </p>
-              <button
-                onClick={() => onCopy(`tel-${item.id}`, item.text)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 4,
-                  padding: "4px 10px",
-                  borderRadius: 6,
-                  border: "1px solid var(--border)",
-                  background: "var(--bg-elevated)",
-                  cursor: "pointer",
-                  fontSize: 11,
-                  color:
-                    copiedId === `tel-${item.id}` ? "var(--success-text)" : "var(--text-secondary)",
-                  fontFamily: "var(--font-sans)",
-                }}
-              >
-                {copiedId === `tel-${item.id}` ? <CheckCircle2 size={11} /> : <Copy size={11} />}
-                {copiedId === `tel-${item.id}` ? "Skopiowano" : "Kopiuj"}
-              </button>
-            </div>
+              label={item.label}
+              text={fill(item.text)}
+              copied={copiedId === `tel-${item.id}`}
+              onCopyClick={() => onCopy(`tel-${item.id}`, item.text)}
+            />
           ))}
         </div>
       )}
@@ -1678,18 +1571,6 @@ export default function SprzedazPage() {
 
           <Card title="Warunki umowy" collapsible defaultOpen={false}>
             <WarunkiUmowyForm
-              client={selected}
-              onSaved={(patch) => {
-                setSelected((prev) => (prev ? { ...prev, ...patch } : prev));
-                setClients((prev) =>
-                  prev.map((c) => (c.id === selected?.id ? { ...c, ...patch } : c)),
-                );
-              }}
-            />
-          </Card>
-
-          <Card title="Skrypt: Analiza przedkontraktowa" collapsible defaultOpen={false}>
-            <AnalizaPrzedkontraktowaPanel
               client={selected}
               onSaved={(patch) => {
                 setSelected((prev) => (prev ? { ...prev, ...patch } : prev));

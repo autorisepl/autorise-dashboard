@@ -8,7 +8,15 @@
 // synchronizowanych kopii JSX. Kwalifikacja zachowuje swoje lokalne kopie na razie
 // nietknięte (działający kod, zero ryzyka regresji) — to /sprzedaz migruje na wspólny plik.
 
-import { AlertTriangle, Check, ChevronDown, MessageSquare, Users } from "lucide-react";
+import {
+  AlertTriangle,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  Copy,
+  MessageSquare,
+  Users,
+} from "lucide-react";
 import { useState } from "react";
 import type { ScriptLine } from "@/lib/scripts/types";
 
@@ -401,4 +409,90 @@ export function TransitionBlock({ text, idPrefix }: { text: string; idPrefix: st
 
 export function useOpenRow() {
   return useState<string | null>(null);
+}
+
+// Nagłówek grupy w panelu SMS/wiadomości (np. "Kwalifikacja", "Facebook", "Przed Discovery")
+// — wzór 1:1 z /kwalifikacja.
+export const messageGroupCapStyle = (color = "var(--text-primary)"): React.CSSProperties => ({
+  fontFamily: "var(--font-sans)",
+  fontSize: 11,
+  fontWeight: 800,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  color,
+  marginBottom: 2,
+});
+
+// Karta jednej wiadomości (SMS/FB/telefon) — obramowanie + cień, wzór 1:1 z SmsPanel
+// w /kwalifikacja. Wcześniej /sprzedaz renderowała te karty bez ramki/cienia i mniejszą
+// czcionką (11/12px zamiast 11/14px), więc wyglądały wizualnie "płasko" obok reszty strony
+// po przejściu na wspólny design (Michał, 2026-08-29: redesign SMS/wiadomości).
+export function MessageCard({
+  label,
+  text,
+  copied,
+  onCopyClick,
+}: {
+  label: string;
+  text: string;
+  copied: boolean;
+  onCopyClick: () => void;
+}) {
+  return (
+    <div
+      style={{
+        background: "var(--bg)",
+        border: "1px solid rgba(255,255,255,0.42)",
+        borderRadius: "var(--radius-sm)",
+        boxShadow: "var(--shadow-sm)",
+        padding: 12,
+      }}
+    >
+      <div
+        style={{
+          fontFamily: "var(--font-sans)",
+          fontSize: 11,
+          fontWeight: 800,
+          letterSpacing: "0.03em",
+          textTransform: "uppercase",
+          color: "var(--text-primary)",
+          marginBottom: 6,
+        }}
+      >
+        {label}
+      </div>
+      <p
+        style={{
+          margin: "0 0 10px",
+          fontSize: 14,
+          lineHeight: 1.55,
+          color: "var(--text-primary)",
+          fontFamily: "var(--font-sans)",
+        }}
+      >
+        {text}
+      </p>
+      <button
+        onClick={onCopyClick}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 5,
+          height: 30,
+          padding: "0 12px",
+          borderRadius: "var(--radius-xs)",
+          border: "1px solid rgba(255,255,255,0.42)",
+          background: copied ? "var(--success-bg)" : "var(--bg-elevated)",
+          cursor: "pointer",
+          fontSize: 12,
+          fontWeight: 700,
+          color: copied ? "var(--success-text)" : "var(--text-primary)",
+          fontFamily: "var(--font-sans)",
+        }}
+      >
+        {copied ? <CheckCircle2 size={13} /> : <Copy size={13} />}
+        {copied ? "Skopiowano" : "Kopiuj"}
+      </button>
+    </div>
+  );
 }

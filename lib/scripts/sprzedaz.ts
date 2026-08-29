@@ -134,22 +134,23 @@ export const STEPS_D: Step[] = [
       options: [
         {
           trigger: "Głównie nowe zlecenia mailem",
-          action:
-            "Dopytaj: 'Ile takich maili dziennie, i co się z nimi dzieje krok po kroku?' — kandydat na email-parser",
+          sayAfter: "Ile takich maili dziennie, i co się z nimi dzieje krok po kroku?",
+          action: "Kandydat na email-parser.",
           goToStepId: "info_czas",
           tone: "positive",
         },
         {
           trigger: "Głównie stałe zlecenia, powtarzalne trasy",
-          action:
-            "Dopytaj: 'Skoro trasy są stałe, gdzie mimo to traci się czas — dokumenty, faktury, rozliczenia?' — kandydat na document-ocr, nie email-parser",
+          sayAfter:
+            "Skoro trasy są stałe, gdzie mimo to traci się czas, dokumenty, faktury, rozliczenia?",
+          action: "Kandydat na document-ocr, nie email-parser.",
           goToStepId: "info_czas",
           tone: "positive",
         },
         {
           trigger: "Kilka rozłącznych systemów, dane nie łączą się",
-          action:
-            "Dopytaj: 'Jak dane z jednego systemu trafiają do drugiego, ktoś to ręcznie przepisuje?' — profil integracyjny, priorytet inny niż standardowe cztery moduły",
+          sayAfter: "Jak dane z jednego systemu trafiają do drugiego, ktoś to ręcznie przepisuje?",
+          action: "Profil integracyjny, priorytet inny niż standardowe cztery moduły.",
           goToStepId: "info_czas",
           tone: "warning",
         },
@@ -303,7 +304,7 @@ export const STEPS_D: Step[] = [
         },
         {
           trigger: "Niepewny, waha się między priorytetami",
-          action: "Powiedz: 'Co musiałoby się wydarzyć żeby to stało się priorytetem?'",
+          sayAfter: "Co musiałoby się wydarzyć żeby to stało się priorytetem?",
           goToStepId: "parafraza",
           tone: "neutral",
         },
@@ -525,15 +526,18 @@ export const STEPS_D: Step[] = [
         },
         {
           trigger: "Niepewna, wymaga dopytania",
+          sayAfter: "Co konkretnie budzi wątpliwość, zanim przejdziemy dalej?",
           action:
-            "Powiedz: 'Co konkretnie budzi wątpliwość, zanim przejdziemy dalej?' Wysłuchaj odpowiedzi, znajdź pasującą obiekcję niżej w skrypcie i odpowiedz na NIĄ. Nie przechodź do decydenta/ceny zanim wątpliwość nie zostanie realnie zaadresowana — po odpowiedzi na obiekcję wróć do parafrazy, nie skacz od razu do pytania o decyzyjność.",
+            "Wysłuchaj odpowiedzi, znajdź pasującą obiekcję niżej w skrypcie i odpowiedz na NIĄ. Nie przechodź do decydenta ani do ceny zanim wątpliwość nie zostanie realnie zaadresowana, po odpowiedzi na obiekcję wróć do parafrazy, nie skacz od razu do pytania o decyzyjność.",
           goToStepId: "parafraza",
           tone: "neutral",
         },
         {
           trigger: "Negatywna, coś nie przekonuje",
+          sayAfter:
+            "Widzę że coś z tego co pokazałem nie do końca trafia. Co konkretnie nie przekonuje?",
           action:
-            "Nie wracaj do tej samej parafrazy słowo w słowo. Powiedz: 'Widzę że coś z tego co pokazałem nie do końca trafia. Co konkretnie nie przekonuje?' Wysłuchaj, dopiero potem zdecyduj czy wracać do pitchu czy do ceny.",
+            "Nie wracaj do tej samej parafrazy słowo w słowo. Wysłuchaj, dopiero potem zdecyduj czy wracać do pitchu czy do ceny.",
           goToStepId: "parafraza",
           tone: "warning",
         },
@@ -751,7 +755,7 @@ export const OBJECTIONS_D: Objection[] = [
           openObjectionId: "od1_watpliwosc",
           tone: "warning",
         },
-        { trigger: "Kwestia budżetu", openObjectionId: "od1_finanse", tone: "warning" },
+        { trigger: "Kwestia budżetu", openObjectionId: "od11", tone: "warning" },
         { trigger: "Chce skonsultować z kimś", openObjectionId: "od1_partner", tone: "warning" },
       ],
     },
@@ -760,17 +764,14 @@ export const OBJECTIONS_D: Objection[] = [
     id: "od1_watpliwosc",
     stage: "cena",
     label: "Zastanowienie: wątpliwość co do produktu",
+    // Scalone 2026-08-29 z byłego od22 ("Obiekcja ogólna") — ten sam cel (dowiedzieć się co
+    // konkretnie przeszkadza), dwie różne techniki zamiast dwóch osobnych wierszy w akordeonie:
+    // wprost pytasz co budzi wątpliwość, a jeśli klient się waha, izolujesz problem (finanse na
+    // bok) zanim zaczniesz odpowiadać na coś czego może wcale nie powiedział.
     script:
-      "Jasne. Co konkretnie budzi wątpliwość, chętnie wyjaśnię teraz zamiast żeby to chodziło Panu po głowie.",
-  },
-  {
-    id: "od1_finanse",
-    stage: "cena",
-    label: "Zastanowienie: kwestia finansowa",
-    script: "Rozumiem. Co możemy wspólnie zrobić, żeby dało się to zagospodarować budżetowo?",
-    followup:
-      "Umowa nie przewiduje rozłożenia na raty. Cała kwota płatna jest jednorazowo, zanim zaczynamy pracę. Czy to raczej kwestia terminu, na przykład rozpoczęcia w kolejnym miesiącu rozliczeniowym, czy realnie fizycznego braku środków w tej chwili?",
-    note: "Followup zadawaj tylko jeśli klient nie widzi możliwości sfinansowania od razu. UMOWA_SYSTEM_AUTORISE.pdf nie przewiduje żadnego wariantu ratalnego - płatność jest zawsze jednorazowa, przed startem prac (§2 ust. 1-2, §8 ust. 1). Nie proponuj rat, nawet jako ustępstwo.",
+      "Jasne. Co konkretnie budzi wątpliwość, chętnie wyjaśnię teraz zamiast żeby to chodziło Panu po głowie. Finanse na bok, czy to co pokazałem mogłoby być odpowiedzią na to czego Pan szuka?",
+    followup: "Czemu Pan tak uważa?",
+    note: "Jeśli klient potwierdza że rozwiązanie odpowiada na jego potrzebę, poczekaj na jego własne uzasadnienie zamiast podpowiadać.",
   },
   {
     id: "od1_partner",
@@ -792,21 +793,13 @@ export const OBJECTIONS_D: Objection[] = [
       options: [
         {
           trigger: "Kwestia logistyki płatności",
-          openObjectionId: "od3_logistyka",
+          openObjectionId: "od11",
           tone: "warning",
         },
         { trigger: "Wątpliwość czy się zwróci", openObjectionId: "od3_wartosc", tone: "warning" },
         { trigger: "Porównuje z inną ofertą", openObjectionId: "od3_konkurencja", tone: "warning" },
       ],
     },
-  },
-  {
-    id: "od3_logistyka",
-    stage: "cena",
-    label: "Za drogo: kwestia logistyki płatności",
-    script:
-      "Rozumiem, to nie jest mała kwota jednorazowo. Umowa nie przewiduje rat, cała kwota jest płatna jednorazowo przed startem prac, ale mogę dopasować moment startu, na przykład do początku kolejnego miesiąca, jeśli to pomaga zaplanować przepływ gotówki. Ułatwia to decyzję?",
-    note: "Bez propozycji rat - UMOWA_SYSTEM_AUTORISE.pdf nie przewiduje takiego wariantu. Jedyna dostępna elastyczność to termin startu, nie rozłożenie kwoty.",
   },
   {
     id: "od3_wartosc",
@@ -894,10 +887,16 @@ export const OBJECTIONS_D: Objection[] = [
   {
     id: "od11",
     stage: "cena",
-    label: "Mogę płacić w ratach?",
+    label: "Mogę płacić w ratach? / kwestia budżetu",
+    // Scalone 2026-08-29 z byłych od1_finanse i od3_logistyka — trzy osobne wiersze mówiące
+    // to samo (nie ma rat, cała kwota jednorazowo, jedyna elastyczność to termin startu) tylko
+    // innymi słowami. Jedna wersja, otwierana czy to wprost pytaniem o raty, czy przez decyzje
+    // w od1 ("Kwestia budżetu") i od3 ("Kwestia logistyki płatności").
     script:
-      "Niestety nie, umowa nie przewiduje rat. Cała kwota za wdrożenie jest płatna jednorazowo, przed startem prac. To dlatego gwarancja i cały proces weryfikacji mają sens finansowy dla obu stron. Mogę za to dopasować moment startu do Pana kalendarza płatności, jeśli to pomaga.",
-    note: "UMOWA_SYSTEM_AUTORISE.pdf nie przewiduje żadnego wariantu ratalnego. Nie obiecuj rat w żadnej formie, nawet jako gest dobrej woli.",
+      "Rozumiem, to nie jest mała kwota jednorazowo. Umowa nie przewiduje rat, cała kwota za wdrożenie jest płatna jednorazowo przed startem prac, to dlatego gwarancja i cały proces weryfikacji mają sens finansowy dla obu stron. Mogę za to dopasować moment startu, na przykład do początku kolejnego miesiąca, jeśli to pomaga zaplanować przepływ gotówki. Co możemy wspólnie zrobić, żeby dało się to zagospodarować budżetowo?",
+    followup:
+      "Czy to raczej kwestia terminu, na przykład rozpoczęcia w kolejnym miesiącu rozliczeniowym, czy realnie fizycznego braku środków w tej chwili?",
+    note: "Followup zadawaj tylko jeśli klient nie widzi możliwości sfinansowania od razu. UMOWA_SYSTEM_AUTORISE.pdf nie przewiduje żadnego wariantu ratalnego — płatność jest zawsze jednorazowa, przed startem prac (§2 ust. 1-2, §8 ust. 1). Jedyna dostępna elastyczność to termin startu, nigdy rozłożenie kwoty — nie proponuj rat w żadnej formie, nawet jako gest dobrej woli.",
   },
   {
     id: "od12",
@@ -969,15 +968,6 @@ export const OBJECTIONS_D: Objection[] = [
     followup:
       "Skoro wiemy co konkretnie stoi na przeszkodzie, sprawdźmy razem czy da się to rozwiązać już teraz, zamiast czekać miesiąc z tym samym kosztem który dalej biegnie.",
     note: "Wskazówka Agency Leaders: nie akceptować 'za miesiąc' biernie — dobry sprzedawca doradza, nie tylko czeka na 'tak'. Po poznaniu realnego powodu, spróbuj pokazać koszt dalszego zwlekania i sprawdź czy przeszkoda da się usunąć teraz, zanim zaakceptujesz odłożenie w czasie.",
-  },
-  {
-    id: "od22",
-    stage: "cena",
-    label: "Obiekcja ogólna (cokolwiek poza 'nie widzę wartości')",
-    script:
-      "Rozumiem, to normalne. Finanse na bok, czy to co Panu pokazałem mogłoby być odpowiedzią na to czego Pan szuka?",
-    followup: "Czemu Pan tak uważa?",
-    note: "Jeśli klient potwierdza, zadaj followup i czekaj na jego własne uzasadnienie, nie podpowiadaj.",
   },
   {
     id: "od1_pozniej",
