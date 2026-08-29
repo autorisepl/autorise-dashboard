@@ -416,7 +416,19 @@ export function ClientSidebar({
   );
 }
 
-function ContactAttemptsMeter({ proby }: { proby: number }) {
+// Eksportowany 2026-08-29 — /pipeline miał własną, mniejszą plakietkę (ContactAttemptsBadge:
+// jedna ikona telefonu + trzy kropki 6px) zupełnie inaczej wyglądającą niż ten licznik w kartach
+// klienta /kwalifikacja (Michał: "próby kontaktu w pipeline mają wyglądać dokładnie tak samo jak
+// w kwalifikacji"). `onIncrement` opcjonalny — w /kwalifikacja licznik jest tylko do odczytu
+// (przycisk +/- siedzi w headerze dla zaznaczonego klienta), w /pipeline karta nie ma
+// odpowiednika headera per-klient, więc dostaje własny przycisk "+" tu, w tym samym miejscu.
+export function ContactAttemptsMeter({
+  proby,
+  onIncrement,
+}: {
+  proby: number;
+  onIncrement?: (e: React.MouseEvent) => void;
+}) {
   const maxed = proby >= 3;
   return (
     <div
@@ -480,6 +492,35 @@ function ContactAttemptsMeter({ proby }: { proby: number }) {
           >
             Wyślij SMS
           </span>
+        )}
+        {onIncrement && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onIncrement(e);
+            }}
+            title="Zarejestruj kolejną próbę kontaktu"
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: "50%",
+              border: "1px solid rgba(255,255,255,0.42)",
+              background: "var(--bg-elevated)",
+              color: "var(--text-secondary)",
+              fontSize: 15,
+              fontWeight: 700,
+              lineHeight: 1,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+              marginLeft: maxed ? 6 : 0,
+            }}
+          >
+            +
+          </button>
         )}
       </div>
     </div>

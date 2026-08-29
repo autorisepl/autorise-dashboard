@@ -31,7 +31,7 @@ import {
 import type { CSSProperties } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { type PipelineClientDetailed, SKRYPT_V4_DATA } from "@/app/api/notion/pipeline/route";
-import { ContactAttemptsBadge } from "@/components/clients/ContactAttemptsBadge";
+import { ContactAttemptsMeter } from "@/components/clients/ClientSidebar";
 import { Button } from "@/components/ui/Button";
 import { formatPhone } from "@/lib/format/phone";
 import { DASHBOARD_ZARZADCZY_LABEL, MODULE_CATALOG } from "@/lib/scripts/moduleCatalog";
@@ -476,24 +476,27 @@ function ClientCard({
         </div>
       )}
 
-      {/* Stopka karty: próby kontaktu + przypisany sprzedawca, oddzielone dividerem
-          od danych kontaktowych powyżej. */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          flexWrap: "wrap",
-          gap: 8,
-          marginTop: 8,
-          paddingTop: 8,
-          borderTop: "1px solid rgba(255,255,255,0.42)",
-        }}
-      >
-        <ContactAttemptsBadge
+      {/* Próby kontaktu — wzór 1:1 z karty klienta w /kwalifikacja (ContactAttemptsMeter w
+          ClientSidebar.tsx, Michał 2026-08-29: "mają wyglądać dokładnie tak samo"), zamiast
+          osobnej, mniejszej plakietki którą miał tylko Pipeline. Stopka karty dzieli się teraz
+          na stakowane sekcje z własnymi dividerami, dokładnie jak w ClientRow kwalifikacji,
+          zamiast jednego wspólnego rzędu flex-wrap dla obu elementów. */}
+      {(client.liczbaProb ?? 0) > 0 && (
+        <ContactAttemptsMeter
           proby={client.liczbaProb ?? 0}
           onIncrement={() => onIncrement(client)}
         />
-        {seller && (
+      )}
+      {seller && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            marginTop: 8,
+            paddingTop: 8,
+            borderTop: "1px solid rgba(255,255,255,0.42)",
+          }}
+        >
           <span
             style={{
               display: "inline-flex",
@@ -513,8 +516,8 @@ function ClientCard({
             <User size={13} strokeWidth={2.5} />
             {seller}
           </span>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -60,12 +60,14 @@ function toVocative(name: string): string {
 // Konsolidacja 2026-08-29 (Michał: "rozbrajanie obiekcji na multum zamiast na jedne konkretne
 // i porządne") — usunięte trzy prawie identyczne warianty "nie ma rat" (od1_finanse,
 // od3_logistyka, dawny standalone od11) scalone w jeden kanoniczny "od11", i były catch-all
-// "od22" scalony w od1_watpliwosc. 14 obiekcji w close_c spadło do 11.
+// "od22" scalony w od1_watpliwosc. 14 obiekcji w close_c spadło do 11. Tego samego dnia,
+// premortem w drugą stronę — dodane od25/od26/od27 (bezpieczeństwo danych, własność po
+// zakończeniu współpracy, prośba o pilotaż) na realne, dotąd nieobsłużone scenariusze.
 const STEP_OBJECTIONS_D: Record<string, string[]> = {
   podsumowanie_kwal: ["juz_mowilem"],
   info: ["od8"],
   proby: ["od7"],
-  pitch: ["od6", "od9", "konkurencja_m365_d", "od23"],
+  pitch: ["od6", "od9", "konkurencja_m365_d", "od23", "od25"],
   close_c: [
     "od1",
     "od1_watpliwosc",
@@ -78,9 +80,10 @@ const STEP_OBJECTIONS_D: Record<string, string[]> = {
     "od14",
     "od17",
     "od24",
+    "od27",
   ],
   closing: ["od4", "od5", "od19", "od20", "od21", "od1_pozniej"],
-  warunki_umowy: ["od12", "od13", "od15", "od18"],
+  warunki_umowy: ["od12", "od13", "od15", "od18", "od26"],
 };
 
 // ── Card wrapper ──────────────────────────────────────────────────────

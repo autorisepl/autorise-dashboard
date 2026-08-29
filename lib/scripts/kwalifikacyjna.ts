@@ -108,7 +108,9 @@ export const STEPS_K: Step[] = [
       {
         t: "say",
         text: "To Pana firma?",
-        cel: "Ustalić czy rozmawiasz z osobą decyzyjną, żeby nie umówić spotkania bez sensu. Celowo bez słowa 'właściciel/właścicielka', żeby zdanie brzmiało tak samo naturalnie w wersji dla Pana i dla Pani.",
+        // Celowo bez słowa "właściciel/właścicielka", żeby zdanie brzmiało tak samo naturalnie
+        // w wersji dla Pana i dla Pani.
+        cel: "Ustalić czy rozmawiasz z osobą decyzyjną, żeby nie umówić spotkania bez sensu.",
       },
     ],
     expected: "Klient jest właścicielem albo wspólnikiem firmy.",
@@ -418,6 +420,19 @@ export const OBJECTIONS_K: Objection[] = [
     nextStepId: "diagnoza_otwarcie",
   },
   {
+    // Dodane w premortem 2026-08-29 (Michał: "mam wrażenie że niektórych obiekcji brakuje") —
+    // pytanie o referencje/dowód społeczny zanim klient w ogóle odpowie na pytania
+    // diagnostyczne, realny scenariusz w cold-leadowej rozmowie kwalifikacyjnej, wcześniej
+    // zupełnie nieobsłużony (jedyny odpowiednik, od23 w skrypcie sprzedażowym, dotyczy dopiero
+    // etapu po Discovery, nie tej pierwszej rozmowy).
+    id: "referencje_branzowe",
+    label: "Macie jakieś referencje z mojej branży?",
+    stage: "opening",
+    script:
+      "Rozumiem, że chce Pan to zweryfikować zanim zajmiemy Panu czas. Pracujemy wyłącznie z firmami transportowymi, więc dokładnie tę branżę rozumiemy. Na spotkaniu pokażę realny przykład podobnego wdrożenia i policzymy konkretną liczbę dla Pana firmy, nie ogólnikami.",
+    nextStepId: "diagnoza_otwarcie",
+  },
+  {
     id: "ok4",
     label: "Jadę na urlop, wracam za jakiś czas",
     stage: "wszedzie",
@@ -439,6 +454,15 @@ export const OBJECTIONS_K: Objection[] = [
     stage: "icp",
     script:
       "Dziękuję za szczerość. Przy tej wielkości biura pewnie nie poczułby Pan jeszcze realnej różnicy, więc szczerze, nie namawiam na coś co się nie zwróci. Mogę zapisać kontakt i wrócić za jakieś trzy miesiące, jak zespół się powiększy, dobrze?",
+  },
+  {
+    // Dodane w premortem 2026-08-29 — próg ICP miał dotąd tylko dolną granicę
+    // (icp_ponizej_progu), żadnej odpowiedzi na duże floty wątpiące że mały dostawca im podoła.
+    id: "icp_powyzej_progu",
+    label: "Flota za duża, mamy własny dział IT / potrzebujemy czegoś enterprise",
+    stage: "icp",
+    script:
+      "To akurat dobra wiadomość, bo im większa flota tym większa oszczędność z automatyzacji. Nie zastępujemy Waszego działu IT, tylko zdejmujemy konkretną, powtarzalną robotę ręczną z biura, więc to się dobrze uzupełnia niezależnie od wielkości zespołu IT. Sprawdźmy razem gdzie dokładnie ta ręczna praca u Was siedzi.",
   },
   {
     id: "icp_nie_decydent",

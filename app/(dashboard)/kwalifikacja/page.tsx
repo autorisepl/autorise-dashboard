@@ -65,9 +65,9 @@ function toSentences(text: string): string[] {
 // szukał podczas rozmowy na żywo. Każdy krok renderuje je tak samo jak krok
 // OPENING: rozwijane wiersze z gotową odpowiedzią w miejscu.
 const STEP_OBJECTIONS: Record<string, string[]> = {
-  opener: ["ok_nie_kojarzy", "ok_nie_czasu", "ok3", "ok_em", "ok_ms"],
+  opener: ["ok_nie_kojarzy", "ok_nie_czasu", "ok3", "ok_em", "ok_ms", "referencje_branzowe"],
   diagnoza_otwarcie: ["brak_konkretu", "brak_bolu", "ok_nie_kojarzy", "po_co_to_pytanie"],
-  diagnoza_icp_flota: ["icp_ponizej_progu", "spedytorzy_dorazni"],
+  diagnoza_icp_flota: ["icp_ponizej_progu", "icp_powyzej_progu", "spedytorzy_dorazni"],
   diagnoza_icp_decydent: ["icp_nie_decydent"],
   diagnoza_tms: ["konkurencja_m365", "tms_panel_zewnetrzny"],
   diagnoza_dokumenty_faktura: ["zewnetrzne_biuro_ksiegowe"],
