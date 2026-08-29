@@ -26,11 +26,10 @@ import { DecisionDiagram } from "@/components/scripts/DecisionDiagram";
 import { NextStepArrow } from "@/components/scripts/NextStepArrow";
 import { AnalizaPrzedkontraktowaPanel } from "@/components/sprzedaz/AnalizaPrzedkontraktowaPanel";
 import { WarunkiUmowyForm } from "@/components/sprzedaz/WarunkiUmowyForm";
-import { PageHeader } from "@/components/ui/PageHeader";
 import { fillBrief, parseCytatyKlienta } from "@/lib/scripts/fillBrief";
 import { useFormaGrzecznosciowa } from "@/lib/scripts/formaGrzecznosciowa";
 import { GROUP_COLORS, MESSAGES_DATA } from "@/lib/scripts/messages";
-import { DISCOVERY_STATUSES, OBJECTIONS_D, STEPS_D } from "@/lib/scripts/sprzedaz";
+import { OBJECTIONS_D, STEPS_D } from "@/lib/scripts/sprzedaz";
 import type { DecisionOption, Objection, ScriptLine } from "@/lib/scripts/types";
 import { objectionColor } from "@/lib/scripts/types";
 
@@ -51,16 +50,35 @@ function findStepLabelD(stepId: string): string {
   return step ? `${step.nr} ${step.label}` : stepId;
 }
 
-// Te same wartości co STATUS_COLORS w /pipeline (rozjaśnione pod ciemny motyw, audyt WCAG AA
-// 2026-08-05) — jedno źródło prawdy o kolorach statusów, nie osobno dobierane per strona.
-const STATUS_COLORS: Record<string, string> = {
-  Kwalifikacja: "#a379ec",
-  "Discovery umówione": "#14b8a7",
-  Finalizacja: "#d97706",
-  Kickoff: "#16a34a",
-  Wdrożenie: "#34b262",
-  Retainer: "#3fa676",
-  Upsell: "#0ea5e9",
+// Minimalny, wyselekcjonowany zestaw obiekcji przypięty do KONKRETNEGO kroku — ten sam wzór
+// co STEP_OBJECTIONS w /kwalifikacja (przeniesienie z osobnego, zawsze-widocznego prawego
+// panelu do kroków w których realnie padają, 2026-08-29). Sub-obiekcje otwierane przez
+// decision.openObjectionId nadrzędnej obiekcji (np. od1 → od1_finanse) muszą siedzieć w TYM
+// SAMYM kroku co rodzic, inaczej jumpToObjection nie znajdzie elementu DOM do przewinięcia —
+// stąd close_c ma cały klaster cenowy razem, nie tylko obiekcje najwyższego poziomu.
+const STEP_OBJECTIONS_D: Record<string, string[]> = {
+  podsumowanie_kwal: ["juz_mowilem"],
+  info: ["od8"],
+  proby: ["od7"],
+  pitch: ["od6", "od9", "konkurencja_m365_d", "od23"],
+  close_c: [
+    "od1",
+    "od1_watpliwosc",
+    "od1_finanse",
+    "od1_partner",
+    "od3",
+    "od3_logistyka",
+    "od3_wartosc",
+    "od3_konkurencja",
+    "od10",
+    "od11",
+    "od14",
+    "od17",
+    "od22",
+    "od24",
+  ],
+  closing: ["od4", "od5", "od19", "od20", "od21", "od1_pozniej"],
+  warunki_umowy: ["od12", "od13", "od15", "od18"],
 };
 
 // ── Line styles ───────────────────────────────────────────────────────
@@ -147,104 +165,6 @@ function Card({
   );
 }
 
-// ── No-show banner ────────────────────────────────────────────────────
-
-// A6 (2026-07-18): dotąd zero mechanizmu no-show w całym systemie — /statystyki miało
-// wyłącznie szacunek (pole "Wynik Discovery" puste + data w przeszłości). Ten przycisk
-// zapisuje realną wartość "NO-SHOW" do tego samego pola, więc show rate i licznik No-Show
-// w /statystyki liczą się z faktu, nie z domysłu. Zapis idzie tym samym PATCH
-// /api/notion/pipeline-update co WarunkiUmowyForm, ten sam wzorzec optimistic update.
-function NoShowBanner({
-  client,
-  onSaved,
-}: {
-  client: PipelineClientDetailed;
-  onSaved: (patch: Partial<PipelineClientDetailed>) => void;
-}) {
-  const [saving, setSaving] = useState(false);
-  const isNoShow = client.wynikDiscovery === "NO-SHOW";
-
-  const toggle = useCallback(async () => {
-    setSaving(true);
-    const next = isNoShow ? null : "NO-SHOW";
-    try {
-      await fetch("/api/notion/pipeline-update", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pageId: client.id, wynikDiscovery: next }),
-      });
-      onSaved({ wynikDiscovery: next ?? "" });
-    } finally {
-      setSaving(false);
-    }
-  }, [client.id, isNoShow, onSaved]);
-
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        padding: "10px 14px",
-        marginBottom: 12,
-        borderRadius: 10,
-        background: isNoShow ? "var(--error-bg)" : "var(--warning-bg)",
-        border: `1px solid ${isNoShow ? "var(--error-border)" : "var(--warning)"}`,
-      }}
-    >
-      <PhoneOff size={16} color={isNoShow ? "var(--error)" : "var(--warning)"} strokeWidth={2} />
-      <div style={{ flex: 1 }}>
-        <span
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: 12,
-            fontWeight: 700,
-            color: "var(--text-primary)",
-          }}
-        >
-          {isNoShow ? "Oznaczono: klient się nie stawił" : "Klient się nie stawił?"}
-        </span>{" "}
-        <span
-          style={{ fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--text-secondary)" }}
-        >
-          {isNoShow
-            ? "Liczy się jako No-Show w statystykach."
-            : "Zapisze No-Show do Notion, licznik w /statystyki zaktualizuje się od razu."}
-        </span>
-      </div>
-      <button
-        onClick={() => void toggle()}
-        disabled={saving}
-        style={{
-          height: 28,
-          padding: "0 12px",
-          borderRadius: 7,
-          border: `1px solid ${isNoShow ? "var(--error)" : "var(--warning)"}`,
-          background: "var(--bg-elevated)",
-          color: isNoShow ? "var(--error-text)" : "var(--warning-text)",
-          fontFamily: "var(--font-sans)",
-          fontSize: 11,
-          fontWeight: 700,
-          cursor: saving ? "default" : "pointer",
-          opacity: saving ? 0.6 : 1,
-          flexShrink: 0,
-          display: "flex",
-          alignItems: "center",
-          gap: 5,
-        }}
-      >
-        {isNoShow ? (
-          <>
-            <Undo2 size={11} /> Cofnij
-          </>
-        ) : (
-          "Oznacz No-Show"
-        )}
-      </button>
-    </div>
-  );
-}
-
 // ── Script step ───────────────────────────────────────────────────────
 
 function ScriptStep({
@@ -255,6 +175,9 @@ function ScriptStep({
   onJump,
   onDecisionSelect,
   selectedTrigger,
+  openObjectionId,
+  setOpenObjectionId,
+  selectedOptions,
 }: {
   step: (typeof STEPS_D)[0];
   fill: (t: string) => string;
@@ -263,8 +186,12 @@ function ScriptStep({
   onJump: (stepId: string) => void;
   onDecisionSelect: (stepId: string, option: DecisionOption) => void;
   selectedTrigger?: string;
+  openObjectionId: string | null;
+  setOpenObjectionId: (id: string | null) => void;
+  selectedOptions: Record<string, string>;
 }) {
   const [open, setOpen] = useState(true);
+  const stepObjections = STEP_OBJECTIONS_D[step.id] ?? [];
 
   return (
     <div
@@ -455,6 +382,40 @@ function ScriptStep({
           )}
           {!step.decision && step.nextStepId && (
             <NextStepArrow label="Dalej" onJump={() => onJump(step.nextStepId!)} />
+          )}
+          {stepObjections.length > 0 && (
+            <div style={{ marginTop: 4 }}>
+              <div
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 10,
+                  fontWeight: 700,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  color: "var(--text-tertiary)",
+                  padding: "6px 2px 4px",
+                }}
+              >
+                Możliwe obiekcje
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                {stepObjections.map((objId) => {
+                  const obj = OBJECTIONS_D.find((o) => o.id === objId);
+                  if (!obj) return null;
+                  return renderObjectionD(
+                    obj,
+                    openObjectionId,
+                    setOpenObjectionId,
+                    fill,
+                    onCopy,
+                    copiedId,
+                    onDecisionSelect,
+                    selectedOptions,
+                    onJump,
+                  );
+                })}
+              </div>
+            </div>
           )}
         </div>
       )}
@@ -718,16 +679,10 @@ function BriefSection({ client }: { client: PipelineClientDetailed | null }) {
 }
 
 // ── Objections accordion ──────────────────────────────────────────────
-
-const STAGE_LABELS_D: Partial<Record<Objection["stage"], string>> = {
-  diagnoza: "Diagnoza",
-  pitch: "Prezentacja",
-  cena: "Cena",
-  closing: "Zamknięcie",
-  wszedzie: "Obiekcje ogólne",
-};
-
-const STAGE_ORDER_D: Objection["stage"][] = ["diagnoza", "pitch", "cena", "closing", "wszedzie"];
+// Przeniesione 2026-08-29 z osobnego, zawsze-widocznego prawego panelu (grupowanego wg stage)
+// do kroków skryptu w których dana obiekcja realnie pada — ten sam wzór co STEP_OBJECTIONS w
+// /kwalifikacja (patrz STEP_OBJECTIONS_D wyżej). renderObjectionD zostaje bez zmian, wołane
+// teraz z wnętrza ScriptStep zamiast z osobnego ObjectionsPanel.
 
 function renderObjectionD(
   obj: Objection,
@@ -913,66 +868,6 @@ function renderObjectionD(
           )}
         </div>
       )}
-    </div>
-  );
-}
-
-function ObjectionsPanel({
-  fill,
-  onCopy,
-  copiedId,
-  openId,
-  setOpenId,
-  onDecisionSelect,
-  selectedOptions,
-  onJump,
-}: {
-  fill: (t: string) => string;
-  onCopy: (id: string, text: string) => void;
-  copiedId: string | null;
-  openId: string | null;
-  setOpenId: (id: string | null) => void;
-  onDecisionSelect: (objectionId: string, option: DecisionOption) => void;
-  selectedOptions: Record<string, string>;
-  onJump: (stepId: string) => void;
-}) {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      {STAGE_ORDER_D.map((stage) => {
-        const items = OBJECTIONS_D.filter((o) => o.stage === stage);
-        if (items.length === 0) return null;
-        return (
-          <div key={stage} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <div
-              style={{
-                fontFamily: "var(--font-sans)",
-                fontSize: 10,
-                fontWeight: 700,
-                color: "var(--text-tertiary)",
-                letterSpacing: "0.05em",
-                textTransform: "uppercase",
-              }}
-            >
-              {STAGE_LABELS_D[stage]}
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              {items.map((obj) =>
-                renderObjectionD(
-                  obj,
-                  openId,
-                  setOpenId,
-                  fill,
-                  onCopy,
-                  copiedId,
-                  onDecisionSelect,
-                  selectedOptions,
-                  onJump,
-                ),
-              )}
-            </div>
-          </div>
-        );
-      })}
     </div>
   );
 }
@@ -1505,26 +1400,18 @@ function DalszeKrokiDiscovery({ client }: { client: PipelineClientDetailed | nul
 
 // ── Right panel ───────────────────────────────────────────────────────
 
+// Obiekcje przeniesione do kroków skryptu (STEP_OBJECTIONS_D) — ten sam wzór co RightPanel
+// w /kwalifikacja, który po tej samej przebudowie zostaje wyłącznie z frazami/SMS/ICP.
 function RightPanel({
   client,
   fill,
   onCopy,
   copiedId,
-  openObjectionId,
-  setOpenObjectionId,
-  onDecisionSelect,
-  selectedOptions,
-  onJump,
 }: {
   client: PipelineClientDetailed | null;
   fill: (t: string) => string;
   onCopy: (id: string, text: string) => void;
   copiedId: string | null;
-  openObjectionId: string | null;
-  setOpenObjectionId: (id: string | null) => void;
-  onDecisionSelect: (objectionId: string, option: DecisionOption) => void;
-  selectedOptions: Record<string, string>;
-  onJump: (stepId: string) => void;
 }) {
   return (
     <div
@@ -1538,18 +1425,6 @@ function RightPanel({
         background: "var(--bg-elevated)",
       }}
     >
-      <Card title="Obiekcje w Discovery">
-        <ObjectionsPanel
-          fill={fill}
-          onCopy={onCopy}
-          copiedId={copiedId}
-          openId={openObjectionId}
-          setOpenId={setOpenObjectionId}
-          onDecisionSelect={onDecisionSelect}
-          selectedOptions={selectedOptions}
-          onJump={onJump}
-        />
-      </Card>
       <Card title="SMS / Wiadomości" collapsible defaultOpen={false}>
         <SmsPanel fill={fill} onCopy={onCopy} copiedId={copiedId} />
       </Card>
@@ -1572,30 +1447,30 @@ export default function SprzedazPage() {
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const [openObjectionId, setOpenObjectionId] = useState<string | null>(null);
 
-  // A6 (2026-07-16): licznik rozmów sprzedażowych — wcześniej /sprzedaz nie miało
-  // WCALE żadnego tally, "Rozmowy" w /statystyki zawsze liczyło wyłącznie
-  // kwalifikację. Wzorzec identyczny jak tally("dial"/"rozmowa") w /kwalifikacja.
-  const [rozmowaFlash, setRozmowaFlash] = useState(false);
-  const [rozmowaUndo, setRozmowaUndo] = useState(false);
-  const postRozmowaTally = (delta: 1 | -1) =>
-    fetch("/api/stats/tally", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type: "rozmowa_sprzedaz", delta }),
-    }).catch(() => {
-      /* licznik jest pomocniczy — brak sieci nie blokuje pracy */
-    });
-  const tallyRozmowa = useCallback(() => {
-    setRozmowaFlash(true);
-    setRozmowaUndo(true);
-    setTimeout(() => setRozmowaFlash(false), 1800);
-    setTimeout(() => setRozmowaUndo(false), 5000);
-    void postRozmowaTally(1);
-  }, []);
-  const undoRozmowaTally = useCallback(() => {
-    setRozmowaUndo(false);
-    void postRozmowaTally(-1);
-  }, []);
+  // No-show na klientach Discovery — przeniesione 2026-08-29 z osobnego banera w treści
+  // strony (NoShowBanner) do przycisku w headerze, w tym samym miejscu i tej samej formie
+  // wizualnej co "Zarejestruj rozmowę" w /kwalifikacja. Zapisuje realną wartość "NO-SHOW"
+  // do pola "Wynik Discovery" w Notion (ten sam PATCH co WarunkiUmowyForm), więc show rate
+  // w /statystyki liczy się z faktu, nie z domysłu.
+  const [noShowSaving, setNoShowSaving] = useState(false);
+  const isNoShow = selected?.wynikDiscovery === "NO-SHOW";
+  const toggleNoShow = useCallback(async () => {
+    if (!selected) return;
+    setNoShowSaving(true);
+    const next = isNoShow ? null : "NO-SHOW";
+    try {
+      await fetch("/api/notion/pipeline-update", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pageId: selected.id, wynikDiscovery: next }),
+      });
+      const patch = { wynikDiscovery: next ?? "" };
+      setSelected((prev) => (prev ? { ...prev, ...patch } : prev));
+      setClients((prev) => prev.map((c) => (c.id === selected.id ? { ...c, ...patch } : c)));
+    } finally {
+      setNoShowSaving(false);
+    }
+  }, [selected, isNoShow]);
 
   const fetchClients = useCallback(async () => {
     setLoading(true);
@@ -1826,144 +1701,161 @@ export default function SprzedazPage() {
     [jumpToObjection],
   );
 
+  // Wspólny styl etykiety w pasku narzędzi headera — ten sam wzór co TOOLBAR_LABEL
+  // w /kwalifikacja (fill() w app/(dashboard)/kwalifikacja/page.tsx).
+  const TOOLBAR_LABEL: React.CSSProperties = {
+    fontFamily: "var(--font-sans)",
+    fontSize: 12.5,
+    fontWeight: 800,
+    letterSpacing: "0.05em",
+    textTransform: "uppercase",
+    color: "var(--text-primary)",
+  };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
-      {/* Header */}
-      <PageHeader icon={<Target size={15} color="var(--accent)" />} title="Sprzedaż">
-        <div style={{ height: 20, width: 1, background: "var(--border)", marginLeft: 4 }} />
-        <span
-          style={{ fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--text-tertiary)" }}
-        >
-          {selected ? selected.kontakt || selected.firma : "Discovery Call"}
-        </span>
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <button
-            onClick={tallyRozmowa}
+      {/* Header — dwuwierszowy, wzór 1:1 z /pipeline i /kwalifikacja: duży tytuł + podtytuł
+          w pierwszym rzędzie, cały pasek narzędzi osobnym, spójnym rzędem pod spodem. */}
+      <div
+        style={{
+          flexShrink: 0,
+          padding: "16px 20px 12px",
+          borderBottom: "1px solid var(--border)",
+          background: "var(--bg-elevated)",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "baseline", gap: 14, flexWrap: "wrap" }}>
+          <h1
             style={{
-              height: 28,
-              padding: "0 10px",
-              borderRadius: 7,
-              border: "1px solid var(--border)",
-              background: rozmowaFlash ? "var(--success-bg)" : "var(--bg)",
-              color: rozmowaFlash ? "var(--success-text)" : "var(--text-secondary)",
-              fontSize: 11,
-              fontWeight: 600,
-              cursor: "pointer",
+              margin: 0,
+              fontFamily: "var(--font-sans)",
+              fontSize: 22,
+              fontWeight: 700,
+              color: "var(--text-primary)",
+              letterSpacing: "-0.02em",
+            }}
+          >
+            Sprzedaż
+          </h1>
+          <span
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 14,
+              fontWeight: 500,
+              color: "var(--text-secondary)",
+            }}
+          >
+            {selected ? selected.kontakt || selected.firma : "Wybierz klienta z listy"}
+          </span>
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            marginTop: 14,
+            flexWrap: "wrap",
+          }}
+        >
+          {/* ── No-show na Discovery (zamiast "Zarejestruj rozmowę" z /kwalifikacja —
+              tu chodzi o obecność klienta na spotkaniu, nie o zliczenie rozmowy) ── */}
+          <button
+            onClick={selected ? () => void toggleNoShow() : undefined}
+            disabled={!selected || noShowSaving}
+            title={
+              selected
+                ? isNoShow
+                  ? "Cofnij oznaczenie No-Show"
+                  : "Oznacz że klient nie stawił się na Discovery Call"
+                : "Wybierz klienta z listy"
+            }
+            style={{
               display: "flex",
               alignItems: "center",
-              gap: 5,
+              gap: 6,
+              height: 34,
+              padding: "0 14px",
+              borderRadius: "var(--radius-xs)",
+              border: "1px solid rgba(255,255,255,0.42)",
+              background: isNoShow ? "var(--error-bg)" : "var(--bg)",
+              color: isNoShow ? "var(--error-text)" : "var(--text-primary)",
               fontFamily: "var(--font-sans)",
+              fontSize: 12.5,
+              fontWeight: 800,
+              letterSpacing: "0.04em",
+              textTransform: "uppercase",
+              cursor: selected ? "pointer" : "not-allowed",
+              opacity: selected ? (noShowSaving ? 0.6 : 1) : 0.45,
               transition: "background 150ms, color 150ms",
             }}
-            title="Zlicz odbytą rozmowę sprzedażową (statystyki dzienne)"
           >
-            {rozmowaFlash ? <Check size={11} /> : <MessageSquare size={11} />}
-            Rozmowa
+            {isNoShow ? <Undo2 size={15} /> : <PhoneOff size={15} />}
+            {isNoShow ? "Oznaczono No-Show" : "Brak uczestnictwa w rozmowie"}
           </button>
-          {rozmowaUndo && (
-            <button
-              onClick={undoRozmowaTally}
-              style={{
-                height: 28,
-                padding: "0 10px",
-                borderRadius: 7,
-                border: "1px solid var(--warning)",
-                background: "var(--warning-bg)",
-                color: "var(--warning-text)",
-                fontSize: 11,
-                fontWeight: 700,
-                cursor: "pointer",
-                fontFamily: "var(--font-sans)",
-              }}
-              title="Cofnij ostatnie zliczenie (5 sekund)"
-            >
-              Cofnij
-            </button>
-          )}
-        </div>
-        {selected && (
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: "auto" }}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                padding: "4px 10px 4px 4px",
-                borderRadius: 8,
-                border: "1px solid var(--border)",
-                background: "var(--bg)",
-              }}
-              title="Jak setter ma zwracać się do klienta w tej rozmowie"
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <span
-                  style={{
-                    fontSize: 12,
-                    color: "var(--text-secondary)",
-                    fontFamily: "var(--font-sans)",
-                  }}
-                >
-                  Zwrot do klienta:
-                </span>
-                {(["Pan", "Pani"] as const).map((f) => (
+
+          {selected && (
+            <>
+              <div style={{ height: 24, width: 1, background: "rgba(255,255,255,0.42)" }} />
+
+              {/* ── Forma grzecznościowa ── */}
+              <span style={TOOLBAR_LABEL}>Zwrot do klienta</span>
+              {(["Pan", "Pani"] as const).map((f) => {
+                const active = forma === f;
+                return (
                   <button
                     key={f}
                     onClick={() => setFormaOverride(f)}
                     style={{
-                      height: 28,
-                      padding: "0 10px",
-                      borderRadius: 8,
-                      border: `1px solid ${forma === f ? "var(--accent)" : "var(--border)"}`,
-                      background: forma === f ? "rgba(67, 121, 177, 0.08)" : "var(--bg-elevated)",
-                      color: forma === f ? "var(--accent)" : "var(--text-secondary)",
-                      fontSize: 12,
-                      fontWeight: forma === f ? 600 : 400,
-                      cursor: "pointer",
+                      height: 30,
+                      padding: "0 14px",
+                      borderRadius: "var(--radius-xs)",
+                      border: `1px solid ${active ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.42)"}`,
+                      background: active ? "var(--accent)" : "var(--bg-elevated)",
+                      color: active ? "var(--text-on-accent)" : "var(--text-primary)",
                       fontFamily: "var(--font-sans)",
+                      fontSize: 12,
+                      fontWeight: active ? 800 : 600,
+                      letterSpacing: "0.04em",
+                      textTransform: "uppercase",
+                      cursor: "pointer",
                     }}
                   >
                     {f}
                   </button>
-                ))}
-                {formaOverride !== "auto" && (
-                  <button
-                    onClick={() => setFormaOverride("auto")}
-                    title="Wróć do automatycznego wykrywania"
-                    style={{
-                      height: 28,
-                      padding: "0 8px",
-                      borderRadius: 8,
-                      border: "1px solid var(--border)",
-                      background: "transparent",
-                      color: "var(--text-tertiary)",
-                      fontSize: 11,
-                      cursor: "pointer",
-                    }}
-                  >
-                    auto
-                  </button>
-                )}
-              </div>
-              <div style={{ height: 20, width: 1, background: "var(--border)" }} />
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <span
+                );
+              })}
+              {formaOverride !== "auto" && (
+                <button
+                  onClick={() => setFormaOverride("auto")}
+                  title="Wróć do automatycznego wykrywania"
                   style={{
-                    fontSize: 12,
-                    color: "var(--text-secondary)",
+                    height: 30,
+                    padding: "0 10px",
+                    borderRadius: "var(--radius-xs)",
+                    border: "1px solid rgba(255,255,255,0.42)",
+                    background: "transparent",
+                    color: "var(--text-tertiary)",
                     fontFamily: "var(--font-sans)",
+                    fontSize: 11,
+                    cursor: "pointer",
                   }}
                 >
-                  Jak się zwracać:
-                </span>
+                  auto
+                </button>
+              )}
+
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={TOOLBAR_LABEL}>Jak się zwracać</span>
                 <input
                   value={vocative}
                   onChange={(e) => setVocative(e.target.value)}
-                  placeholder="wołacz imienia"
+                  placeholder="wołacz imienia, np. Marku"
                   style={{
-                    height: 28,
+                    height: 30,
                     padding: "0 10px",
-                    borderRadius: 8,
-                    border: "1px solid var(--border)",
+                    borderRadius: "var(--radius-xs)",
+                    border: "1px solid rgba(255,255,255,0.42)",
                     fontFamily: "var(--font-sans)",
                     fontSize: 13,
                     color: "var(--text-primary)",
@@ -1973,10 +1865,10 @@ export default function SprzedazPage() {
                   }}
                 />
               </div>
-            </div>
-          </div>
-        )}
-      </PageHeader>
+            </>
+          )}
+        </div>
+      </div>
 
       {/* 3-column layout */}
       <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
@@ -1987,10 +1879,9 @@ export default function SprzedazPage() {
           selected={selected}
           onSelect={setSelected}
           onRefresh={fetchClients}
-          filterStatuses={DISCOVERY_STATUSES}
-          groupByStatus
-          statusColors={STATUS_COLORS}
-          emptyLabel="Brak klientów Discovery"
+          filterStatuses={["Discovery umówione"]}
+          headerLabel="Discovery umówione"
+          emptyLabel='Brak klientów "Discovery umówione"'
         />
 
         {/* Main: brief + script + roi + dalsze kroki */}
@@ -1998,18 +1889,6 @@ export default function SprzedazPage() {
           <Card title="Brief Agenta 02" collapsible defaultOpen={true}>
             <BriefSection client={selected} />
           </Card>
-
-          {selected && (
-            <NoShowBanner
-              client={selected}
-              onSaved={(patch) => {
-                setSelected((prev) => (prev ? { ...prev, ...patch } : prev));
-                setClients((prev) =>
-                  prev.map((c) => (c.id === selected.id ? { ...c, ...patch } : c)),
-                );
-              }}
-            />
-          )}
 
           <Card title="Skrypt Discovery">
             {STEPS_D.map((step) => (
@@ -2022,6 +1901,9 @@ export default function SprzedazPage() {
                 onJump={jumpToStep}
                 onDecisionSelect={handleDecisionSelect}
                 selectedTrigger={selectedOptions[step.id]}
+                openObjectionId={openObjectionId}
+                setOpenObjectionId={setOpenObjectionId}
+                selectedOptions={selectedOptions}
               />
             ))}
           </Card>
@@ -2101,17 +1983,7 @@ export default function SprzedazPage() {
         </div>
 
         {/* Right: objections + SMS + prezentacja */}
-        <RightPanel
-          client={selected}
-          fill={fill}
-          onCopy={onCopy}
-          copiedId={copiedId}
-          openObjectionId={openObjectionId}
-          setOpenObjectionId={setOpenObjectionId}
-          onDecisionSelect={handleDecisionSelect}
-          selectedOptions={selectedOptions}
-          onJump={jumpToStep}
-        />
+        <RightPanel client={selected} fill={fill} onCopy={onCopy} copiedId={copiedId} />
       </div>
     </div>
   );

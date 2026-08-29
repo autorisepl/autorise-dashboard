@@ -861,7 +861,7 @@ const FUNNEL_NODES: FunnelNode[] = [
     agent:
       "Ręcznie: wystawienie faktury elektronicznej (KSeF) za wdrożenie (30 000 PLN brutto, bez rat i bez rabatu — oba mechanizmy nieobecne w UMOWA_SYSTEM_AUTORISE.pdf, wersja 2026-08-29, która zastąpiła UMOWA_AUTORISE_FINAL.md).",
     entry: "Umowa podpisana.",
-    exit: 'Faktura wystawiona w 2 dni robocze. Wykonawca NIE przystępuje do prac przed otrzymaniem pełnej wpłaty (§2 ust. 1). Jeśli pełna kwota nie zaksięguje się na koncie w ciągu 7 dni kalendarzowych od podpisania, umowa automatycznie się rozwiązuje ze skutkiem wstecznym (§2 ust. 2) — mechanizm który w poprzedniej wersji umowy (UMOWA_AUTORISE_FINAL.md) nie istniał, ta gałąź map wcześniej flagowała go jako niepotwierdzony.',
+    exit: "Faktura wystawiona w 2 dni robocze. Wykonawca NIE przystępuje do prac przed otrzymaniem pełnej wpłaty (§2 ust. 1). Jeśli pełna kwota nie zaksięguje się na koncie w ciągu 7 dni kalendarzowych od podpisania, umowa automatycznie się rozwiązuje ze skutkiem wstecznym (§2 ust. 2) — mechanizm który w poprzedniej wersji umowy (UMOWA_AUTORISE_FINAL.md) nie istniał, ta gałąź map wcześniej flagowała go jako niepotwierdzony.",
     ref: "§2 ust. 1-2",
     refStatus: "confirmed",
     refNote:

@@ -11,7 +11,6 @@ import {
   Search,
   User,
   Users,
-  X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { PipelineClientDetailed } from "@/app/api/notion/pipeline/route";
@@ -50,9 +49,11 @@ interface ClientSidebarProps {
   callDoneClientIds?: string[];
   /** Nazwa sprzedawcy per klient (klucz = client.id) — pokazywana wprost na karcie klienta. */
   sellerNameById?: Record<string, string>;
-  /** Pokaż link "Otwórz prezentację" + "Odznacz klienta" na dole panelu (domyślnie tak).
-   * W /kwalifikacja wyłączone — prezentacja jest dopiero na etapie sprzedaży, a odznaczasz
-   * klienta klikając go ponownie na liście. */
+  /** Pokaż przycisk "Otwórz prezentację" na dole KAŻDEJ karty klienta (domyślnie tak).
+   * W /kwalifikacja wyłączone — prezentacja jest dopiero na etapie sprzedaży. Przeniesione
+   * 2026-08-29 z osobnego, wysuwanego panelu pod listą (widocznego tylko dla zaznaczonego
+   * klienta) na kartę każdego klienta z osobna — setter otwiera prezentację bez zaznaczania,
+   * "Odznacz klienta" znika bo klik w już zaznaczoną kartę już to robi. */
   showPresentation?: boolean;
 }
 
@@ -353,6 +354,7 @@ export function ClientSidebar({
                             onSelect={onSelect}
                             callDone={callDoneSet.has(c.id)}
                             sellerName={sellerNameById?.[c.id] ?? null}
+                            showPresentation={showPresentation}
                           />
                         ))}
                       </div>
@@ -366,6 +368,7 @@ export function ClientSidebar({
                       onSelect={onSelect}
                       callDone={callDoneSet.has(c.id)}
                       sellerName={sellerNameById?.[c.id] ?? null}
+                      showPresentation={showPresentation}
                     />
                   ))}
               {filtered.length === 0 && (
@@ -382,61 +385,6 @@ export function ClientSidebar({
                 </div>
               )}
             </div>
-
-            {selected && showPresentation && (
-              <div
-                style={{
-                  padding: "12px",
-                  borderTop: "1px solid var(--border)",
-                  flexShrink: 0,
-                  background: "var(--bg-hover)",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 10,
-                }}
-              >
-                <a
-                  href={`/prezentacja.html?id=${encodeURIComponent(selected.id)}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 5,
-                    background: "var(--accent-muted)",
-                    border: "1px solid var(--accent-border)",
-                    borderRadius: 8,
-                    padding: "6px 8px",
-                    cursor: "pointer",
-                    color: "var(--accent)",
-                    fontSize: 11,
-                    fontWeight: 600,
-                    fontFamily: "var(--font-sans)",
-                    textDecoration: "none",
-                  }}
-                >
-                  <ExternalLink size={11} />
-                  Otwórz prezentację
-                </a>
-                <button
-                  onClick={() => onSelect(null)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 5,
-                    background: "transparent",
-                    border: "none",
-                    cursor: "pointer",
-                    color: "var(--text-tertiary)",
-                    fontSize: 11,
-                    fontFamily: "var(--font-sans)",
-                  }}
-                >
-                  <X size={11} />
-                  Odznacz klienta
-                </button>
-              </div>
-            )}
           </>
         )}
       </div>
@@ -520,12 +468,14 @@ function ClientRow({
   onSelect,
   callDone,
   sellerName,
+  showPresentation,
 }: {
   client: PipelineClientDetailed;
   selected: PipelineClientDetailed | null;
   onSelect: (c: PipelineClientDetailed | null) => void;
   callDone?: boolean;
   sellerName?: string | null;
+  showPresentation?: boolean;
 }) {
   const isSelected = selected?.id === client.id;
   const [hovered, setHovered] = useState(false);
@@ -698,6 +648,43 @@ function ClientRow({
               {sellerName}
             </div>
           </div>
+        </div>
+      )}
+      {showPresentation && (
+        <div
+          style={{
+            marginTop: 10,
+            paddingTop: 10,
+            borderTop: "1px solid rgba(255,255,255,0.42)",
+          }}
+        >
+          <a
+            href={`/prezentacja.html?id=${encodeURIComponent(client.id)}`}
+            target="_blank"
+            rel="noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 6,
+              width: "100%",
+              boxSizing: "border-box",
+              background: "var(--accent-muted)",
+              border: "1px solid var(--accent-border)",
+              borderRadius: "var(--radius-xs)",
+              padding: "7px 8px",
+              cursor: "pointer",
+              color: "var(--accent)",
+              fontSize: 12,
+              fontWeight: 700,
+              fontFamily: "var(--font-sans)",
+              textDecoration: "none",
+            }}
+          >
+            <ExternalLink size={12} strokeWidth={2.5} />
+            Otwórz prezentację
+          </a>
         </div>
       )}
     </div>
