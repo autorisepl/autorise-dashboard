@@ -1613,13 +1613,13 @@ export default function SprzedazPage() {
       );
       const roznicowanie = selected.zdanieRoznicujace?.trim() ?? "";
       out = out.replace(
-        /Wcześniej pojawiła się próba rozwiązania tego inaczej: \[poprzednia próba z rozmowy\], która nie zadziałała bo \[powód z rozmowy\]\.\s*My robimy to inaczej — nie sprzedajemy kolejnego generycznego narzędzia, tylko wdrożenie dopasowane do \[nazwa TMS\/system klienta\] i tego konkretnego procesu\./g,
+        /Wcześniej pojawiła się próba rozwiązania tego inaczej, \[poprzednia próba z rozmowy\], która nie zadziałała bo \[powód z rozmowy\]\.\s*My robimy to inaczej\.\s*Nie sprzedajemy kolejnego generycznego narzędzia, tylko wdrożenie dopasowane do \[nazwa TMS\/system klienta\] i tego konkretnego procesu\./g,
         roznicowanie ||
           "— brak zdania różnicującego z Agenta Kwalifikacja, opisz na żywo czym Autorise różni się od poprzednich prób klienta —",
       );
       const systemKroki = selected.systemTransformacji ?? [];
       out = out.replace(
-        /System transformacji wygląda tak: krok pierwszy, \[moduł 1 opisany korzyścią\]\.\s*Krok drugi, \[moduł 2 opisany korzyścią\]\.\s*Krok trzeci, \[moduł 3 opisany korzyścią\]\./g,
+        /System transformacji wygląda tak\.\s*Krok pierwszy, \[moduł 1 zakończony konkretnym efektem, nie opisem funkcji\]\.\s*Krok drugi, \[moduł 2 zakończony konkretnym efektem, nie opisem funkcji\]\.\s*Krok trzeci, \[moduł 3 zakończony konkretnym efektem, nie opisem funkcji\]\./g,
         systemKroki.length >= 3
           ? systemKroki.slice(0, 3).join(" ")
           : "— brak system_transformacji z Agenta Kwalifikacja, opisz na żywo 3 kroki wdrożenia dla tego klienta —",

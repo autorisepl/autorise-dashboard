@@ -3,6 +3,15 @@
 // diagnostyczne (proces krok po kroku, poprzednie próby, cele) mają wynikać naturalnie z tego co
 // klient właśnie powiedział, nie być czytane po kolei jak ankieta. Jeśli klient już coś powiedział
 // przy okazji wcześniejszego pytania, nie pytaj o to drugi raz tym samym sformułowaniem.
+//
+// Zasada języka mówionego (przeniesiona z kwalifikacyjna.ts, 2026-08-29, pełna zgodność między
+// oboma skryptami): każda linia "say"/"script"/"followup" to tekst który Michał WYPOWIADA na
+// głos. Zero myślników i dwukropków wewnątrz zdań, zero instrukcji procesowych ("zaznacz w
+// Pipeline", "przejdź do kroku X") w liniach "say" — te żyją wyłącznie w "note"/"cel"/"action".
+// Zero słowa "Kickoff" w linii "say" — mów "spotkanie startowe" (Kickoff zostaje w
+// cel/note/nazwach statusów Notion, tam to nazwa własna etapu, nie coś czytane klientowi).
+// Liczby w ustach settera zaokrąglone. `cel` to notka WYŁĄCZNIE dla Michała, nigdy czytana
+// klientowi.
 
 import type { Objection, Step } from "./types";
 
@@ -34,7 +43,7 @@ export const STEPS_D: Step[] = [
         t: "say",
         text: [
           "Dzień dobry, Pan {IMIĘ}. Cieszę się że możemy porozmawiać.",
-          "Przed chwilą przejrzałem stronę firmy — widzę że firma [nazwa] ma flotę [X] pojazdów.",
+          "Przed chwilą przejrzałem stronę firmy, widzę że firma [nazwa] ma flotę [X] pojazdów.",
           "Dobrze widzę?",
         ],
       },
@@ -47,6 +56,8 @@ export const STEPS_D: Step[] = [
         ],
       },
     ],
+    expected: "Klient potwierdza dane o firmie i flocie, ewentualnie koryguje drobny szczegół.",
+    transition: "Dobrze. Zanim zaczniemy, powiem jeszcze jak zaplanowałem to spotkanie.",
   },
   {
     id: "agenda",
@@ -58,7 +69,7 @@ export const STEPS_D: Step[] = [
         t: "say",
         text: [
           "Na to spotkanie mam dla nas 45 minut.",
-          "Plan: pierwsze 20 minut to pytania o firmę i o to jak działa biuro.",
+          "Pierwsze 20 minut to pytania o firmę i o to jak działa biuro.",
           "Drugie 20 minut pokazuję co możemy zrobić dla tej firmy.",
           "Ostatnie 5 minut pytania i decyzja co dalej.",
           "Pasuje taki plan?",
@@ -66,6 +77,8 @@ export const STEPS_D: Step[] = [
       },
       { t: "client", text: "Tak, jasne." },
     ],
+    expected: "Klient potwierdza że taki plan spotkania mu odpowiada.",
+    transition: "Świetnie, to zaczynajmy.",
   },
   {
     id: "podsumowanie_kwal",
@@ -87,9 +100,12 @@ export const STEPS_D: Step[] = [
       },
       {
         t: "note",
-        text: "Jeśli klient zareaguje 'już to mówiłem': patrz obiekcja 'Klient: już to mówiłem' w prawym panelu (stage: diagnoza).",
+        text: "Jeśli klient zareaguje 'już to mówiłem', patrz obiekcja 'Klient: już to mówiłem' niżej w tym kroku.",
       },
     ],
+    expected:
+      "Klient potwierdza podsumowanie albo aktualizuje szczegóły które się zmieniły od kwalifikacji.",
+    transition: "Dziękuję, to przejdźmy głębiej w sytuację firmy.",
   },
   {
     id: "info",
@@ -106,7 +122,7 @@ export const STEPS_D: Step[] = [
       {
         t: "say",
         text: [
-          "Proszę opowiedzieć jak wygląda dzień pracy w biurze — od momentu gdy wpada zlecenie do wystawienia faktury.",
+          "Proszę opowiedzieć jak wygląda dzień pracy w biurze, od momentu gdy wpada zlecenie do wystawienia faktury.",
           "Krok po kroku.",
         ],
         cel: "Zmapować proces operacyjny krok po kroku, żeby trafnie dobrać moduły do pitchu",
@@ -148,7 +164,7 @@ export const STEPS_D: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Z naszej rozmowy telefonicznej wynika że to około [godziny z Pipeline] godzin dziennie na spedytora przy ręcznym wpisywaniu — to się nadal zgadza, i ilu w sumie osób jest teraz zaangażowanych w ten proces?",
+        text: "Z naszej rozmowy telefonicznej wynika że to około [godziny z Pipeline] godzin dziennie na spedytora przy ręcznym wpisywaniu. Czy to się nadal zgadza, i ilu w sumie osób jest teraz zaangażowanych w ten proces?",
         cel: "Potwierdzić dane z kalkulatora kwalifikacji zamiast pytać od zera, zgodnie z zasadą że Discovery nie powtarza pytań z kwalifikacji. Godziny na spedytora to realne pole zapisane w Pipeline; liczba osób nie jest jeszcze zapisywana do Notion (kalkulator liczy ją tylko lokalnie w UI kwalifikacji), więc to jedyna część pytana od nowa",
       },
       { t: "client", text: "[potwierdza lub koryguje]" },
@@ -193,7 +209,7 @@ export const STEPS_D: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Dlaczego nie możecie tego rozwiązać samodzielnie — wewnętrznie?",
+        text: "Dlaczego nie możecie tego rozwiązać wewnętrznie, we własnym zakresie?",
         cel: "Wyeliminować 'zrobimy to sami' jako obiekcję zanim padnie na etapie ceny",
       },
       { t: "client", text: "[odpowiedź]" },
@@ -214,7 +230,7 @@ export const STEPS_D: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Ile szacuje {FORMA} że kosztuje firma ta ręczna praca miesięcznie — w godzinach, błędach, stresie?",
+        text: "Ile szacuje {FORMA} że kosztuje firmę ta ręczna praca miesięcznie, licząc godziny, błędy i stres?",
         cel: "Sprawić żeby klient sam wyliczył koszt bezczynności — mocniejsze niż podanie liczby przez Ciebie",
       },
       { t: "client", text: "[odpowiedź]" },
@@ -236,7 +252,7 @@ export const STEPS_D: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Zanim przejdziemy dalej — czy macie Państwo już zarezerwowany budżet na tego typu rozwiązanie w tym roku, czy to byłaby zupełnie nowa decyzja inwestycyjna?",
+        text: "Zanim przejdziemy dalej, czy macie Państwo już zarezerwowany budżet na tego typu rozwiązanie w tym roku, czy to byłaby zupełnie nowa decyzja inwestycyjna?",
         cel: "Sprawdzić realne zasoby finansowe zanim zainwestujesz czas w pełny pitch — uniknąć 20 minut prezentacji komuś bez fizycznej możliwości zapłaty",
       },
       { t: "client", text: "[odpowiedź]" },
@@ -254,7 +270,7 @@ export const STEPS_D: Step[] = [
       {
         t: "say",
         text: [
-          "Gdybyśmy to rozwiązali w ciągu 30 dni — jak wyglądałby idealny wynik?",
+          "Gdybyśmy to rozwiązali w ciągu 30 dni, jak wyglądałby idealny wynik?",
           "Co by się zmieniło w firmie?",
         ],
         cel: "Zbudować wizję pożądanego stanu, do której odwołasz się w pitchu i closing",
@@ -272,7 +288,7 @@ export const STEPS_D: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Jak {FORMA} ocenia, jak mocno to teraz doskwiera w firmie — to coś co spokojnie poczeka do przyszłego kwartału, czy to raczej coś czego {FORMA} chce się pozbyć jak najszybciej?",
+        text: "Jak {FORMA} ocenia, jak mocno to teraz doskwiera w firmie? Czy to coś co spokojnie poczeka do przyszłego kwartału, czy raczej coś, czego {FORMA} chce się pozbyć jak najszybciej?",
         cel: "Zmierzyć realną gotowość do działania bez brzmienia jak ankieta satysfakcji — odpowiedź daje ten sam sygnał co liczba 1-10, tylko w naturalnej formie",
       },
     ],
@@ -350,18 +366,21 @@ export const STEPS_D: Step[] = [
         t: "say",
         text: [
           "Dziękuję za szczerość.",
-          "Mam przygotowaną prezentację specjalnie dla [nazwa firmy] — z liczbami tej firmy.",
+          "Mam przygotowaną prezentację specjalnie dla [nazwa firmy], z liczbami tej firmy.",
           "Mogę ją teraz pokazać?",
         ],
       },
       { t: "client", text: "Tak, proszę." },
       {
         t: "say",
-        text: "Zanim pokażę rozwiązanie — jedno pytanie na rozgrzewkę. Gdyby to co za chwilę pokażę było dokładnie tym czego {FORMA} szuka, jak szybko dałoby się zacząć?",
+        text: "Zanim pokażę rozwiązanie, jedno pytanie na rozgrzewkę. Gdyby to co za chwilę pokażę było dokładnie tym czego {FORMA} szuka, jak szybko dałoby się zacząć?",
         cel: "Pre-frame gotowości przed pitchem, technika Agency Leaders — łapiesz sygnał pilności zanim jeszcze zobaczy cenę, i zbijasz obiekcję czasową zanim się pojawi",
       },
       { t: "client", text: "[odpowiedź — zapisz, wróć do niej przy closing]" },
     ],
+    expected:
+      "Klient zgadza się zobaczyć prezentację i podaje choćby przybliżony horyzont czasowy startu.",
+    transition: "Dziękuję, zapisuję to. Przechodzę teraz do pokazania rozwiązania.",
   },
   {
     id: "pitch",
@@ -376,8 +395,8 @@ export const STEPS_D: Step[] = [
       {
         t: "say",
         text: [
-          "Autorise pracuje wyłącznie z firmami transportowymi — nic innego nie robimy.",
-          "Dzięki temu rozumiemy tę branżę od środka — nie uczymy się jej kosztem klienta.",
+          "Autorise pracuje wyłącznie z firmami transportowymi, nic innego nie robimy.",
+          "Dzięki temu rozumiemy tę branżę od środka, nie uczymy się jej kosztem klienta.",
         ],
         cel: "Kilka słów o firmie, krótko — Kimura Framework: nie za długo, max 30 sekund",
       },
@@ -388,22 +407,22 @@ export const STEPS_D: Step[] = [
       {
         t: "say",
         text: [
-          "To co przed chwilą zostało opisane — [ból główny słowami klienta z parafrazy] — to dokładnie to, co u naszych klientów znika w ciągu 30 dni.",
-          "Odzyskuje {FORMA} minimum 70% obliczonego czasu bazowego — [gwarancja godzin] miesięcznie. Jeśli po 30 dniach tego nie osiągniemy, mamy czas na poprawki i sprawdzamy jeszcze raz — a jeśli i to się nie uda, ma Pan prawo do zwrotu wpłaconej kwoty.",
+          "To co przed chwilą zostało opisane, [ból główny słowami klienta z parafrazy], to dokładnie to, co u naszych klientów znika w ciągu 30 dni.",
+          "Odzyskuje {FORMA} minimum 70% obliczonego czasu bazowego, czyli [gwarancja godzin] miesięcznie. Jeśli po 30 dniach tego nie osiągniemy, mamy czas na poprawki i sprawdzamy jeszcze raz. Jeśli i to się nie uda, ma Pan prawo do zwrotu wpłaconej kwoty.",
         ],
         cel: "Obietnica/big promise — prowadzisz pitch od razu ofertą i gwarancją, nie chowasz jej na koniec. Sformułowanie zgodne z UMOWA_SYSTEM_AUTORISE.pdf §5 (dwie rundy weryfikacji, potem prawo Zamawiającego do odstąpienia i zwrotu wpłaconej kwoty) — nie 'zwrot 100% bez wyjątków' jak w starej wersji, ten mechanizm już nie istnieje w obecnej umowie",
       },
       {
         t: "say",
         text: [
-          "Wcześniej pojawiła się próba rozwiązania tego inaczej: [poprzednia próba z rozmowy], która nie zadziałała bo [powód z rozmowy].",
-          "My robimy to inaczej — nie sprzedajemy kolejnego generycznego narzędzia, tylko wdrożenie dopasowane do [nazwa TMS/system klienta] i tego konkretnego procesu.",
+          "Wcześniej pojawiła się próba rozwiązania tego inaczej, [poprzednia próba z rozmowy], która nie zadziałała bo [powód z rozmowy].",
+          "My robimy to inaczej. Nie sprzedajemy kolejnego generycznego narzędzia, tylko wdrożenie dopasowane do [nazwa TMS/system klienta] i tego konkretnego procesu.",
         ],
         cel: "Inaczej/lepiej niż konkurencja lub niż poprzednie próby — konkretne, nie ogólnikowe 'jesteśmy najlepsi'",
       },
       {
         t: "say",
-        text: "I jeszcze jedno, zanim przejdziemy dalej: ryzyko finansowe jest po naszej stronie, nie po Waszej. Jeśli po 30 dniach nie odzyskacie minimum 70% obliczonego czasu bazowego, czyli [gwarancja godzin] miesięcznie, mamy dwa tygodnie robocze na poprawki i weryfikujemy jeszcze raz. Jeśli i to się nie uda, ma Pan prawo odstąpić od umowy i dostać zwrot wpłaconej kwoty.",
+        text: "I jeszcze jedno, zanim przejdziemy dalej. Ryzyko finansowe jest po naszej stronie, nie po Waszej. Jeśli po 30 dniach nie odzyskacie minimum 70% obliczonego czasu bazowego, czyli [gwarancja godzin] miesięcznie, mamy dwa tygodnie robocze na poprawki i weryfikujemy jeszcze raz. Jeśli i to się nie uda, ma Pan prawo odstąpić od umowy i dostać zwrot wpłaconej kwoty.",
         cel: "Stały, mocny wyróżnik różnicujący (Blok 'Arek' pkt 4, 2026-07-15) — nie wzmianka o gwarancji przy okazji, tylko jawne nazwanie kto ponosi ryzyko finansowe. Zbija najczęstszą niewypowiedzianą obiekcję 'a jeśli to nie zadziała' zanim padnie. Mechanizm zgodny z UMOWA_SYSTEM_AUTORISE.pdf §5 ust. 6-8 — dwie rundy weryfikacji (30 dni + 14 dni robocze poprawek + 30 dni ponownej weryfikacji), dopiero potem prawo do odstąpienia i zwrotu, nie jednorazowy automatyczny zwrot",
       },
       {
@@ -413,7 +432,7 @@ export const STEPS_D: Step[] = [
       {
         t: "say",
         text: [
-          "System transformacji wygląda tak: krok pierwszy, [moduł 1 zakończony konkretnym efektem, nie opisem funkcji].",
+          "System transformacji wygląda tak. Krok pierwszy, [moduł 1 zakończony konkretnym efektem, nie opisem funkcji].",
           "Krok drugi, [moduł 2 zakończony konkretnym efektem, nie opisem funkcji].",
           "Krok trzeci, [moduł 3 zakończony konkretnym efektem, nie opisem funkcji].",
           "Od tego co ma {FORMA} dziś, do stanu w którym te godziny wracają do biura.",
@@ -435,7 +454,7 @@ export const STEPS_D: Step[] = [
       {
         t: "say",
         text: [
-          "Pomożemy Panu osiągnąć [WYNIK]. Jeśli po weryfikacji i ewentualnej korekcie nadal tego nie osiągniemy, ma Pan prawo do zwrotu wpłaconej kwoty. Robimy to dzięki [MECHANIZM] - automatyzacji panelu, odczytowi dokumentów i jednoklikowym potwierdzeniom spedytora. Mamy to opisane w umowie, nie na słowo.",
+          "Pomożemy Panu osiągnąć [WYNIK]. Jeśli po weryfikacji i ewentualnej korekcie nadal tego nie osiągniemy, ma Pan prawo do zwrotu wpłaconej kwoty. Robimy to dzięki [MECHANIZM], czyli automatyzacji panelu, odczytowi dokumentów i jednoklikowym potwierdzeniom spedytora. Mamy to opisane w umowie, nie na słowo.",
         ],
       },
       {
@@ -472,7 +491,7 @@ export const STEPS_D: Step[] = [
         {
           trigger: "Zgłasza wątpliwość",
           action:
-            "Znajdź pasującą obiekcję w prawym panelu i odpowiedz na NIĄ zanim wrócisz do sekwencji zamykania wartości. Nie przechodź do kroku b) z niezaadresowaną wątpliwością.",
+            "Znajdź pasującą obiekcję niżej w skrypcie (najczęściej w kroku Cena albo Closing) i odpowiedz na NIĄ zanim wrócisz do sekwencji zamykania wartości. Nie przechodź do kroku b) z niezaadresowaną wątpliwością.",
           goToStepId: "parafraza",
           tone: "warning",
         },
@@ -493,7 +512,7 @@ export const STEPS_D: Step[] = [
         t: "say",
         text: [
           "Podsumowując, moduły które Panu pokazałem przekładają się na [X godzin/zł miesięcznie].",
-          "Pytanie do Pana - jeżeli inwestycja, którą zaraz pokażę, będzie do przełknięcia, czy ten model współpracy z Panem rezonuje?",
+          "Pytanie do Pana, jeżeli inwestycja którą zaraz pokażę będzie do przełknięcia, czy ten model współpracy z Panem rezonuje?",
         ],
         cel: "Sprawdzić temperaturę bez sztywnej skali liczbowej, naturalniej niż 'gdzie jesteśmy 1-10'",
       },
@@ -511,7 +530,7 @@ export const STEPS_D: Step[] = [
         {
           trigger: "Niepewna, wymaga dopytania",
           action:
-            "Powiedz: 'Co konkretnie budzi wątpliwość, zanim przejdziemy dalej?' Wysłuchaj odpowiedzi, znajdź pasującą obiekcję w prawym panelu i odpowiedz na NIĄ. Nie przechodź do decydenta/ceny zanim wątpliwość nie zostanie realnie zaadresowana — po odpowiedzi na obiekcję wróć do parafrazy, nie skacz od razu do pytania o decyzyjność.",
+            "Powiedz: 'Co konkretnie budzi wątpliwość, zanim przejdziemy dalej?' Wysłuchaj odpowiedzi, znajdź pasującą obiekcję niżej w skrypcie i odpowiedz na NIĄ. Nie przechodź do decydenta/ceny zanim wątpliwość nie zostanie realnie zaadresowana — po odpowiedzi na obiekcję wróć do parafrazy, nie skacz od razu do pytania o decyzyjność.",
           goToStepId: "parafraza",
           tone: "neutral",
         },
@@ -575,7 +594,7 @@ export const STEPS_D: Step[] = [
         t: "say",
         text: [
           "Za tę inwestycję odzyskuje {FORMA} minimum [gwarancja godzin] godzin miesięcznie, które dziś firma traci na ręcznej pracy.",
-          "Gwarancja: minimum 70% obliczonego czasu bazowego Pana firmy, czyli [gwarancja godzin] miesięcznie, sprawdzane po 30 dniach — jeśli nie osiągniemy progu, poprawiamy i weryfikujemy jeszcze raz, a jeśli i to się nie uda, ma Pan prawo do zwrotu wpłaconej kwoty.",
+          "Gwarancja to minimum 70% obliczonego czasu bazowego Pana firmy, czyli [gwarancja godzin] miesięcznie, sprawdzane po 30 dniach. Jeśli nie osiągniemy progu, poprawiamy i weryfikujemy jeszcze raz, a jeśli i to się nie uda, ma Pan prawo do zwrotu wpłaconej kwoty.",
         ],
         cel: "Clear value proposition (Kacper Wierszewski) — jedno jasne zdanie łączące liczbę z wynikiem PRZED samą kwotą, żeby klient słyszał najpierw efekt, potem cenę. Gwarancja opisana zgodnie z UMOWA_SYSTEM_AUTORISE.pdf §5 (dwie rundy weryfikacji, potem prawo do odstąpienia i zwrotu), nie jako jednorazowy zwrot",
       },
@@ -634,14 +653,14 @@ export const STEPS_D: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Ryzyko po naszej stronie, gwarancja zwrotu, i już dziś wie {FORMA} że to się zwraca w [X] miesięcy — pytanie właściwie brzmi, co miałoby powstrzymać Pana przed startem?",
+        text: "Ryzyko po naszej stronie, gwarancja zwrotu, i już dziś wie {FORMA} że to się zwraca w [X] miesięcy. Pytanie właściwie brzmi, co miałoby powstrzymać Pana przed startem?",
         cel: "Make people feel dumb saying no (Kacper Wierszewski) — podsumowanie asymetrii ryzyka tuż przed pytaniem o decyzję, żeby odmowa wymagała od klienta konkretnego kontrargumentu, nie ogólnego wahania",
       },
       { t: "say", text: "Co potrzebuje {FORMA} żeby podjąć decyzję dziś?" },
       { t: "client", text: "[odpowiedź]" },
       {
         t: "note",
-        text: "Jeśli brak obiekcji: 'Super. Prześlę umowę na maila. Mogę teraz?' Jeśli jest obiekcja — użyj sekcji Obiekcje.",
+        text: "Jeśli brak obiekcji: 'Super. Prześlę umowę na maila. Mogę teraz?' Jeśli jest obiekcja, znajdź ją niżej w tym kroku.",
       },
       {
         t: "say",
@@ -649,7 +668,7 @@ export const STEPS_D: Step[] = [
           "Świetnie.",
           "Prześlę umowę na [email] do podpisu.",
           "Po podpisaniu wystawiam fakturę, płatna w 2 dni robocze.",
-          "Kickoff umawiamy w ciągu 7 dni roboczych od zaksięgowania pełnej wpłaty — to jest moment od którego realnie zaczynamy.",
+          "Spotkanie startowe umawiamy w ciągu 7 dni roboczych od zaksięgowania pełnej wpłaty, to jest moment od którego realnie zaczynamy.",
           "Pasuje?",
         ],
         cel: "Kolejność podpis → faktura → wpłata → Kickoff — praca zaczyna się dopiero po zaksięgowaniu pełnej wpłaty (UMOWA_SYSTEM_AUTORISE.pdf §2-3), nie od samego podpisania",
@@ -659,6 +678,8 @@ export const STEPS_D: Step[] = [
         text: "Ważne dla Ciebie, niekoniecznie do wypowiedzenia wprost: umowa ma warunek rozwiązujący — jeśli pełna kwota nie wpłynie na konto w ciągu 7 dni kalendarzowych od podpisania, umowa automatycznie się rozwiązuje ze skutkiem wstecznym (UMOWA_SYSTEM_AUTORISE.pdf §2 ust. 2). Dopilnuj żeby klient wiedział o tym terminie i żeby faktura poszła od razu.",
       },
     ],
+    expected: "Klient nie zgłasza dalszej obiekcji i zgadza się na przesłanie umowy.",
+    transition: "Świetnie, to przejdźmy jeszcze przez warunki umowy, zanim wyślę dokument.",
   },
   {
     id: "warunki_umowy",
@@ -677,7 +698,7 @@ export const STEPS_D: Step[] = [
       },
       {
         t: "say",
-        text: "Ważna rzecz: jeśli pełna kwota nie wpłynie na nasze konto w ciągu 7 dni kalendarzowych od podpisania, umowa automatycznie się rozwiązuje. Dlatego zależy mi żeby faktura poszła szybko po podpisie, i żeby przelew poszedł zaraz po niej.",
+        text: "Ważna rzecz. Jeśli pełna kwota nie wpłynie na nasze konto w ciągu 7 dni kalendarzowych od podpisania, umowa automatycznie się rozwiązuje. Dlatego zależy mi żeby faktura poszła szybko po podpisie, i żeby przelew poszedł zaraz po niej.",
         cel: "Warunek rozwiązujący — UMOWA_SYSTEM_AUTORISE.pdf §2 ust. 2, twardy termin nieobecny w starszych wersjach umowy. Musi być wypowiedziany wprost, klient nie może się dowiedzieć o nim dopiero z treści dokumentu",
       },
       {
@@ -702,12 +723,12 @@ export const STEPS_D: Step[] = [
       },
       {
         t: "say",
-        text: "Tysiąc złotych miesięcznie przez minimum 12 miesięcy licząc od dnia odbioru systemu, niezależnie od wyniku weryfikacji — to osobna rzecz od samego wdrożenia.",
+        text: "Tysiąc złotych miesięcznie przez minimum 12 miesięcy licząc od dnia odbioru systemu, niezależnie od wyniku weryfikacji. To osobna rzecz od samego wdrożenia.",
         cel: "Retainer — oddzielić jednoznacznie od gwarancji zwrotu, najczęstszy punkt niejasności po podpisie. Kwota i start liczenia zgodne z UMOWA_SYSTEM_AUTORISE.pdf §7 ust. 1 i §8 ust. 2",
       },
       {
         t: "say",
-        text: "Jeśli Pana TMS nie ma jeszcze potwierdzonego dostępu do API, zwykle nie jest to problem — mamy na to sprawdzony sposób, zajmę się tym na Kickoff.",
+        text: "Jeśli Pana TMS nie ma jeszcze potwierdzonego dostępu do API, zwykle nie jest to problem. Mamy na to sprawdzony sposób, zajmę się tym na pierwszym spotkaniu po podpisaniu.",
         cel: "Wykonalność integracji TMS — proces oceny z KARTA_PRODUKTU_SYSTEM_OPERACYJNY.md pkt 8 (2026-07-19), tu w skróconej formie: pewność bez rozwlekania mechanizmu, którego klient na tym etapie nie potrzebuje. Celowo 'zwykle nie problem', nie 'to nie jest ryzyko' — UMOWA_SYSTEM_AUTORISE.pdf §3 ust. 5 dopuszcza odstąpienie obu stron w rzadkim przypadku braku alternatywy, nie warto tego przemilczać jeśli klient dopyta wprost",
       },
       {
@@ -716,12 +737,12 @@ export const STEPS_D: Step[] = [
       },
       {
         t: "say",
-        text: "Po podpisaniu dostanie Pan konkretny rytm, nie ciszę: Kickoff w ciągu 7 dni roboczych od pełnej wpłaty, potem zbieramy dostępy, potem do 4 tygodni wdrożenia, potem odbiór systemu, i od tego dnia liczy się 30-dniowa weryfikacja i pierwsza faktura retainera — każdy etap z ustaloną datą, nie zawieszony w niepewności.",
+        text: "Po podpisaniu dostanie Pan konkretny rytm, nie ciszę. Spotkanie startowe w ciągu 7 dni roboczych od pełnej wpłaty, potem zbieramy dostępy, potem do 4 tygodni wdrożenia, potem odbiór systemu, i od tego dnia liczy się 30-dniowa weryfikacja i pierwsza faktura retainera. Każdy etap ma ustaloną datę, nic nie zawiśnie w niepewności.",
         cel: "Zapowiedź całego cyklu, nie tylko momentu podpisu — żeby klient nie miał wrażenia że po podpisie 'coś się dzieje' bez konkretnego rytmu. Wypowiadane PRZED prośbą o podpis, jako ostatni punkt pewności zanim padnie pytanie o samą decyzję. Kolejność zgodna z UMOWA_SYSTEM_AUTORISE.pdf §3-5: wpłata → Kickoff → dostępy → wdrożenie → odbiór → weryfikacja + start retainera",
       },
       {
         t: "say",
-        text: "Wysyłam teraz umowę do podpisu — proszę o podpis jeszcze dziś, żeby zegar dostępów mógł ruszyć jak najszybciej.",
+        text: "Wysyłam teraz umowę do podpisu. Proszę o podpis jeszcze dziś, żeby zegar dostępów mógł ruszyć jak najszybciej.",
         cel: "Podpis — moment wywołania Google Workspace eSignature / iLovePDF. W systemie nie ma jeszcze gotowej integracji/linku do tego kroku — to świadomie sam tekst przypominający, bez budowania nowej integracji teraz",
       },
     ],
@@ -760,7 +781,7 @@ export const OBJECTIONS_D: Objection[] = [
     label: "Zastanowienie: kwestia finansowa",
     script: "Rozumiem. Co możemy wspólnie zrobić, żeby dało się to zagospodarować budżetowo?",
     followup:
-      "Umowa nie przewiduje rozłożenia na raty - cała kwota płatna jest jednorazowo, zanim zaczynamy pracę. Czy to raczej kwestia terminu, na przykład rozpoczęcia w kolejnym miesiącu rozliczeniowym, czy realnie fizycznego braku środków w tej chwili?",
+      "Umowa nie przewiduje rozłożenia na raty. Cała kwota płatna jest jednorazowo, zanim zaczynamy pracę. Czy to raczej kwestia terminu, na przykład rozpoczęcia w kolejnym miesiącu rozliczeniowym, czy realnie fizycznego braku środków w tej chwili?",
     note: "Followup zadawaj tylko jeśli klient nie widzi możliwości sfinansowania od razu. UMOWA_SYSTEM_AUTORISE.pdf nie przewiduje żadnego wariantu ratalnego - płatność jest zawsze jednorazowa, przed startem prac (§2 ust. 1-2, §8 ust. 1). Nie proponuj rat, nawet jako ustępstwo.",
   },
   {
@@ -768,7 +789,7 @@ export const OBJECTIONS_D: Objection[] = [
     stage: "closing",
     label: "Zastanowienie: chce skonsultować z kimś",
     script:
-      "Jak najbardziej rozumiem. Żeby wiedzieć jak najlepiej Panu pomóc - czy to jest wspólna decyzja pięćdziesiąt na pięćdziesiąt, czy bardziej Pan decyduje, a [osoba] jest informowana?",
+      "Jak najbardziej rozumiem. Żeby wiedzieć jak najlepiej Panu pomóc, czy to jest wspólna decyzja pięćdziesiąt na pięćdziesiąt, czy bardziej Pan decyduje, a [osoba] jest informowana?",
     followup:
       "Czy pomogłoby, gdybyśmy to wspólnie omówili na krótkim spotkaniu, żeby nie robić głuchego telefonu?",
     note: "Followup, czyli propozycja krótkiego wspólnego spotkania, zadawaj po odpowiedzi klienta, zamiast przekazywania informacji z drugiej ręki.",
@@ -796,7 +817,7 @@ export const OBJECTIONS_D: Objection[] = [
     stage: "cena",
     label: "Za drogo: kwestia logistyki płatności",
     script:
-      "Rozumiem, to nie jest mała kwota jednorazowo. Umowa nie przewiduje rat, cała kwota jest płatna jednorazowo przed startem prac - ale mogę dopasować moment startu, na przykład do początku kolejnego miesiąca, jeśli to pomaga zaplanować przepływ gotówki. Ułatwia to decyzję?",
+      "Rozumiem, to nie jest mała kwota jednorazowo. Umowa nie przewiduje rat, cała kwota jest płatna jednorazowo przed startem prac, ale mogę dopasować moment startu, na przykład do początku kolejnego miesiąca, jeśli to pomaga zaplanować przepływ gotówki. Ułatwia to decyzję?",
     note: "Bez propozycji rat - UMOWA_SYSTEM_AUTORISE.pdf nie przewiduje takiego wariantu. Jedyna dostępna elastyczność to termin startu, nie rozłożenie kwoty.",
   },
   {
@@ -887,7 +908,7 @@ export const OBJECTIONS_D: Objection[] = [
     stage: "cena",
     label: "Mogę płacić w ratach?",
     script:
-      "Niestety nie, umowa nie przewiduje rat - cała kwota za wdrożenie jest płatna jednorazowo, przed startem prac. To dlatego gwarancja i cały proces weryfikacji mają sens finansowy dla obu stron. Mogę za to dopasować moment startu do Pana kalendarza płatności, jeśli to pomaga.",
+      "Niestety nie, umowa nie przewiduje rat. Cała kwota za wdrożenie jest płatna jednorazowo, przed startem prac. To dlatego gwarancja i cały proces weryfikacji mają sens finansowy dla obu stron. Mogę za to dopasować moment startu do Pana kalendarza płatności, jeśli to pomaga.",
     note: "UMOWA_SYSTEM_AUTORISE.pdf nie przewiduje żadnego wariantu ratalnego. Nie obiecuj rat w żadnej formie, nawet jako gest dobrej woli.",
   },
   {
@@ -903,7 +924,7 @@ export const OBJECTIONS_D: Objection[] = [
     stage: "closing",
     label: "Czemu Pan podpisuje, nie właściciel firmy?",
     script:
-      "Działam jako pełnomocnik właściciela na podstawie pisemnego pełnomocnictwa, art. 100 kodeksu cywilnego — mam pełne prawo podpisać tę umowę w jego imieniu.",
+      "Działam jako pełnomocnik właściciela na podstawie pisemnego pełnomocnictwa, art. 100 kodeksu cywilnego. Mam pełne prawo podpisać tę umowę w jego imieniu.",
     note: "Krótko i pewnie, bez dalszego tłumaczenia się jeśli klient nie dopytuje dalej — to potwierdzenie faktu, nie negocjacja.",
   },
   {
@@ -911,21 +932,21 @@ export const OBJECTIONS_D: Objection[] = [
     stage: "cena",
     label: "Co jeśli AI popełni błąd np. na fakturze?",
     script:
-      "Dlatego w pierwszych 30 dniach obowiązuje wyrywkowa weryfikacja z Pana strony — sprawdzacie próbkę dokumentów zanim w pełni zaufacie automatyzacji. Jak coś nie zgadza się, poprawiamy to od razu, taki jest sens tego okresu.",
+      "Dlatego w pierwszych 30 dniach obowiązuje wyrywkowa weryfikacja z Pana strony. Sprawdzacie próbkę dokumentów zanim w pełni zaufacie automatyzacji. Jak coś nie zgadza się, poprawiamy to od razu, taki jest sens tego okresu.",
   },
   {
     id: "od15",
     stage: "closing",
     label: "Czemu zegar liczy się od dostępów, nie od podpisania?",
     script:
-      "To uczciwe dla obu stron — nie płaci Pan za czas w którym fizycznie nie mogliśmy jeszcze pracować, bo nie mieliśmy dostępów. Zegar rusza dopiero gdy realnie zaczynamy.",
+      "To uczciwe dla obu stron. Nie płaci Pan za czas w którym fizycznie nie mogliśmy jeszcze pracować, bo nie mieliśmy dostępów. Zegar rusza dopiero gdy realnie zaczynamy.",
   },
   {
     id: "od17",
     stage: "cena",
     label: "A jeśli godziny oszczędności się nie potwierdzą bo się spóźniliście z integracją?",
     script:
-      "Weryfikacja 30 dni liczy się dopiero od odbioru systemu, czyli po zakończeniu wdrożenia — jeśli to my się spóźnimy z integracją, odbiór jeszcze nie nastąpił, więc zegar weryfikacji jeszcze się nie zaczął i to nie obciąża Pana. Obciąża Pana tylko jeśli to Państwa strona spóźni dostępy mimo ustalonego terminu, bo to wydłuża sam etap wdrożenia przed odbiorem.",
+      "Weryfikacja 30 dni liczy się dopiero od odbioru systemu, czyli po zakończeniu wdrożenia. Jeśli to my się spóźnimy z integracją, odbiór jeszcze nie nastąpił, więc zegar weryfikacji jeszcze się nie zaczął i to nie obciąża Pana. Obciąża Pana tylko jeśli to Państwa strona spóźni dostępy mimo ustalonego terminu, bo to wydłuża sam etap wdrożenia przed odbiorem.",
   },
   {
     id: "od18",
@@ -940,7 +961,7 @@ export const OBJECTIONS_D: Objection[] = [
     stage: "closing",
     label: "Musimy przesłać umowę do prawnika/działu prawnego",
     script:
-      "Rozumiem, to standardowa procedura przy większych firmach. Wyślę umowę dziś/jutro na maila — czy mogę prosić o konkretny termin kiedy spodziewa się Pan odpowiedzi od prawnika, żebyśmy mogli zaplanować start? Jeśli po drodze pojawią się pytania techniczne czy dotyczące zakresu, chętnie odpowiem prawnikowi bezpośrednio albo Panu, żeby nie utknęło bez potrzeby.",
+      "Rozumiem, to standardowa procedura przy większych firmach. Wyślę umowę dziś albo jutro na maila. Czy mogę prosić o konkretny termin kiedy spodziewa się Pan odpowiedzi od prawnika, żebyśmy mogli zaplanować start? Jeśli po drodze pojawią się pytania techniczne czy dotyczące zakresu, chętnie odpowiem prawnikowi bezpośrednio albo Panu, żeby nie utknęło bez potrzeby.",
     note: "Realny, powtarzalny przypadek u większych klientów, nie to samo co generyczne 'muszę pomyśleć' (od1) — to legalna procedura korporacyjna, nie wymówka. Potwierdzone na Arku Burkowskim ('u nas czyta prawnie', 'on na pewno nie usiądzie do tego na CITO'). Cel: nie naciskać na podpis tego samego dnia w takiej sytuacji, tylko wyciągnąć konkretny termin follow-up zamiast otwartego 'jakoś się odezwę'.",
   },
   {
@@ -956,7 +977,7 @@ export const OBJECTIONS_D: Objection[] = [
     stage: "closing",
     label: "To temat na za miesiąc",
     script:
-      "Rozumiem, ale zanim to zostawimy na później — co konkretnie sprawia że to akurat za miesiąc, nie teraz? Budżet, sezon, czy ktoś inny musi to jeszcze zaakceptować?",
+      "Rozumiem, ale zanim to zostawimy na później, co konkretnie sprawia że to akurat za miesiąc, nie teraz? Budżet, sezon, czy ktoś inny musi to jeszcze zaakceptować?",
     followup:
       "Skoro wiemy co konkretnie stoi na przeszkodzie, sprawdźmy razem czy da się to rozwiązać już teraz, zamiast czekać miesiąc z tym samym kosztem który dalej biegnie.",
     note: "Wskazówka Agency Leaders: nie akceptować 'za miesiąc' biernie — dobry sprzedawca doradza, nie tylko czeka na 'tak'. Po poznaniu realnego powodu, spróbuj pokazać koszt dalszego zwlekania i sprawdź czy przeszkoda da się usunąć teraz, zanim zaakceptujesz odłożenie w czasie.",
@@ -966,7 +987,7 @@ export const OBJECTIONS_D: Objection[] = [
     stage: "cena",
     label: "Obiekcja ogólna (cokolwiek poza 'nie widzę wartości')",
     script:
-      "Rozumiem, to normalne. Finanse na bok - czy to co Panu pokazałem mogłoby być odpowiedzią na to czego Pan szuka?",
+      "Rozumiem, to normalne. Finanse na bok, czy to co Panu pokazałem mogłoby być odpowiedzią na to czego Pan szuka?",
     followup: "Czemu Pan tak uważa?",
     note: "Jeśli klient potwierdza, zadaj followup i czekaj na jego własne uzasadnienie, nie podpowiadaj.",
   },
@@ -985,14 +1006,14 @@ export const OBJECTIONS_D: Objection[] = [
     stage: "pitch",
     label: "Brak case studies / referencji",
     script:
-      "Powiem wprost - jesteśmy na etapie budowania portfolio w tej gałęzi, pierwsze wdrożenie ruszamy teraz. Dlatego dajemy gwarancję z prawem do zwrotu wpłaconej kwoty jeśli nie osiągniemy celu, nie opieramy się tylko na zaufaniu. Mogę pokazać dokładne wyliczenie oszczędności na Pana danych, to jest twardszy dowód niż cudze referencje.",
+      "Powiem wprost, jesteśmy na etapie budowania portfolio w tej gałęzi, pierwsze wdrożenie ruszamy teraz. Dlatego dajemy gwarancję z prawem do zwrotu wpłaconej kwoty jeśli nie osiągniemy celu, nie opieramy się tylko na zaufaniu. Mogę pokazać dokładne wyliczenie oszczędności na Pana danych, to jest twardszy dowód niż cudze referencje.",
   },
   {
     id: "od24",
     stage: "cena",
     label: "Płatność z góry",
     script:
-      "Rozumiem tę wątpliwość. Robimy tak, bo klient który się nie angażuje finansowo od początku, rzadziej angażuje się we współpracy po swojej stronie - a to jest kluczowe dla wyniku. Dlatego Pana prawo do zwrotu wpłaconej kwoty, jeśli nie osiągniemy celu efektywności, jest zapisane w umowie, nie na słowo.",
+      "Rozumiem tę wątpliwość. Robimy tak, bo klient który się nie angażuje finansowo od początku, rzadziej angażuje się we współpracy po swojej stronie, a to jest kluczowe dla wyniku. Dlatego Pana prawo do zwrotu wpłaconej kwoty, jeśli nie osiągniemy celu efektywności, jest zapisane w umowie, nie na słowo.",
   },
 ];
 
