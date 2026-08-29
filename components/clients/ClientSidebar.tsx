@@ -49,6 +49,11 @@ interface ClientSidebarProps {
   callDoneClientIds?: string[];
   /** Nazwa sprzedawcy per klient (klucz = client.id) — pokazywana wprost na karcie klienta. */
   sellerNameById?: Record<string, string>;
+  /** Id klientów oznaczonych jako brak uczestnictwa w rozmowie (No-Show) — czerwona
+   * plakietka na karcie klienta, ten sam mechanizm wizualny co `callDoneClientIds`
+   * (zielona "Rozmowa odbyta"), tylko w kolorze błędu. Przeniesione 2026-08-29 z braku
+   * jakiejkolwiek widoczności No-Show na liście klientów w /sprzedaz. */
+  noShowClientIds?: string[];
   /** Pokaż przycisk "Otwórz prezentację" na dole KAŻDEJ karty klienta (domyślnie tak).
    * W /kwalifikacja wyłączone — prezentacja jest dopiero na etapie sprzedaży. Przeniesione
    * 2026-08-29 z osobnego, wysuwanego panelu pod listą (widocznego tylko dla zaznaczonego
@@ -71,8 +76,10 @@ export function ClientSidebar({
   callDoneClientIds,
   sellerNameById,
   showPresentation = true,
+  noShowClientIds,
 }: ClientSidebarProps) {
   const callDoneSet = new Set(callDoneClientIds ?? []);
+  const noShowSet = new Set(noShowClientIds ?? []);
   const [search, setSearch] = useState("");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [collapsed, setCollapsed] = useState(false);
@@ -109,8 +116,12 @@ export function ClientSidebar({
   return (
     <div
       style={{
-        width: collapsed ? 44 : 276,
-        minWidth: collapsed ? 44 : 276,
+        // Szerokość +10% (276 -> 304, 2026-08-29, Michał: plakietka statusu "Discovery
+        // umówione" łamała się na dwie linie w wąskim panelu) — patrz też whiteSpace:"nowrap"
+        // na plakietce niżej, to razem rozwiązuje problem, samo poszerzenie panelu nie
+        // wystarczyłoby przy długich nazwach statusów.
+        width: collapsed ? 44 : 304,
+        minWidth: collapsed ? 44 : 304,
         height: "100%",
         borderRight: "1px solid var(--border)",
         display: "flex",
@@ -236,13 +247,25 @@ export function ClientSidebar({
                     fontWeight: 800,
                     letterSpacing: "0.02em",
                     textTransform: "uppercase",
+                    // white-space jest właściwością dziedziczoną — nowrap tu wystarcza żeby
+                    // nazwa statusu (np. "Discovery umówione") nie łamała się na dwie linie
+                    // wewnątrz plakietki, niezależnie od tego czy to bare-string flex item.
+                    whiteSpace: "nowrap",
                   }}
                 >
                   <span
-                    style={{ width: 7, height: 7, borderRadius: "50%", background: "#ffffff" }}
+                    style={{
+                      width: 7,
+                      height: 7,
+                      borderRadius: "50%",
+                      background: "#ffffff",
+                      flexShrink: 0,
+                    }}
                   />
                   {groupByStatus ? "Klienci" : headerLabel}
-                  <span style={{ fontWeight: 700, opacity: 0.75 }}>{filtered.length}</span>
+                  <span style={{ fontWeight: 700, opacity: 0.75, flexShrink: 0 }}>
+                    {filtered.length}
+                  </span>
                 </span>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <button
@@ -353,6 +376,7 @@ export function ClientSidebar({
                             selected={selected}
                             onSelect={onSelect}
                             callDone={callDoneSet.has(c.id)}
+                            noShow={noShowSet.has(c.id)}
                             sellerName={sellerNameById?.[c.id] ?? null}
                             showPresentation={showPresentation}
                           />
@@ -467,6 +491,7 @@ function ClientRow({
   selected,
   onSelect,
   callDone,
+  noShow,
   sellerName,
   showPresentation,
 }: {
@@ -474,6 +499,7 @@ function ClientRow({
   selected: PipelineClientDetailed | null;
   onSelect: (c: PipelineClientDetailed | null) => void;
   callDone?: boolean;
+  noShow?: boolean;
   sellerName?: string | null;
   showPresentation?: boolean;
 }) {
@@ -541,6 +567,36 @@ function ClientRow({
             }}
           >
             Rozmowa odbyta
+          </span>
+        </div>
+      )}
+
+      {noShow && (
+        <div
+          style={{
+            marginTop: 8,
+            paddingTop: 8,
+            borderTop: "1px solid rgba(255,255,255,0.42)",
+          }}
+        >
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "5px 12px",
+              borderRadius: "var(--radius-xs)",
+              background: "var(--error-bg)",
+              border: "1px solid rgba(255,255,255,0.5)",
+              color: "var(--error-text)",
+              fontFamily: "var(--font-sans)",
+              fontSize: 13,
+              fontWeight: 800,
+              letterSpacing: "0.04em",
+              textTransform: "uppercase",
+            }}
+          >
+            Brak uczestnictwa
           </span>
         </div>
       )}

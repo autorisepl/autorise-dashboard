@@ -16,17 +16,21 @@ import { Panel } from "@/components/ui/Panel";
 // logami systemu zamiast ręcznego wpisu metryk, KARTA_PRODUKTU pkt 13).
 
 // Ten sam fallback co DOMYSLNY_RETAINER w /api/notion/prezentacja-dane — pole "Retainer PLN/mc"
-// jest wypełniane wyłącznie ręcznie przez Michała, wczesne karty mają je puste.
-const DOMYSLNY_RETAINER = 4000;
+// jest wypełniane wyłącznie ręcznie przez Michała, wczesne karty mają je puste. 1000 zł/mc
+// zgodnie z UMOWA_SYSTEM_AUTORISE.pdf §7 ust. 1 (poprzednio 4000, stara umowa, 2026-08-29).
+const DOMYSLNY_RETAINER = 1000;
 
 // Treść identyczna ze slajdu 6 prezentacji (public/prezentacja.html, sekcja "Co obejmuje
 // retainer") — jeden opis stałego zakresu retainera, nie dwie wersje tego samego tekstu.
+// Zaktualizowane 2026-08-29 do UMOWA_SYSTEM_AUTORISE.pdf: naprawa usterek to 5 dni robocze
+// (§6.1.6), nie 24h, i zakres to drobne modyfikacje reguł automatyzacji (§6.1.4), nie
+// "skalowanie floty" — obietnica nieobecna w obecnej umowie.
 const RETAINER_ZAKRES = [
   "Poprawki przy zmianach API dostawców (TMS, księgowość, KSeF)",
-  "Skalowanie systemu wraz ze wzrostem floty i biura",
+  "Drobne modyfikacje i nowe reguły automatyzacji w miarę rozwoju firmy",
   "Wsparcie telefoniczne bezpośrednio u Foundera",
   "Kontrola działania systemu na dashboardzie",
-  "Naprawa awarii w 24 godziny",
+  "Naprawa usterek w 5 dni roboczych od zgłoszenia",
 ];
 
 // KARTA_PRODUKTU_SYSTEM_OPERACYJNY.md pkt 14, drabinka eskalacji zdecydowana 2026-07-17.

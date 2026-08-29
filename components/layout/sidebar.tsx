@@ -5,6 +5,7 @@ import {
   BookOpen,
   CalendarDays,
   Clock,
+  FileCheck2,
   Kanban,
   LayoutDashboard,
   LifeBuoy,
@@ -167,6 +168,10 @@ const NAV: {
     label: "Klienci",
     items: [
       { href: "/pipeline", label: "Pipeline", icon: Kanban },
+      // Nowa zakładka między Pipeline a Wdrożeniem (2026-08-29, Michał) — na razie pusta,
+      // treść (skrypt analizy przedkontraktowej przeniesiony ze /sprzedaz, gdzie stoi bez
+      // sensu w trakcie samej rozmowy Discovery) dochodzi w kolejnej sesji.
+      { href: "/finalizacja", label: "Finalizacja i analiza", icon: FileCheck2, exact: true },
       { href: "/wdrozenie", label: "Wdrożenie", icon: Rocket, exact: true },
       { href: "/utrzymanie", label: "Utrzymanie", icon: LifeBuoy, exact: true },
       { href: "/agenci", label: "Agenci AI", icon: LayoutDashboard, exact: false },

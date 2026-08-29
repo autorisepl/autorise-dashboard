@@ -471,7 +471,7 @@ export const STEPS_D: Step[] = [
     lines: [
       {
         t: "note",
-        text: "Krok a) sekwencji zamykania wartości. Zbierz 2-3 takie potwierdzenia na bieżąco w trakcie prezentacji (SLAJDY 2-7 w kroku 4), nie dopiero po jej zakończeniu — tu zapisane osobno dla jasności skryptu i jawnego bramkowania przed krokiem b.",
+        text: "Zbierz 2-3 takie potwierdzenia na bieżąco w trakcie prezentacji (SLAJDY 2-7 w kroku PREZENTACJA ROZWIĄZANIA), nie dopiero po jej zakończeniu.",
       },
       {
         t: "say",
@@ -491,7 +491,7 @@ export const STEPS_D: Step[] = [
         {
           trigger: "Zgłasza wątpliwość",
           action:
-            "Znajdź pasującą obiekcję niżej w skrypcie (najczęściej w kroku Cena albo Closing) i odpowiedz na NIĄ zanim wrócisz do sekwencji zamykania wartości. Nie przechodź do kroku b) z niezaadresowaną wątpliwością.",
+            "Znajdź pasującą obiekcję niżej w skrypcie (najczęściej w kroku Cena albo Closing) i odpowiedz na NIĄ zanim wrócisz do podsumowania. Nie przechodź dalej z niezaadresowaną wątpliwością.",
           goToStepId: "parafraza",
           tone: "warning",
         },
@@ -504,10 +504,6 @@ export const STEPS_D: Step[] = [
     label: "KROK B — PODSUMOWANIE I REZONANS",
     tag: "PYTASZ",
     lines: [
-      {
-        t: "note",
-        text: "Krok b) sekwencji zamykania wartości, wykonywany po potwierdzeniu z kroku a.",
-      },
       {
         t: "say",
         text: [
@@ -599,10 +595,6 @@ export const STEPS_D: Step[] = [
         cel: "Clear value proposition (Kacper Wierszewski) — jedno jasne zdanie łączące liczbę z wynikiem PRZED samą kwotą, żeby klient słyszał najpierw efekt, potem cenę. Gwarancja opisana zgodnie z UMOWA_SYSTEM_AUTORISE.pdf §5 (dwie rundy weryfikacji, potem prawo do odstąpienia i zwrotu), nie jako jednorazowy zwrot",
       },
       {
-        t: "note",
-        text: "Krok c) sekwencji zamykania wartości, wykonywany po potwierdzeniu z kroku b i ustaleniu decydenta.",
-      },
-      {
         t: "say",
         text: "Inwestycja żeby skorzystać z tego systemu i osiągnąć ten cel to jest 30 000 złotych za wdrożenie i 1000 złotych miesięcznie retainera. Czy to jest w ramach Pana możliwości firmowych?",
         cel: "Podać konkretną liczbę i przetrzymać ciszę — pierwsza osoba która przerwie milczenie zwykle przegrywa negocjację. Cena zgodna z UMOWA_SYSTEM_AUTORISE.pdf §8: 30 000 PLN wdrożenie (jednorazowo, płatne przed startem prac), 1000 PLN/mc retainer",
@@ -616,10 +608,6 @@ export const STEPS_D: Step[] = [
     label: "KROK D — CISZA",
     tag: "MÓWISZ",
     lines: [
-      {
-        t: "note",
-        text: "Krok d) sekwencji zamykania wartości: cisza, brak dalszego tekstu, czekasz na odpowiedź klienta.",
-      },
       { t: "action", text: "CISZA. Minimum 20 sekund. Nie wypełniaj jej niczym." },
       {
         t: "note",

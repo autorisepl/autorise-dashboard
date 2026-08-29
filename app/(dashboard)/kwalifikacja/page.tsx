@@ -2360,6 +2360,8 @@ export default function KwalifikacjaPage() {
             </span>
           )}
 
+          <div style={{ height: 24, width: 1, background: "rgba(255,255,255,0.42)" }} />
+
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <span style={TOOLBAR_LABEL}>Imię w skrypcie</span>
             <input
@@ -2483,6 +2485,8 @@ export default function KwalifikacjaPage() {
                   </button>
                 );
               })}
+
+              <div style={{ height: 24, width: 1, background: "rgba(255,255,255,0.42)" }} />
 
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <span style={TOOLBAR_LABEL}>Jak się zwracać</span>

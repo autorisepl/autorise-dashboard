@@ -20,6 +20,13 @@ import type { ScriptLine } from "@/lib/scripts/types";
 // Notion "Tabela modułów Analiza przedkontraktowa" (Batch 10), nie do "Tabela modułów Kickoff" —
 // to dwa różne momenty prawne: przed podpisem (wiążące dla treści umowy) i po podpisie
 // (potwierdzenie tego co już podpisano, kickoff.ts krok 4).
+//
+// ZMIANA DECYZJI (2026-08-29, Michał): to uzasadnienie już nieaktualne — po przeglądzie
+// /sprzedaz Michał ocenił że ten panel jednak nie ma sensu na stronie samej rozmowy
+// Discovery. Docelowo przenosi się do nowej zakładki /finalizacja ("Finalizacja i analiza",
+// dodana między Pipeline a Wdrożeniem). Zostaje tu na razie nietknięty, żeby nie zgubić
+// kontekstu treści przed właściwą migracją w kolejnej sesji — nie duplikować pracy budując
+// migrację na pół gotowo w tej samej rundzie co redesign reszty /sprzedaz.
 
 const MODULE_LABELS: Record<string, string> = Object.fromEntries(
   MODULE_CATALOG.map((m) => [m.code, m.label]),

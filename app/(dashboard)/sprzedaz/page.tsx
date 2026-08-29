@@ -1,36 +1,38 @@
 "use client";
 
 import {
-  AlertTriangle,
-  ArrowDown,
-  Check,
   CheckCircle2,
   ChevronDown,
   Copy,
   ExternalLink,
   FileText,
-  MessageSquare,
   Monitor,
   PhoneOff,
   Target,
   Undo2,
-  Users,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import type { GoogleTaskList } from "@/app/api/google/tasks/route";
 import type { PipelineClientDetailed } from "@/app/api/notion/pipeline/route";
 import { ClientSidebar } from "@/components/clients/ClientSidebar";
 import { ProgressBar, SectionLabelSmall, StepCard } from "@/components/dalsze-kroki/DalszeKrokiUI";
-import { KalkulatorRoi } from "@/components/kalkulator/KalkulatorRoi";
 import { DecisionDiagram } from "@/components/scripts/DecisionDiagram";
-import { NextStepArrow } from "@/components/scripts/NextStepArrow";
+import {
+  answerParagraphs,
+  CollapsibleAnswer,
+  ExpectedBlock,
+  ScriptLineRow,
+  SectionCap,
+  StepHeaderPill,
+  TransitionBlock,
+} from "@/components/scripts/ScriptStepShared";
 import { AnalizaPrzedkontraktowaPanel } from "@/components/sprzedaz/AnalizaPrzedkontraktowaPanel";
 import { WarunkiUmowyForm } from "@/components/sprzedaz/WarunkiUmowyForm";
 import { fillBrief, parseCytatyKlienta } from "@/lib/scripts/fillBrief";
 import { useFormaGrzecznosciowa } from "@/lib/scripts/formaGrzecznosciowa";
 import { GROUP_COLORS, MESSAGES_DATA } from "@/lib/scripts/messages";
 import { OBJECTIONS_D, STEPS_D } from "@/lib/scripts/sprzedaz";
-import type { DecisionOption, Objection, ScriptLine } from "@/lib/scripts/types";
+import type { DecisionOption, Objection } from "@/lib/scripts/types";
 import { objectionColor } from "@/lib/scripts/types";
 
 // ── Helpers ───────────────────────────────────────────────────────────
@@ -43,11 +45,6 @@ function toVocative(name: string): string {
   if (first.endsWith("ek") && first.length > 3) return first.slice(0, -2) + "ku";
   if (first.endsWith("a") && first.length > 2) return first.slice(0, -1) + "o";
   return first;
-}
-
-function findStepLabelD(stepId: string): string {
-  const step = STEPS_D.find((s) => s.id === stepId);
-  return step ? `${step.nr} ${step.label}` : stepId;
 }
 
 // Minimalny, wyselekcjonowany zestaw obiekcji przypięty do KONKRETNEGO kroku — ten sam wzór
@@ -81,28 +78,11 @@ const STEP_OBJECTIONS_D: Record<string, string[]> = {
   warunki_umowy: ["od12", "od13", "od15", "od18"],
 };
 
-// ── Line styles ───────────────────────────────────────────────────────
-
-const LINE_COLOR: Record<ScriptLine["t"], string> = {
-  say: "var(--text-primary)",
-  client: "var(--text-secondary)",
-  note: "var(--warning)",
-  action: "var(--accent)",
-  branch: "var(--success-text)",
-  "branch-bad": "var(--error)",
-};
-
-const LINE_BG: Record<ScriptLine["t"], string> = {
-  say: "transparent",
-  client: "transparent",
-  note: "var(--warning-bg)",
-  action: "var(--accent-muted)",
-  branch: "var(--success-bg)",
-  "branch-bad": "var(--error-bg)",
-};
-
 // ── Card wrapper ──────────────────────────────────────────────────────
 
+// Card wzorem 1:1 z /kwalifikacja (border rgba, --radius-md, --shadow-sm) — poprzednia
+// wersja (--bg-card, --border, radius 12 na sztywno) dawała wizualnie inną kartę niż
+// kwalifikacja mimo identycznej nazwy komponentu (Michał, 2026-08-29).
 function Card({
   title,
   children,
@@ -118,9 +98,10 @@ function Card({
   return (
     <div
       style={{
-        background: "var(--bg-card)",
-        border: "1px solid var(--border)",
-        borderRadius: 12,
+        background: "var(--bg-elevated)",
+        border: "1px solid rgba(255,255,255,0.42)",
+        borderRadius: "var(--radius-md)",
+        boxShadow: "var(--shadow-sm)",
         overflow: "hidden",
         marginBottom: 12,
       }}
@@ -167,11 +148,14 @@ function Card({
 
 // ── Script step ───────────────────────────────────────────────────────
 
+// Kolor plakietki etapu — jedna spójna barwa dla całego Discovery (kwalifikacja rezerwuje
+// niebieski #3b82f6 wyłącznie dla opener/"NOWY LEAD", tu nie ma odpowiednika statusu
+// Pipeline do podświetlenia, więc cały skrypt dostaje jednolity akcent #4379b1).
+const STEP_PILL_COLOR = "#4379b1";
+
 function ScriptStep({
   step,
   fill,
-  onCopy,
-  copiedId,
   onJump,
   onDecisionSelect,
   selectedTrigger,
@@ -181,8 +165,6 @@ function ScriptStep({
 }: {
   step: (typeof STEPS_D)[0];
   fill: (t: string) => string;
-  onCopy: (id: string, text: string) => void;
-  copiedId: string | null;
   onJump: (stepId: string) => void;
   onDecisionSelect: (stepId: string, option: DecisionOption) => void;
   selectedTrigger?: string;
@@ -197,35 +179,19 @@ function ScriptStep({
     <div
       id={`step-${step.id}`}
       style={{
-        marginBottom: 8,
-        border: "1px solid var(--border)",
-        borderRadius: 10,
+        marginBottom: 10,
+        border: "1px solid rgba(255,255,255,0.42)",
+        borderRadius: "var(--radius-md)",
+        background: "var(--bg-elevated)",
+        boxShadow: "var(--shadow-sm)",
         overflow: "hidden",
       }}
     >
-      {!step.decision && step.nextStepId && (
-        <div
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: 10,
-            color: "var(--text-tertiary)",
-            padding: "5px 14px",
-            background: "var(--bg-hover)",
-            borderBottom: "1px solid var(--border)",
-            display: "flex",
-            alignItems: "center",
-            gap: 4,
-          }}
-        >
-          <ArrowDown size={10} />
-          {`Dalej: ${findStepLabelD(step.nextStepId)}`}
-        </div>
-      )}
       <div
         onClick={() => setOpen((p) => !p)}
         style={{
-          padding: "10px 14px",
-          background: open ? "rgba(67, 121, 177, 0.03)" : "var(--bg-elevated)",
+          padding: "12px 14px",
+          background: open ? "rgba(67, 121, 177, 0.04)" : "transparent",
           display: "flex",
           alignItems: "center",
           gap: 10,
@@ -233,46 +199,22 @@ function ScriptStep({
           userSelect: "none",
         }}
       >
-        <span
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: 10,
-            fontWeight: 800,
-            color: "var(--text-tertiary)",
-            minWidth: 20,
-          }}
-        >
-          {step.nr}
-        </span>
-        <span
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: 13,
-            fontWeight: 600,
-            color: "var(--text-primary)",
-            flex: 1,
-          }}
-        >
-          {step.label}
-        </span>
-        {step.duration && (
+        <StepHeaderPill color={STEP_PILL_COLOR} label={step.label} />
+        <span style={{ flex: 1 }} />
+        {step.tag && step.tag !== "MÓWISZ" && (
           <span
-            style={{ fontSize: 10, color: "var(--text-tertiary)", fontFamily: "var(--font-sans)" }}
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 10,
+              fontWeight: 600,
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              color: "var(--text-tertiary)",
+            }}
           >
-            {step.duration}
+            {step.tag}
           </span>
         )}
-        <span
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: 8,
-            fontWeight: 600,
-            letterSpacing: "0.06em",
-            color: "var(--text-tertiary)",
-          }}
-        >
-          {step.tag}
-        </span>
         <ChevronDown
           size={13}
           color="var(--text-tertiary)"
@@ -282,96 +224,13 @@ function ScriptStep({
       {open && (
         <div style={{ padding: "8px 14px 12px", display: "flex", flexDirection: "column", gap: 6 }}>
           {step.lines.map((line, li) => (
-            <div
-              key={li}
-              style={{
-                display: "flex",
-                alignItems: "flex-start",
-                gap: 8,
-                padding: "7px 10px",
-                borderRadius: 8,
-                background: LINE_BG[line.t],
-              }}
-            >
-              <div style={{ flexShrink: 0, marginTop: 1 }}>
-                {line.t === "say" && (
-                  <MessageSquare size={13} color="var(--accent)" strokeWidth={1.6} />
-                )}
-                {line.t === "client" && (
-                  <Users size={13} color="var(--text-secondary)" strokeWidth={1.8} />
-                )}
-                {line.t === "note" && (
-                  <AlertTriangle size={12} color="var(--warning)" strokeWidth={1.6} />
-                )}
-                {line.t === "action" && <Check size={12} color="var(--accent)" strokeWidth={2} />}
-                {(line.t === "branch" || line.t === "branch-bad") && (
-                  <Check size={12} color={LINE_COLOR[line.t]} strokeWidth={2} />
-                )}
-              </div>
-              <div style={{ flex: 1 }}>
-                {(Array.isArray(line.text) ? line.text : [line.text]).map((paragraph, pi) => (
-                  <p
-                    key={pi}
-                    style={{
-                      margin: pi === 0 ? 0 : "6px 0 0 0",
-                      fontFamily: "var(--font-sans)",
-                      fontSize: 13,
-                      lineHeight: 1.55,
-                      color: LINE_COLOR[line.t],
-                    }}
-                  >
-                    {fill(paragraph)}
-                  </p>
-                ))}
-                {line.t === "say" && line.cel && (
-                  <div
-                    style={{
-                      fontFamily: "var(--font-sans)",
-                      fontSize: 11,
-                      color: "var(--text-secondary)",
-                      fontStyle: "italic",
-                      marginTop: 2,
-                      paddingLeft: 8,
-                      borderLeft: "2px solid var(--text-tertiary)",
-                    }}
-                  >
-                    Cel: {line.cel}
-                  </div>
-                )}
-              </div>
-              {line.t === "say" && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onCopy(
-                      `${step.id}-${li}`,
-                      Array.isArray(line.text) ? line.text.join(" ") : line.text,
-                    );
-                  }}
-                  style={{
-                    flexShrink: 0,
-                    padding: "3px 7px",
-                    borderRadius: 5,
-                    border: "1px solid var(--border)",
-                    background: "transparent",
-                    cursor: "pointer",
-                    color:
-                      copiedId === `${step.id}-${li}`
-                        ? "var(--success-text)"
-                        : "var(--text-tertiary)",
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                >
-                  {copiedId === `${step.id}-${li}` ? (
-                    <CheckCircle2 size={10} />
-                  ) : (
-                    <Copy size={10} />
-                  )}
-                </button>
-              )}
-            </div>
+            <ScriptLineRow key={li} line={line} fill={fill} />
           ))}
+
+          {step.expected && <ExpectedBlock text={fill(step.expected)} />}
+
+          {step.transition && <TransitionBlock text={fill(step.transition)} idPrefix={step.id} />}
+
           {step.decision && (
             <DecisionDiagram
               decision={step.decision}
@@ -380,42 +239,29 @@ function ScriptStep({
               selectedTrigger={selectedTrigger}
             />
           )}
-          {!step.decision && step.nextStepId && (
-            <NextStepArrow label="Dalej" onJump={() => onJump(step.nextStepId!)} />
-          )}
+
           {stepObjections.length > 0 && (
-            <div style={{ marginTop: 4 }}>
-              <div
-                style={{
-                  fontFamily: "var(--font-sans)",
-                  fontSize: 10,
-                  fontWeight: 700,
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
-                  color: "var(--text-tertiary)",
-                  padding: "6px 2px 4px",
-                }}
-              >
-                Możliwe obiekcje
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <>
+              <SectionCap>Możliwe obiekcje</SectionCap>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 {stepObjections.map((objId) => {
                   const obj = OBJECTIONS_D.find((o) => o.id === objId);
                   if (!obj) return null;
-                  return renderObjectionD(
-                    obj,
-                    openObjectionId,
-                    setOpenObjectionId,
-                    fill,
-                    onCopy,
-                    copiedId,
-                    onDecisionSelect,
-                    selectedOptions,
-                    onJump,
+                  return (
+                    <ObjectionRow
+                      key={obj.id}
+                      obj={obj}
+                      openId={openObjectionId}
+                      setOpenId={setOpenObjectionId}
+                      fill={fill}
+                      onDecisionSelect={onDecisionSelect}
+                      selectedOptions={selectedOptions}
+                      onJump={onJump}
+                    />
                   );
                 })}
               </div>
-            </div>
+            </>
           )}
         </div>
       )}
@@ -684,191 +530,103 @@ function BriefSection({ client }: { client: PipelineClientDetailed | null }) {
 // /kwalifikacja (patrz STEP_OBJECTIONS_D wyżej). renderObjectionD zostaje bez zmian, wołane
 // teraz z wnętrza ScriptStep zamiast z osobnego ObjectionsPanel.
 
-function renderObjectionD(
-  obj: Objection,
-  openId: string | null,
-  setOpenId: (id: string | null) => void,
-  fill: (t: string) => string,
-  onCopy: (id: string, text: string) => void,
-  copiedId: string | null,
-  onDecisionSelect: (objectionId: string, option: DecisionOption) => void,
-  selectedOptions: Record<string, string>,
-  onJump: (stepId: string) => void,
-) {
+// Jeden wiersz obiekcji — wzór 1:1 z CollapsibleAnswer w /kwalifikacja (patrz
+// ScriptStepShared.tsx), rozszerzony o to czego kwalifikacja nie potrzebuje: decyzję
+// rozgałęziającą do sub-obiekcji (od1 -> od1_finanse) i opcjonalny SMS. `id` na elemencie
+// DOM zostaje, bo jumpToObjection() w tej stronie przewija do niego po id, niezależnie od
+// tego w którym kroku dana obiekcja fizycznie siedzi.
+function ObjectionRow({
+  obj,
+  openId,
+  setOpenId,
+  fill,
+  onDecisionSelect,
+  selectedOptions,
+  onJump,
+}: {
+  obj: Objection;
+  openId: string | null;
+  setOpenId: (id: string | null) => void;
+  fill: (t: string) => string;
+  onDecisionSelect: (objectionId: string, option: DecisionOption) => void;
+  selectedOptions: Record<string, string>;
+  onJump: (stepId: string) => void;
+}) {
   const oc = objectionColor(obj.label);
   const isOpen = openId === obj.id;
   return (
-    <div
-      key={obj.id}
+    <CollapsibleAnswer
       id={`objection-${obj.id}`}
-      style={{
-        border: "1px solid var(--border)",
-        borderLeft: `3px solid ${oc.accent}`,
-        borderRadius: 8,
-        overflow: "hidden",
-        background: isOpen ? oc.bg : "var(--bg-elevated)",
-        transition: "background-color 200ms, box-shadow 250ms",
-      }}
+      label={obj.label}
+      sublabel={oc.category}
+      open={isOpen}
+      onToggle={() => setOpenId(isOpen ? null : obj.id)}
     >
-      <div
-        onClick={() => setOpenId(isOpen ? null : obj.id)}
-        style={{
-          padding: "8px 12px",
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          cursor: "pointer",
-          userSelect: "none",
-        }}
-      >
-        <div style={{ flex: 1 }}>
-          <div
-            style={{
-              fontSize: 8,
-              fontWeight: 600,
-              letterSpacing: "0.06em",
-              textTransform: "uppercase",
-              color: "var(--text-tertiary)",
-              marginBottom: 1,
-            }}
-          >
-            {oc.category}
-          </div>
-          <div
+      {obj.script && answerParagraphs(fill(obj.script), `obj-${obj.id}-s`)}
+      {obj.followup && (
+        <div style={{ marginTop: 10 }}>
+          <span
             style={{
               fontFamily: "var(--font-sans)",
-              fontSize: 12,
-              fontWeight: 500,
-              color: "var(--text-primary)",
+              fontSize: 13,
+              fontWeight: 700,
+              color: "var(--accent)",
             }}
           >
-            {obj.label}
-          </div>
-        </div>
-        <ChevronDown
-          size={12}
-          color="var(--text-tertiary)"
-          style={{
-            transform: isOpen ? "rotate(180deg)" : "none",
-            transition: "transform 150ms",
-            flexShrink: 0,
-          }}
-        />
-      </div>
-      {isOpen && (
-        <div style={{ padding: "0 12px 12px", display: "flex", flexDirection: "column", gap: 8 }}>
-          {obj.script && (
-            <div style={{ display: "flex", alignItems: "flex-start", gap: 6 }}>
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: 13,
-                  lineHeight: 1.55,
-                  color: "var(--text-primary)",
-                  fontFamily: "var(--font-sans)",
-                  flex: 1,
-                }}
-              >
-                {fill(obj.script)}
-              </p>
-              <button
-                onClick={() => onCopy(`obj-${obj.id}-script`, obj.script!)}
-                style={{
-                  flexShrink: 0,
-                  padding: "3px 7px",
-                  borderRadius: 5,
-                  border: "1px solid var(--border)",
-                  background: "transparent",
-                  cursor: "pointer",
-                  color:
-                    copiedId === `obj-${obj.id}-script`
-                      ? "var(--success-text)"
-                      : "var(--text-tertiary)",
-                  display: "flex",
-                  alignItems: "center",
-                }}
-              >
-                {copiedId === `obj-${obj.id}-script` ? (
-                  <CheckCircle2 size={10} />
-                ) : (
-                  <Copy size={10} />
-                )}
-              </button>
-            </div>
-          )}
-          {obj.followup && (
-            <p
-              style={{
-                margin: 0,
-                fontSize: 13,
-                lineHeight: 1.55,
-                color: "var(--text-primary)",
-                fontFamily: "var(--font-sans)",
-              }}
-            >
-              {fill(obj.followup)}
-            </p>
-          )}
-          {obj.decision && (
-            <DecisionDiagram
-              decision={obj.decision}
-              onSelect={(option) => onDecisionSelect(obj.id, option)}
-              onJump={onJump}
-              selectedTrigger={selectedOptions[obj.id]}
-            />
-          )}
-          {obj.note && (
-            <p
-              style={{
-                margin: 0,
-                fontSize: 11,
-                lineHeight: 1.5,
-                color: "var(--text-secondary)",
-                fontFamily: "var(--font-sans)",
-                background: "var(--warning-bg)",
-                padding: "6px 8px",
-                borderRadius: 6,
-              }}
-            >
-              {obj.note}
-            </p>
-          )}
-          {obj.sms && (
-            <div
-              style={{
-                background: "var(--accent-muted)",
-                padding: "8px 10px",
-                borderRadius: 6,
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 9,
-                  fontWeight: 700,
-                  color: "var(--accent-text)",
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
-                  marginBottom: 4,
-                }}
-              >
-                SMS
-              </div>
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: 12,
-                  color: "var(--text-primary)",
-                  lineHeight: 1.55,
-                  fontFamily: "var(--font-sans)",
-                }}
-              >
-                {fill(obj.sms)}
-              </p>
-            </div>
-          )}
+            Jeśli nadal naciska:
+          </span>
+          {answerParagraphs(fill(obj.followup), `obj-${obj.id}-f`)}
         </div>
       )}
-    </div>
+      {obj.decision && (
+        <div style={{ marginTop: 10 }}>
+          <DecisionDiagram
+            decision={obj.decision}
+            onSelect={(option) => onDecisionSelect(obj.id, option)}
+            onJump={onJump}
+            selectedTrigger={selectedOptions[obj.id]}
+          />
+        </div>
+      )}
+      {obj.note && (
+        <p
+          style={{
+            margin: "10px 0 0",
+            fontFamily: "var(--font-sans)",
+            fontSize: 12.5,
+            lineHeight: 1.5,
+            color: "var(--text-tertiary)",
+          }}
+        >
+          {obj.note}
+        </p>
+      )}
+      {obj.sms && (
+        <div
+          style={{
+            marginTop: 10,
+            background: "var(--accent-muted)",
+            border: "1px solid var(--accent-border)",
+            padding: "10px 12px",
+            borderRadius: 8,
+          }}
+        >
+          <div
+            style={{
+              fontSize: 10,
+              fontWeight: 800,
+              color: "var(--accent-text)",
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              marginBottom: 6,
+            }}
+          >
+            SMS
+          </div>
+          {answerParagraphs(fill(obj.sms), `obj-${obj.id}-sms`)}
+        </div>
+      )}
+    </CollapsibleAnswer>
   );
 }
 
@@ -1226,7 +984,12 @@ function DalszeKrokiDiscovery({ client }: { client: PipelineClientDetailed | nul
     <div style={{ display: "flex", flexDirection: "column" }}>
       <ProgressBar doneCount={doneCount} totalCount={totalCount} />
 
-      <SectionLabelSmall>Teraz</SectionLabelSmall>
+      {/* Przemianowane z "Teraz" (2026-08-29, Michał: "te dalsze kroki po discovery to są
+          przecież kroki przed discovery") — Fathom/brief/prezentacja/przypomnienie to
+          przygotowanie DO rozmowy, nie coś co robi się po jej zakończeniu. Karta nazywa się
+          "Dalsze kroki po Discovery", ale realnie obejmuje cały cykl wokół spotkania, więc
+          dzieli się teraz jawnie na dwie fazy zamiast udawać że wszystko jest "po". */}
+      <SectionLabelSmall>Przed spotkaniem</SectionLabelSmall>
       <StepCard
         done={checks.fathom}
         label={DALSZE_KROKI_DISCOVERY_LABELS.fathom}
@@ -1298,6 +1061,10 @@ function DalszeKrokiDiscovery({ client }: { client: PipelineClientDetailed | nul
           </button>
         </div>
       )}
+
+      <div style={{ height: 1, background: "var(--border)", margin: "8px 0 12px" }} />
+
+      <SectionLabelSmall>Po spotkaniu</SectionLabelSmall>
       <StepCard
         done={checks.closing}
         label={DALSZE_KROKI_DISCOVERY_LABELS.closing}
@@ -1845,6 +1612,8 @@ export default function SprzedazPage() {
                 </button>
               )}
 
+              <div style={{ height: 24, width: 1, background: "rgba(255,255,255,0.42)" }} />
+
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <span style={TOOLBAR_LABEL}>Jak się zwracać</span>
                 <input
@@ -1882,6 +1651,7 @@ export default function SprzedazPage() {
           filterStatuses={["Discovery umówione"]}
           headerLabel="Discovery umówione"
           emptyLabel='Brak klientów "Discovery umówione"'
+          noShowClientIds={clients.filter((c) => c.wynikDiscovery === "NO-SHOW").map((c) => c.id)}
         />
 
         {/* Main: brief + script + roi + dalsze kroki */}
@@ -1896,8 +1666,6 @@ export default function SprzedazPage() {
                 key={step.id}
                 step={step}
                 fill={fill}
-                onCopy={onCopy}
-                copiedId={copiedId}
                 onJump={jumpToStep}
                 onDecisionSelect={handleDecisionSelect}
                 selectedTrigger={selectedOptions[step.id]}
@@ -1906,13 +1674,6 @@ export default function SprzedazPage() {
                 selectedOptions={selectedOptions}
               />
             ))}
-          </Card>
-
-          <Card title="Kalkulator ROI" collapsible defaultOpen={false}>
-            <KalkulatorRoi
-              embedded
-              initialClientName={selected?.kontakt || selected?.firma || ""}
-            />
           </Card>
 
           <Card title="Warunki umowy" collapsible defaultOpen={false}>
