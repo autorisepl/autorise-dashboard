@@ -5,8 +5,9 @@ import {
   type PipelineCardOldDefaultPrice,
 } from "@/lib/notion/client";
 
-// GET: podgląd kart z "Cena wdrożenia" = 15000 (stara wartość domyślna sprzed usunięcia
-// mechanizmu rabatu za terminowość — pod obecną umową to zwyczajnie zła cena) — bez zapisu.
+// GET: podgląd kart z "Cena wdrożenia" = 18000 i/lub "Retainer PLN/mc" = 4000 (stare wartości
+// domyślne sprzed przejścia na UMOWA_SYSTEM_AUTORISE.pdf — pod obecną umową to zwyczajnie
+// złe ceny) — bez zapisu.
 export async function GET() {
   try {
     const cards = await findPipelineCardsWithOldDefaultPrice();
@@ -41,7 +42,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
-      message: `Wyczyszczono "Cena wdrożenia" dla ${result.updated.length} kart (wracają do domyślnego 18000).`,
+      message: `Wyczyszczono stare ceny dla ${result.updated.length} kart (wracają do domyślnych: 30000 wdrożenie / 1000 retainer).`,
       updated: result.updated,
     });
   } catch (err) {

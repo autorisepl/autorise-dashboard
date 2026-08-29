@@ -715,18 +715,16 @@ interface FunnelNode {
   refStatus?: RefStatus;
 }
 
-// Przebudowa 2026-07-27 — cykl życia klienta od leada do retainera, zgodny ze WSZYSTKIMI
-// mechanizmami z aktualnej umowy (UMOWA_AUTORISE_FINAL.md). Podczas researchu znaleziono realny
-// rozjazd: sam tekst umowy (§3, §5, §6) wciąż opisuje płaską gwarancję 80h/mc + rabat
-// 18000/15000 + jedną weryfikację, podczas gdy CAŁY produkt (prompty agentów, prezentacja,
-// kalkulatory, tabela Kickoff w /wdrozenie) od commitu 98d95cf liczy 70% czasu bazowego, bez
-// rabatu, w dwóch rundach — zdecydowano (Michał, 2026-07-27) trzymać się aktualnych liczb
-// produktowych, oznaczając literalny tekst umowy jako nieaktualny tam gdzie się rozjeżdża
-// (pole `ref`/`refStatus` niżej), zamiast fabrykować cytaty które nie odpowiadają żadnemu
-// realnemu dokumentowi. Węzeł "Odbiór systemu" (usterka krytyczna/niekrytyczna/milczący odbiór)
-// istniał już w kodzie /wdrozenie z komentarzem błędnie cytującym "umowa §3" — w rzeczywistości
-// ten mechanizm nie występuje w ŻADNYM dokumencie Autorise (ani w umowie, ani w Karcie Produktu),
-// oznaczony tu jako refStatus "missing".
+// Przebudowa 2026-07-27 — cykl życia klienta od leada do retainera. UWAGA (2026-08-29): umowa
+// referencyjna zmieniła się z UMOWA_AUTORISE_FINAL.md na UMOWA_SYSTEM_AUTORISE.pdf (cena
+// wdrożenia 18000→30000, retainer 4000→1000, mechanizm rat i rabatu za terminowość usunięty
+// całkowicie). Kilka węzłów poniżej naprawionych pod tę zmianę (płatność/warunek rozwiązujący,
+// Kick-off liczony od wpłaty a nie od podpisania) — ale ten plik opisuje CAŁY cykl życia klienta
+// przez kilkanaście węzłów i nie przeszedł jeszcze pełnego, węzeł-po-węźle audytu przeciwko
+// nowej umowie, tak jak sprzedaz.ts (STEPS_D/OBJECTIONS_D). Węzeł "Odbiór systemu" (usterka
+// krytyczna/niekrytyczna/jednostronny odbiór), wcześniej oznaczony jako refStatus "missing" bo
+// nie istniał w żadnym dokumencie Autorise, TERAZ ma realne pokrycie w UMOWA_SYSTEM_AUTORISE.pdf
+// §4 — wymaga aktualizacji refStatus na "confirmed" przy pełnym audycie tego pliku.
 const FUNNEL_NODES: FunnelNode[] = [
   {
     id: "source",
@@ -861,27 +859,27 @@ const FUNNEL_NODES: FunnelNode[] = [
     tone: "accent",
     isBranch: true,
     agent:
-      "Ręcznie: wystawienie faktury za wdrożenie (18 000 PLN, bez rabatu — mechanizm rabatu za terminowość 18000/15000 z §5 ust. 1 usunięty z produktu 2026-07-25, dokument umowy jeszcze tego nie odzwierciedla).",
+      "Ręcznie: wystawienie faktury elektronicznej (KSeF) za wdrożenie (30 000 PLN brutto, bez rat i bez rabatu — oba mechanizmy nieobecne w UMOWA_SYSTEM_AUTORISE.pdf, wersja 2026-08-29, która zastąpiła UMOWA_AUTORISE_FINAL.md).",
     entry: "Umowa podpisana.",
-    exit: 'Faktura wystawiona w 2 dni robocze. Zgodnie z §5 ust. 3 prace wdrożeniowe (Kickoff, zbieranie dostępów) ruszają od dostarczenia dostępów NIEZALEŻNIE od statusu płatności — umowa nie przewiduje mechanizmu "umowa niezawarta" przy braku wpłaty.',
-    ref: "§5 ust. 3",
-    refStatus: "stale",
+    exit: 'Faktura wystawiona w 2 dni robocze. Wykonawca NIE przystępuje do prac przed otrzymaniem pełnej wpłaty (§2 ust. 1). Jeśli pełna kwota nie zaksięguje się na koncie w ciągu 7 dni kalendarzowych od podpisania, umowa automatycznie się rozwiązuje ze skutkiem wstecznym (§2 ust. 2) — mechanizm który w poprzedniej wersji umowy (UMOWA_AUTORISE_FINAL.md) nie istniał, ta gałąź map wcześniej flagowała go jako niepotwierdzony.',
+    ref: "§2 ust. 1-2",
+    refStatus: "confirmed",
     refNote:
-      '§5 ust. 3: "Faktura za wdrożenie wystawiana w terminie 2 dni roboczych po podpisaniu umowy. Prace wdrożeniowe rozpoczynają się od dnia dostarczenia kompletu dostępów, niezależnie od statusu płatności." Zlecenie tej przebudowy zakładało "warunek rozwiązujący: brak pełnej wpłaty w 7 dni = umowa uważana za niezawartą" — TAKI ZAPIS NIE ISTNIEJE w UMOWA_AUTORISE_FINAL.md, umowa mówi dosłownie coś przeciwnego (start prac niezależny od płatności). Gałąź "Brak wpłaty" poniżej pokazuje to jako niepotwierdzony mechanizm, nie fakt.',
+      'UMOWA_SYSTEM_AUTORISE.pdf §2 ust. 1: "Wykonawca przystąpi do wykonywania Umowy nie wcześniej niż po otrzymaniu pełnej kwoty wynagrodzenia." §2 ust. 2 (warunek rozwiązujący): brak zaksięgowania pełnej kwoty w 7 dni kalendarzowych od podpisania = umowa automatycznie rozwiązana ze skutkiem wstecznym, umowę uważa się za niezawartą. To dokładnie odwraca poprzedni stan (UMOWA_AUTORISE_FINAL.md §5 ust. 3: praca zaczynała się od dostarczenia dostępów NIEZALEŻNIE od statusu płatności) — gałąź poniżej zaktualizowana pod nowy mechanizm, nie stary.',
     branches: [
       {
-        label: "Wpłata zaksięgowana",
+        label: "Wpłata zaksięgowana w 7 dni",
         targetId: "kickoff",
         tone: "neutral",
-        note: "Bieg dalszy: Kick-off w ciągu 7 dni roboczych od podpisania umowy (§2 ust. 1) — niezależnie od tego, czy płatność już wpłynęła.",
+        note: "Bieg dalszy: Kick-off w ciągu 7 dni roboczych od otrzymania pełnej wpłaty (§3 ust. 1) — nie od podpisania, jak w poprzedniej wersji umowy.",
       },
       {
-        label: "Brak wpłaty (niepotwierdzone)",
+        label: "Brak wpłaty w 7 dni",
         targetId: "zakonczona",
         tone: "negative",
-        note: 'Mechanizm z briefu tej mapy ("7 dni, umowa niezawarta") nie ma pokrycia w §5 ust. 3 ani nigdzie indziej w dokumentach Autorise. Jeśli ma obowiązywać, wymaga dopisania do umowy — dziś brak wpłaty NIE zatrzymuje prac wdrożeniowych.',
-        ref: "Brak w umowie",
-        refStatus: "missing",
+        note: "Umowa automatycznie się rozwiązuje ze skutkiem wstecznym z upływem 7. dnia kalendarzowego od podpisania (§2 ust. 2). Umowę uważa się za niezawartą, żadna ze Stron nie jest zobowiązana do jakichkolwiek świadczeń.",
+        ref: "§2 ust. 2",
+        refStatus: "confirmed",
       },
     ],
   },
@@ -889,17 +887,17 @@ const FUNNEL_NODES: FunnelNode[] = [
     id: "kickoff",
     nr: "06",
     title: "Kick-off",
-    subtitle: "30-45 min, w 7 dni roboczych",
+    subtitle: "30-45 min, w 7 dni roboczych od pełnej wpłaty",
     tone: "neutral",
     agent:
       "Ręcznie: warsztat Kick-off — ustalenie harmonogramu wdrożenia i zebranie tabeli czasu bazowego per moduł (Załącznik nr 1: Moduł/Jednostka/Czas na jednostkę/Wolumen na miesiąc), teraz budowanej w Panelu 0 zakładki /wdrozenie zamiast jednego ręcznie wpisywanego pola.",
-    entry: "Umowa podpisana.",
+    entry: "Pełna wpłata zaksięgowana.",
     exit: "Harmonogram i tabela czasu bazowego ustalone: start zbierania dostępów (Załącznik nr 1).",
     statusKey: "Kickoff",
-    ref: "§2 ust. 1",
+    ref: "§3 ust. 1",
     refStatus: "confirmed",
     refNote:
-      '"Wykonawca zobowiązuje się do przeprowadzenia warsztatu Kick-off (30-45 minut) w ciągu 7 dni roboczych od podpisania umowy, którego celem jest ustalenie harmonogramu wdrożenia i zebranie niezbędnych dostępów."',
+      'UMOWA_SYSTEM_AUTORISE.pdf §3 ust. 1: "Wykonawca zobowiązuje się do przeprowadzenia warsztatu Kick-off w wymiarze 30–45 minut w ciągu 7 dni roboczych od dnia otrzymania zapłaty pełnej kwoty wynagrodzenia." Zmiana względem UMOWA_AUTORISE_FINAL.md: termin liczony od WPŁATY, nie od podpisania — bo w nowej umowie prace w ogóle nie startują bez pełnej wpłaty (§2 ust. 1).',
   },
   {
     id: "zebranie-dostepow",

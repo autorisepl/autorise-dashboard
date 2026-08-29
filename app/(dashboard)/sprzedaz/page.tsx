@@ -1761,8 +1761,8 @@ export default function SprzedazPage() {
         roiDopowiedzenie.match(/zwraca się w (\d+)/)?.[1] ??
         roiDopowiedzenie.match(/(\d+)\s*miesi/)?.[1];
       out = out.replace(
-        /18000 zł zwraca się w \[X\] miesięcy/g,
-        `18000 zł zwraca się w ${roiMiesiace ?? "— policz —"} miesięcy`,
+        /30 000 zł zwraca się w \[X\] miesięcy/g,
+        `30 000 zł zwraca się w ${roiMiesiace ?? "— policz —"} miesięcy`,
       );
       // Gwarancja procentowa (nowa umowa, §4): 70% czasu bazowego klienta z Notion
       // ("Czas bazowy potwierdzony h/mc", pole dotąd zarezerwowane, niewykorzystane w UI).

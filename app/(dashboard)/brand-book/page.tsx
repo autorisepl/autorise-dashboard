@@ -949,8 +949,10 @@ const PLACEHOLDERS: PlaceholderEntry[] = [
   },
   {
     token: "Pan {IMIĘ} / Pani {IMIĘ}",
-    description: "Zwrot adresatywny, fill() zamienia cały fragment na wołacz: 'Panie Jacku' / 'Pani Anno'",
-    source: "Pole kontakt w Pipeline — fill() w /kwalifikacja i /sprzedaz, reaguje na przełącznik Pan/Pani",
+    description:
+      "Zwrot adresatywny, fill() zamienia cały fragment na wołacz: 'Panie Jacku' / 'Pani Anno'",
+    source:
+      "Pole kontakt w Pipeline — fill() w /kwalifikacja i /sprzedaz, reaguje na przełącznik Pan/Pani",
     example: "Gdyby te [X] godzin wróciły do Pan {IMIĘ}... → ...wróciły do Panie Jacku...",
   },
   {

@@ -4,9 +4,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 export const dynamic = "force-dynamic";
 
 // Gwarancja to procent czasu bazowego klienta (minimum 70%, patrz AGENT1_SYSTEM_PROMPT i
-// SZKIC_UMOWA_AUTORISE.md §4, wersja umowy 2026-07-24), nie sztywna liczba firmowa — ten sam
-// mechanizm co placeholder [gwarancja godzin] w lib/scripts/sprzedaz.ts (`fill()` w
-// app/(dashboard)/sprzedaz/page.tsx).
+// UMOWA_SYSTEM_AUTORISE.pdf §5), nie sztywna liczba firmowa — ten sam mechanizm co placeholder
+// [gwarancja godzin] w lib/scripts/sprzedaz.ts (`fill()` w app/(dashboard)/sprzedaz/page.tsx).
 const GWARANCJA_PROCENT = 0.7;
 // "Po wdrożeniu" nie ma dedykowanego pola w Notion — Agent 3 szacuje je jako 10-15%
 // wartości "Dziś" (patrz AGENT3_SYSTEM_PROMPT). Ten endpoint nie wywołuje AI, więc
@@ -16,14 +15,15 @@ const PO_WDROZENIU_FRACTION = 0.125;
 // biura — ten sam wzór co koszt_problemu.wzor_obliczenia Agenta 1 (patrz prompts.ts):
 // godziny dziennie × liczba spedytorów × dni robocze/mc.
 const DNI_ROBOCZE_MC = 21;
-// Cena standardowa, zdefiniowana w lib/agents/prompts.ts (Agent 1/2/5) i SZKIC_UMOWA_AUTORISE.md
-// §5 ust. 1 (wersja umowy z 2026-07-24): 18 000 PLN, jedna cena, bez rabatu za terminowość —
-// mechanizm rabatu (poprzednia wersja umowy) usunięty. Pole Notion "Cena wdrożenia" jest
-// wypełniane ręcznie przez Michała — puste pole oznacza standardową ofertę, nie brak ceny, więc
-// fallback na tę stałą zamiast null/"ustalana indywidualnie". Wartość ręcznie wpisana w Notion to
-// zawsze cena finalna dla wdrożeń niestandardowych (poza 4 modułami albo skalą floty/biura).
-const DOMYSLNA_CENA_WDROZENIA = 18000;
-const DOMYSLNY_RETAINER = 4000;
+// Cena standardowa, zdefiniowana w lib/agents/prompts.ts (Agent 1/2/5) i UMOWA_SYSTEM_AUTORISE.pdf
+// §8 (wersja umowy z 2026-08-29): 30 000 PLN wdrożenie, 1 000 PLN/mc retainer, jedna cena, bez
+// rat i bez rabatu za terminowość — oba mechanizmy nieobecne w tej umowie. Pole Notion "Cena
+// wdrożenia" jest wypełniane ręcznie przez Michała — puste pole oznacza standardową ofertę, nie
+// brak ceny, więc fallback na tę stałą zamiast null/"ustalana indywidualnie". Wartość ręcznie
+// wpisana w Notion to zawsze cena finalna dla wdrożeń niestandardowych (poza 4 modułami albo
+// skalą floty/biura).
+const DOMYSLNA_CENA_WDROZENIA = 30000;
+const DOMYSLNY_RETAINER = 1000;
 
 interface PrezentacjaRow {
   firma: string;
@@ -114,10 +114,10 @@ export async function GET(req: Request) {
     const gwarancjaH = bazaGwarancji > 0 ? Math.round(bazaGwarancji * GWARANCJA_PROCENT) : null;
 
     // Pole puste w Notion (<=0) = standardowa oferta, nie brak ceny — fallback na cenę
-    // 18000 zamiast null/"ustalana indywidualnie". Wartość faktycznie wpisana ręcznie
+    // 30000 zamiast null/"ustalana indywidualnie". Wartość faktycznie wpisana ręcznie
     // (niestandardowe wdrożenie, poza 4 modułami/skalą floty) zawsze ma pierwszeństwo.
-    // cena_z_rabatem zostaje zawsze null — mechanizm rabatu za terminowość usunięty z nowej
-    // wersji umowy (2026-07-24), front-end przy null pokazuje jedną kwotę bez przekreślenia.
+    // cena_z_rabatem zostaje zawsze null — brak mechanizmu rat/rabatu w UMOWA_SYSTEM_AUTORISE.pdf
+    // (wersja 2026-08-29), front-end przy null pokazuje jedną kwotę bez przekreślenia.
     const cenaWdrozeniaEfektywna = cenaWdrozenia > 0 ? cenaWdrozenia : DOMYSLNA_CENA_WDROZENIA;
     const cenaZRabatem: number | null = null;
     const retainerEfektywny = retainer > 0 ? retainer : DOMYSLNY_RETAINER;

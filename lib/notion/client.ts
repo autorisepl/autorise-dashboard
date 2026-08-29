@@ -1499,13 +1499,14 @@ export async function migrateDailyStatsSchema(): Promise<{ added: string[]; erro
   return { added, errors };
 }
 
-// Cena standardowa z lib/agents/prompts.ts (Agent 1/2/5): 18 000 PLN wdrożenie, jednorazowo
-// (bez rabatu za terminowość, mechanizm usunięty z umowy 2026-07-24) + 4 000 PLN/mc retainer.
+// Cena standardowa z lib/agents/prompts.ts (Agent 1/2/5): 30 000 PLN wdrożenie, jednorazowo
+// (UMOWA_SYSTEM_AUTORISE.pdf §8, wersja z 2026-08-29 — bez rat i bez rabatu za terminowość,
+// oba mechanizmy nieobecne w tej umowie) + 1 000 PLN/mc retainer.
 // "Cena wdrożenia"/"Retainer PLN/mc" są polami wypełnianymi WYŁĄCZNIE ręcznie przez Michała —
 // jednorazowa migracja uzupełnia tylko puste karty, nigdy nie nadpisuje wartości już wpisanej
 // (mogła być świadomie ustawiona inaczej).
-const DOMYSLNA_CENA_WDROZENIA = 18000;
-const DOMYSLNY_RETAINER = 4000;
+const DOMYSLNA_CENA_WDROZENIA = 30000;
+const DOMYSLNY_RETAINER = 1000;
 
 export interface PipelineCardMissingPricing {
   id: string;
@@ -1584,21 +1585,24 @@ export async function fillDefaultPricingForCards(
   return { updated, errors };
 }
 
-// Historyczna migracja (2026-07-13, SZKIC_UMOWA_AUTORISE.md §5 ust. 1 sprzed zmiany
-// 2026-07-24) — mechanizm rabatu za terminowość (18000/15000) jest już CAŁKOWICIE usunięty z
-// umowy i z tego pliku (patrz DOMYSLNA_CENA_WDROZENIA=18000 wyżej), ale niektóre karty w
-// Notion nadal mogą mieć "Cena wdrożenia"=15000 zapisane przez starą, wcześniejszą wersję
-// fillDefaultPricingForCards sprzed tej zmiany — pod obecnym mechanizmem to zwyczajnie
-// NIEPRAWIDŁOWA cena (klient zobaczyłby 15000 zamiast realnych 18000), nie do utrzymania z
-// żadnego powodu. Ta migracja czyści TYLKO karty z wartością dokładnie 15000 — realna,
-// świadomie inna cena niestandardowa (np. 22000 dla dużej floty) zostaje nietknięta, bo nie
-// pasuje do exact match. Po wyczyszczeniu pole jest puste i fallback w prezentacja-dane/route.ts
-// pokazuje poprawne 18000.
-const STARA_CENA_DOMYSLNA = 15000;
+// Historyczna migracja, druga runda (2026-08-29, UMOWA_SYSTEM_AUTORISE.pdf zastąpiła
+// UMOWA_AUTORISE_FINAL.md — cena wdrożenia 18000→30000, retainer 4000→1000, mechanizm rat
+// usunięty) — ale niektóre karty w Notion nadal mogą mieć "Cena wdrożenia"=18000 zapisane
+// przez starą, wcześniejszą wersję fillDefaultPricingForCards sprzed tej zmiany — pod obecną
+// umową to zwyczajnie NIEPRAWIDŁOWA cena (klient zobaczyłby 18000 zamiast realnych 30000), nie
+// do utrzymania z żadnego powodu. Ta migracja czyści TYLKO karty z wartością dokładnie 18000 —
+// realna, świadomie inna cena niestandardowa (np. 35000 dla dużej floty) zostaje nietknięta,
+// bo nie pasuje do exact match. Po wyczyszczeniu pole jest puste i fallback w
+// prezentacja-dane/route.ts pokazuje poprawne 30000. Poprzednia runda tej migracji (15000→18000,
+// 2026-07-24) już wykonana, nieaktualna dla nowych kart.
+const STARA_CENA_DOMYSLNA = 18000;
+const STARY_RETAINER_DOMYSLNY = 4000;
 
 export interface PipelineCardOldDefaultPrice {
   id: string;
   name: string;
+  cenaStara: boolean;
+  retainerStary: boolean;
 }
 
 export async function findPipelineCardsWithOldDefaultPrice(): Promise<
@@ -1619,13 +1623,19 @@ export async function findPipelineCardsWithOldDefaultPrice(): Promise<
       if (page.object !== "page") continue;
       const firma = page.properties["Firma"];
       const cena = page.properties["Cena wdrożenia"];
-      if (cena?.type === "number" && cena.number === STARA_CENA_DOMYSLNA) {
+      const retainer = page.properties["Retainer PLN/mc"];
+      const cenaStara = cena?.type === "number" && cena.number === STARA_CENA_DOMYSLNA;
+      const retainerStary =
+        retainer?.type === "number" && retainer.number === STARY_RETAINER_DOMYSLNY;
+      if (cenaStara || retainerStary) {
         results.push({
           id: page.id,
           name:
             firma?.type === "title"
               ? firma.title.map((t) => t.plain_text).join("") || "Bez nazwy"
               : "Bez nazwy",
+          cenaStara,
+          retainerStary,
         });
       }
     }
@@ -1641,9 +1651,10 @@ export interface ReconcilePricingResult {
   errors: string[];
 }
 
-// Czyści "Cena wdrożenia" (ustawia na pusty number) TYLKO dla kart przekazanych ze
-// świeżego findPipelineCardsWithOldDefaultPrice, tuż przed wywołaniem — bez ponownego
-// sprawdzania stanu, żeby uniknąć wyścigu z ręczną edycją w Notion między preview a apply.
+// Czyści "Cena wdrożenia" i/lub "Retainer PLN/mc" (ustawia na pusty number) TYLKO dla pól
+// faktycznie oflagowanych jako stare w kartach przekazanych ze świeżego
+// findPipelineCardsWithOldDefaultPrice, tuż przed wywołaniem — bez ponownego sprawdzania
+// stanu, żeby uniknąć wyścigu z ręczną edycją w Notion między preview a apply.
 export async function clearOldDefaultPriceForCards(
   cards: PipelineCardOldDefaultPrice[],
 ): Promise<ReconcilePricingResult> {
@@ -1651,11 +1662,14 @@ export async function clearOldDefaultPriceForCards(
   const errors: string[] = [];
 
   for (const card of cards) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const props: Record<string, any> = {};
+    if (card.cenaStara) props["Cena wdrożenia"] = { number: null };
+    if (card.retainerStary) props["Retainer PLN/mc"] = { number: null };
+    if (Object.keys(props).length === 0) continue;
+
     try {
-      await notion.pages.update({
-        page_id: card.id,
-        properties: { "Cena wdrożenia": { number: null } },
-      });
+      await notion.pages.update({ page_id: card.id, properties: props });
       updated.push(card.name);
     } catch (err) {
       errors.push(`${card.name}: ${err instanceof Error ? err.message : "Błąd zapisu"}`);

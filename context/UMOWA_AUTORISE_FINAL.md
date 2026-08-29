@@ -1,5 +1,10 @@
 # UMOWA O ŚWIADCZENIE USŁUG WDROŻENIA SYSTEMU AUTORISE
 
+**⚠️ NIEAKTUALNE (od 2026-08-29) — zastąpione przez `UMOWA_SYSTEM_AUTORISE.pdf` (D:\autorise\workspace\context\UMOWA_SYSTEM_AUTORISE.pdf).
+Cena wdrożenia, retainer, i mechanizm weryfikacji efektywności/zwrotu opisane niżej są nieaktualne
+— zachowane w repo wyłącznie jako dokument historyczny. Zobacz `PRODUKT_ZRODLO_PRAWDY.md` dla
+aktualnego stanu.**
+
 **WERSJA FINALNA DO WERYFIKACJI PRAWNEJ — wymaga przejrzenia przez prawnika przed pierwszym użyciem z klientem.**
 
 ---

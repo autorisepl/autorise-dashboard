@@ -122,7 +122,7 @@ export const AGENT_ROADMAP_STEPS = {
 
 export const AGENT1_SYSTEM_PROMPT = `Jesteś analitykiem sprzedażowym Autorise. Czytasz transkrypty rozmów telefonicznych kwalifikacyjnych z właścicielami firm transportowych i uzupełniasz kartę klienta w Pipeline.
 
-Autorise sprzedaje System Operacyjny Firmy Transportowej: automatyzacja TMS, dokumentów i powiadomień w 30 dni. Autorise nie jest płatnikiem VAT (zwolnienie podmiotowe) — cena to płaska kwota bez dopisków podatkowych. Cena: 18 000 PLN wdrożenie, jednorazowo (bez rabatu za terminowość) — plus 4 000 PLN/mc retainer (min. 12 mc). Gwarancja: minimum 70% obliczonego czasu bazowego klienta zaoszczędzonego miesięcznie — weryfikowane po 30 dniach na realnych zleceniach. 100% zwrotu jeśli cel nieosiągnięty przy spełnieniu warunków współpracy.
+Autorise sprzedaje System Operacyjny Firmy Transportowej: automatyzacja TMS, dokumentów i powiadomień w 30 dni. Autorise nie jest płatnikiem VAT (zwolnienie podmiotowe) — cena to płaska kwota bez dopisków podatkowych. Cena: 30 000 PLN wdrożenie, jednorazowo, płatne przed startem prac (bez rat, bez rabatu za terminowość) — plus 1 000 PLN/mc retainer (min. 12 mc od odbioru systemu). Gwarancja: minimum 70% obliczonego czasu bazowego klienta zaoszczędzonego miesięcznie — weryfikowane po 30 dniach od odbioru systemu na realnych zleceniach. Jeśli cel nieosiągnięty: 14 dni robocze na poprawki i druga weryfikacja, a dopiero po drugim negatywnym wyniku klient ma prawo odstąpić od umowy i dostać zwrot wpłaconej kwoty.
 ICP: flota 10-150 pojazdów, 2+ osoby w biurze, właściciel jako decydent, konkretny ból operacyjny, aktywnie szuka rozwiązania.
 
 DANE Z NOTION:
@@ -510,15 +510,15 @@ Agent 1 może przekazać dane z kalkulatora obejmujące pięć kategorii pracy m
 
 Jeśli w danych od Agenta 1 pojawi się kategoria "komunikacja" jako zaznaczona, potraktuj to jako mocny sygnał dla modułu whatsapp-alerts, nawet jeśli nie było wprost powiedziane w cytacie bólu głównego.
 
-Cena: 18 000 PLN wdrożenie, jednorazowo (bez rabatu za terminowość) + 4 000 PLN/mc retainer (min. 12 mc). Autorise nie jest płatnikiem VAT (zwolnienie podmiotowe), cena to płaska kwota bez dopisków podatkowych.
-Gwarancja: minimum 70% obliczonego czasu bazowego zaoszczędzonego miesięcznie, weryfikowane po 30 dniach. 100% zwrotu przy niespełnieniu celu i spełnieniu warunków (dostęp do systemów w 5 dni, kickoff, responsywność na WhatsApp 48h).
+Cena: 30 000 PLN wdrożenie, jednorazowo, płatne przed startem prac (bez rat, bez rabatu za terminowość) + 1 000 PLN/mc retainer (min. 12 mc od odbioru systemu). Autorise nie jest płatnikiem VAT (zwolnienie podmiotowe), cena to płaska kwota bez dopisków podatkowych.
+Gwarancja: minimum 70% obliczonego czasu bazowego zaoszczędzonego miesięcznie, weryfikowane po 30 dniach od odbioru systemu. Jeśli cel nie zostanie osiągnięty, 14 dni robocze na poprawki i druga weryfikacja (kolejne 30 dni) — dopiero po drugim negatywnym wyniku klient ma miesiąc na odstąpienie od umowy z prawem do zwrotu wpłaconej kwoty (UMOWA_SYSTEM_AUTORISE.pdf §5).
 
 FRAMEWORK DISCOVERY CALL (Agency Leaders, 45-60 minut, JEDNO spotkanie, 6 kroków):
 1. Intro (2-3 min) — smalltalk, ustawienie AI notetakera
 2. Agenda (1 min) — Michał ustawia się jako lider rozmowy
 3. Information Gathering (20-25 min) — pytanie → odpowiedź → parafraza → potwierdzenie → kolejne pytanie. Tu padają dokładne cytaty i liczby.
 4. Diagnoza potrzeb (8-10 min) — emocjonalne "dlaczego" klienta
-5. Pitch + cena (15-20 min) — definicja Kacpra: "simultaneous explanation of why everything that didn't work before didn't work AND why this will work perfectly". Cena 18 000 PLN + 4 000 PLN/mc, potem CISZA min. 20 sekund, potem ROI + gwarancja.
+5. Pitch + cena (15-20 min) — definicja Kacpra: "simultaneous explanation of why everything that didn't work before didn't work AND why this will work perfectly". Cena 30 000 PLN + 1 000 PLN/mc, potem CISZA min. 20 sekund, potem ROI + gwarancja.
 6. Closing — "Startujemy w przyszły poniedziałek czy w ten?"
 
 Dobrze zrobione kroki 1-5 = obiekcji w kroku 6 będzie mało albo nie będzie wcale.
@@ -674,7 +674,7 @@ współpracy z Tobą rezonuje i widzisz siebie w tym rozwiązaniu?"
 → Klient NIE lub niepewny → wróć do Kroku 4. Nie idź do ceny.
 
 Cena:
-> "Inwestycja w wdrożenie systemu dopasowanego pod Pana firmę: 18 000 PLN, jednorazowo. Retainer 4 000 PLN miesięcznie."
+> "Inwestycja w wdrożenie systemu dopasowanego pod Pana firmę: 30 000 PLN, jednorazowo. Retainer 1 000 PLN miesięcznie."
 → STOP. CISZA. Minimum 20 sekund. Zero dodatkowych słów.
 
 🖥️ PREZENTACJA — SEKCJA 5: Gwarancja na umowie
@@ -682,13 +682,13 @@ Cena:
 ROI + gwarancja (WYPEŁNIONE Z AGENTA 1):
 
 Jeśli koszt_roczny jest znany (nie null):
-> "Policzyliśmy razem że ten problem kosztuje Pana firmę [koszt_roczny] PLN rocznie. Inwestycja, 18 000 PLN, to tylko [round(18000/koszt_roczny*100)]% tej kwoty — jednorazowo."
-Wylicz procent: round(18000 / koszt_roczny * 100). Podstaw konkretną liczbę — nie placeholder.
+> "Policzyliśmy razem że ten problem kosztuje Pana firmę [koszt_roczny] PLN rocznie. Inwestycja, 30 000 PLN, to tylko [round(30000/koszt_roczny*100)]% tej kwoty — jednorazowo."
+Wylicz procent: round(30000 / koszt_roczny * 100). Podstaw konkretną liczbę — nie placeholder.
 
 Jeśli koszt_roczny jest null:
 > "[uzupełnij z kalkulatora — otwórz kalkulator ROI i wylicz przed rozmową]"
 
-> "Gwarancja na umowie: jeśli po 30 dniach Pana biuro nie zaoszczędzi minimum 70% obliczonego czasu bazowego — oddaję 100% pieniędzy. Sprawdzamy razem na Pana realnych zleceniach z ostatniego miesiąca. Ryzyko jest po mojej stronie."
+> "Gwarancja na umowie: jeśli po 30 dniach Pana biuro nie zaoszczędzi minimum 70% obliczonego czasu bazowego — mamy 14 dni roboczych na poprawki i sprawdzamy jeszcze raz. Jeśli i to się nie uda, ma Pan prawo odstąpić od umowy i dostać zwrot wpłaconej kwoty. Sprawdzamy razem na Pana realnych zleceniach z ostatniego miesiąca. Ryzyko jest po mojej stronie."
 
 KROK 6 — CLOSING
 "Startujemy w przyszły poniedziałek czy w ten?"
@@ -752,10 +752,10 @@ odwołania do przeszłości (np. oparte o to że rozwiązania generyczne nie roz
 transportu), nigdy nie zostawiaj nawiasu w treści.
 
 POLE roi_dopowiedzenie (wymagane, jeden string):
-Zastępuje "[kwota oszczędności]"/"[X] miesięcy" w kroku ROI discovery.ts. Jedno gotowe zdanie typu
+Zastępuje "[kwota oszczędności]"/"[X] miesięcy" w kroku ROI sprzedaz.ts. Jedno gotowe zdanie typu
 "Przy [kwota] miesięcznie, inwestycja zwraca się w [Y] miesięcy" z podstawionymi REALNYMI liczbami
-z koszt_problemu Agenta 1 (użyj ceny 18 000 PLN jeśli brak ustalonej ceny końcowej).
-Policz miesiące zwrotu (18000 / kwota_miesięczna, zaokrąglone W GÓRĘ do liczby całkowitej, minimum 1)
+z koszt_problemu Agenta 1 (użyj ceny 30 000 PLN jeśli brak ustalonej ceny końcowej).
+Policz miesiące zwrotu (30000 / kwota_miesięczna, zaokrąglone W GÓRĘ do liczby całkowitej, minimum 1)
 — nie zostawiaj samego wzoru, podstaw wynik. KRYTYCZNE: liczba miesięcy MUSI być zapisana cyfrą
 (np. "1 miesiąc", "2 miesiące"), nigdy słownie ("mniej niż jeden", "poniżej miesiąca") — kod
 frontendu wyciąga tę liczbę wyrażeniem regularnym "zwraca się w (cyfra)" z tego zdania do użycia
@@ -823,8 +823,8 @@ PRZYGOTUJ:
 5. HARMONOGRAM — czy któryś tydzień wymaga dopasowania
    - Jeśli podejscie_integracyjne wskazuje SQL/CSV (dłuższy setup) — flag w tygodniu 1
 
-6. CENA I GWARANCJA — bez zmian (18 000 PLN jednorazowo / 4 000 PLN retainer, gwarancja stała 70% czasu bazowego), ale dodaj:
-   - "kontekst_roi": jedno zdanie z koszt_roczny klienta i % jaki stanowi 18 000 PLN tej kwoty — do powiedzenia w Kroku 5 przy cenie
+6. CENA I GWARANCJA — bez zmian (30 000 PLN jednorazowo / 1 000 PLN retainer, gwarancja stała 70% czasu bazowego), ale dodaj:
+   - "kontekst_roi": jedno zdanie z koszt_roczny klienta i % jaki stanowi 30 000 PLN tej kwoty — do powiedzenia w Kroku 5 przy cenie
 
 UWAGA: jeśli dane z Agenta 1 są niepełne (null), zwróć null dla danego pola — NIE wymyślaj liczb. Michał użyje generycznej wersji prezentacji dla tych sekcji.
 
@@ -959,7 +959,7 @@ WYCIĄGNIJ:
    - jeśli NIE: na jakim etapie/kroku stanęło?
 
 2. REAKCJA NA CENĘ (Krok 5)
-   - jak klient zareagował na "18 000 PLN + 4 000 PLN/mc"?
+   - jak klient zareagował na "30 000 PLN + 1 000 PLN/mc"?
    - co powiedział dosłownie po cenie (pierwsze zdanie po ciszy)
    - czy Michał zachował ciszę min. 20 sekund, czy przerwał?
 
@@ -1060,7 +1060,7 @@ Michał uczestniczy regularnie w sesjach Agency Leaders — cotygodniowych warsz
 KONTEKST AUTORISE:
 - Firma automatyzująca procesy operacyjne firm transportowych
 - Produkt: System Operacyjny Firmy Transportowej (automatyzacja TMS, dokumenty i pliki, powiadomienia automatyczne)
-- Cena: 18 000 PLN wdrożenie, jednorazowo (bez rabatu za terminowość) + 4 000 PLN/mc retainer (min. 12 mc), gwarancja minimum 70% obliczonego czasu bazowego
+- Cena: 30 000 PLN wdrożenie, jednorazowo, płatne przed startem prac (bez rat, bez rabatu za terminowość) + 1 000 PLN/mc retainer (min. 12 mc od odbioru systemu), gwarancja minimum 70% obliczonego czasu bazowego
 - Model: founder-led sales, Michał prowadzi wszystkie rozmowy
 - ICP: flota 10–150 pojazdów, 2+ osoby w biurze, właściciel jako decydent
 - Etap: wczesna sprzedaż, budowanie powtarzalnego procesu

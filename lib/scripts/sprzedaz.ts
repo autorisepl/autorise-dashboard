@@ -158,7 +158,8 @@ export const STEPS_D: Step[] = [
       },
     ],
     expected: "Klient potwierdza liczby z kwalifikacji albo podaje skorygowane wartości.",
-    transition: "Dobrze, mam punkt odniesienia. Sprawdźmy jeszcze, co dotychczas próbowano z tym zrobić.",
+    transition:
+      "Dobrze, mam punkt odniesienia. Sprawdźmy jeszcze, co dotychczas próbowano z tym zrobić.",
     nextStepId: "proby",
   },
   {
@@ -180,7 +181,8 @@ export const STEPS_D: Step[] = [
       },
       { t: "client", text: "[odpowiedź]" },
     ],
-    expected: "Klient opisuje konkretną próbę (narzędzie, proces, osobę) i miejsce gdzie to nie zadziałało.",
+    expected:
+      "Klient opisuje konkretną próbę (narzędzie, proces, osobę) i miejsce gdzie to nie zadziałało.",
     transition: "Rozumiem. Sprawdźmy jeszcze, dlaczego nie da się tego rozwiązać wewnętrznie.",
   },
   {
@@ -200,7 +202,8 @@ export const STEPS_D: Step[] = [
         text: "To pytanie pokazuje głębię problemu i eliminuje 'zrobimy to sami' jako późniejszą obiekcję.",
       },
     ],
-    expected: "Klient wskazuje realną przeszkodę (czas, kompetencje, priorytety), nie tylko 'nie było okazji'.",
+    expected:
+      "Klient wskazuje realną przeszkodę (czas, kompetencje, priorytety), nie tylko 'nie było okazji'.",
     transition: "Dobrze, to policzmy razem ile to dziś realnie kosztuje firmę.",
   },
   {
@@ -220,7 +223,8 @@ export const STEPS_D: Step[] = [
         text: "Pomóż klientowi policzyć: godziny × stawka + błędy + opóźnienia w fakturach.",
       },
     ],
-    expected: "Klient podaje orientacyjny koszt w godzinach, błędach albo złotówkach, choćby przybliżony.",
+    expected:
+      "Klient podaje orientacyjny koszt w godzinach, błędach albo złotówkach, choćby przybliżony.",
     transition: "Rozumiem. Zanim przejdę dalej, jeszcze jedno pytanie o budżet.",
     nextStepId: "finanse_zasoby",
   },
@@ -385,9 +389,9 @@ export const STEPS_D: Step[] = [
         t: "say",
         text: [
           "To co przed chwilą zostało opisane — [ból główny słowami klienta z parafrazy] — to dokładnie to, co u naszych klientów znika w ciągu 30 dni.",
-          "Odzyskuje {FORMA} minimum 70% obliczonego czasu bazowego — [gwarancja godzin] miesięcznie — albo zwracamy 100% inwestycji. Bez wyjątków.",
+          "Odzyskuje {FORMA} minimum 70% obliczonego czasu bazowego — [gwarancja godzin] miesięcznie. Jeśli po 30 dniach tego nie osiągniemy, mamy czas na poprawki i sprawdzamy jeszcze raz — a jeśli i to się nie uda, ma Pan prawo do zwrotu wpłaconej kwoty.",
         ],
-        cel: "Obietnica/big promise — prowadzisz pitch od razu ofertą i gwarancją, nie chowasz jej na koniec",
+        cel: "Obietnica/big promise — prowadzisz pitch od razu ofertą i gwarancją, nie chowasz jej na koniec. Sformułowanie zgodne z UMOWA_SYSTEM_AUTORISE.pdf §5 (dwie rundy weryfikacji, potem prawo Zamawiającego do odstąpienia i zwrotu wpłaconej kwoty) — nie 'zwrot 100% bez wyjątków' jak w starej wersji, ten mechanizm już nie istnieje w obecnej umowie",
       },
       {
         t: "say",
@@ -399,8 +403,8 @@ export const STEPS_D: Step[] = [
       },
       {
         t: "say",
-        text: "I jeszcze jedno, zanim przejdziemy dalej: ryzyko finansowe jest po naszej stronie, nie po Waszej. Jeśli po 30 dniach nie odzyskacie minimum 70% obliczonego czasu bazowego, czyli [gwarancja godzin] miesięcznie, oddajemy 100% pieniędzy. Bez pytań, bez wyjątków.",
-        cel: "Stały, mocny wyróżnik różnicujący (Blok 'Arek' pkt 4, 2026-07-15) — nie wzmianka o gwarancji przy okazji, tylko jawne nazwanie kto ponosi ryzyko finansowe. Zbija najczęstszą niewypowiedzianą obiekcję 'a jeśli to nie zadziała' zanim padnie",
+        text: "I jeszcze jedno, zanim przejdziemy dalej: ryzyko finansowe jest po naszej stronie, nie po Waszej. Jeśli po 30 dniach nie odzyskacie minimum 70% obliczonego czasu bazowego, czyli [gwarancja godzin] miesięcznie, mamy dwa tygodnie robocze na poprawki i weryfikujemy jeszcze raz. Jeśli i to się nie uda, ma Pan prawo odstąpić od umowy i dostać zwrot wpłaconej kwoty.",
+        cel: "Stały, mocny wyróżnik różnicujący (Blok 'Arek' pkt 4, 2026-07-15) — nie wzmianka o gwarancji przy okazji, tylko jawne nazwanie kto ponosi ryzyko finansowe. Zbija najczęstszą niewypowiedzianą obiekcję 'a jeśli to nie zadziała' zanim padnie. Mechanizm zgodny z UMOWA_SYSTEM_AUTORISE.pdf §5 ust. 6-8 — dwie rundy weryfikacji (30 dni + 14 dni robocze poprawek + 30 dni ponownej weryfikacji), dopiero potem prawo do odstąpienia i zwrotu, nie jednorazowy automatyczny zwrot",
       },
       {
         t: "action",
@@ -431,7 +435,7 @@ export const STEPS_D: Step[] = [
       {
         t: "say",
         text: [
-          "Pomożemy Panu osiągnąć [WYNIK]. Jeśli tego nie osiągniemy, zwracamy całość wynagrodzenia za wdrożenie. Robimy to dzięki [MECHANIZM] - automatyzacji panelu, odczytowi dokumentów i jednoklikowym potwierdzeniom spedytora. Mamy to opisane w umowie, nie na słowo.",
+          "Pomożemy Panu osiągnąć [WYNIK]. Jeśli po weryfikacji i ewentualnej korekcie nadal tego nie osiągniemy, ma Pan prawo do zwrotu wpłaconej kwoty. Robimy to dzięki [MECHANIZM] - automatyzacji panelu, odczytowi dokumentów i jednoklikowym potwierdzeniom spedytora. Mamy to opisane w umowie, nie na słowo.",
         ],
       },
       {
@@ -571,9 +575,9 @@ export const STEPS_D: Step[] = [
         t: "say",
         text: [
           "Za tę inwestycję odzyskuje {FORMA} minimum [gwarancja godzin] godzin miesięcznie, które dziś firma traci na ręcznej pracy.",
-          "Gwarancja: minimum 70% obliczonego czasu bazowego Pana firmy, czyli [gwarancja godzin] miesięcznie, sprawdzane po 30 dniach — jeśli nie osiągniemy progu, zwrot 100%.",
+          "Gwarancja: minimum 70% obliczonego czasu bazowego Pana firmy, czyli [gwarancja godzin] miesięcznie, sprawdzane po 30 dniach — jeśli nie osiągniemy progu, poprawiamy i weryfikujemy jeszcze raz, a jeśli i to się nie uda, ma Pan prawo do zwrotu wpłaconej kwoty.",
         ],
-        cel: "Clear value proposition (Kacper Wierszewski) — jedno jasne zdanie łączące liczbę z wynikiem PRZED samą kwotą, żeby klient słyszał najpierw efekt, potem cenę",
+        cel: "Clear value proposition (Kacper Wierszewski) — jedno jasne zdanie łączące liczbę z wynikiem PRZED samą kwotą, żeby klient słyszał najpierw efekt, potem cenę. Gwarancja opisana zgodnie z UMOWA_SYSTEM_AUTORISE.pdf §5 (dwie rundy weryfikacji, potem prawo do odstąpienia i zwrotu), nie jako jednorazowy zwrot",
       },
       {
         t: "note",
@@ -581,8 +585,8 @@ export const STEPS_D: Step[] = [
       },
       {
         t: "say",
-        text: "Inwestycja żeby skorzystać z tego systemu i osiągnąć ten cel to jest 18 000 złotych za wdrożenie i 4000 miesięcznie retainera. Czy to jest w ramach Pana możliwości firmowych?",
-        cel: "Podać konkretną liczbę i przetrzymać ciszę — pierwsza osoba która przerwie milczenie zwykle przegrywa negocjację",
+        text: "Inwestycja żeby skorzystać z tego systemu i osiągnąć ten cel to jest 30 000 złotych za wdrożenie i 1000 złotych miesięcznie retainera. Czy to jest w ramach Pana możliwości firmowych?",
+        cel: "Podać konkretną liczbę i przetrzymać ciszę — pierwsza osoba która przerwie milczenie zwykle przegrywa negocjację. Cena zgodna z UMOWA_SYSTEM_AUTORISE.pdf §8: 30 000 PLN wdrożenie (jednorazowo, płatne przed startem prac), 1000 PLN/mc retainer",
       },
     ],
     nextStepId: "close_d",
@@ -644,11 +648,15 @@ export const STEPS_D: Step[] = [
         text: [
           "Świetnie.",
           "Prześlę umowę na [email] do podpisu.",
-          "Po podpisaniu wystawiam fakturę, płatna w 2 dni.",
-          "Kickoff umawiamy w ciągu 7 dni roboczych od zaksięgowania wpłaty — to jest moment od którego realnie zaczynamy.",
+          "Po podpisaniu wystawiam fakturę, płatna w 2 dni robocze.",
+          "Kickoff umawiamy w ciągu 7 dni roboczych od zaksięgowania pełnej wpłaty — to jest moment od którego realnie zaczynamy.",
           "Pasuje?",
         ],
-        cel: "Kolejność podpis → faktura → wpłata → Kickoff — praca zaczyna się dopiero po zaksięgowaniu wpłaty (SZKIC_UMOWA_AUTORISE.md §2 ust. 1-2), nie od samego podpisania",
+        cel: "Kolejność podpis → faktura → wpłata → Kickoff — praca zaczyna się dopiero po zaksięgowaniu pełnej wpłaty (UMOWA_SYSTEM_AUTORISE.pdf §2-3), nie od samego podpisania",
+      },
+      {
+        t: "note",
+        text: "Ważne dla Ciebie, niekoniecznie do wypowiedzenia wprost: umowa ma warunek rozwiązujący — jeśli pełna kwota nie wpłynie na konto w ciągu 7 dni kalendarzowych od podpisania, umowa automatycznie się rozwiązuje ze skutkiem wstecznym (UMOWA_SYSTEM_AUTORISE.pdf §2 ust. 2). Dopilnuj żeby klient wiedział o tym terminie i żeby faktura poszła od razu.",
       },
     ],
   },
@@ -660,27 +668,32 @@ export const STEPS_D: Step[] = [
     lines: [
       {
         t: "note",
-        text: "Zanim wyślesz umowę, przejdź na głos przez tych 9 punktów z klientem — każdy osobno, nie jednym zdaniem. To ostatni moment żeby uniknąć niejasności przed podpisem, nie krok do przeklikania w ciszy.",
+        text: "Zanim wyślesz umowę, przejdź na głos przez tych 10 punktów z klientem — każdy osobno, nie jednym zdaniem. To ostatni moment żeby uniknąć niejasności przed podpisem, nie krok do przeklikania w ciszy.",
       },
       {
         t: "say",
-        text: "18 tysięcy złotych, płatne jednorazowo w ciągu 2 dni od faktury.",
-        cel: "Cena — potwierdzenie kwoty na głos, nie zakładanie że {FORMA} pamięta to z wcześniejszej części rozmowy. Jedna cena, bez mechanizmu rabatu za terminowość (usunięty z nowej wersji umowy)",
+        text: "30 tysięcy złotych za wdrożenie, płatne jednorazowo w ciągu 2 dni roboczych od faktury.",
+        cel: "Cena — potwierdzenie kwoty na głos, nie zakładanie że {FORMA} pamięta to z wcześniejszej części rozmowy. Jedna cena, bez rat i bez rabatu za terminowość — żadnego z tych mechanizmów nie ma w obecnej umowie (UMOWA_SYSTEM_AUTORISE.pdf §8 ust. 1)",
       },
       {
         t: "say",
-        text: "Praca zaczyna się dopiero po zaksięgowaniu wpłaty, nie po samym podpisaniu — dlatego zależy mi żeby faktura poszła szybko po podpisie.",
+        text: "Ważna rzecz: jeśli pełna kwota nie wpłynie na nasze konto w ciągu 7 dni kalendarzowych od podpisania, umowa automatycznie się rozwiązuje. Dlatego zależy mi żeby faktura poszła szybko po podpisie, i żeby przelew poszedł zaraz po niej.",
+        cel: "Warunek rozwiązujący — UMOWA_SYSTEM_AUTORISE.pdf §2 ust. 2, twardy termin nieobecny w starszych wersjach umowy. Musi być wypowiedziany wprost, klient nie może się dowiedzieć o nim dopiero z treści dokumentu",
+      },
+      {
+        t: "say",
+        text: "Prace zaczynają się dopiero po zaksięgowaniu pełnej wpłaty, nie po samym podpisaniu.",
         cel: "Kolejność płatność → praca — kluczowa różnica względem intuicji klienta ('podpisałem więc już zaczynacie'), musi być wypowiedziana wprost, nie domyślna",
       },
       {
         t: "say",
-        text: "30-dniowa weryfikacja gwarancji liczy się od dnia gdy dostanę komplet dostępów, nie od dzisiejszego podpisu.",
-        cel: "Start zegara — kluczowa różnica względem intuicji klienta ('podpisałem więc już się liczy'), musi być wypowiedziana wprost, nie domyślna",
+        text: "30-dniowa weryfikacja efektywności liczy się od dnia odbioru systemu, czyli po zakończeniu wdrożenia, nie od dzisiejszego podpisu ani od momentu przekazania dostępów.",
+        cel: "Start zegara — kluczowa różnica względem intuicji klienta ('podpisałem więc już się liczy'), musi być wypowiedziana wprost, nie domyślna. UMOWA_SYSTEM_AUTORISE.pdf §5 ust. 2 liczy weryfikację od odbioru Systemu (po Discovery technicznym, integracji i testach), nie od przekazania dostępów na starcie wdrożenia",
       },
       {
         t: "say",
-        text: "Jeśli po pierwszych 30 dniach wynik nie osiągnie progu, mamy 2 tygodnie na poprawki i sprawdzamy jeszcze raz — dopiero jeśli i to nie wyjdzie, przysługuje Panu zwrot.",
-        cel: "Druga runda weryfikacji przed zwrotem — SZKIC_UMOWA_AUTORISE.md §4 ust. 7. Wypowiadane wprost, żeby klient znał realną procedurę, nie zakładał automatycznego zwrotu zaraz po pierwszym negatywnym wyniku",
+        text: "Jeśli po pierwszych 30 dniach wynik nie osiągnie progu, mam 14 dni roboczych na poprawki, i weryfikujemy jeszcze raz przez kolejne 30 dni. Dopiero jeśli druga weryfikacja też wypadnie negatywnie, ma Pan miesiąc na to żeby odstąpić od umowy i dostać zwrot tego, co Pan do tej pory zapłacił.",
+        cel: "Druga runda weryfikacji przed prawem do odstąpienia — UMOWA_SYSTEM_AUTORISE.pdf §5 ust. 7-8. Wypowiadane wprost, żeby klient znał realną procedurę: to prawo do odstąpienia z obowiązkiem zwrotu, nie automatyczny zwrot zaraz po pierwszym negatywnym wyniku, i klient musi sam z niego skorzystać w terminie miesiąca, inaczej umowa trwa dalej",
       },
       {
         t: "say",
@@ -689,13 +702,13 @@ export const STEPS_D: Step[] = [
       },
       {
         t: "say",
-        text: "4 tysiące miesięcznie przez minimum 12 miesięcy, niezależnie od wyniku gwarancji — to osobna rzecz od samego wdrożenia.",
-        cel: "Retainer — oddzielić jednoznacznie od gwarancji zwrotu, najczęstszy punkt niejasności po podpisie",
+        text: "Tysiąc złotych miesięcznie przez minimum 12 miesięcy licząc od dnia odbioru systemu, niezależnie od wyniku weryfikacji — to osobna rzecz od samego wdrożenia.",
+        cel: "Retainer — oddzielić jednoznacznie od gwarancji zwrotu, najczęstszy punkt niejasności po podpisie. Kwota i start liczenia zgodne z UMOWA_SYSTEM_AUTORISE.pdf §7 ust. 1 i §8 ust. 2",
       },
       {
         t: "say",
-        text: "Jeśli Pana TMS nie ma jeszcze potwierdzonego dostępu do API, to nie jest ryzyko że wdrożenie stanie w miejscu — mamy na to sprawdzony sposób, zajmę się tym na Kickoff.",
-        cel: "Wykonalność integracji TMS — proces oceny z KARTA_PRODUKTU_SYSTEM_OPERACYJNY.md pkt 8 (2026-07-19), tu w skróconej formie: pewność bez rozwlekania mechanizmu, którego klient na tym etapie nie potrzebuje. Simplicity > complexity (Kacper Wierszewski) — pełna metodologia w notatce niżej, dopiero jeśli klient dopyta",
+        text: "Jeśli Pana TMS nie ma jeszcze potwierdzonego dostępu do API, zwykle nie jest to problem — mamy na to sprawdzony sposób, zajmę się tym na Kickoff.",
+        cel: "Wykonalność integracji TMS — proces oceny z KARTA_PRODUKTU_SYSTEM_OPERACYJNY.md pkt 8 (2026-07-19), tu w skróconej formie: pewność bez rozwlekania mechanizmu, którego klient na tym etapie nie potrzebuje. Celowo 'zwykle nie problem', nie 'to nie jest ryzyko' — UMOWA_SYSTEM_AUTORISE.pdf §3 ust. 5 dopuszcza odstąpienie obu stron w rzadkim przypadku braku alternatywy, nie warto tego przemilczać jeśli klient dopyta wprost",
       },
       {
         t: "note",
@@ -703,8 +716,8 @@ export const STEPS_D: Step[] = [
       },
       {
         t: "say",
-        text: "Po podpisaniu dostanie Pan konkretny rytm, nie ciszę: Kickoff w ciągu 7 dni roboczych od wpłaty, potem zbieramy dostępy, potem 4 tygodnie wdrożenia, na końcu weryfikacja efektywności — każdy etap z ustaloną datą, nie zawieszony w niepewności.",
-        cel: "Zapowiedź całego cyklu, nie tylko momentu podpisu — żeby klient nie miał wrażenia że po podpisie 'coś się dzieje' bez konkretnego rytmu. Wypowiadane PRZED prośbą o podpis, jako ostatni punkt pewności zanim padnie pytanie o samą decyzję",
+        text: "Po podpisaniu dostanie Pan konkretny rytm, nie ciszę: Kickoff w ciągu 7 dni roboczych od pełnej wpłaty, potem zbieramy dostępy, potem do 4 tygodni wdrożenia, potem odbiór systemu, i od tego dnia liczy się 30-dniowa weryfikacja i pierwsza faktura retainera — każdy etap z ustaloną datą, nie zawieszony w niepewności.",
+        cel: "Zapowiedź całego cyklu, nie tylko momentu podpisu — żeby klient nie miał wrażenia że po podpisie 'coś się dzieje' bez konkretnego rytmu. Wypowiadane PRZED prośbą o podpis, jako ostatni punkt pewności zanim padnie pytanie o samą decyzję. Kolejność zgodna z UMOWA_SYSTEM_AUTORISE.pdf §3-5: wpłata → Kickoff → dostępy → wdrożenie → odbiór → weryfikacja + start retainera",
       },
       {
         t: "say",
@@ -747,8 +760,8 @@ export const OBJECTIONS_D: Objection[] = [
     label: "Zastanowienie: kwestia finansowa",
     script: "Rozumiem. Co możemy wspólnie zrobić, żeby dało się to zagospodarować budżetowo?",
     followup:
-      "Nie każdy ma od razu pełną kwotę na taką inwestycję. Czy pomogłoby, gdybyśmy rozbili to na raty - na przykład 50 procent teraz, 25 procent po odbiorze systemu, 25 procent po weryfikacji efektywności?",
-    note: "Followup zadawaj tylko jeśli klient nie widzi możliwości sfinansowania od razu.",
+      "Umowa nie przewiduje rozłożenia na raty - cała kwota płatna jest jednorazowo, zanim zaczynamy pracę. Czy to raczej kwestia terminu, na przykład rozpoczęcia w kolejnym miesiącu rozliczeniowym, czy realnie fizycznego braku środków w tej chwili?",
+    note: "Followup zadawaj tylko jeśli klient nie widzi możliwości sfinansowania od razu. UMOWA_SYSTEM_AUTORISE.pdf nie przewiduje żadnego wariantu ratalnego - płatność jest zawsze jednorazowa, przed startem prac (§2 ust. 1-2, §8 ust. 1). Nie proponuj rat, nawet jako ustępstwo.",
   },
   {
     id: "od1_partner",
@@ -783,21 +796,22 @@ export const OBJECTIONS_D: Objection[] = [
     stage: "cena",
     label: "Za drogo: kwestia logistyki płatności",
     script:
-      "Rozumiem, to nie jest mała kwota jednorazowo. Możemy rozbić to na raty: 50 procent teraz, 25 procent po odbiorze systemu, 25 procent po weryfikacji efektywności. Retainer zostaje 4000 zł miesięcznie. Ułatwia to decyzję?",
+      "Rozumiem, to nie jest mała kwota jednorazowo. Umowa nie przewiduje rat, cała kwota jest płatna jednorazowo przed startem prac - ale mogę dopasować moment startu, na przykład do początku kolejnego miesiąca, jeśli to pomaga zaplanować przepływ gotówki. Ułatwia to decyzję?",
+    note: "Bez propozycji rat - UMOWA_SYSTEM_AUTORISE.pdf nie przewiduje takiego wariantu. Jedyna dostępna elastyczność to termin startu, nie rozłożenie kwoty.",
   },
   {
     id: "od3_wartosc",
     stage: "cena",
     label: "Za drogo: wątpliwość czy się zwróci",
     script:
-      "Dobre pytanie. Sam Pan policzył ze mną że to [kwota] miesięcznie, prawda? 18000 zł zwraca się w [X] miesięcy, a retainer jest mniejszy niż jedna trzecia tego co teraz tracicie. Widzi Pan to inaczej po tych liczbach?",
+      "Dobre pytanie. Sam Pan policzył ze mną że to [kwota] miesięcznie, prawda? 30 000 zł zwraca się w [X] miesięcy, a retainer to tysiąc złotych miesięcznie, ułamek tego co teraz tracicie. Widzi Pan to inaczej po tych liczbach?",
   },
   {
     id: "od3_konkurencja",
     stage: "cena",
     label: "Za drogo: porównuje z inną ofertą",
     script:
-      "Jasne. Kto i co dokładnie oferuje za tę cenę? Dają gwarancję konkretnego efektu na umowie, tak jak my dajemy [gwarancja godzin] miesięcznie albo zwrot całości?",
+      "Jasne. Kto i co dokładnie oferuje za tę cenę? Dają gwarancję konkretnego efektu na umowie, tak jak my dajemy [gwarancja godzin] miesięcznie z prawem do zwrotu wpłaconej kwoty jeśli tego nie osiągniemy?",
   },
   {
     id: "od4",
@@ -819,7 +833,7 @@ export const OBJECTIONS_D: Objection[] = [
     stage: "pitch",
     label: "Chcę najpierw zobaczyć demo / testować",
     script:
-      "Nasze demo to realne wdrożenie z Pana danymi, dlatego mamy gwarancję 30-dniową ze 100% zwrotem. Nie pokazujemy sandboxa, wdrażamy i Pan ocenia na żywych danych. Zmienia to Pana perspektywę?",
+      "Nasze demo to realne wdrożenie z Pana danymi, dlatego mamy 30-dniową weryfikację efektywności z prawem do zwrotu jeśli nie osiągniemy celu. Nie pokazujemy sandboxa, wdrażamy i Pan ocenia na żywych danych. Zmienia to Pana perspektywę?",
   },
   {
     id: "od7",
@@ -873,15 +887,16 @@ export const OBJECTIONS_D: Objection[] = [
     stage: "cena",
     label: "Mogę płacić w ratach?",
     script:
-      "Tak, mamy opcję rat: 50 procent teraz, 25 procent po odbiorze systemu, 25 procent po weryfikacji efektywności. Retainer zostaje 4 000 zł/mc. Przy ratach wdrożenie startuje po pierwszej wpłacie. Pasuje Panu?",
+      "Niestety nie, umowa nie przewiduje rat - cała kwota za wdrożenie jest płatna jednorazowo, przed startem prac. To dlatego gwarancja i cały proces weryfikacji mają sens finansowy dla obu stron. Mogę za to dopasować moment startu do Pana kalendarza płatności, jeśli to pomaga.",
+    note: "UMOWA_SYSTEM_AUTORISE.pdf nie przewiduje żadnego wariantu ratalnego. Nie obiecuj rat w żadnej formie, nawet jako gest dobrej woli.",
   },
   {
     id: "od12",
     stage: "closing",
     label: "Chcę móc zrezygnować z retainera w każdej chwili",
     script:
-      "Rozumiem, że chce Pan wiedzieć na czym stoi, zanim podpiszemy. To proste: retainer to 12 miesięcy, bo tyle czasu potrzeba żeby system naprawdę wszedł w krew firmy i przynosił efekt, nie na to żeby Pana związać. Jeśli coś nie działa po naszej stronie, naprawiamy to, taki jest sens gwarancji. Jeśli zdecyduje się Pan zakończyć wcześniej bez naszej winy, rozliczamy pozostałe miesiące jednorazowo, żeby obie strony miały jasność od pierwszego dnia, nie żeby to było karą. Wolę powiedzieć to teraz wprost, niż żeby to było niespodzianką za pół roku.",
-    note: "Do wypowiedzenia proaktywnie przy pierwszej wzmiance o retainerze, albo w odpowiedzi na wprost zadane pytanie o rezygnację. Podstawa: SZKIC_UMOWA_AUTORISE.md §5 ust. 7 (rozliczenie pozostałych miesięcy przy wcześniejszej rezygnacji bez winy Wykonawcy).",
+      "Rozumiem, że chce Pan wiedzieć na czym stoi, zanim podpiszemy. To proste: retainer to minimum 12 miesięcy od dnia odbioru systemu, bo tyle czasu potrzeba żeby system naprawdę wszedł w krew firmy i przynosił efekt, nie na to żeby Pana związać. W tym czasie umowę może wcześniej zakończyć tylko strona, która doznała rażącego naruszenia, na przykład jeśli przestalibyśmy naprawiać usterki albo Pan przestałby płacić mimo wezwania. Poza tym, po 12 miesiącach umowa przechodzi na czas nieokreślony, z 3-miesięcznym okresem wypowiedzenia, więc od tego momentu ma Pan pełną elastyczność. Wolę powiedzieć to teraz wprost, niż żeby to było niespodzianką za pół roku.",
+    note: "Do wypowiedzenia proaktywnie przy pierwszej wzmiance o retainerze, albo w odpowiedzi na wprost zadane pytanie o rezygnację. Podstawa: UMOWA_SYSTEM_AUTORISE.pdf §7 - retainer minimum 12 miesięcy od odbioru, brak ogólnej klauzuli 'wcześniejszej rezygnacji za rozliczeniem pozostałych miesięcy' (ta klauzula była w starszej wersji umowy i już nie obowiązuje), wcześniejsze zakończenie możliwe tylko przy rażącym naruszeniu (§7 ust. 3-4), po 12 miesiącach automatyczne przedłużenie z 3-miesięcznym wypowiedzeniem (§7 ust. 2). Nie obiecuj klientowi wykupienia się z pozostałych miesięcy - tej opcji już nie ma.",
   },
   {
     id: "od13",
@@ -910,14 +925,14 @@ export const OBJECTIONS_D: Objection[] = [
     stage: "cena",
     label: "A jeśli godziny oszczędności się nie potwierdzą bo się spóźniliście z integracją?",
     script:
-      "Weryfikacja 30 dni liczy się od faktycznego startu, czyli od zebrania dostępów — jeśli to my się spóźnimy z integracją, zegar jeszcze się nie zaczął, więc to nie obciąża Pana. Obciąża Pana tylko jeśli to Państwa strona spóźni dostępy mimo ustalonego terminu.",
+      "Weryfikacja 30 dni liczy się dopiero od odbioru systemu, czyli po zakończeniu wdrożenia — jeśli to my się spóźnimy z integracją, odbiór jeszcze nie nastąpił, więc zegar weryfikacji jeszcze się nie zaczął i to nie obciąża Pana. Obciąża Pana tylko jeśli to Państwa strona spóźni dostępy mimo ustalonego terminu, bo to wydłuża sam etap wdrożenia przed odbiorem.",
   },
   {
     id: "od18",
     stage: "closing",
     label: "Chcę zobaczyć demo/wizualizację działania przed podpisem",
     script:
-      "Rozumiem tę potrzebę, ale robimy to celowo w innej kolejności: najpierw podpis, potem wizualizacja. Powód jest prosty — dopiero po podpisaniu i zebraniu dostępów mogę zbudować wizualizację na Pana realnych danych, z Pana TMS-em i Pana zleceniami, nie na generycznym przykładzie który niewiele powie o tym jak to będzie działać u Was. Gwarancja minimum 70% obliczonego czasu bazowego i zwrot 100% to jest Pana realne zabezpieczenie na wypadek gdyby coś nie zadziałało, dokładnie w tym samym celu co demo — tylko że dotyczy Pana firmy, nie cudzej.",
+      "Rozumiem tę potrzebę, ale robimy to celowo w innej kolejności: najpierw podpis, potem wizualizacja. Powód jest prosty — dopiero po podpisaniu i zebraniu dostępów mogę zbudować wizualizację na Pana realnych danych, z Pana TMS-em i Pana zleceniami, nie na generycznym przykładzie który niewiele powie o tym jak to będzie działać u Was. Gwarancja minimum 70% obliczonego czasu bazowego, z prawem do zwrotu wpłaconej kwoty jeśli po weryfikacji i poprawkach tego nie osiągniemy, to jest Pana realne zabezpieczenie na wypadek gdyby coś nie zadziałało, dokładnie w tym samym celu co demo — tylko że dotyczy Pana firmy, nie cudzej.",
     note: "Technika 'podpis, potem wizualizacja' (rozmowa z Arkiem Burkowskim, 15 lipca) — nie budować jeszcze uniwersalnego demo-przykładu wielokrotnego użytku, to osobna decyzja produktowa do podjęcia z Michałem. Ta obiekcja pojawi się częściej przy większych klientach, odpowiedź musi być pewna, nie defensywna.",
   },
   {
@@ -970,14 +985,14 @@ export const OBJECTIONS_D: Objection[] = [
     stage: "pitch",
     label: "Brak case studies / referencji",
     script:
-      "Powiem wprost - jesteśmy na etapie budowania portfolio w tej gałęzi, pierwsze wdrożenie ruszamy teraz. Dlatego dajemy gwarancję zwrotu całości, nie opieramy się tylko na zaufaniu. Mogę pokazać dokładne wyliczenie oszczędności na Pana danych, to jest twardszy dowód niż cudze referencje.",
+      "Powiem wprost - jesteśmy na etapie budowania portfolio w tej gałęzi, pierwsze wdrożenie ruszamy teraz. Dlatego dajemy gwarancję z prawem do zwrotu wpłaconej kwoty jeśli nie osiągniemy celu, nie opieramy się tylko na zaufaniu. Mogę pokazać dokładne wyliczenie oszczędności na Pana danych, to jest twardszy dowód niż cudze referencje.",
   },
   {
     id: "od24",
     stage: "cena",
     label: "Płatność z góry",
     script:
-      "Rozumiem tę wątpliwość. Robimy tak, bo klient który się nie angażuje finansowo od początku, rzadziej angażuje się we współpracy po swojej stronie - a to jest kluczowe dla wyniku. Dlatego gwarancja zwrotu całej kwoty jest zapisana w umowie, nie na słowo.",
+      "Rozumiem tę wątpliwość. Robimy tak, bo klient który się nie angażuje finansowo od początku, rzadziej angażuje się we współpracy po swojej stronie - a to jest kluczowe dla wyniku. Dlatego Pana prawo do zwrotu wpłaconej kwoty, jeśli nie osiągniemy celu efektywności, jest zapisane w umowie, nie na słowo.",
   },
 ];
 

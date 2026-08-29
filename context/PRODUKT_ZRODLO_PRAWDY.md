@@ -1,7 +1,10 @@
 # Produkt Autorise — źródło prawdy
 
-Źródło: `public/prezentacja.html` (slajd 3) + `UMOWA_AUTORISE_FINAL.md` + Załącznik nr 1.
-Ostatnia weryfikacja: 08.08.2026.
+Źródło: `public/prezentacja.html` (slajd 3) + `UMOWA_SYSTEM_AUTORISE.pdf` + Załącznik nr 1.
+Ostatnia weryfikacja: 29.08.2026 — umowa referencyjna zmieniona z `UMOWA_AUTORISE_FINAL.md`
+(nieaktualna, zachowana w repo jako dokument historyczny) na `UMOWA_SYSTEM_AUTORISE.pdf`, wraz
+ze zmianą cennika (patrz sekcja Cennik) i mechanizmu weryfikacji efektywności (patrz sekcja
+Gwarancja).
 
 **Ten plik jest źródłem prawdy o produkcie. Notion "Produkty" i stare pliki SOP (np.
 `KARTA_PRODUKTU_SYSTEM_OPERACYJNY.md`, wczesna koncepcja z 01.07.2026 na stronie PR-0 w
@@ -50,28 +53,33 @@ zakresie modułu "Dokumenty i pliki" (odczyt i przypisanie, nie rozliczanie).
 
 ## Cennik
 
-- **Wdrożenie:** 18 000 PLN netto, jednorazowo (cena regularna). Rabat za terminowość 3 000
-  PLN (15 000 PLN) pod warunkiem zapłaty faktury w 14 dni ORAZ dostarczenia kompletu
-  dostępów w ustalonym terminie — niespełnienie któregokolwiek warunku cofa rabat.
-- **Retainer:** 4 000 PLN netto miesięcznie, minimum 12 miesięcy od zakończenia wdrożenia.
+- **Wdrożenie:** 30 000 PLN brutto, jednorazowo. Bez rat, bez rabatu za terminowość — oba
+  mechanizmy nieobecne w UMOWA_SYSTEM_AUTORISE.pdf (żadna wcześniejsza wersja umowy z ratami
+  lub rabatem już nie obowiązuje). Płatne w 2 dni robocze od faktury elektronicznej (KSeF).
+  Prace nie zaczynają się przed zaksięgowaniem pełnej kwoty (§2 ust. 1); jeśli pełna kwota nie
+  wpłynie w ciągu 7 dni kalendarzowych od podpisania, umowa automatycznie się rozwiązuje ze
+  skutkiem wstecznym (§2 ust. 2, warunek rozwiązujący).
+- **Retainer:** 1 000 PLN brutto miesięcznie, płatne z góry, minimum 12 miesięcy licząc od dnia
+  odbioru systemu (nie od podpisania umowy).
 - Autorise korzysta ze zwolnienia podmiotowego z VAT (art. 113 ust. 1 ustawy o VAT) — podane
   kwoty są kwotami do zapłaty, bez doliczanego VAT.
-- Standardowy czas wdrożenia: 4 tygodnie od otrzymania pełnych dostępów (możliwe wydłużenie
-  o max. 2 tygodnie przy nietypowej konfiguracji systemów klienta lub oczekiwaniu na API
-  strony trzeciej).
+- Standardowy czas wdrożenia: 4 tygodnie od potwierdzenia otrzymania pełnych dostępów (możliwe
+  wydłużenie o max. 2 tygodnie przy nietypowej konfiguracji systemów klienta, dłużej przy
+  oczekiwaniu na API strony trzeciej — patrz §3 ust. 4-5).
 
 ## Gwarancja: wzór i pomiar
 
-Zobowiązanie zwrotu (nie gwarancja rezultatu w sensie prawnym — umowa starannego działania).
+Prawo do odstąpienia i zwrotu (nie gwarancja rezultatu w sensie prawnym — umowa starannego
+działania, UMOWA_SYSTEM_AUTORISE.pdf §5).
 
 **Pomiar C — przed podpisaniem/na Kickoffie (Tydzień 1):** realny czas manualny na jedną
 operację, per moduł, w godzinach. Mierzony obserwacją/zrzutami ekranu z timestampami, nie
 deklaracją słowną klienta. Wolumen operacji świadomie NIE jest zbierany na tym etapie.
 
-**Dzień 30 — Weryfikacja:** dla każdego modułu objętego celem efektywności zbierane są dwie
-nowe liczby: D = liczba operacji wykonanych przez System w okresie, F = rzeczywisty czas
-jaki zajęła obsługa tych operacji człowiekowi przy Systemie (z logów/obserwacji, nie
-zakładane jako zero).
+**30 dni od odbioru systemu — pierwsza weryfikacja:** dla każdego modułu objętego celem
+efektywności zbierane są dwie nowe liczby: D = liczba operacji wykonanych przez System w
+okresie, F = rzeczywisty czas jaki zajęła obsługa tych operacji człowiekowi przy Systemie (z
+logów/obserwacji, nie zakładane jako zero).
 
 **Wzór:**
 ```
@@ -83,11 +91,14 @@ Suma po wszystkich modułach objętych celem efektywności (`MODULE_DEFAULT_WLIC
 zdarzenie eskalacyjne nie jest podstawową jednostką pracy jak zlecenie czy dokument).
 
 Cel domyślny: **minimum 70%** obliczonej efektywności (edytowalny per klient na Kickoffie,
-jedno źródło tej liczby). 100% zwrotu wynagrodzenia za wdrożenie, jeśli cel nieosiągnięty
-przy łącznym spełnieniu WSZYSTKICH warunków z umowy §3 ust. 4: dostępy w ustalonym terminie,
-odpowiedź na uzgodnionym kanale w maks. 48h w dni robocze, udział w Kickoffie i sesjach
-uzupełniających, brak ingerencji w konfigurację Systemu bez zgody, ciągłość systemów
-zewnętrznych klienta. Zwrot nie dotyczy wynagrodzenia za retainer.
+jedno źródło tej liczby, zapisany w Załączniku nr 1). Jeśli pierwsza weryfikacja wypadnie
+negatywnie z przyczyn leżących po stronie Systemu (§5 ust. 6), Wykonawca ma 14 dni roboczych na
+działania naprawcze, po czym weryfikacja powtarza się na kolejne 30 dni kalendarzowych (§5
+ust. 7). Dopiero jeśli DRUGA weryfikacja też wypadnie negatywnie, Zamawiający ma prawo (nie
+obowiązek Wykonawcy — trzeba je aktywnie wykonać) odstąpić od umowy w terminie miesiąca i
+dostać zwrot dotychczas faktycznie zapłaconego wynagrodzenia (§5 ust. 8) — jeśli tego prawa nie
+wykona w terminie, umowa trwa dalej i cel uważa się za osiągnięty. To NIE jest jednorazowy,
+automatyczny zwrot 100% po pierwszym negatywnym wyniku.
 
 ## ICP
 

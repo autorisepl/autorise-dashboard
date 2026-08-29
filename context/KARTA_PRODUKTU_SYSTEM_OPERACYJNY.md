@@ -1,5 +1,11 @@
 # KARTA PRODUKTU: System Operacyjny Firmy Transportowej (PR-0)
 
+**⚠️ Ceny w tym dokumencie NIEAKTUALNE (od 2026-08-29)** — cena wdrożenia i retainer poniżej
+(18000/15000, 4000/mc) to stara wersja, zastąpiona przez UMOWA_SYSTEM_AUTORISE.pdf: 30 000 PLN
+wdrożenie (bez rat, bez rabatu), 1 000 PLN/mc retainer. Zobacz `PRODUKT_ZRODLO_PRAWDY.md` dla
+aktualnego cennika i mechanizmu gwarancji. Reszta tego dokumentu (moduły, metodologia integracji
+TMS) niezmieniona.
+
 Struktura wzorem sprawdzonej metody Agency Leaders (15 punktów), treść w pełni zgodna z aktualnym produktem: 4 standardowe moduły, cena 18000/15000, retainer 4000/mc, gwarancja 80h/30 dni.
 
 ## 1. Snapshot

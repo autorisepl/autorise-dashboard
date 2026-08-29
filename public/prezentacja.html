@@ -1382,7 +1382,7 @@
             <tr><td>Integracja TMS</td><td class="yes">&#10003; <span class="val-tms">Trans.eu</span></td><td class="no">Osobne API, extra koszt</td></tr>
             <tr><td>Wsparcie</td><td class="yes">&#10003; Bezpośrednie, online</td><td class="no">Kolejka zgłoszeń</td></tr>
             <tr><td>Gwarancja efektu</td><td class="yes">&#10003; min. <span class="val-gwar">80</span>h oszczędzonych / mies.</td><td class="no">Brak</td></tr>
-            <tr><td>Ryzyko finansowe</td><td class="yes">&#10003; Po naszej stronie, zwrot 100%</td><td class="no">Po Waszej stronie</td></tr>
+            <tr><td>Ryzyko finansowe</td><td class="yes">&#10003; Po naszej stronie, prawo do zwrotu</td><td class="no">Po Waszej stronie</td></tr>
             <tr><td>Model cenowy</td><td class="yes">&#10003; Stała opłata, brak ukrytych kosztów</td><td class="no">Licencje + wdrożenie + utrzymanie</td></tr>
           </tbody>
         </table>
@@ -1509,7 +1509,7 @@
 
       <div class="ai" style="--i:5;margin-top:20px;padding:18px 20px;border:1px solid var(--line);border-radius:16px;background:var(--bg);">
         <div style="font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:4px;">Co obejmuje retainer</div>
-        <div style="font-size:14px;color:var(--text-secondary);margin-bottom:2px;"><span class="val-retainer">4 000</span> PLN miesięcznie, opieka nad systemem po wdrożeniu</div>
+        <div style="font-size:14px;color:var(--text-secondary);margin-bottom:2px;"><span class="val-retainer">1 000</span> PLN miesięcznie, opieka nad systemem po wdrożeniu</div>
         <div class="check-list" style="margin-top:10px;">
           <div class="check-item">
             <div class="check-dot"><iconify-icon icon="tabler:check"></iconify-icon></div>
@@ -1776,15 +1776,15 @@ function applyValues() {
 
   // Realne payback_miesiace/procent_kosztu (endpoint) mają pierwszeństwo, gdy Notion ma
   // "Koszt problemu PLN/mc" wypełnione. Tryb podglądu/URL-params (brak HAS_CLIENT_DATA) bez
-  // tego pokazuje starą heurystykę opartą o cenie 18 000 PLN (jedna cena, bez rabatu za
-  // terminowość — mechanizm rabatu usunięty z umowy 2026-07-24) jako orientacyjną. Gdy dane
+  // tego pokazuje starą heurystykę opartą o cenie 30 000 PLN (jedna cena, bez rat i bez rabatu
+  // za terminowość — UMOWA_SYSTEM_AUTORISE.pdf, wersja 2026-08-29) jako orientacyjną. Gdy dane
   // klienta SĄ realne (fetch się powiódł), ale koszt problemu nie jest jeszcze policzony w
   // Notion — pokazujemy "–", nie fabrykujemy liczby obok notatki twierdzącej że to realne dane
-  // klienta. "Cena wdrożenia" sama w sobie zawsze ma wartość (fallback 18000 w endpoincie),
+  // klienta. "Cena wdrożenia" sama w sobie zawsze ma wartość (fallback 30000 w endpoincie),
   // więc ten guard dotyczy tylko ROI/payback.
-  const gain            = bol / 12 - 4000
-  const monthsFallback  = !HAS_CLIENT_DATA && gain > 0 ? Math.ceil(18000 / gain) : '–'
-  const pctFallback     = !HAS_CLIENT_DATA && bol > 0  ? Math.round(18000 / bol * 100) : '–'
+  const gain            = bol / 12 - 1000
+  const monthsFallback  = !HAS_CLIENT_DATA && gain > 0 ? Math.ceil(30000 / gain) : '–'
+  const pctFallback     = !HAS_CLIENT_DATA && bol > 0  ? Math.round(30000 / bol * 100) : '–'
   const months = V.paybackMiesiace != null ? V.paybackMiesiace : monthsFallback
   const pct    = V.procentKosztu   != null ? V.procentKosztu   : pctFallback
   const vm = document.getElementById('val-months')
@@ -1820,10 +1820,10 @@ function applyValues() {
       ? 'jednorazowo'
       : V.cenaWdrozenia != null ? 'jednorazowo, wg zakresu wdrożenia' : 'w zależności od zakresu wdrożenia'
   })
-  // Sekcja "Co obejmuje retainer" (slajd 6) — fallback 4000 zgodny z DOMYSLNY_RETAINER
+  // Sekcja "Co obejmuje retainer" (slajd 6) — fallback 1000 zgodny z DOMYSLNY_RETAINER
   // po stronie /api/notion/prezentacja-dane, ten sam mechanizm co cenaWdrozenia.
   document.querySelectorAll('.val-retainer').forEach(el => {
-    el.textContent = fmt(V.retainer != null ? V.retainer : 4000)
+    el.textContent = fmt(V.retainer != null ? V.retainer : 1000)
   })
 
   const invNote = document.getElementById('inv-note-text')
