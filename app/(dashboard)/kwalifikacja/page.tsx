@@ -2058,6 +2058,11 @@ export default function KwalifikacjaPage() {
     if (vocative.trim()) out = out.replace(/\{IMIĘ\}/g, vocative.trim());
     else if (nominative) out = out.replace(/\{IMIĘ\}/g, nominative);
 
+    // Forma mianownikowa, celowo NIE wołacz — do pytań weryfikujących tożsamość
+    // ("Dzień dobry, Pan {IMIĘ_NOM}?"), gdzie "Panie Jacku?" brzmi jak zawołanie,
+    // a nie potwierdzenie kto odbiera telefon.
+    if (nominative) out = out.replace(/\{IMIĘ_NOM\}/g, nominative);
+
     // Cały skrypt reaguje na przełącznik Pan/Pani: samodzielne formy grzecznościowe
     // w treści zamieniane na żeńskie, gdy wybrano "Pani". Kolejność od najdłuższych
     // przypadków, żeby "Panem" nie złapało się wcześniej jako "Pan"+"em".

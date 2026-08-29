@@ -34,14 +34,16 @@ export const STEPS_K: Step[] = [
     label: "OPENING",
     tag: "MÓWISZ",
     lines: [
-      { t: "say", text: "Dzień dobry, Pan {IMIĘ}?" },
+      { t: "say", text: "Dzień dobry, Pan {IMIĘ_NOM}?" },
       { t: "client", text: "Tak, słucham." },
       {
         t: "say",
-        text: "Dzień dobry, z tej strony {IMIĘ_SPRZEDAWCY} z Autorise. Pomagamy firmom transportowym zdejmować z biura powtarzalną, ręczną robotę, z gwarancją efektu wpisaną w umowę albo zwrotem pełnej kwoty. Dzwonię, bo zostawił Pan u nas formularz o oszczędzaniu czasu w biurze i chcę sprawdzić, czy mamy jak Panu pomóc.",
+        text: "Dzień dobry, z tej strony {IMIĘ_SPRZEDAWCY} z Autorise. Pomagamy firmom transportowym zdejmować z biura powtarzalną, ręczną robotę, z gwarancją efektu wpisaną w umowę. Dzwonię, bo zostawił Pan u nas formularz o oszczędzaniu czasu w biurze i chcę sprawdzić, czy mamy jak Panu pomóc.",
         cel: "Klient najpierw wie kto dzwoni i co robicie, potem po co ten telefon, i że nie ryzykuje.",
       },
     ],
+    expected: "Klient potwierdza że to on i słucha dalej, bez odmowy rozmowy.",
+    transition: "Dziękuję. Zaraz przejdę do konkretów, mam do Pana kilka pytań.",
     nextStepId: "diagnoza_otwarcie",
   },
   {
@@ -105,8 +107,8 @@ export const STEPS_K: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Jest Pan właścicielem firmy?",
-        cel: "Ustalić czy rozmawiasz z osobą decyzyjną, żeby nie umówić spotkania bez sensu.",
+        text: "To Pana firma?",
+        cel: "Ustalić czy rozmawiasz z osobą decyzyjną, żeby nie umówić spotkania bez sensu. Celowo bez słowa 'właściciel/właścicielka', żeby zdanie brzmiało tak samo naturalnie w wersji dla Pana i dla Pani.",
       },
     ],
     expected: "Klient jest właścicielem albo wspólnikiem firmy.",

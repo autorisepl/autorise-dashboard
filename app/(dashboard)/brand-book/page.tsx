@@ -948,16 +948,17 @@ const PLACEHOLDERS: PlaceholderEntry[] = [
     example: "Dzień dobry, Pan {IMIĘ} → Dzień dobry, Pan Michał",
   },
   {
-    token: "Pan {IMIĘ}",
-    description: "Forma oficjalna z mianownikiem imienia (nie wołaczem)",
-    source: "Pole kontakt w Pipeline — fill() podstawia nominatyw (pierwsze słowo pola kontakt)",
-    example: "Dzień dobry, Pan {IMIĘ}? → Dzień dobry, Pan Jacek?",
+    token: "Pan {IMIĘ} / Pani {IMIĘ}",
+    description: "Zwrot adresatywny, fill() zamienia cały fragment na wołacz: 'Panie Jacku' / 'Pani Anno'",
+    source: "Pole kontakt w Pipeline — fill() w /kwalifikacja i /sprzedaz, reaguje na przełącznik Pan/Pani",
+    example: "Gdyby te [X] godzin wróciły do Pan {IMIĘ}... → ...wróciły do Panie Jacku...",
   },
   {
-    token: "Pani {IMIĘ}",
-    description: "Forma żeńska z mianownikiem imienia",
-    source: "Pole kontakt w Pipeline — analogicznie jak Pan {IMIĘ}",
-    example: "Dzień dobry, Pani {IMIĘ}? → Dzień dobry, Pani Anna?",
+    token: "{IMIĘ_NOM}",
+    description:
+      "Mianownik imienia, celowo NIE wołacz — do pytań weryfikujących tożsamość, gdzie wołacz brzmiałby jak zawołanie zamiast potwierdzenia",
+    source: "Pole kontakt w Pipeline — fill() podstawia pierwsze słowo pola kontakt bez odmiany",
+    example: "Dzień dobry, Pan {IMIĘ_NOM}? → Dzień dobry, Pan Jacek?",
   },
   {
     token: "[LICZBA Z KALKULATORA]",
