@@ -23,7 +23,7 @@ import type { TeamMember } from "@/app/api/team/route";
 import { ClientSidebar } from "@/components/clients/ClientSidebar";
 import { ProgressBar, SectionLabelSmall, StepCard } from "@/components/dalsze-kroki/DalszeKrokiUI";
 import { useIdentity } from "@/lib/auth/RoleContext";
-import { useFormaGrzecznosciowa } from "@/lib/scripts/formaGrzecznosciowa";
+import { godzinyOdmiana, useFormaGrzecznosciowa } from "@/lib/scripts/formaGrzecznosciowa";
 import {
   ACKNOWLEDGMENT_PHRASES,
   ICP_RULES,
@@ -2107,9 +2107,16 @@ export default function KwalifikacjaPage() {
     const roundedGodziny = roundTo(totalGodzinyH, 5);
     const roundedPln = roundTo(totalPln, 100);
     const potencjalH = roundTo(totalGodzinyH * 0.7, 5);
-    out = out.replace(/\[WYNIK Z KALKULATORA\]/g, String(roundedGodziny));
+    // Placeholdery niosą teraz też słowo "godzin(y)" odmienione przez liczbę — źródłowe zdania
+    // (kwalifikacyjna.ts) miały to słowo dopisane na sztywno obok, więc np. "42 godzin
+    // miesięcznie" zamiast poprawnego "42 godziny miesięcznie" (ten sam bug znaleziony i
+    // naprawiony w /sprzedaz, audyt 2026-08-29).
+    out = out.replace(
+      /\[WYNIK Z KALKULATORA\]/g,
+      `${roundedGodziny} ${godzinyOdmiana(roundedGodziny)}`,
+    );
     out = out.replace(/\[WARTOŚĆ PLN\]/g, `${fmtPln(roundedPln)} zł`);
-    out = out.replace(/\[POTENCJAL_H\]/g, String(potencjalH));
+    out = out.replace(/\[POTENCJAL_H\]/g, `${potencjalH} ${godzinyOdmiana(potencjalH)}`);
     return out;
   };
 

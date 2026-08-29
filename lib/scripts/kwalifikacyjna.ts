@@ -259,12 +259,12 @@ export const STEPS_K: Step[] = [
         t: "say",
         text: [
           "Dobrze, mam komplet.",
-          "Z tego co Pan opisał wychodzi, że biuro traci na tej ręcznej robocie około [WYNIK Z KALKULATORA] godzin miesięcznie. W przeliczeniu na koszt pracy to jakieś [WARTOŚĆ PLN] miesięcznie.",
+          "Z tego co Pan opisał wychodzi, że biuro traci na tej ręcznej robocie około [WYNIK Z KALKULATORA] miesięcznie. W przeliczeniu na koszt pracy to jakieś [WARTOŚĆ PLN] miesięcznie.",
         ],
       },
       {
         t: "say",
-        text: "Nie wszystko da się zdjąć w stu procentach, część to rozmowy i decyzje. Realnie mówimy o jakichś 70 procentach tego czasu, czyli około [POTENCJAL_H] godzin miesięcznie wracających do biura.",
+        text: "Nie wszystko da się zdjąć w stu procentach, część to rozmowy i decyzje. Realnie mówimy o jakichś 70 procentach tego czasu, czyli około [POTENCJAL_H] miesięcznie wracających do biura.",
         cel: "Budować wiarygodność przez uczciwość, nie obiecywać więcej niż realnie możliwe.",
       },
       {
@@ -283,7 +283,7 @@ export const STEPS_K: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Gdyby te [POTENCJAL_H] godzin miesięcznie wróciły do biura, co by Pan z nimi zrobił?",
+        text: "Gdyby te [POTENCJAL_H] miesięcznie wróciły do biura, co by Pan z nimi zrobił?",
         cel: "Klient sam nazywa korzyść, zapamiętaj jego dokładne słowa na rozmowę sprzedażową.",
       },
       { t: "client", text: "[odpowiedź]" },

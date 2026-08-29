@@ -30,25 +30,15 @@ import {
 } from "@/components/scripts/ScriptStepShared";
 import { WarunkiUmowyForm } from "@/components/sprzedaz/WarunkiUmowyForm";
 import { fillBrief, parseCytatyKlienta } from "@/lib/scripts/fillBrief";
-import { useFormaGrzecznosciowa } from "@/lib/scripts/formaGrzecznosciowa";
+import { godzinyOdmiana, useFormaGrzecznosciowa } from "@/lib/scripts/formaGrzecznosciowa";
 import { GROUP_COLORS, MESSAGES_DATA } from "@/lib/scripts/messages";
 import { OBJECTIONS_D, STEPS_D } from "@/lib/scripts/sprzedaz";
 import type { DecisionOption, Objection } from "@/lib/scripts/types";
 import { objectionColor } from "@/lib/scripts/types";
 
 // ── Helpers ───────────────────────────────────────────────────────────
-
-// Polska odmiana liczebnikowa rzeczownika "godzina" — bez tego fill() zawsze wypisywał sztywne
-// "godzin" niezależnie od liczby (audyt 2026-08-29): "42 godzin miesięcznie" zamiast "42 godziny
-// miesięcznie", czytane na głos klientowi. Reguła: 1 -> godzina, końcówka 2-4 poza 12-14 ->
-// godziny, reszta -> godzin.
-function godzinyOdmiana(n: number): string {
-  if (n === 1) return "godzina";
-  const mod10 = n % 10;
-  const mod100 = n % 100;
-  if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)) return "godziny";
-  return "godzin";
-}
+// godzinyOdmiana przeniesiona do lib/scripts/formaGrzecznosciowa.ts (2026-08-29) — ten sam bug
+// istniał równolegle w /kwalifikacja, wspólna funkcja zamiast dwóch kopii do synchronizowania.
 
 function toVocative(name: string): string {
   const first = name.trim().split(" ")[0];
