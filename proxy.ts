@@ -21,6 +21,9 @@ const PUBLIC_PATHS = [
 const SETTER_ALLOWED_PREFIXES = [
   "/kwalifikacja",
   "/sprzedaz",
+  // Drugie spotkanie sprzedażowe (2026-08-30) — sam dostęp co /sprzedaz, patrz
+  // SETTER_VISIBLE_HREFS w components/layout/sidebar.tsx.
+  "/finalizacja",
   "/agencja",
   "/prezentacja",
   "/agenci",

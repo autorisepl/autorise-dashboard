@@ -15,6 +15,19 @@
 
 import type { Objection, Step } from "./types";
 
+// Proces sprzedaży to dwa oddzielne spotkania (2026-08-30, Michał). Spotkanie 1 (ten plik) to
+// diagnoza, pitch, słowna zgoda na cenę — kończy się umówieniem Finalizacji, nie podpisem.
+// Spotkanie 2 (lib/scripts/finalizacja.ts) to pomiar realnego czasu, uzupełnienie Załącznika
+// nr 1 na żywo i podpis. Krok "Warunki umowy — potwierdź na żywo" przeniósł się w całości do
+// finalizacja.ts (warunki umowy są teraz potwierdzane na drugim spotkaniu, razem z liczbami
+// z pomiaru, nie na pierwszym razem z samą ceną).
+//
+// Wariant płatności ratalnej (od11_raty) wymaga osobnego wariantu umowy od Kacpra
+// Sompolskiego — dzisiejsza umowa ma warunek rozwiązujący działający tylko przy jednej
+// wpłacie. Flaga trzyma tę obiekcję poza eksportowaną tablicą dopóki taki wariant nie jest
+// realnie gotowy do podpisania, zamiast ukrywać ją dopiero w warstwie UI.
+const RATY_WARIANT_DOSTEPNY = false;
+
 export const STEPS_D: Step[] = [
   {
     id: "prep_d",
@@ -72,8 +85,11 @@ export const STEPS_D: Step[] = [
           "Pierwsze 20 minut to pytania o firmę i o to jak działa biuro.",
           "Drugie 20 minut pokazuję co możemy zrobić dla tej firmy.",
           "Ostatnie 5 minut pytania i decyzja co dalej.",
+          "To jest pierwsze z dwóch krótkich spotkań przed ewentualnym startem. Drugie, Finalizacja, to już tylko dokładny pomiar i formalności.",
           "Pasuje taki plan?",
         ],
+        // Jeśli klient później sam powtórzy słowo "Finalizacja", zapisz to jako pozytywny
+        // sygnał w Pipeline.
       },
       { t: "client", text: "Tak, jasne." },
     ],
@@ -630,6 +646,7 @@ export const STEPS_D: Step[] = [
         t: "say",
         text: [
           "Przy [kwota oszczędności] miesięcznie, inwestycja zwraca się w [X] miesięcy.",
+          "Rocznie ten problem kosztuje firmę około [kwota roczna] złotych. Nasz system w pierwszym roku, licząc wdrożenie i cały retainer, kosztuje 42 tysiące złotych. To jest różnica, którą {FORMA} odzyskuje już w pierwszym roku.",
           "Czy to ma sens dla tej firmy?",
         ],
       },
@@ -653,106 +670,22 @@ export const STEPS_D: Step[] = [
       { t: "client", text: "[odpowiedź]" },
       {
         t: "say",
-        text: [
-          "Świetnie.",
-          "Prześlę umowę na [email] do podpisu.",
-          "Po podpisaniu wystawiam fakturę, płatna w 2 dni robocze.",
-          "Spotkanie startowe umawiamy w ciągu 7 dni roboczych od zaksięgowania pełnej wpłaty, to jest moment od którego realnie zaczynamy.",
-          "Pasuje?",
-        ],
-        // Kolejność zgodna z UMOWA_SYSTEM_AUTORISE.pdf §2-3: podpis → faktura → wpłata → start.
-        cel: "Praca zaczyna się dopiero po zaksięgowaniu pełnej wpłaty, nie od podpisania.",
+        text: "Świetnie. To co teraz proponuję: umówmy drugie, krótkie spotkanie, Finalizację. Tam razem zmierzymy realny czas, żeby liczby w umowie były dokładne, nie szacunkowe. Pasuje Panu w najbliższych dniach?",
+        cel: "Drugie spotkanie mierzy realny czas przed podpisem, cena już padła i została zaakceptowana na tym spotkaniu.",
+      },
+      { t: "client", text: "[odpowiedź, ustalenie terminu]" },
+      {
+        t: "say",
+        text: "Wysyłam już teraz umowę na Pana maila, bez załącznika z liczbami, ten dopiszemy razem na Finalizacji. Może Pan już teraz przekazać ją prawnikowi do wstępnego czytania, żeby nie czekać z tym do drugiego spotkania.",
+        cel: "Umowa idzie od razu, żeby prawnik miał czas — Załącznik nr 1 z liczbami dopisujemy dopiero na Finalizacji po realnym pomiarze.",
       },
     ],
-    // Usunięte 2026-08-29 dwie notatki: "jeśli brak obiekcji..." tylko zapowiadała linię say
-    // tuż pod nią, "warunek rozwiązujący" dublował to co i tak pada wprost jako scripted "say"
-    // w kroku WARUNKI UMOWY zaraz potem — nie trzeba dwóch loud-warning boxów na to samo.
-    expected: "Klient nie zgłasza dalszej obiekcji i zgadza się na przesłanie umowy.",
-    transition: "Świetnie, to przejdźmy jeszcze przez warunki umowy, zanim wyślę dokument.",
-  },
-  {
-    id: "warunki_umowy",
-    nr: "5e",
-    label: "WARUNKI UMOWY — POTWIERDŹ NA ŻYWO",
-    tag: "POTWIERDZASZ",
-    lines: [
-      {
-        t: "note",
-        text: "Zanim wyślesz umowę, przejdź na głos przez tych 10 punktów z klientem — każdy osobno, nie jednym zdaniem. To ostatni moment żeby uniknąć niejasności przed podpisem, nie krok do przeklikania w ciszy.",
-      },
-      {
-        t: "say",
-        text: "30 tysięcy złotych za wdrożenie, płatne jednorazowo w ciągu 2 dni roboczych od faktury.",
-        // Jedna cena, bez rat i bez rabatu za terminowość — UMOWA_SYSTEM_AUTORISE.pdf §8 ust. 1.
-        cel: "Potwierdzić kwotę na głos, nie zakładać że klient ją pamięta.",
-      },
-      {
-        t: "say",
-        text: "Ważna rzecz. Jeśli pełna kwota nie wpłynie na nasze konto w ciągu 7 dni kalendarzowych od podpisania, umowa automatycznie się rozwiązuje. Dlatego zależy mi żeby faktura poszła szybko po podpisie, i żeby przelew poszedł zaraz po niej.",
-        // Warunek rozwiązujący, twardy termin z UMOWA_SYSTEM_AUTORISE.pdf §2 ust. 2.
-        cel: "Musi być wypowiedziany wprost, klient nie może się o tym dowiedzieć dopiero z dokumentu.",
-      },
-      {
-        t: "say",
-        text: "Prace zaczynają się dopiero po zaksięgowaniu pełnej wpłaty, nie po samym podpisaniu.",
-        cel: "Musi być wypowiedziane wprost — klientowi intuicyjnie wydaje się, że podpis to już start.",
-      },
-      {
-        t: "say",
-        text: "30-dniowa weryfikacja efektywności liczy się od dnia odbioru systemu, czyli po zakończeniu wdrożenia, nie od dzisiejszego podpisu ani od momentu przekazania dostępów.",
-        // UMOWA_SYSTEM_AUTORISE.pdf §5 ust. 2 liczy weryfikację od odbioru Systemu, nie od
-        // przekazania dostępów na starcie wdrożenia.
-        cel: "Musi być wypowiedziane wprost — klientowi intuicyjnie wydaje się, że podpis to już start zegara.",
-      },
-      {
-        t: "say",
-        text: "Jeśli po pierwszych 30 dniach wynik nie osiągnie progu, mam 14 dni roboczych na poprawki, i weryfikujemy jeszcze raz przez kolejne 30 dni. Dopiero jeśli druga weryfikacja też wypadnie negatywnie, ma Pan miesiąc na to żeby odstąpić od umowy i dostać zwrot tego, co Pan do tej pory zapłacił.",
-        // UMOWA_SYSTEM_AUTORISE.pdf §5 ust. 7-8 — to prawo do odstąpienia z obowiązkiem zwrotu,
-        // nie automatyczny zwrot po pierwszym negatywnym wyniku, klient musi z niego skorzystać
-        // sam w terminie miesiąca.
-        cel: "Klient musi znać realną procedurę drugiej rundy weryfikacji przed prawem do odstąpienia.",
-      },
-      {
-        t: "say",
-        text: "[poza zakresem]",
-        cel: "Wstawiane na żywo z formularza 'Warunki umowy' niżej — jeśli puste, dopytaj teraz.",
-      },
-      {
-        t: "say",
-        text: "Tysiąc złotych miesięcznie przez minimum 12 miesięcy licząc od dnia odbioru systemu, niezależnie od wyniku weryfikacji. To osobna rzecz od samego wdrożenia.",
-        // Kwota i start liczenia zgodne z UMOWA_SYSTEM_AUTORISE.pdf §7 ust. 1 i §8 ust. 2.
-        cel: "Oddzielić retainer od gwarancji zwrotu — częsty punkt niejasności po podpisie.",
-      },
-      {
-        t: "say",
-        text: "Jeśli Pana TMS nie ma jeszcze potwierdzonego dostępu do API, zwykle nie jest to problem. Mamy na to sprawdzony sposób, zajmę się tym na pierwszym spotkaniu po podpisaniu.",
-        // Proces oceny integracji z KARTA_PRODUKTU_SYSTEM_OPERACYJNY.md pkt 8. Celowo "zwykle
-        // nie problem", nie "to nie jest ryzyko" — UMOWA_SYSTEM_AUTORISE.pdf §3 ust. 5 dopuszcza
-        // odstąpienie obu stron w rzadkim przypadku braku alternatywy.
-        cel: "Dać pewność bez rozwlekania mechanizmu, którego klient teraz nie potrzebuje.",
-      },
-      {
-        t: "note",
-        text: "Jeśli klient dopyta jak dokładnie to działa: pierwszy krok to zawsze bezpośredni kontakt z dostawcą systemu na Kickoff. Jeśli się nie uda, są jeszcze trzy sprawdzone sposoby obejścia braku dostępu do API strony trzeciej (metodologia w bazie Notion Produkty) — dopiero na to pytanie warto rozwijać szczegóły, nie w głównym przepływie przed podpisem.",
-      },
-      {
-        t: "say",
-        text: "Po podpisaniu dostanie Pan konkretny rytm, nie ciszę. Spotkanie startowe w ciągu 7 dni roboczych od pełnej wpłaty, potem zbieramy dostępy, potem do 4 tygodni wdrożenia, potem odbiór systemu, i od tego dnia liczy się 30-dniowa weryfikacja i pierwsza faktura retainera. Każdy etap ma ustaloną datę, nic nie zawiśnie w niepewności.",
-        // Kolejność zgodna z UMOWA_SYSTEM_AUTORISE.pdf §3-5: wpłata → start → dostępy →
-        // wdrożenie → odbiór → weryfikacja + start retainera.
-        cel: "Zapowiedzieć cały cykl, nie tylko moment podpisu, żeby klient nie czekał w niepewności.",
-      },
-      {
-        t: "say",
-        text: "Wysyłam teraz umowę do podpisu. Proszę o podpis jeszcze dziś, żeby zegar dostępów mógł ruszyć jak najszybciej.",
-        // System nie ma jeszcze integracji e-podpisu — to świadomie sam tekst przypominający.
-        cel: "Moment wywołania e-podpisu (Google Workspace eSignature / iLovePDF).",
-      },
-    ],
+    expected:
+      "Klient akceptuje termin drugiego spotkania (Finalizacja) i zgadza się na przesłanie umowy bez załącznika.",
   },
 ];
 
-export const OBJECTIONS_D: Objection[] = [
+const ALL_OBJECTIONS_D: Objection[] = [
   {
     id: "od1",
     stage: "cena",
@@ -912,6 +845,16 @@ export const OBJECTIONS_D: Objection[] = [
     note: "Followup zadawaj tylko jeśli klient nie widzi możliwości sfinansowania od razu. UMOWA_SYSTEM_AUTORISE.pdf nie przewiduje żadnego wariantu ratalnego — płatność jest zawsze jednorazowa, przed startem prac (§2 ust. 1-2, §8 ust. 1). Jedyna dostępna elastyczność to termin startu, nigdy rozłożenie kwoty — nie proponuj rat w żadnej formie, nawet jako gest dobrej woli.",
   },
   {
+    id: "od11_raty",
+    stage: "cena",
+    label: "Mogę płacić w ratach? (wariant rezerwowy)",
+    // Poza RATY_WARIANT_DOSTEPNY na górze pliku — trzymana tu żeby wiring w STEP_OBJECTIONS_D
+    // był gotowy z wyprzedzeniem, ale odfiltrowana z eksportu dopóki wariant umowy nie istnieje.
+    script:
+      "Rozumiem że jednorazowo to dużo naraz. Mamy jeszcze jedną opcję: podział na dwie wpłaty, pięćdziesiąt procent przed spotkaniem startowym, pięćdziesiąt procent przy podpisaniu protokołu odbioru systemu. Czy taki podział rozwiązuje sprawę?",
+    note: "Wymaga osobnego wariantu umowy od Kacpra Sompolskiego, dzisiejsza umowa ma warunek rozwiązujący działający tylko przy jednej wpłacie.",
+  },
+  {
     id: "od12",
     stage: "closing",
     label: "Chcę móc zrezygnować z retainera w każdej chwili",
@@ -1032,6 +975,10 @@ export const OBJECTIONS_D: Objection[] = [
       "Rozumiem potrzebę ograniczenia ryzyka, ale u nas to już jest wbudowane w umowę, nie trzeba osobnego pilotażu. Pierwsze 30 dni po wdrożeniu to właśnie weryfikacja efektu na Państwa realnych danych, a jeśli progu nie osiągniemy, mamy prawo to poprawić i sprawdzić jeszcze raz zanim cokolwiek jest ostatecznie rozliczone. To silniejsze zabezpieczenie niż ograniczenie się do połowy floty, bo dostajecie pełny obraz, nie fragment.",
   },
 ];
+
+export const OBJECTIONS_D: Objection[] = RATY_WARIANT_DOSTEPNY
+  ? ALL_OBJECTIONS_D
+  : ALL_OBJECTIONS_D.filter((o) => o.id !== "od11_raty");
 
 export const DISCOVERY_STATUSES = [
   "Kwalifikacja",

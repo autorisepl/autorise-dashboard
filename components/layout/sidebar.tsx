@@ -140,6 +140,9 @@ function toDisplayName(name: string): string {
 const SETTER_VISIBLE_HREFS = [
   "/kwalifikacja",
   "/sprzedaz",
+  // Drugie spotkanie sprzedażowe, ten sam dostęp co /sprzedaz (2026-08-30) — patrz komentarz
+  // przy wpisie w NAV niżej.
+  "/finalizacja",
   "/agencja",
   "/prezentacja.html",
   "/agenci",
@@ -168,10 +171,6 @@ const NAV: {
     label: "Klienci",
     items: [
       { href: "/pipeline", label: "Pipeline", icon: Kanban },
-      // Nowa zakładka między Pipeline a Wdrożeniem (2026-08-29, Michał) — przejęła skrypt
-      // analizy przedkontraktowej ze /sprzedaz, gdzie stał bez sensu w trakcie samej rozmowy
-      // Discovery (patrz komentarz w AnalizaPrzedkontraktowaPanel.tsx).
-      { href: "/finalizacja", label: "Finalizacja i analiza", icon: FileCheck2, exact: true },
       { href: "/wdrozenie", label: "Wdrożenie", icon: Rocket, exact: true },
       { href: "/utrzymanie", label: "Utrzymanie", icon: LifeBuoy, exact: true },
       { href: "/agenci", label: "Agenci AI", icon: LayoutDashboard, exact: false },
@@ -182,6 +181,13 @@ const NAV: {
     items: [
       { href: "/kwalifikacja", label: "Kwalifikacja", icon: Phone },
       { href: "/sprzedaz", label: "Sprzedaż", icon: Target },
+      // Przeniesione z grupy "Klienci" (2026-08-30) — od tej rundy strona nie jest już
+      // wyłącznie skryptem analizy przedkontraktowej, tylko pełnym drugim spotkaniem
+      // sprzedażowym (pomiar czasu, Załącznik nr 1, podpis), patrz lib/scripts/finalizacja.ts.
+      // Ten sam status Pipeline "Finalizacja" co wcześniej, ale to teraz rozmowa z klientem
+      // na żywo, nie narzędzie porządkowe po fakcie — miejsce w nawigacji i dostęp settera
+      // dopasowane 1:1 do /sprzedaz.
+      { href: "/finalizacja", label: "Finalizacja i analiza", icon: FileCheck2, exact: true },
       { href: "/prezentacja.html", label: "Prezentacja", icon: Presentation },
       { href: "/narzedzia", label: "Transkrypcja", icon: Mic, exact: true },
     ],

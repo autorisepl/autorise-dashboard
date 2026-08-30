@@ -63,6 +63,14 @@ function toVocative(name: string): string {
 // "od22" scalony w od1_watpliwosc. 14 obiekcji w close_c spadło do 11. Tego samego dnia,
 // premortem w drugą stronę — dodane od25/od26/od27 (bezpieczeństwo danych, własność po
 // zakończeniu współpracy, prośba o pilotaż) na realne, dotąd nieobsłużone scenariusze.
+//
+// 2026-08-30 (dwa spotkania): krok "warunki_umowy" przeniósł się w całości do finalizacja.ts
+// (patrz komentarz na górze lib/scripts/sprzedaz.ts), więc obiekcje które pod nim wisiały
+// (od12, od13, od15, od18, od26) wracają teraz razem z resztą klastra closingowego pod
+// "closing" — to ostatni krok tego spotkania, umowa jest wysyłana zaraz po nim, więc pytania
+// o jej warunki nadal realnie tu padają. "od11_raty" dopisana do close_c z wyprzedzeniem:
+// obiekcja jest odfiltrowana z eksportu dopóki RATY_WARIANT_DOSTEPNY w sprzedaz.ts jest false,
+// więc na razie po prostu nic tu nie renderuje (ObjectionRow pomija brakujące id).
 const STEP_OBJECTIONS_D: Record<string, string[]> = {
   podsumowanie_kwal: ["juz_mowilem"],
   info: ["od8"],
@@ -77,13 +85,25 @@ const STEP_OBJECTIONS_D: Record<string, string[]> = {
     "od3_konkurencja",
     "od10",
     "od11",
+    "od11_raty",
     "od14",
     "od17",
     "od24",
     "od27",
   ],
-  closing: ["od4", "od5", "od19", "od20", "od21", "od1_pozniej"],
-  warunki_umowy: ["od12", "od13", "od15", "od18", "od26"],
+  closing: [
+    "od4",
+    "od5",
+    "od12",
+    "od13",
+    "od15",
+    "od18",
+    "od19",
+    "od20",
+    "od21",
+    "od26",
+    "od1_pozniej",
+  ],
 };
 
 // ── Card wrapper ──────────────────────────────────────────────────────
@@ -1246,16 +1266,6 @@ export default function SprzedazPage() {
         selected.godzinyWpisywania
           ? `${selected.godzinyWpisywania} godzinami dziennie`
           : "— podaj godziny które klient wskazał w diagnozie —",
-      );
-      // Blok 6.8 (2026-07-15) — ustalenia "poza zakresem" wpisane w mini-formularzu Warunki
-      // umowy (patrz WarunkiUmowyForm.tsx), wstawione na żywo w kroku "Warunki umowy —
-      // potwierdź na żywo" zamiast generycznego tekstu.
-      const pozaZakresem = selected.pozaZakresem?.trim() ?? "";
-      out = out.replace(
-        /\[poza zakresem\]/g,
-        pozaZakresem
-          ? `Poza zakresem tego wdrożenia zostaje: ${pozaZakresem}.`
-          : "— brak ustaleń w Notion, dopytaj teraz i zapisz w mini-formularzu 'Warunki umowy' —",
       );
       // Blok "Arek" pkt 1 (2026-07-15) — te nawiasy były NIGDY nieusuwane na żywo, sprzedawca
       // czytał je dosłownie klientowi. Wypełnione danymi klienta (nazwa/flota/TMS) i nowymi
