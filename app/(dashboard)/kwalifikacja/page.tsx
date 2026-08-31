@@ -1038,9 +1038,7 @@ function ScriptStep({
           {/* Element zapisujący dane (podział na role / stawki / godziny, kalkulator)
               renderuje się TU, bezpośrednio pod linią odpowiedzi klienta, nie na
               samym dole karty, żeby setter nie gubił go w trakcie rozmowy. */}
-          {children && (
-            <div style={{ marginTop: 4, marginBottom: 4 }}>{children}</div>
-          )}
+          {children && <div style={{ marginTop: 4, marginBottom: 4 }}>{children}</div>}
 
           {step.expected && (
             <>

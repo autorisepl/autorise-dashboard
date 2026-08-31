@@ -128,7 +128,8 @@ export const STEPS_K: Step[] = [
       },
       { t: "client", text: "[odpowiedź]" },
     ],
-    expected: "Klient nazywa konkretny wyzwalacz, moment albo wydarzenie, które go do tego pchnęło.",
+    expected:
+      "Klient nazywa konkretny wyzwalacz, moment albo wydarzenie, które go do tego pchnęło.",
     transition:
       "Rozumiem, to sensowny moment żeby się tym zająć. Wrócę jeszcze do tego, co było przed naszą rozmową.",
     nextStepId: "diagnoza_proby",
@@ -186,7 +187,8 @@ export const STEPS_K: Step[] = [
     ],
     expected:
       "Klient podaje liczbę pojazdów i rozkład osób w biurze, co najmniej dwie przy zleceniach i dokumentach.",
-    transition: "Jasne, zapisuję. Zanim wejdziemy w dokumenty, jedno krótkie pytanie o strukturę firmy.",
+    transition:
+      "Jasne, zapisuję. Zanim wejdziemy w dokumenty, jedno krótkie pytanie o strukturę firmy.",
   },
   {
     id: "diagnoza_icp_decydent",
