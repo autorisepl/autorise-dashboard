@@ -22,6 +22,7 @@ import type { PipelineClientDetailed } from "@/app/api/notion/pipeline/route";
 import type { TeamMember } from "@/app/api/team/route";
 import { ClientSidebar } from "@/components/clients/ClientSidebar";
 import { ProgressBar, SectionLabelSmall, StepCard } from "@/components/dalsze-kroki/DalszeKrokiUI";
+import { DecisionDiagram } from "@/components/scripts/DecisionDiagram";
 import { useIdentity } from "@/lib/auth/RoleContext";
 import { godzinyOdmiana, useFormaGrzecznosciowa } from "@/lib/scripts/formaGrzecznosciowa";
 import {
@@ -32,7 +33,7 @@ import {
 } from "@/lib/scripts/kwalifikacyjna";
 import { MESSAGES_DATA } from "@/lib/scripts/messages";
 import { getRecommendedModules } from "@/lib/scripts/moduleRecommendation";
-import type { CalculatorGroup, ScriptLine } from "@/lib/scripts/types";
+import type { CalculatorGroup, DecisionOption, ScriptLine } from "@/lib/scripts/types";
 
 // ── Helpers ──────────────────────────────────────────────────────────
 
@@ -64,17 +65,34 @@ function toSentences(text: string): string[] {
 // obiekcji z OBJECTIONS_K celowo nie jest nigdzie pokazywana, żeby setter nie
 // szukał podczas rozmowy na żywo. Każdy krok renderuje je tak samo jak krok
 // OPENING: rozwijane wiersze z gotową odpowiedzią w miejscu.
+// Sub-obiekcje otwierane przez decision.openObjectionId nadrzędnej obiekcji (np.
+// brak_czasu_1 → brak_czasu_2) muszą siedzieć w TYM SAMYM kroku co rodzic, inaczej
+// jumpToObjection nie znajdzie elementu DOM do przewinięcia — stąd ok_kontekst ma
+// oba warianty czasu obok siebie.
 const STEP_OBJECTIONS: Record<string, string[]> = {
-  opener: ["ok_nie_kojarzy", "ok_nie_czasu", "ok3", "ok_em", "ok_ms", "referencje_branzowe"],
-  diagnoza_otwarcie: ["brak_konkretu", "brak_bolu", "ok_nie_kojarzy", "po_co_to_pytanie"],
+  ok_kontekst: [
+    "brak_czasu_1",
+    "brak_czasu_2",
+    "ok_nie_kojarzy",
+    "ok3",
+    "wyslij_mailem",
+    "referencje_branzowe",
+  ],
+  diagnoza_wyzwania: ["brak_bolu", "co_robicie", "po_co_to_pytanie"],
+  diagnoza_powod: ["co_robicie"],
   diagnoza_icp_flota: ["icp_ponizej_progu", "icp_powyzej_progu", "spedytorzy_dorazni"],
   diagnoza_icp_decydent: ["icp_nie_decydent"],
-  diagnoza_tms: ["konkurencja_m365", "tms_panel_zewnetrzny"],
-  diagnoza_dokumenty_faktura: ["zewnetrzne_biuro_ksiegowe"],
-  diagnoza_stawka: ["stawka_niechec"],
-  diagnoza_czas: ["czas_milczy", "czas_obronny", "czas_przeskakuje"],
-  spotkanie: ["ok4", "ok5", "spotkanie_link_zapasowy"],
-  spotkanie_rezerwacja: ["spotkanie_link_zapasowy"],
+  // Premortem: audyt modułowy zdjęty z telefonu. Obiekcje TMS/panel/biuro księgowe/
+  // spedytorzy doraźni mogą paść naturalnie jako odpowiedź na jedno pytanie o proces.
+  diagnoza_proces: [
+    "konkurencja_m365",
+    "tms_panel_zewnetrzny",
+    "zewnetrzne_biuro_ksiegowe",
+    "spedytorzy_dorazni",
+  ],
+  diagnoza_godziny: ["czas_milczy", "czas_obronny", "czas_przeskakuje"],
+  spot_propozycja: ["wyslij_mailem", "ok4", "ok5", "spotkanie_link_zapasowy"],
+  spot_potwierdzenie: ["spotkanie_link_zapasowy"],
 };
 
 // ── Line colors ───────────────────────────────────────────────────────
@@ -178,10 +196,10 @@ function Card({
 // ── Kalkulator (na żywo) — pasek narastających flag z decyzji 2f ─────────
 
 const FLAG_SOURCE: Record<string, { label: string; nr: string }> = {
-  zlecenia: { label: "Zlecenia", nr: "2d" },
-  cmr: { label: "CMR/POD", nr: "2e" },
-  faktury_recznie: { label: "Faktury", nr: "2f" },
-  komunikacja: { label: "Komunikacja", nr: "2g" },
+  zlecenia: { label: "Zlecenia", nr: "2f" },
+  cmr: { label: "CMR/POD", nr: "2g" },
+  faktury_recznie: { label: "Faktury", nr: "2h" },
+  komunikacja: { label: "Komunikacja", nr: "2i" },
 };
 
 function CalculatorFlagsBar({ flags }: { flags: Record<string, boolean> }) {
@@ -780,6 +798,12 @@ function ScriptStep({
   role,
   calcFlagActive,
   onToggleCalcFlag,
+  onJump,
+  onDecisionSelect,
+  selectedTrigger,
+  openObjectionId,
+  setOpenObjectionId,
+  selectedOptions,
   children,
 }: {
   step: (typeof STEPS_K)[0];
@@ -787,17 +811,21 @@ function ScriptStep({
   role: "admin" | "setter" | "closer" | null;
   calcFlagActive: boolean;
   onToggleCalcFlag: (flag: string) => void;
+  onJump: (stepId: string) => void;
+  onDecisionSelect: (sourceId: string, option: DecisionOption) => void;
+  selectedTrigger?: string;
+  openObjectionId: string | null;
+  setOpenObjectionId: (id: string | null) => void;
+  selectedOptions: Record<string, string>;
   children?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(true);
-  // Który rozwijany wiersz (reakcja klienta albo obiekcja) jest otwarty.
-  const [openRow, setOpenRow] = useState<string | null>(null);
   const stepObjections = STEP_OBJECTIONS[step.id] ?? [];
 
   // Etap "opener" dostaje plakietkę statusu w języku Pipeline ("NOWY LEAD"),
   // reszta kroków neutralną plakietkę akcentową z własną nazwą etapu. Bez
   // numeracji i bez ciasnego mikro-tagu — jedna czytelna plakietka na kartę.
-  const isOpener = step.id === "opener";
+  const isOpener = step.label === "OPENING";
   // Styl plakietki wzięty z etykiet statusu w /pipeline (kropka + wersaliki +
   // tło/obwódka z alfą). Kolor w hex, nie token, bo plakietka dokleja alfę
   // sufiksem "26"/"70" — "var(--accent)26" nie jest poprawnym kolorem CSS.
@@ -1007,6 +1035,13 @@ function ScriptStep({
             );
           })}
 
+          {/* Element zapisujący dane (podział na role / stawki / godziny, kalkulator)
+              renderuje się TU, bezpośrednio pod linią odpowiedzi klienta, nie na
+              samym dole karty, żeby setter nie gubił go w trakcie rozmowy. */}
+          {children && (
+            <div style={{ marginTop: 4, marginBottom: 4 }}>{children}</div>
+          )}
+
           {step.expected && (
             <>
               <SectionCap>Oczekiwana reakcja klienta</SectionCap>
@@ -1086,6 +1121,15 @@ function ScriptStep({
             </>
           )}
 
+          {step.decision && (
+            <DecisionDiagram
+              decision={step.decision}
+              onSelect={(option) => onDecisionSelect(step.id, option)}
+              onJump={onJump}
+              selectedTrigger={selectedTrigger}
+            />
+          )}
+
           {step.calculatorFlag && (
             <button
               onClick={(e) => {
@@ -1130,51 +1174,59 @@ function ScriptStep({
                   if (!obj) return null;
                   const rowKey = `obj-${objId}`;
                   return (
-                    <CollapsibleAnswer
-                      key={rowKey}
-                      label={obj.label}
-                      open={openRow === rowKey}
-                      onToggle={() => setOpenRow(openRow === rowKey ? null : rowKey)}
-                    >
-                      {answerParagraphs(fill(obj.script ?? ""), `${rowKey}-s`)}
-                      {obj.followup && (
-                        <div style={{ marginTop: 10 }}>
-                          <span
+                    <div key={rowKey} id={`objection-${objId}`}>
+                      <CollapsibleAnswer
+                        label={obj.label}
+                        open={openObjectionId === objId}
+                        onToggle={() =>
+                          setOpenObjectionId(openObjectionId === objId ? null : objId)
+                        }
+                      >
+                        {answerParagraphs(fill(obj.script ?? ""), `${rowKey}-s`)}
+                        {obj.followup && (
+                          <div style={{ marginTop: 10 }}>
+                            <span
+                              style={{
+                                fontFamily: "var(--font-sans)",
+                                fontSize: 13,
+                                fontWeight: 700,
+                                color: "var(--accent)",
+                              }}
+                            >
+                              Jeśli nadal naciska:
+                            </span>
+                            {answerParagraphs(fill(obj.followup), `${rowKey}-f`)}
+                          </div>
+                        )}
+                        {obj.note && (
+                          <p
                             style={{
+                              margin: "10px 0 0",
                               fontFamily: "var(--font-sans)",
-                              fontSize: 13,
-                              fontWeight: 700,
-                              color: "var(--accent)",
+                              fontSize: 12.5,
+                              lineHeight: 1.5,
+                              color: "var(--text-tertiary)",
                             }}
                           >
-                            Jeśli nadal naciska:
-                          </span>
-                          {answerParagraphs(fill(obj.followup), `${rowKey}-f`)}
-                        </div>
-                      )}
-                      {obj.note && (
-                        <p
-                          style={{
-                            margin: "10px 0 0",
-                            fontFamily: "var(--font-sans)",
-                            fontSize: 12.5,
-                            lineHeight: 1.5,
-                            color: "var(--text-tertiary)",
-                          }}
-                        >
-                          {obj.note}
-                        </p>
-                      )}
-                    </CollapsibleAnswer>
+                            {obj.note}
+                          </p>
+                        )}
+                        {obj.decision && (
+                          <div style={{ marginTop: 10 }}>
+                            <DecisionDiagram
+                              decision={obj.decision}
+                              onSelect={(option) => onDecisionSelect(obj.id, option)}
+                              onJump={onJump}
+                              selectedTrigger={selectedOptions[obj.id]}
+                            />
+                          </div>
+                        )}
+                      </CollapsibleAnswer>
+                    </div>
                   );
                 })}
               </div>
             </>
-          )}
-          {children && (
-            <div style={{ borderTop: "1px solid var(--border)", marginTop: 4, paddingTop: 10 }}>
-              {children}
-            </div>
           )}
         </div>
       )}
@@ -1926,6 +1978,10 @@ export default function KwalifikacjaPage() {
   const [calcGroups, setCalcGroups] = useState<CalculatorGroup[]>([]);
   const [sprzedawcaImie, setSprzedawcaImie] = useState("Michał");
   const [smsForceOpen, setSmsForceOpen] = useState(false);
+  // Wybrane opcje decyzji (per krok / per obiekcja) i aktualnie otwarta obiekcja —
+  // wzór 1:1 z /sprzedaz, potrzebne odkąd kwalifikacja renderuje DecisionDiagram.
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
+  const [openObjectionId, setOpenObjectionId] = useState<string | null>(null);
   const identity = useIdentity();
   const role = identity?.role ?? null;
 
@@ -2032,6 +2088,8 @@ export default function KwalifikacjaPage() {
     setCalculatorFlags({});
     setCalcGroups([]);
     setSmsForceOpen(false);
+    setSelectedOptions({});
+    setOpenObjectionId(null);
   }, [selected?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const updateSprzedawcaImie = (value: string) => {
@@ -2087,9 +2145,13 @@ export default function KwalifikacjaPage() {
         /\b([a-ząćęłńóśźż]+ł)(by)?((?:\s+(?:się|sobie))?)\s+Pani\b/gi,
         (_m, stem: string, by = "", refl = "") => `${fem(stem)}${by || ""}${refl} Pani`,
       );
-      // Pani + [sama] + krótka wstawka + czasownik + [by]
+      // Pani + [sama] + krótka wstawka + czasownik + [by].
+      // Zakończenie to negatywny lookahead na polską literę, NIE `\b` — `\b` w JS jest
+      // ASCII-owe, więc po nie-ASCII "ł" stykającym się z literą (np. "wł" w "własnej")
+      // uznaje granicę słowa i pozwala złapać krótki prefiks "Xł" dłuższego wyrazu,
+      // psując go na "wł"+"a"+"asnej" = "właasnej". Lookahead wymusza realny koniec wyrazu.
       out = out.replace(
-        /\bPani(\s+sama)?([^.,;:?!]{0,32}?\s)([a-ząćęłńóśźż]+ł)(by)?\b/gi,
+        /\bPani(\s+sama)?([^.,;:?!]{0,32}?\s)([a-ząćęłńóśźż]+ł)(by)?(?![a-ząćęłńóśźż])/gi,
         (_m, sama = "", mid: string, stem: string, by = "") =>
           `Pani${sama || ""}${mid}${fem(stem)}${by || ""}`,
       );
@@ -2145,6 +2207,43 @@ export default function KwalifikacjaPage() {
   const undoTally = useCallback((type: "dial" | "rozmowa_kwalifikacja" | "sms") => {
     void postTally(type, -1);
   }, []);
+
+  const jumpToStep = useCallback((stepId: string) => {
+    const el = document.getElementById(`step-${stepId}`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    el.style.transition = "box-shadow 250ms, background-color 250ms";
+    el.style.boxShadow = "0 0 0 2px var(--accent)";
+    el.style.backgroundColor = "rgba(67, 121, 177, 0.08)";
+    setTimeout(() => {
+      el.style.boxShadow = "";
+      el.style.backgroundColor = "";
+    }, 2000);
+  }, []);
+
+  const jumpToObjection = useCallback((objectionId: string) => {
+    setOpenObjectionId(objectionId);
+    requestAnimationFrame(() => {
+      const el = document.getElementById(`objection-${objectionId}`);
+      if (!el) return;
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.style.transition = "box-shadow 250ms";
+      el.style.boxShadow = "0 0 0 2px var(--warning)";
+      setTimeout(() => {
+        el.style.boxShadow = "";
+      }, 2000);
+    });
+  }, []);
+
+  const handleDecisionSelect = useCallback(
+    (sourceId: string, option: DecisionOption) => {
+      setSelectedOptions((prev) => ({ ...prev, [sourceId]: option.trigger }));
+      if (option.openObjectionId) jumpToObjection(option.openObjectionId);
+      // Przejście po `goToStepId` NIE jest automatyczne — setter klika osobny
+      // przycisk "Dalej" wewnątrz DecisionDiagram (onJump), gdy przeczytał `sayAfter`.
+    },
+    [jumpToObjection],
+  );
 
   const jumpToSmsTemplate = useCallback((smsId: string) => {
     setSmsForceOpen(true);
@@ -2551,6 +2650,12 @@ export default function KwalifikacjaPage() {
                   step.calculatorFlag ? Boolean(calculatorFlags[step.calculatorFlag]) : false
                 }
                 onToggleCalcFlag={toggleCalcFlag}
+                onJump={jumpToStep}
+                onDecisionSelect={handleDecisionSelect}
+                selectedTrigger={selectedOptions[step.id]}
+                openObjectionId={openObjectionId}
+                setOpenObjectionId={setOpenObjectionId}
+                selectedOptions={selectedOptions}
               >
                 {step.captureField === "role" && (
                   <RolesEditor mode="count" groups={calcGroups} onChange={setCalcGroups} />
