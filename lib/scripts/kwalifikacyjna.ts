@@ -131,7 +131,7 @@ export const STEPS_K: Step[] = [
     expected:
       "Klient nazywa konkretny wyzwalacz, moment albo wydarzenie, które go do tego pchnęło.",
     transition:
-      "Rozumiem, to sensowny moment żeby się tym zająć. Wrócę jeszcze do tego, co było przed naszą rozmową.",
+      "Aha, rozumiem, czyli [jednym krótkim zdaniem parafraza tego, co pchnęło klienta do zgłoszenia się akurat teraz].",
     nextStepId: "diagnoza_proby",
   },
   {
@@ -149,7 +149,7 @@ export const STEPS_K: Step[] = [
     ],
     expected: "Klient opisuje konkretną próbę albo mówi wprost, że nic jeszcze nie próbował.",
     transition:
-      "Rozumiem, to częsty obraz, na porządne poukładanie tego zwykle nie ma czasu przy bieżącej robocie. Teraz zapytam o wielkość firmy, żeby liczby, które za chwilę policzymy, były Wasze, a nie branżowa średnia.",
+      "Aha, rozumiem, czyli [jednym krótkim zdaniem parafraza tego, co klient próbował zrobić samodzielnie i z jakim skutkiem].",
     nextStepId: "diagnoza_icp_flota",
   },
   {
@@ -166,12 +166,12 @@ export const STEPS_K: Step[] = [
       },
       {
         t: "say",
-        text: "A tak z grubsza, roczne obroty firmy to bardziej okolice dwóch, trzech milionów, czy powyżej pięciu? Pytam, żeby dobrać skalę rozwiązania. Jeśli woli Pan tego nie podawać, bez problemu, idziemy dalej.",
+        text: "A tak z grubsza, roczne obroty firmy to bardziej okolice dwóch, trzech milionów, czy powyżej pięciu? Pytam, żeby dobrać skalę rozwiązania.",
         cel: "Orientacyjny drugi filtr ICP, widełki trzymaj nisko bo ICP zaczyna się od około miliona złotych rocznie na działania.",
       },
       {
         t: "note",
-        text: "Pytanie opcjonalne. Jeśli klient nie chce podać, przechodzisz dalej bez naciskania.",
+        text: "Pytanie zadajesz wprost, bez usprawiedliwiania. Jeśli klient realnie się wzbrania, otwórz obiekcję 'Nie chce podać obrotów' i przechodzisz dalej bez naciskania.",
       },
       {
         t: "say",
@@ -188,7 +188,7 @@ export const STEPS_K: Step[] = [
     expected:
       "Klient podaje liczbę pojazdów i rozkład osób w biurze, co najmniej dwie przy zleceniach i dokumentach.",
     transition:
-      "Jasne, zapisuję. Zanim wejdziemy w dokumenty, jedno krótkie pytanie o strukturę firmy.",
+      "Aha, rozumiem, czyli [jednym krótkim zdaniem parafraza wielkości floty i tego, jak rozkłada się biuro na role].",
   },
   {
     id: "diagnoza_icp_decydent",
@@ -198,15 +198,15 @@ export const STEPS_K: Step[] = [
     lines: [
       {
         t: "say",
-        text: "To Pana firma?",
+        text: "Czy to Pan podejmuje decyzje w takich sprawach, czy jest ktoś jeszcze, z kim warto to od razu przegadać?",
         // Celowo bez słowa "właściciel/właścicielka", żeby zdanie brzmiało tak samo naturalnie
         // w wersji dla Pana i dla Pani.
         cel: "Ustalić czy rozmawiasz z osobą decyzyjną, żeby nie umówić spotkania bez sensu.",
       },
     ],
-    expected: "Klient jest właścicielem albo wspólnikiem firmy.",
+    expected: "Klient decyduje sam albo od razu wskazuje drugą osobę, którą można wciągnąć w rozmowę.",
     transition:
-      "Dobrze. Teraz przejdźmy do tego, na czym pracujecie na co dzień, żebym wiedział czego nie ma sensu ruszać.",
+      "Aha, rozumiem, czyli [jednym krótkim zdaniem parafraza tego, kto po stronie klienta podejmuje decyzję].",
   },
   {
     // Premortem: pełny audyt modułowy (TMS, zlecenia, CMR, faktury, wgląd) i
@@ -221,13 +221,14 @@ export const STEPS_K: Step[] = [
       {
         t: "say",
         text: "Jak dziś u Was wygląda obsługa zleceń i dokumentów, robicie to ręcznie, czy macie już coś zautomatyzowane?",
-        cel: "Jedno otwarte pytanie sytuacyjne, nie audyt modułowy. Klient sam nazwie co go najbardziej uwiera, to wystarczy do umówienia spotkania. Pełny rozkład procesu robicie na spotkaniu, nie przez telefon.",
+        cel: "Cel tego pytania to sprawdzić czy jest JAKAKOLWIEK ręczna praca warta rozmowy, nie dopasować konkretne moduły. Dopasowanie modułów robi się na spotkaniu, nie tutaj. Wystarczy że klient potwierdzi ogólnie że coś robi ręcznie.",
       },
       { t: "client", text: "[opis]" },
     ],
     expected:
       "Klient opisuje własnymi słowami gdzie w obsłudze zleceń i dokumentów schodzi mu najwięcej ręcznej pracy.",
-    transition: "Rozumiem. Jeszcze tylko jedna liczba i mam obraz sytuacji.",
+    transition:
+      "Aha, rozumiem, czyli [jednym krótkim zdaniem parafraza tego, gdzie w obsłudze zleceń i dokumentów schodzi najwięcej ręcznej pracy].",
     nextStepId: "diagnoza_godziny",
   },
   {
@@ -238,13 +239,14 @@ export const STEPS_K: Step[] = [
     lines: [
       {
         t: "say",
-        text: "Orientacyjnie, ile godzin dziennie to zajmuje w biurze?",
+        text: "Orientacyjnie, ile godzin dziennie realnie schodzi w biurze na tę ręczną, powtarzalną robotę, o której Pan wspomniał?",
         cel: "Tylko surowa, przybliżona liczba. Bez przeliczania na procenty ani złotówki teraz, to zrobimy dokładnie na spotkaniu, na prawdziwych danych.",
       },
       { t: "client", text: "[przybliżona liczba godzin]" },
     ],
     expected: "Klient podaje przybliżoną liczbę godzin dziennie, choćby w widełkach.",
-    transition: "Dziękuję. To mi wystarczy, żeby ocenić czy spotkanie ma sens.",
+    transition:
+      "Aha, rozumiem, czyli [jednym krótkim zdaniem parafraza podanej liczby godzin dziennie na ręczną robotę].",
     nextStepId: "diagnoza_czas",
   },
   {
@@ -262,7 +264,7 @@ export const STEPS_K: Step[] = [
     ],
     expected: "Klient konkretnie nazywa, co zrobiłby z odzyskanym czasem.",
     transition:
-      "Zapiszę to dokładnie tak, jak Pan mówi. Na tej podstawie mam propozycję kolejnego kroku.",
+      "Aha, rozumiem, czyli [jednym krótkim zdaniem parafraza tego, co klient zrobiłby z odzyskanym czasem].",
     nextStepId: "spot_propozycja",
   },
 
@@ -287,7 +289,7 @@ export const STEPS_K: Step[] = [
       { t: "client", text: "[wybiera dzień albo zgłasza obiekcję]" },
     ],
     expected: "Klient wybiera jutro albo pojutrze, albo proponuje inny konkretny dzień.",
-    transition: "Dobrze. To dopnijmy porę.",
+    transition: "Aha, rozumiem, czyli pasuje Panu [wybrany przez klienta dzień].",
     nextStepId: "spot_dzien",
   },
   {
@@ -347,7 +349,7 @@ export const OBJECTIONS_K: Objection[] = [
   // ── OPENING ────────────────────────────────────────────────────────
   {
     id: "brak_czasu_1",
-    label: "Nie mam teraz czasu (pierwsze wystąpienie)",
+    label: "Nie ma czasu (1. raz)",
     stage: "opening",
     script:
       "Rozumiem. To będzie konkret. W dwie minuty sprawdzimy czy i jak jesteśmy w stanie pomóc Pana firmie zaoszczędzić realny czas. Jeśli się okaże że nie, rozłączymy się bez problemu.",
@@ -366,7 +368,7 @@ export const OBJECTIONS_K: Objection[] = [
   },
   {
     id: "brak_czasu_2",
-    label: "Naprawdę nie mam teraz czasu (drugie wystąpienie)",
+    label: "Nie ma czasu (2. raz)",
     stage: "opening",
     script:
       "Nie ma problemu, rozumiem że jest Pan zabiegany. Kiedy mogę zadzwonić, jutro czy pojutrze?",
@@ -375,7 +377,7 @@ export const OBJECTIONS_K: Objection[] = [
   },
   {
     id: "ok_nie_kojarzy",
-    label: "Nie kojarzy, nie wie o co chodzi, co sprzedajecie, to nie ja wypełniałem",
+    label: "Nie kojarzy zgłoszenia",
     stage: "opening",
     script:
       "Już tłumaczę. Autorise buduje firmom transportowym rozwiązania, które zdejmują z biura powtarzalną, ręczną robotę, każdą taką gdzie ktoś przepisuje albo przekleja dane z jednego miejsca w drugie. Nie wiem jeszcze co u Pana zajmuje najwięcej czasu, więc zamiast zgadywać, chciałbym zadać kilka krótkich pytań o to jak wygląda u Pana zwykły dzień w biurze. Od razu będzie wiadomo, czy jest tu w ogóle co usprawniać. Możemy tak zrobić?",
@@ -385,7 +387,7 @@ export const OBJECTIONS_K: Objection[] = [
   },
   {
     id: "ok3",
-    label: "Mam już program do zarządzania",
+    label: "Ma już TMS",
     stage: "opening",
     script:
       "To dobrze, większość naszych klientów ma TMS. My nie zastępujemy systemu, zdejmujemy z biura ręczną robotę wokół niego. Mam kilka pytań jak to dziś wygląda u Pana, dobrze?",
@@ -395,7 +397,7 @@ export const OBJECTIONS_K: Objection[] = [
     // Pytanie o dowód społeczny zanim klient odpowie na pytania diagnostyczne, realny
     // scenariusz w cold-leadowej rozmowie kwalifikacyjnej.
     id: "referencje_branzowe",
-    label: "Macie jakieś referencje z mojej branży?",
+    label: "Prosi o referencje z branży",
     stage: "opening",
     script:
       "Rozumiem, że chce Pan to zweryfikować zanim zajmiemy Panu czas. Pracujemy wyłącznie z firmami transportowymi, więc dokładnie tę branżę rozumiemy. Na spotkaniu pokażę realny przykład podobnego wdrożenia i policzymy konkretną liczbę dla Pana firmy, nie ogólnikami.",
@@ -413,39 +415,45 @@ export const OBJECTIONS_K: Objection[] = [
   // ── DIAGNOZA ───────────────────────────────────────────────────────
   {
     id: "brak_bolu",
-    label: "W sumie nie mam żadnych problemów, wszystko mamy ogarnięte",
+    label: "Brak bólu",
     stage: "diagnoza",
     script:
-      "Rozumiem, wielu ludzi z którymi rozmawiam mówi podobnie na początku, a potem okazuje się że jest jedno konkretne miejsce, gdzie coś nie gra tak jak by chcieli. Jak to u Pana wygląda?",
-    followup:
-      "Zanim odpuszczę, jedno pytanie. Czy jest w biurze jakaś czynność, którą robicie w kółko ręcznie i która najbardziej Pana uwiera, nawet jeśli dziś jakoś się to spina? Jeśli nie, to spokojnie. Zapiszę Wasz kontakt i odezwę się za jakiś czas.",
+      "Rozumiem, wielu ludzi z którymi rozmawiam mówi podobnie na początku. Mimo wszystko musiał być jakiś powód, dla którego akurat kliknął Pan w tę reklamę, a nie przewinął dalej. Co to było?",
     note: "Nie pytaj wprost o konkretne bóle, które rozwiązujecie, to zamyka klienta jeszcze bardziej. Normalizuj i czekaj na jego własną odpowiedź.",
   },
   {
     id: "co_robicie",
-    label: "A co wy właściwie robicie? Powiedzcie najpierw co oferujecie",
+    label: "Pyta co robicie",
     stage: "diagnoza",
     script:
-      "Za chwilę dokładnie to pokażę, ale żeby to miało sens dla Pana konkretnej sytuacji, chciałbym najpierw zrozumieć jak to dziś u Was wygląda. Mogę dokończyć te dwa pytania?",
+      "Za chwilę dokładnie to pokażę, ale żeby to miało sens dla Pana sytuacji, chciałbym najpierw zrozumieć jak to dziś u Was wygląda. Mogę dokończyć te pytania?",
     note: "Nie odpowiadaj opisem usługi w tym momencie, przekieruj z powrotem do pytań. Jeśli klient nadal nalega, daj jedno krótkie zdanie z wynikiem, nie z opisem usługi, i wróć do pytań.",
   },
   {
+    id: "przychod_prywatne",
+    label: "Nie chce podać obrotów",
+    stage: "diagnoza",
+    script:
+      "Rozumiem, to dane wrażliwe. Wystarczy mi orientacyjny rząd wielkości, nawet w widełkach, żeby dobrze dobrać skalę rozwiązania.",
+    note: "Otwieraj tylko jeśli klient realnie się wzbrania, nie domyślnie.",
+  },
+  {
     id: "po_co_to_pytanie",
-    label: "Pyta po co te pytania, podważa ich sens",
+    label: "Podważa sens pytań",
     stage: "diagnoza",
     script:
       "Pytam, bo od tego zależy czy w ogóle mam dla Pana sensowną propozycję. Wolę sprawdzić to teraz, w kilku zdaniach, niż umawiać spotkanie które niczego by nie wniosło.",
   },
   {
     id: "icp_ponizej_progu",
-    label: "Poniżej progu ICP, jedna osoba w biurze",
+    label: "Poniżej progu ICP",
     stage: "icp",
     script:
       "Dziękuję za szczerość. Przy tej wielkości biura pewnie nie poczułby Pan jeszcze realnej różnicy, więc szczerze, nie namawiam na coś co się nie zwróci. Mogę zapisać kontakt i wrócić za jakieś trzy miesiące, jak zespół się powiększy, dobrze?",
   },
   {
     id: "icp_powyzej_progu",
-    label: "Flota za duża, mamy własny dział IT / potrzebujemy czegoś enterprise",
+    label: "Za duzi, własny dział IT",
     stage: "icp",
     script:
       "To akurat dobra wiadomość, bo im większa flota tym większa oszczędność z automatyzacji. Nie zastępujemy Waszego działu IT, tylko zdejmujemy konkretną, powtarzalną robotę ręczną z biura, więc to się dobrze uzupełnia niezależnie od wielkości zespołu IT. Sprawdźmy razem gdzie dokładnie ta ręczna praca u Was siedzi.",
@@ -461,14 +469,14 @@ export const OBJECTIONS_K: Objection[] = [
   },
   {
     id: "spedytorzy_dorazni",
-    label: "Spedytorzy nie są zatrudnieni na stałe",
+    label: "Spedytorzy doraźni",
     stage: "diagnoza",
     script:
       "Rozumiem, czyli pracują doraźnie, na wezwanie. A gdy jest dużo zleceń naraz, ile osób realnie wtedy przy tym siedzi i ile godzin to zajmuje?",
   },
   {
     id: "konkurencja_m365",
-    label: "Ma wszystko w Microsoft 365, Power Automate",
+    label: "Ma Microsoft 365 lub Power Automate",
     stage: "diagnoza",
     script:
       "To brzmi jak solidna konfiguracja. Sprawdzam zwykle jedną rzecz, czy to faktycznie odczytuje dane z dokumentu i wpisuje je samo, czy tylko przenosi plik do folderu, a ktoś i tak musi go otworzyć i przepisać ręcznie?",
@@ -477,36 +485,42 @@ export const OBJECTIONS_K: Objection[] = [
   },
   {
     id: "tms_panel_zewnetrzny",
-    label:
-      "Pracuje tylko przez zewnętrzny panel (Amazon Relay, panel kurierski, giełda z własnym rozliczeniem)",
+    label: "Pracuje przez zewnętrzny panel",
     stage: "diagnoza",
     script:
       "Rozumiem, czyli większość obiegu macie w tym panelu. Powie mi Pan, co przy tym robicie jeszcze ręcznie obok samego panelu? Wystawianie faktur, zbieranie potwierdzeń, pilnowanie płatności?",
   },
   {
     id: "zewnetrzne_biuro_ksiegowe",
-    label: "Faktury, zewnętrzne biuro rachunkowe",
+    label: "Zewnętrzne biuro rachunkowe",
     stage: "diagnoza",
     script:
       "Jasne, biuro rachunkowe zajmuje się rozliczeniami. A kto u Was przygotowuje i wysyła im dokumenty, faktury, potwierdzenia dostaw? To zwykle ta sama osoba co reszta administracji, zgadza się?",
   },
   {
     id: "czas_milczy",
-    label: "Milczy po pytaniu co zrobiłby z czasem",
+    label: "Milczy przy pytaniu o czas",
     stage: "kalkulator",
     script:
       "To może być na przykład więcej zleceń przy tej samej ekipie, mniej błędów w dokumentach, szybsza obsługa klientów, mniej nadgodzin dla zespołu. Który z tych kierunków jest dla Pana teraz ważny?",
   },
   {
+    id: "czas_zartobliwie",
+    label: "Zbywa pytanie żartem (śmiech, wakacje, nie wiem)",
+    stage: "kalkulator",
+    script:
+      "Rozumiem, dobre pytanie żeby się nad tym zastanowić. Załóżmy że to więcej zleceń, mniej błędów w dokumentach, albo mniej nadgodzin dla zespołu, który z tych kierunków jest dla Pana teraz ważny?",
+  },
+  {
     id: "czas_obronny",
-    label: "Obawia się zwolnień pracowników",
+    label: "Boi się zwolnień",
     stage: "kalkulator",
     script:
       "Jasne, nie chodzi o zwalnianie nikogo. Chodzi o to, żeby ten sam zespół miał więcej przestrzeni na klientów zamiast tonąć w papierach. Ma to dla Pana znaczenie?",
   },
   {
     id: "czas_przeskakuje",
-    label: "Przeskakuje od razu do pytania o cenę",
+    label: "Przeskakuje do ceny",
     stage: "kalkulator",
     script: "Do ceny zaraz dojdziemy, chcę tylko dokończyć ten wątek.",
   },
@@ -514,14 +528,14 @@ export const OBJECTIONS_K: Objection[] = [
   // ── SPOTKANIE / WSZĘDZIE ───────────────────────────────────────────
   {
     id: "ok4",
-    label: "Jadę na urlop, wracam za jakiś czas",
+    label: "Jedzie na urlop",
     stage: "wszedzie",
     script: "Rozumiem. Kiedy Pan wraca?",
     followup: "Zapisuję. Zadzwonię do Pana [data po powrocie]. Życzę udanego urlopu.",
   },
   {
     id: "ok5",
-    label: "Muszę porozmawiać ze wspólnikiem, synem, żoną",
+    label: "Musi zapytać wspólnika lub rodzinę",
     stage: "wszedzie",
     script:
       "A mogliby Państwo dołączyć we dwoje na spotkanie przez internet? Mam przygotowane liczby konkretnie dla Pana firmy. Wtedy oboje macie pełen obraz i decydujecie razem.",
@@ -530,7 +544,7 @@ export const OBJECTIONS_K: Objection[] = [
   },
   {
     id: "spotkanie_link_zapasowy",
-    label: "Nie chce ustalać terminu teraz, wariant zapasowy z linkiem",
+    label: "Nie chce ustalać terminu teraz",
     stage: "closing",
     script:
       "Rozumiem, nie ma problemu. Wyślę Panu link do samodzielnej rezerwacji przez Calendly, wybierze Pan dogodny termin. Dostanie Pan też automatyczne przypomnienie SMS dzień przed.",

@@ -80,7 +80,12 @@ const STEP_OBJECTIONS: Record<string, string[]> = {
   ],
   diagnoza_wyzwania: ["brak_bolu", "co_robicie", "po_co_to_pytanie"],
   diagnoza_powod: ["co_robicie"],
-  diagnoza_icp_flota: ["icp_ponizej_progu", "icp_powyzej_progu", "spedytorzy_dorazni"],
+  diagnoza_icp_flota: [
+    "przychod_prywatne",
+    "icp_ponizej_progu",
+    "icp_powyzej_progu",
+    "spedytorzy_dorazni",
+  ],
   diagnoza_icp_decydent: ["icp_nie_decydent"],
   // Premortem: audyt modułowy zdjęty z telefonu. Obiekcje TMS/panel/biuro księgowe/
   // spedytorzy doraźni mogą paść naturalnie jako odpowiedź na jedno pytanie o proces.
@@ -90,7 +95,7 @@ const STEP_OBJECTIONS: Record<string, string[]> = {
     "zewnetrzne_biuro_ksiegowe",
     "spedytorzy_dorazni",
   ],
-  diagnoza_godziny: ["czas_milczy", "czas_obronny", "czas_przeskakuje"],
+  diagnoza_godziny: ["czas_milczy", "czas_zartobliwie", "czas_obronny", "czas_przeskakuje"],
   spot_propozycja: ["wyslij_mailem", "ok4", "ok5", "spotkanie_link_zapasowy"],
   spot_potwierdzenie: ["spotkanie_link_zapasowy"],
 };
@@ -755,7 +760,16 @@ function CollapsibleAnswer({
           cursor: "pointer",
         }}
       >
-        <span>{label}</span>
+        <span
+          style={{
+            textTransform: "uppercase",
+            fontSize: 15,
+            fontWeight: 700,
+            letterSpacing: "0.03em",
+          }}
+        >
+          {label}
+        </span>
         <ChevronDown
           size={15}
           color="var(--text-tertiary)"
