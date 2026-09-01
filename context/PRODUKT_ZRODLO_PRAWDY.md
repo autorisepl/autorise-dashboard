@@ -1,10 +1,11 @@
 # Produkt Autorise — źródło prawdy
 
 Źródło: `public/prezentacja.html` (slajd 3) + `UMOWA_SYSTEM_AUTORISE.pdf` + Załącznik nr 1.
-Ostatnia weryfikacja: 29.08.2026 — umowa referencyjna zmieniona z `UMOWA_AUTORISE_FINAL.md`
+Ostatnia weryfikacja: 01.09.2026 — zmiana cennika wdrożenia (15 000 PLN jednorazowo lub
+18 000 PLN w dwóch ratach; patrz sekcja Cennik), retainer i mechanizm gwarancji bez zmian.
+Poprzednia weryfikacja: 29.08.2026 — umowa referencyjna zmieniona z `UMOWA_AUTORISE_FINAL.md`
 (nieaktualna, zachowana w repo jako dokument historyczny) na `UMOWA_SYSTEM_AUTORISE.pdf`, wraz
-ze zmianą cennika (patrz sekcja Cennik) i mechanizmu weryfikacji efektywności (patrz sekcja
-Gwarancja).
+ze zmianą cennika i mechanizmu weryfikacji efektywności (patrz sekcja Gwarancja).
 
 **Ten plik jest źródłem prawdy o produkcie. Notion "Produkty" i stare pliki SOP (np.
 `KARTA_PRODUKTU_SYSTEM_OPERACYJNY.md`, wczesna koncepcja z 01.07.2026 na stronie PR-0 w
@@ -53,14 +54,18 @@ zakresie modułu "Dokumenty i pliki" (odczyt i przypisanie, nie rozliczanie).
 
 ## Cennik
 
-- **Wdrożenie:** 30 000 PLN brutto, jednorazowo. Bez rat, bez rabatu za terminowość — oba
-  mechanizmy nieobecne w UMOWA_SYSTEM_AUTORISE.pdf (żadna wcześniejsza wersja umowy z ratami
-  lub rabatem już nie obowiązuje). Płatne w 2 dni robocze od faktury elektronicznej (KSeF).
-  Prace nie zaczynają się przed zaksięgowaniem pełnej kwoty (§2 ust. 1); jeśli pełna kwota nie
-  wpłynie w ciągu 7 dni kalendarzowych od podpisania, umowa automatycznie się rozwiązuje ze
-  skutkiem wstecznym (§2 ust. 2, warunek rozwiązujący).
-- **Retainer:** 1 000 PLN brutto miesięcznie, płatne z góry, minimum 12 miesięcy licząc od dnia
-  odbioru systemu (nie od podpisania umowy).
+**Aktualizacja 01.09.2026 — jawnie zastępuje wersję z 29.08.2026 (30 000 PLN jednorazowo, bez
+rat / 1 000 PLN retainer).**
+
+- **Wdrożenie:** 15 000 PLN brutto jednorazowo, albo 18 000 PLN brutto w dwóch ratach po
+  9 000 PLN: pierwsza rata przed startem prac, druga po podpisaniu protokołu odbioru systemu.
+  Zapisy UMOWA_SYSTEM_AUTORISE.pdf §2 (płatność w 2 dni robocze od faktury KSeF, brak startu
+  prac przed zaksięgowaniem pełnej kwoty, warunek rozwiązujący po 7 dniach) opisują poprzedni
+  model jednorazowy i wymagają aktualizacji pod wariant ratalny.
+- **Retainer:** 1 000 PLN brutto miesięcznie, bez zmian, płatne z góry, minimum 12 miesięcy
+  licząc od dnia odbioru systemu (nie od podpisania umowy).
+- **Mechanizm gwarancji** (wzór procentowy `(ΣE − ΣF) / ΣE`) bez zmian — dotyczy godzin, nie
+  kwoty, więc zmiana ceny go nie rusza (patrz sekcja Gwarancja).
 - Autorise korzysta ze zwolnienia podmiotowego z VAT (art. 113 ust. 1 ustawy o VAT) — podane
   kwoty są kwotami do zapłaty, bez doliczanego VAT.
 - Standardowy czas wdrożenia: 4 tygodnie od potwierdzenia otrzymania pełnych dostępów (możliwe
@@ -105,3 +110,14 @@ automatyczny zwrot 100% po pierwszym negatywnym wyniku.
 Kalkulator ROI musi pokazać minimum 80h/mc oszczędności łącznie z dostępnych modułów.
 Orientacyjnie flota 10-150 pojazdów. Twardy disqualifier: poniżej 2 osób w biurze
 administracji. Właściciel jako decydent obecny na rozmowie.
+
+## Otwarte pytania (dodane 01.09.2026)
+
+Nierozstrzygnięte, do rozwiązania dopiero w trakcie budowy skryptu sprzedażowego, ściśle
+według materiałów od Agency Leaders (nie jako doraźna decyzja oderwana od frameworku):
+
+1. Czy wracamy do jednego spotkania sprzedażowego, czy zostaje podział na spotkanie
+   sprzedażowe plus Finalizację.
+2. Czy pomiar realnego czasu u klienta odbywa się na żywo na ekranie, czy szacunkowo ze słów
+   klienta.
+3. Los pliku `lib/scripts/finalizacja.ts`, zbudowanego 29.08.2026, dziś nieużywanego.
